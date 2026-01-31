@@ -1,0 +1,96 @@
+@extends('layouts.app')
+
+@section('title', 'Login - WOFINS')
+
+@section('content')
+    <div class="min-h-screen flex items-center justify-center bg-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div class="w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+            <div class="grid md:grid-cols-2 gap-8 items-stretch">
+                <div class="rounded-xl overflow-hidden">
+                    <img src="{{ route('brand.login-image') }}" alt="Login Illustration" class="w-full h-full object-cover">
+                </div>
+                <div class="flex items-center">
+                    <div class="w-full max-w-md mx-auto">
+                        <h1 class="text-3xl font-bold text-gray-900">Sign In</h1>
+                        <p class="mt-1 text-sm text-gray-500">Unlock Smarter Financial Decisions.</p>
+                        @if (session('status'))
+                            <p class="mt-3 text-sm text-green-600">{{ session('status') }}</p>
+                        @endif
+                        <form class="mt-8 space-y-6" action="{{ route('front.login') }}" method="POST">
+                            @csrf
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-900">Email</label>
+                                    <input id="email-address" name="email" type="email" autocomplete="username"
+                                        autofocus required
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="Enter your email" value="{{ old('email') }}">
+                                    @error('email')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div x-data="{ show: false }">
+                                    <label class="text-sm font-medium text-gray-900">Password</label>
+                                    <div class="mt-1 relative">
+                                        <input id="password" name="password" :type="show ? 'text' : 'password'"
+                                            autocomplete="current-password" required
+                                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Enter your password">
+                                        <button type="button" @click="show = !show"
+                                            class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600">
+                                            <svg x-show="!show" class="h-5 w-5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                    d="M2.036 12.322a1.012 1.012 0 010-.644C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.577 3.01 9.964 7.178.07.21.07.434 0 .644C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.577-3.01-9.964-7.178z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            <svg x-show="show" class="h-5 w-5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                    d="M3.98 8.223A10.477 10.477 0 002.036 12.32c-.07.21-.07.434 0 .644C3.423 16.49 7.36 19.5 12 19.5c1.676 0 3.257-.31 4.679-.873M6.115 6.115C8.011 4.904 9.93 4.5 12 4.5c4.64 0 8.577 3.01 9.964 7.178.07.21.07.434 0 .644a10.495 10.495 0 01-1.606 2.472M3 3l18 18M9.88 9.88a3 3 0 104.24 4.24" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    @error('password')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <button type="submit"
+                                    class="w-full px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Sign
+                                    In</button>
+                                @if (false)
+                                    <div class="flex items-center my-2">
+                                        <div class="flex-1 h-px bg-gray-200"></div>
+                                        <span class="px-3 text-xs text-gray-500">Or</span>
+                                        <div class="flex-1 h-px bg-gray-200"></div>
+                                    </div>
+                                    @if (Route::has('auth.google.redirect'))
+                                        <a href="{{ route('auth.google.redirect') }}"
+                                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                                            <i class="fab fa-google text-red-500"></i>
+                                            Sign in with Google
+                                        </a>
+                                    @else
+                                        <a href="#"
+                                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                                            <i class="fab fa-google text-red-500"></i>
+                                            Sign in with Google
+                                        </a>
+                                    @endif
+                                @endif
+                                {{-- @if (Route::has('front.register'))
+                                    <a href="{{ route('front.register') }}"
+                                        class="hidden w-full inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Create
+                                        an account</a>
+                                @endif --}}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection

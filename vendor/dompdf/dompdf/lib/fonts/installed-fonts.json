@@ -1,0 +1,12 @@
+{
+    "poppins": {
+        "normal": "\/home\/u380354370\/domains\/maknakreatif.id\/public_html\/storage\/fonts\/poppins_normal_b41851ceb3b8760a9302cc6c4b394be6",
+        "bold": "poppins_bold_69cfe4a18df1a3984f117309d32a4f07"
+    },
+    "noto sans": {
+        "normal": "\/Applications\/XAMPP\/xamppfiles\/htdocs\/maknakreatif_filament_v4\/mki_28nov\/maknakreatif\/vendor\/dompdf\/dompdf\/lib\/fonts\/noto_sans_normal_1d3fa1de43813f2e3d43c049a3dc3027",
+        "500": "\/Applications\/XAMPP\/xamppfiles\/htdocs\/maknakreatif_filament_v4\/mki_28nov\/maknakreatif\/vendor\/dompdf\/dompdf\/lib\/fonts\/noto_sans_500_93a0c99266b5038dea832e2e4a453c28",
+        "600": "\/Applications\/XAMPP\/xamppfiles\/htdocs\/maknakreatif_filament_v4\/mki_28nov\/maknakreatif\/vendor\/dompdf\/dompdf\/lib\/fonts\/noto_sans_600_28250d88674528bd3123cc6a87717c32",
+        "bold": "noto_sans_bold_d14bb300c338842261b48b55ff65a0d0"
+    }
+}

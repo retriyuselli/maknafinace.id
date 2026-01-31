@@ -1,0 +1,26 @@
+@import "../../../../vendor/filament/filament/resources/css/theme.css";
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+@source '../../../../vendor/filament/**/*.blade.php';
+@source '../../../../vendor/awcodes/filament-table-repeater/resources/**/*.blade.php';
+
+/* Force include common positioning classes */
+.right-0 {
+    right: 0px !important;
+}
+.top-0 {
+    top: 0px !important;
+}
+.absolute {
+    position: absolute !important;
+}
+.relative {
+    position: relative !important;
+}
+.flex {
+    display: flex !important;
+}
+.items-center {
+    align-items: center !important;
+}
