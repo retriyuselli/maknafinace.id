@@ -20,6 +20,11 @@ php artisan optimize
 php artisan filament:optimize
 php artisan shield:generate --all
 
+Jalankan perintah ini di terminal Server/Hostinger untuk memaksa server menggunakan versi terbaru dari Git
+1. Reset semua perubahan di server agar sama persis dengan Git:
+git fetch --all
+git reset --hard origin/main
+
 composer2 dump-autoload
 
 Berisi file sudah dioptimize menggunakan filament v4.0.10

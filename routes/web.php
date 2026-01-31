@@ -22,6 +22,7 @@ use App\Http\Controllers\SimulasiDisplayController;
 use App\Http\Controllers\UserFormPdfController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LaporanKeuanganController;
 use App\Models\DataPembayaran; // Add for debug
 
 // Bank Reconciliation Template Route
@@ -267,3 +268,12 @@ Route::get('/debug-report', function() {
         'sample_data' => $data
     ];
 });
+
+// LAPORAN KEUANGAN PDF DOWNLOAD
+Route::get('/laporan-keuangan/download-pdf', [LaporanKeuanganController::class, 'downloadPdf'])
+    ->name('laporan-keuangan.download-pdf')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+Route::get('/laporan-keuangan/download-pdf-direct', [LaporanKeuanganController::class, 'downloadPdf'])
+    ->name('laporan-keuangan.download-pdf-direct')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
