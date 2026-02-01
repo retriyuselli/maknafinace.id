@@ -206,6 +206,8 @@ class AccountManagerTargetResource extends Resource
                     ->options([
                         'pending' => 'Pending',
                         'achieved' => 'Achieved',
+                        'on_track' => 'On Track',
+                        'behind' => 'Behind',
                         'failed' => 'Failed',
                         'overachieved' => 'Overachieved',
                     ])
@@ -227,7 +229,8 @@ class AccountManagerTargetResource extends Resource
                     ->sortable(),
                 TextColumn::make('month')
                     ->label('Bulan (Angka)')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('month_name')
                     ->label('Nama Bulan')
                     ->getStateUsing(function ($record) {
@@ -434,10 +437,12 @@ class AccountManagerTargetResource extends Resource
 
                             if ($achieved >= $targetAmount) {
                                 $status = 'achieved';
-                            } elseif ($achieved >= ($targetAmount * 0.8)) {
+                            } elseif ($achieved >= ($targetAmount * 0.75)) {
                                 $status = 'on_track';
-                            } elseif ($achieved > 0) {
+                            } elseif ($achieved >= ($targetAmount * 0.50)) {
                                 $status = 'behind';
+                            } else {
+                                $status = 'failed';
                             }
 
                             $record->update([

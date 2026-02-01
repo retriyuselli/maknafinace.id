@@ -9,20 +9,36 @@ use Illuminate\Support\Facades\Auth;
 
 class AmPerformanceChart extends ChartWidget
 {
-    protected ?string $heading = 'Performance Trend 2024';
+    protected ?string $heading = 'Performance Trend';
 
     protected static ?int $sort = 2;
 
+    protected ?string $maxHeight = '1500px';
+
     protected int|string|array $columnSpan = 'full';
+
+    protected function getFilters(): ?array
+    {
+        $currentYear = now()->year;
+        $years = [];
+        for ($i = $currentYear - 2; $i <= $currentYear + 1; $i++) {
+            $years[$i] = (string) $i;
+        }
+        return $years;
+    }
 
     protected function getData(): array
     {
         $user = Auth::user();
-        $currentYear = now()->year;
+        $selectedYear = $this->filter ? (int) $this->filter : now()->year;
 
-        // Get monthly data for current year
+        // Get monthly data for selected year
         $monthlyData = AccountManagerTarget::query()
-            ->where('year', $currentYear)
+            ->where('year', $selectedYear)
+            ->whereHas('user', function ($query) {
+                $query->where('status', '!=', 'terminated')
+                      ->orWhereNull('status');
+            })
             ->selectRaw('month, SUM(target_amount) as total_target, SUM(achieved_amount) as total_achieved')
             ->groupBy('month')
             ->orderBy('month')

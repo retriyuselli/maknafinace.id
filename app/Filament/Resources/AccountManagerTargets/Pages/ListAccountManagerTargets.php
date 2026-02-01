@@ -110,7 +110,7 @@ class ListAccountManagerTargets extends ListRecords
 
                     // Preview langsung dengan memanggil URL preview
                     $accountManager = User::find($data['user_id']);
-                    $monthName = Carbon::createFromDate(null, $data['month'], 1)->format('F');
+                    $monthName = Carbon::createFromDate(null, (int) $data['month'], 1)->format('F');
 
                     // Generate preview content
                     $previewContent = $this->getReportPreviewContent($data['user_id'], $data['year'], $data['month']);

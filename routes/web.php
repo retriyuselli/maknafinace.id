@@ -23,6 +23,7 @@ use App\Http\Controllers\UserFormPdfController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LaporanKeuanganController;
+use App\Http\Controllers\AccountManagerReportController;
 use App\Models\DataPembayaran; // Add for debug
 
 // Bank Reconciliation Template Route
@@ -276,4 +277,9 @@ Route::get('/laporan-keuangan/download-pdf', [LaporanKeuanganController::class, 
 
 Route::get('/laporan-keuangan/download-pdf-direct', [LaporanKeuanganController::class, 'downloadPdf'])
     ->name('laporan-keuangan.download-pdf-direct')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+// ACCOUNT MANAGER REPORT
+Route::get('/account-manager/report/html', [AccountManagerReportController::class, 'downloadHtmlReport'])
+    ->name('account-manager.report.html')
     ->middleware(\Filament\Http\Middleware\Authenticate::class);
