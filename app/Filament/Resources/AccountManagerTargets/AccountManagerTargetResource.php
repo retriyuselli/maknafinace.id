@@ -379,7 +379,7 @@ class AccountManagerTargetResource extends Resource
             ])
             ->actions([
                 Action::make('preview_orders')
-                    ->label('Preview Orders')
+                    ->label('View')
                     ->icon('heroicon-o-eye')
                     ->modalHeading('Detail Kontribusi Order')
                     ->modalContent(function (Action $action, $record) {
@@ -403,9 +403,9 @@ class AccountManagerTargetResource extends Resource
                         return view('filament.modals.achievement-details', [
                             'orders' => $orders,
                         ]);
-                    })
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Tutup'),
+                    }),
+                    // ->modalSubmitAction(false)
+                    // ->modalCancelActionLabel('Tutup'),
                 
                 ActionGroup::make([
                     Action::make('edit_target')
@@ -483,148 +483,9 @@ class AccountManagerTargetResource extends Resource
                                 ->send();
                         }),
 
-                    Action::make('view_orders')
-                        ->label('Lihat Order')
-                        ->icon('heroicon-o-eye')
-                        ->color('info')
-                        ->modalHeading(fn (AccountManagerTarget $record) => 'Order untuk '.$record->user->name.' - '.
-                            Carbon::createFromDate(null, $record->month, 1)->format('F').' '.$record->year
-                        )
-                        ->modalContent(function (AccountManagerTarget $record) {
-                            $orders = Order::where('user_id', $record->user_id)
-                                ->whereNotNull('closing_date')
-                                ->whereYear('closing_date', $record->year)
-                                ->whereMonth('closing_date', $record->month)
-                                ->with('prospect')
-                                ->get();
 
-                            if ($orders->isEmpty()) {
-                                return view('filament.components.empty-state')
-                                    ->with('message', 'Tidak ada order untuk periode ini');
-                            }
 
-                            return view('filament.components.order-list', compact('orders'));
-                        })
-                        ->modalWidth('7xl')
-                        ->modalCancelActionLabel('Tutup')
-                        ->modalSubmitAction(false),
 
-                    Action::make('generate_report')
-                        ->label('Preview Report')
-                        ->icon('heroicon-o-document-text')
-                        ->color('info')
-                        ->visible(function (AccountManagerTarget $record) {
-                            $user = Auth::user();
-                            // Super admin dapat melihat semua report
-                            if ($user && $user->roles->where('name', 'super_admin')->count() > 0) {
-                                return true;
-                            }
-
-                            // User biasa hanya bisa melihat report mereka sendiri
-                            return $record->user_id === $user->id;
-                        })
-                        ->modalHeading(fn (AccountManagerTarget $record) => 'Preview Report - '.$record->user->name.' ('.
-                            Carbon::createFromDate(null, $record->month, 1)->format('F').' '.$record->year.')'
-                        )
-                        ->modalContent(function (AccountManagerTarget $record) {
-                            $user = Auth::user();
-
-                            // Double check authorization
-                            $isSuperAdmin = $user && $user->roles->where('name', 'super_admin')->count() > 0;
-                            if (! $isSuperAdmin && $record->user_id !== $user->id) {
-                                return '<div style="text-align: center; padding: 40px; color: #ef4444; font-family: sans-serif;">
-                                    <div style="font-size: 18px; margin-bottom: 10px;">🚫 Akses Ditolak</div>
-                                    <div>Anda tidak memiliki akses untuk melihat report ini.</div>
-                                </div>';
-                            }
-                            // Get Account Manager user data
-                            $accountManager = User::with(['roles'])->find($record->user_id);
-
-                            // Get orders data for the period
-                            $orders = Order::where('user_id', $record->user_id)
-                                ->whereNotNull('closing_date')
-                                ->whereYear('closing_date', $record->year)
-                                ->whereMonth('closing_date', $record->month)
-                                ->with(['prospect'])
-                                ->get();
-
-                            // Calculate sales statistics
-                            $totalRevenue = $orders->sum('total_price');
-                            $totalOrders = $orders->count();
-                            $averageOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
-
-                            // Get payroll data
-                            $payrollData = null;
-                            if (class_exists('\App\Models\Payroll')) {
-                                $payrollData = Payroll::where('user_id', $record->user_id)
-                                    ->where('period_year', $record->year)
-                                    ->where('period_month', $record->month)
-                                    ->first();
-                            }
-
-                            // Get leave data
-                            $leaveData = collect();
-                            if (class_exists('\App\Models\LeaveRequest')) {
-                                $leaveData = LeaveRequest::where('user_id', $record->user_id)
-                                    ->where(function ($query) use ($record) {
-                                        $query->whereYear('start_date', $record->year)
-                                            ->whereMonth('start_date', $record->month);
-                                    })
-                                    ->orWhere(function ($query) use ($record) {
-                                        $query->whereYear('end_date', $record->year)
-                                            ->whereMonth('end_date', $record->month);
-                                    })
-                                    ->with('leaveType')
-                                    ->get();
-                            }
-
-                            $achievementPercentage = $record->target_amount > 0 ? ($totalRevenue / $record->target_amount) * 100 : 0;
-
-                            return view('filament.components.account-manager-report-preview', [
-                                'accountManager' => $accountManager,
-                                'target' => $record,
-                                'orders' => $orders,
-                                'payrollData' => $payrollData,
-                                'leaveData' => $leaveData,
-                                'year' => $record->year,
-                                'month' => $record->month,
-                                'monthName' => Carbon::createFromDate(null, $record->month, 1)->format('F'),
-                                'totalRevenue' => $totalRevenue,
-                                'totalOrders' => $totalOrders,
-                                'averageOrderValue' => $averageOrderValue,
-                                'achievementPercentage' => $achievementPercentage,
-                            ]);
-                        })
-                        ->modalWidth('7xl')
-                        ->modalSubmitAction(
-                            Action::make('download')
-                                ->label('Download HTML')
-                                ->icon('heroicon-o-arrow-down-tray')
-                                ->color('success')
-                                ->action(function (AccountManagerTarget $record) {
-                                    $user = Auth::user();
-                                    $isSuperAdmin = $user && $user->roles->where('name', 'super_admin')->count() > 0;
-
-                                    // Authorization check untuk download
-                                    if (! $isSuperAdmin && $record->user_id !== $user->id) {
-                                        Notification::make()
-                                            ->title('Akses Ditolak')
-                                            ->body('Anda tidak memiliki akses untuk mendownload report ini.')
-                                            ->danger()
-                                            ->send();
-
-                                        return;
-                                    }
-
-                                    return redirect()->route('account-manager.report.html', [
-                                        'userId' => $record->user_id,
-                                        'year' => $record->year,
-                                        'month' => $record->month,
-                                    ]);
-                                })
-                        )
-                        ->modalCancelActionLabel('Tutup')
-                        ->tooltip('Preview laporan sebelum download'),
                 ])
                     ->label('Actions')
                     ->icon('heroicon-o-cog-6-tooth')

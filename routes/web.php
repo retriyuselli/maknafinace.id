@@ -283,3 +283,15 @@ Route::get('/laporan-keuangan/download-pdf-direct', [LaporanKeuanganController::
 Route::get('/account-manager/report/html', [AccountManagerReportController::class, 'downloadHtmlReport'])
     ->name('account-manager.report.html')
     ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+Route::get('/account-manager/report/pdf', [AccountManagerReportController::class, 'downloadPdfReport'])
+    ->name('account-manager.report.pdf')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+Route::get('/account-manager/report/stream', [AccountManagerReportController::class, 'streamPdfReport'])
+    ->name('account-manager.report.stream')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+Route::get('/account-manager/report/show', [AccountManagerReportController::class, 'showReport'])
+    ->name('account-manager.report.show')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);

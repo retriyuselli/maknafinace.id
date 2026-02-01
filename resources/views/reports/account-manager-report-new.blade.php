@@ -46,19 +46,41 @@
  All CSS File
  ============================== -->
     <!-- Bootstrap -->
-    <link rel="stylesheet" href="{{ asset('assets_am/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ public_path('assets_am/css/bootstrap.min.css') }}">
     <!-- Theme Custom CSS -->
-    <link rel="stylesheet" href="{{ asset('assets_am/css/style.css') }}">
+    <link rel="stylesheet" href="{{ public_path('assets_am/css/style.css') }}">
 
     <!-- Custom Noto Sans Font CSS -->
     <style>
-        .invoice-buttons {
-            position: fixed !important;
-            bottom: 30px;
-            right: 30px;
-            z-index: 9999 !important;
-            display: flex;
-            gap: 10px;
+        /* PDF Page Settings */
+        @page {
+            margin: 0px;
+            /* Reset default margin */
+            size: A4 portrait;
+        }
+
+        /* Override Body Background */
+        body {
+            background-color: #ffffff !important;
+            margin: 0;
+            padding: 20px;
+            /* Add global padding to prevent content hitting edges */
+        }
+
+        .invoice-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            /* Remove internal padding as body handles it */
+            background-color: #ffffff !important;
+            box-shadow: none !important;
+        }
+
+        .themeholy-invoice {
+            background-color: #ffffff !important;
+            box-shadow: none !important;
+            border: none !important;
         }
 
         /* Enforce table width */
@@ -203,20 +225,24 @@ Invoice Area
                                         Header Area
                                         ==============================-->
                                         <header class="themeholy-header header-layout4">
-                                            <div class="row align-items-center justify-content-between">
-                                                <div class="col-auto">
-                                                    <div class="header-logo">
-                                                        <a href="#"><img src="{{ asset('images/logomki.png') }}"
-                                                                alt="Makna Kreatif" width="250" height="auto"
-                                                                style="max-width: 250px; height: auto;"></a>
-                                                    </div>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <h1 class="big-title">Laporan Account Manager</h1>
-                                                    <span><b>Periode: </b> {{ $monthName ?? 'Unknown Month' }}
-                                                        {{ $year ?? 'Unknown Year' }}</span>
-                                                </div>
-                                            </div>
+                                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                                                <tr>
+                                                    <td style="width: 50%; text-align: left; vertical-align: middle;">
+                                                        <div class="header-logo">
+                                                            <img src="{{ public_path('images/logomki.png') }}"
+                                                                alt="Makna Kreatif" width="250"
+                                                                style="max-width: 250px; height: auto;">
+                                                        </div>
+                                                    </td>
+                                                    <td style="width: 50%; text-align: right; vertical-align: middle;">
+                                                        <h1 class="big-title" style="margin: 0; font-size: 24px;">
+                                                            Laporan Account Manager</h1>
+                                                        <span style="display: block; margin-top: 5px;"><b>Periode: </b>
+                                                            {{ $monthName ?? 'Unknown Month' }}
+                                                            {{ $year ?? 'Unknown Year' }}</span>
+                                                    </td>
+                                                </tr>
+                                            </table>
                                         </header>
                                     </th>
                                 </tr>
@@ -363,7 +389,7 @@ Invoice Area
                                                             <th style="width: 12% !important; padding-right: 15px;">
                                                                 Tanggal</th>
                                                             <th style="width: 15% !important; padding-left: 15px;">
-                                                                Total</th>
+                                                                Grand Total</th>
                                                             <th style="width: 15% !important;">Status</th>
                                                         </tr>
                                                     </thead>
@@ -612,54 +638,58 @@ Invoice Area
                                 </tr>
                             </tbody> --}}
                         </table>
-                        <div class="row justify-content-between">
-                            <div class="col-auto">
-                                <div class="invoice-left tips-section">
-                                    <b>Tips Sukses Account Manager</b>
-                                    <p class="mb-0">1. Follow up dengan client secara berkala <br>
-                                        2. Berikan solusi yang sesuai kebutuhan <br>
-                                        3. Jaga hubungan baik dengan semua vendor <br>
-                                        4. Pahami produk dan layanan <br>
-                                        5. Dengarkan kebutuhan dan keluhan client <br>
-                                        6. Kelola waktu dan prioritas dengan baik <br>
-                                        7. Bangun komunikasi yang jelas dan transparan <br>
-                                        8. Selalu update tren industri dan kompetitor <br>
-                                        9. Buat laporan progress yang terukur <br>
-                                        10. Jaga profesionalisme dan integritas
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <table class="total-table">
-                                    <tr>
-                                        <th>Target Bulanan:</th>
-                                        <td> {{ number_format($reportData['target']->target_amount ?? 0, 0, ',', '.') }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Terealisasi:</th>
-                                        <td> {{ number_format($reportData['totalRevenue'] ?? 0, 0, ',', '.') }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Persentase:</th>
-                                        <td>{{ number_format($reportData['achievementPercentage'] ?? 0, 1) }}%</td>
-                                    </tr>
-                                    <tr style="background-color: #f8f9fa;">
-                                        <th>Status Target:</th>
-                                        <td>
-                                            @if (($reportData['achievementPercentage'] ?? 0) >= 100)
-                                                <span style="color: green; font-weight: bold;">✓ TERCAPAI</span>
-                                            @elseif(($reportData['achievementPercentage'] ?? 0) >= 75)
-                                                <span style="color: orange; font-weight: bold;">⚠ HAMPIR
-                                                    TERCAPAI</span>
-                                            @else
-                                                <span style="color: red; font-weight: bold;">✗ BELUM TERCAPAI</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
+                        <table style="width: 100%; margin-top: 20px;">
+                            <tr>
+                                <td style="vertical-align: top; width: 55%;">
+                                    <div class="invoice-left tips-section">
+                                        <b>Tips Sukses Account Manager</b>
+                                        <p class="mb-0">1. Follow up dengan client secara berkala <br>
+                                            2. Berikan solusi yang sesuai kebutuhan <br>
+                                            3. Jaga hubungan baik dengan semua vendor <br>
+                                            4. Pahami produk dan layanan <br>
+                                            5. Dengarkan kebutuhan dan keluhan client <br>
+                                            6. Kelola waktu dan prioritas dengan baik <br>
+                                            7. Bangun komunikasi yang jelas dan transparan <br>
+                                            8. Selalu update tren industri dan kompetitor <br>
+                                            9. Buat laporan progress yang terukur <br>
+                                            10. Jaga profesionalisme dan integritas
+                                        </p>
+                                    </div>
+                                </td>
+                                <td style="vertical-align: top; width: 45%; padding-left: 20px;">
+                                    <table class="total-table" style="width: 100%;">
+                                        <tr>
+                                            <th>Target Bulanan:</th>
+                                            <td> {{ number_format($reportData['target']->target_amount ?? 0, 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Terealisasi:</th>
+                                            <td> {{ number_format($reportData['totalRevenue'] ?? 0, 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Persentase:</th>
+                                            <td>{{ number_format($reportData['achievementPercentage'] ?? 0, 1) }}%</td>
+                                        </tr>
+                                        <tr style="background-color: #f8f9fa;">
+                                            <th>Status Target:</th>
+                                            <td>
+                                                @if (($reportData['achievementPercentage'] ?? 0) >= 100)
+                                                    <span style="color: green; font-weight: bold;">✓ TERCAPAI</span>
+                                                @elseif(($reportData['achievementPercentage'] ?? 0) >= 75)
+                                                    <span style="color: orange; font-weight: bold;">⚠ HAMPIR
+                                                        TERCAPAI</span>
+                                                @else
+                                                    <span style="color: red; font-weight: bold;">✗ BELUM
+                                                        TERCAPAI</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
 
                         <div class="motivational-footer"
                             style="background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%); border-radius: 10px; padding: 20px; color: white; text-align: center; margin: 20px 0;">
@@ -689,43 +719,45 @@ Invoice Area
                         <!-- Signature Section -->
                         <div class="signature-section"
                             style="margin: 40px 0; padding: 30px 0; border-top: 2px solid #eee;">
-                            <div class="row justify-content-between">
-                                <!-- Account Manager Signature -->
-                                <div class="col-md-5 text-center">
-                                    <p style="margin-bottom: 5px; font-weight: 600; color: #333;">Account Manager</p>
-                                    <div
-                                        style="height: 80px; border-bottom: 1px solid #ccc; margin: 20px 0; position: relative;">
-                                        <!-- Space for manual signature -->
+                            <table style="width: 100%;">
+                                <tr>
+                                    <td style="width: 45%; text-align: center; vertical-align: top;">
+                                        <p style="margin-bottom: 5px; font-weight: 600; color: #333;">Account Manager
+                                        </p>
                                         <div
-                                            style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #888;">
-                                            (Tanda Tangan)
+                                            style="height: 80px; border-bottom: 1px solid #ccc; margin: 20px 0; position: relative;">
+                                            <!-- Space for manual signature -->
+                                            <div
+                                                style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #888;">
+                                                (Tanda Tangan)
+                                            </div>
                                         </div>
-                                    </div>
-                                    <p style="margin: 10px 0 5px 0; font-weight: 600; color: #333;">
-                                        {{ $accountManager->name ?? 'Unknown' }}</p>
-                                    <p style="margin: 0; font-size: 12px; color: #666;">
-                                        Tanggal: {{ now()->format('d/m/Y') }}
-                                    </p>
-                                </div>
-
-                                <!-- Direktur Signature -->
-                                <div class="col-md-5 text-center">
-                                    <p style="margin-bottom: 5px; font-weight: 600; color: #333;">Direktur</p>
-                                    <div
-                                        style="height: 80px; border-bottom: 1px solid #ccc; margin: 20px 0; position: relative;">
-                                        <!-- Space for manual signature -->
+                                        <p style="margin: 10px 0 5px 0; font-weight: 600; color: #333;">
+                                            {{ $accountManager->name ?? 'Unknown' }}</p>
+                                        <p style="margin: 0; font-size: 12px; color: #666;">
+                                            Tanggal: {{ now()->format('d/m/Y') }}
+                                        </p>
+                                    </td>
+                                    <td style="width: 10%;"></td>
+                                    <td style="width: 45%; text-align: center; vertical-align: top;">
+                                        <p style="margin-bottom: 5px; font-weight: 600; color: #333;">Direktur</p>
                                         <div
-                                            style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #888;">
-                                            (Tanda Tangan)
+                                            style="height: 80px; border-bottom: 1px solid #ccc; margin: 20px 0; position: relative;">
+                                            <!-- Space for manual signature -->
+                                            <div
+                                                style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #888;">
+                                                (Tanda Tangan)
+                                            </div>
                                         </div>
-                                    </div>
-                                    <p style="margin: 10px 0 5px 0; font-weight: 600; color: #333;">Rama Dhona Utama
-                                    </p>
-                                    <p style="margin: 0; font-size: 12px; color: #666;">
-                                        PT. Makna Kreatif Indonesia
-                                    </p>
-                                </div>
-                            </div>
+                                        <p style="margin: 10px 0 5px 0; font-weight: 600; color: #333;">Rama Dhona
+                                            Utama
+                                        </p>
+                                        <p style="margin: 0; font-size: 12px; color: #666;">
+                                            PT. Makna Kreatif Indonesia
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
 
                         <p class="invoice-note mt-3">
@@ -746,44 +778,11 @@ Invoice Area
                     </tbody>
                     </table>
                 </div>
-                <div class="invoice-buttons">
-                    <button class="print_btn">
-                        <svg width="20" height="21" viewBox="0 0 20 21" fill="none"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M16.25 13H3.75C3.38542 13 3.08594 13.1172 2.85156 13.3516C2.61719 13.5859 2.5 13.8854 2.5 14.25V19.25C2.5 19.6146 2.61719 19.9141 2.85156 20.1484C3.08594 20.3828 3.38542 20.5 3.75 20.5H16.25C16.6146 20.5 16.9141 20.3828 17.1484 20.1484C17.3828 19.9141 17.5 19.6146 17.5 19.25V14.25C17.5 13.8854 17.3828 13.5859 17.1484 13.3516C16.9141 13.1172 16.6146 13 16.25 13ZM16.25 19.25H3.75V14.25H16.25V19.25ZM17.5 8V3.27344C17.5 2.90885 17.3828 2.60938 17.1484 2.375L15.625 0.851562C15.3646 0.617188 15.0651 0.5 14.7266 0.5H5C4.29688 0.526042 3.71094 0.773438 3.24219 1.24219C2.77344 1.71094 2.52604 2.29688 2.5 3V8C1.79688 8.02604 1.21094 8.27344 0.742188 8.74219C0.273438 9.21094 0.0260417 9.79688 0 10.5V14.875C0.0260417 15.2656 0.234375 15.474 0.625 15.5C1.01562 15.474 1.22396 15.2656 1.25 14.875V10.5C1.25 10.1354 1.36719 9.83594 1.60156 9.60156C1.83594 9.36719 2.13542 9.25 2.5 9.25H17.5C17.8646 9.25 18.1641 9.36719 18.3984 9.60156C18.6328 9.83594 18.75 10.1354 18.75 10.5V14.875C18.776 15.2656 18.9844 15.474 19.375 15.5C19.7656 15.474 19.974 15.2656 20 14.875V10.5C19.974 9.79688 19.7266 9.21094 19.2578 8.74219C18.7891 8.27344 18.2031 8.02604 17.5 8ZM16.25 8H3.75V3C3.75 2.63542 3.86719 2.33594 4.10156 2.10156C4.33594 1.86719 4.63542 1.75 5 1.75H14.7266L16.25 3.27344V8ZM16.875 10.1875C16.3021 10.2396 15.9896 10.5521 15.9375 11.125C15.9896 11.6979 16.3021 12.0104 16.875 12.0625C17.4479 12.0104 17.7604 11.6979 17.8125 11.125C17.7604 10.5521 17.4479 10.2396 16.875 10.1875Z"
-                                fill="#00C764" />
-                        </svg>
-                    </button>
-                    <a href="{{ route('account-manager.report.pdf', ['userId' => $accountManager->id ?? 1, 'year' => $year, 'month' => $month]) }}"
-                        class="download_btn"
-                        style="display: flex; align-items: center; justify-content: center; text-decoration: none;">
-                        <svg width="25" height="19" viewBox="0 0 25 19" fill="none"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M8.94531 11.1797C8.6849 10.8932 8.6849 10.6068 8.94531 10.3203C9.23177 10.0599 9.51823 10.0599 9.80469 10.3203L11.875 12.3516V6.375C11.901 5.98438 12.1094 5.77604 12.5 5.75C12.8906 5.77604 13.099 5.98438 13.125 6.375V12.3516L15.1953 10.3203C15.4818 10.0599 15.7682 10.0599 16.0547 10.3203C16.3151 10.6068 16.3151 10.8932 16.0547 11.1797L12.9297 14.3047C12.6432 14.5651 12.3568 14.5651 12.0703 14.3047L8.94531 11.1797ZM10.625 0.75C11.7969 0.75 12.8646 1.01042 13.8281 1.53125C14.8177 2.05208 15.625 2.76823 16.25 3.67969C16.8229 3.39323 17.4479 3.25 18.125 3.25C19.375 3.27604 20.4036 3.70573 21.2109 4.53906C22.0443 5.34635 22.474 6.375 22.5 7.625C22.5 8.01562 22.4479 8.41927 22.3438 8.83594C23.151 9.2526 23.7891 9.85156 24.2578 10.6328C24.7526 11.4141 25 12.2865 25 13.25C24.974 14.6562 24.4922 15.8411 23.5547 16.8047C22.5911 17.7422 21.4062 18.224 20 18.25H5.625C4.03646 18.1979 2.70833 17.651 1.64062 16.6094C0.598958 15.5417 0.0520833 14.2135 0 12.625C0.0260417 11.375 0.377604 10.2812 1.05469 9.34375C1.73177 8.40625 2.63021 7.72917 3.75 7.3125C3.88021 5.4375 4.58333 3.88802 5.85938 2.66406C7.13542 1.4401 8.72396 0.802083 10.625 0.75ZM10.625 2C9.08854 2.02604 7.78646 2.54688 6.71875 3.5625C5.67708 4.57812 5.10417 5.85417 5 7.39062C4.94792 7.91146 4.67448 8.27604 4.17969 8.48438C3.29427 8.79688 2.59115 9.33073 2.07031 10.0859C1.54948 10.8151 1.27604 11.6615 1.25 12.625C1.27604 13.875 1.70573 14.9036 2.53906 15.7109C3.34635 16.5443 4.375 16.974 5.625 17H20C21.0677 16.974 21.9531 16.6094 22.6562 15.9062C23.3594 15.2031 23.724 14.3177 23.75 13.25C23.75 12.5208 23.5677 11.8698 23.2031 11.2969C22.8385 10.724 22.3568 10.2682 21.7578 9.92969C21.2109 9.59115 21.0026 9.09635 21.1328 8.44531C21.2109 8.21094 21.25 7.9375 21.25 7.625C21.224 6.73958 20.9245 5.9974 20.3516 5.39844C19.7526 4.82552 19.0104 4.52604 18.125 4.5C17.6302 4.5 17.1875 4.60417 16.7969 4.8125C16.1719 5.04688 15.651 4.90365 15.2344 4.38281C14.7135 3.65365 14.0495 3.08073 13.2422 2.66406C12.4609 2.22135 11.5885 2 10.625 2Z"
-                                fill="#2D7CFE" />
-                        </svg>
-                    </a>
-                </div>
         </div>
         </main>
     </div>
     </div>
     <!-- Invoice Conainter End -->
-
-    <!--==============================
-    All Js File
-============================== -->
-    <!-- Jquery -->
-    <script src="{{ asset('assets_am/js/vendor/jquery-3.6.0.min.js') }}"></script>
-    <!-- Bootstrap -->
-    <script src="{{ asset('assets_am/js/bootstrap.min.js') }}"></script>
-    <!-- PDF Generator -->
-    <script src="{{ asset('assets_am/js/jspdf.min.js') }}"></script>
-    <script src="{{ asset('assets_am/js/html2canvas.min.js') }}"></script>
-    <!-- Main Js File -->
-    <script src="{{ asset('assets_am/js/main.js') }}"></script>
 
 </body>
 
