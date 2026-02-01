@@ -18,7 +18,7 @@ class AmPerformanceChart extends ChartWidget
 
     public function mount(): void
     {
-        $this->filter = now()->year . '|all';
+        $this->filter = (string) now()->year;
     }
 
     protected function getFilters(): ?array
@@ -26,20 +26,9 @@ class AmPerformanceChart extends ChartWidget
         $currentYear = now()->year;
         $options = [];
         
-        // Get Account Managers
-        $accountManagers = User::whereHas('roles', function ($q) {
-            $q->where('name', 'Account Manager');
-        })->pluck('name', 'id');
-
         // Generate options for recent years
         for ($year = $currentYear - 1; $year <= $currentYear + 1; $year++) {
-            // Option for All AMs
-            $options["{$year}|all"] = "{$year} - All Account Managers";
-            
-            // Options for specific AMs
-            foreach ($accountManagers as $id => $name) {
-                $options["{$year}|{$id}"] = "{$year} - {$name}";
-            }
+            $options[$year] = $year;
         }
         
         return $options;
@@ -49,10 +38,8 @@ class AmPerformanceChart extends ChartWidget
     {
         $user = Auth::user();
         
-        // Parse filter: year|user_id
-        $filterParts = explode('|', $this->filter ?? (now()->year . '|all'));
-        $selectedYear = (int) ($filterParts[0] ?? now()->year);
-        $selectedUserId = $filterParts[1] ?? 'all';
+        $selectedYear = (int) ($this->filter ?? now()->year);
+        $selectedUserId = 'all';
 
         // Check permissions
         $isSuperAdmin = $user && $user->roles->where('name', 'super_admin')->count() > 0;
@@ -88,10 +75,8 @@ class AmPerformanceChart extends ChartWidget
     {
         $user = Auth::user();
         
-        // Parse filter: year|user_id
-        $filterParts = explode('|', $this->filter ?? (now()->year . '|all'));
-        $selectedYear = (int) ($filterParts[0] ?? now()->year);
-        $selectedUserId = $filterParts[1] ?? 'all';
+        $selectedYear = (int) ($this->filter ?? now()->year);
+        $selectedUserId = 'all';
 
         // Check permissions: if user is not super_admin, force their own data if they are AM
         $isSuperAdmin = $user && $user->roles->where('name', 'super_admin')->count() > 0;
