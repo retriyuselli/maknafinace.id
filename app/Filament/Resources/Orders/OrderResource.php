@@ -1039,10 +1039,9 @@ class OrderResource extends Resource
                                 'date_lamaran' => 'Lamaran Date',
                                 'date_akad' => 'Akad Date',
                                 'date_resepsi' => 'Reception Date',
-                                // 'closing_date' => 'Closing Date',
+                                'closing_date' => 'Closing Date',
                             ])
-                            ->default('all')
-                            ->required(),
+                            ->default('all'), // Removed required() to see if it helps, though default('all') effectively makes it required-like
 
                         DatePicker::make('from_date')
                             ->label('From')
@@ -1057,6 +1056,11 @@ class OrderResource extends Resource
                     ->columns(1)
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when($data['date_type'] && ($data['from_date'] || $data['until_date']), function (Builder $query) use ($data) {
+                            if ($data['date_type'] === 'closing_date') {
+                                return $query->when($data['from_date'], fn ($q) => $q->whereDate('closing_date', '>=', $data['from_date']))
+                                    ->when($data['until_date'], fn ($q) => $q->whereDate('closing_date', '<=', $data['until_date']));
+                            }
+
                             return $query->whereHas('prospect', function ($query) use ($data) {
                                 if ($data['date_type'] === 'all') {
                                     // For "All Events", use OR conditions to check all date fields

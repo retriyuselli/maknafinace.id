@@ -96,7 +96,7 @@ class TopPerformersWidget extends BaseWidget
                     ->weight('bold'),
 
                 TextColumn::make('target_amount')
-                    ->label('Target')
+                    ->label('Target AM')
                     ->money('IDR')
                     ->sortable()
                     ->alignEnd(),

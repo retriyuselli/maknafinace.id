@@ -17,6 +17,11 @@ class AmPerformanceChart extends ChartWidget
 
     protected int|string|array $columnSpan = 'full';
 
+    public function mount(): void
+    {
+        $this->filter = (string) now()->year;
+    }
+
     protected function getFilters(): ?array
     {
         $currentYear = now()->year;

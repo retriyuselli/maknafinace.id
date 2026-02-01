@@ -139,6 +139,12 @@ class AccountManagerTargetResource extends Resource
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc');
 
+        // Filter resigned users: only show targets up to their resignation month
+        $query->whereHas('user', function ($q) {
+            $q->whereNull('last_working_date')
+                ->orWhereRaw("(account_manager_targets.year * 100 + account_manager_targets.month) <= (YEAR(last_working_date) * 100 + MONTH(last_working_date))");
+        });
+
         $user = Auth::user();
 
         // If user is Account Manager, only show their own targets
@@ -244,21 +250,12 @@ class AccountManagerTargetResource extends Resource
                     ->label('Pencapaian')
                     ->money('IDR')
                     ->sortable()
-                    ->action(function ($record) {
-                        // Redirect ke OrderResource dengan filter
-                        $url = OrderResource::getUrl('index', [
-                            'tableFilters' => [
-                                'team' => [
-                                    'user_id' => $record->user_id,
-                                ],
-                                'closing_date_filter' => [
-                                    'year' => $record->year,
-                                    'month' => $record->month,
-                                ],
-                            ],
+                    ->action(function ($record, $livewire) {
+                        $livewire->mountTableAction('preview_orders', $record, [
+                            'user_id' => $record->user_id,
+                            'year' => $record->year,
+                            'month' => $record->month,
                         ]);
-
-                        return Redirect::to($url);
                     })
                     ->color('primary')
                     ->tooltip('Klik untuk melihat detail order yang berkontribusi pada pencapaian ini'),
@@ -380,7 +377,36 @@ class AccountManagerTargetResource extends Resource
                     })
                     ->label('Bulan'),
             ])
-            ->recordActions([
+            ->actions([
+                Action::make('preview_orders')
+                    ->label('Preview Orders')
+                    ->icon('heroicon-o-eye')
+                    ->modalHeading('Detail Kontribusi Order')
+                    ->modalContent(function (Action $action, $record) {
+                        $arguments = $action->getArguments();
+                        $userId = $arguments['user_id'] ?? $record?->user_id;
+                        $year = $arguments['year'] ?? $record?->year;
+                        $month = $arguments['month'] ?? $record?->month;
+
+                        if (! $userId) {
+                            return view('filament.modals.achievement-details', [
+                                'orders' => [],
+                            ]);
+                        }
+
+                        $orders = Order::where('user_id', $userId)
+                            ->whereYear('closing_date', $year)
+                            ->whereMonth('closing_date', $month)
+                            ->with('prospect')
+                            ->get();
+                        
+                        return view('filament.modals.achievement-details', [
+                            'orders' => $orders,
+                        ]);
+                    })
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup'),
+                
                 ActionGroup::make([
                     Action::make('edit_target')
                         ->label('Edit Target')
