@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BankReconciliationTemplateController;
+use App\Http\Controllers\BankReconciliationPageController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\Front\AuthController;
@@ -24,6 +25,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LaporanKeuanganController;
 use App\Http\Controllers\AccountManagerReportController;
+use App\Http\Controllers\NotaDinasPdfController;
 use App\Models\DataPembayaran; // Add for debug
 
 // Bank Reconciliation Template Route
@@ -294,4 +296,17 @@ Route::get('/account-manager/report/stream', [AccountManagerReportController::cl
 
 Route::get('/account-manager/report/show', [AccountManagerReportController::class, 'showReport'])
     ->name('account-manager.report.show')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+// NOTA DINAS ROUTES
+Route::get('/nota-dinas/{notaDinas}/preview-web', [NotaDinasPdfController::class, 'previewWeb'])
+    ->name('nota-dinas.preview-web')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+Route::get('/nota-dinas/{notaDinas}/preview-pdf', [NotaDinasPdfController::class, 'previewPdf'])
+    ->name('nota-dinas.preview-pdf')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+// BANK STATEMENT RECONCILIATION ROUTE
+Route::get('/bank-statements/{bankStatement}/reconciliation-alt', [BankReconciliationPageController::class, 'show'])
+    ->name('bank-statements.reconciliation-alt')
     ->middleware(\Filament\Http\Middleware\Authenticate::class);
