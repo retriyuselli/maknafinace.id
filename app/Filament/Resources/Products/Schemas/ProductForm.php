@@ -392,7 +392,7 @@ class ProductForm
                         return self::stripCurrency($val);
                     });
 
-                $set('product_price', self::formatCurrency($totalProductPrice));
+                $set('../product_price', self::formatCurrency($totalProductPrice));
 
                 $totalVendorPrice = collect($itemsArray)
                     ->sum(function ($item) {
@@ -400,10 +400,11 @@ class ProductForm
                         return self::stripCurrency($val);
                     });
 
-                $set('vendorTotal', self::formatCurrency($totalVendorPrice));
+                $set('../vendorTotal', self::formatCurrency($totalVendorPrice));
 
                 $penguranganVal = self::getCleanInt($get, '../pengurangan');
-                $finalPrice = $totalProductPrice - $penguranganVal;
+                $penambahanVal = self::getCleanInt($get, '../penambahan_publish');
+                $finalPrice = $totalProductPrice - $penguranganVal + $penambahanVal;
                 $set('../price', self::formatCurrency($finalPrice));
             })
             ->columns(1);

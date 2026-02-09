@@ -479,53 +479,72 @@
         <div class="mt-6 border border-gray-300 p-4 rounded-md bg-gray-50/50">
             <h3 class="text-sm font-semibold text-gray-800 mb-3">Price Calculation</h3>
             <table class="w-full border-collapse text-sm">
-                <tr>
-                    <td class="border border-gray-300 p-2 text-right text-xs"><strong>Total Publish Price</strong></td>
-                    <td class="border border-gray-300 p-2 text-right font-semibold"><strong>
-                            {{ number_format($basePackagePrice, 0, ',', '.') }}</strong></td>
-                </tr>
-                <tr>
-                    <td class="border border-gray-300 p-2 text-right w-4/5 text-xs"><strong>Total Vendor Price</strong>
-                    </td>
-                    <td class="border border-gray-300 p-2 text-right font-semibold">
-                        {{ number_format($totalVendorPrice, 0, ',', '.') }}</td>
-                </tr>
-                <tr>
-                    <td class="border border-gray-300 p-2 text-right text-xs"><strong>Total Addition Publish
-                            (Penambahan)</strong></td>
-                    <td class="border border-gray-300 p-2 text-right text-green-600 font-semibold"><strong>+
-                            {{ number_format($totalAdditionAmount, 0, ',', '.') }}</strong></td>
-                </tr>
-                <tr>
-                    <td class="border border-gray-300 p-2 text-right text-xs"><strong>Total Addition Vendor
-                            (Penambahan)</strong></td>
-                    <td class="border border-gray-300 p-2 text-right text-green-600 font-semibold"><strong>+
-                            {{ number_format($totalAdditionVendorAmount, 0, ',', '.') }}</strong></td>
-                </tr>
-                <tr>
-                    <td class="border border-gray-300 p-2 text-right text-xs"><strong>Total Reduction
-                            (Pengurangan)</strong></td>
-                    <td class="border border-gray-300 p-2 text-right text-red-600 font-semibold"><strong>-
-                            {{ number_format($totalDiscountAmount, 0, ',', '.') }}</strong></td>
-                </tr>
-                <tr>
-                    <td class="border border-gray-300 p-2 text-right text-xs"><strong>Total Paket Publish (Publish +
-                            Addition Publish - Reduction)</strong></td>
-                    <td class="border border-gray-300 p-2 text-right font-bold text-xs"><strong>
-                            {{ number_format($finalPriceAfterDiscounts, 0, ',', '.') }}</strong></td>
-                </tr>
-                <tr>
-                    <td class="border border-gray-300 p-2 text-right text-xs"><strong>Total Paket Vendor (Vendor +
-                            Addition Vendor - Reduction)</strong></td>
-                    <td class="border border-gray-300 p-2 text-right font-bold text-xs"><strong>
-                            {{ number_format($finalVendorPriceAfterDiscounts, 0, ',', '.') }}</strong></td>
-                </tr>
-                <tr>
-                    <td class="border border-gray-300 p-2 text-right text-xs"><strong>Profit & Loss</strong></td>
-                    <td class="border border-gray-300 p-2 text-right font-semibold"><strong
-                            class="{{ $profitAndLoss < 25000000 ? 'text-red-600' : 'text-green-600' }}">
-                            {{ number_format($profitAndLoss, 0, ',', '.') }}</strong></td>
-                </tr>
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border border-gray-300 p-2 text-left font-semibold">Keterangan</th>
+                        <th class="border border-gray-300 p-2 text-right font-semibold">Publish (Rp)</th>
+                        <th class="border border-gray-300 p-2 text-right font-semibold">Vendor (Rp)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{-- Harga Awal --}}
+                    <tr>
+                        <td class="border border-gray-300 p-2 font-semibold">Harga Awal</td>
+                        <td class="border border-gray-300 p-2 text-right">
+                            {{ number_format($totalPublicPrice, 0, ',', '.') }}</td>
+                        <td class="border border-gray-300 p-2 text-right">
+                            {{ number_format($totalVendorPrice, 0, ',', '.') }}</td>
+                    </tr>
+
+                    {{-- Addition (Penambahan) --}}
+                    <tr>
+                        <td class="border border-gray-300 p-2 font-semibold">Addition (Penambahan)</td>
+                        <td class="border border-gray-300 p-2 text-right text-green-600">+
+                            {{ number_format($totalAdditionAmount, 0, ',', '.') }}</td>
+                        <td class="border border-gray-300 p-2 text-right text-green-600">+
+                            {{ number_format($totalAdditionVendorAmount, 0, ',', '.') }}</td>
+                    </tr>
+
+                    {{-- Subtotal --}}
+                    @php
+                        $subtotalPublish = $totalPublicPrice + $totalAdditionAmount;
+                        $subtotalVendor = $totalVendorPrice + $totalAdditionVendorAmount;
+                    @endphp
+                    <tr class="bg-gray-50">
+                        <td class="border border-gray-300 p-2 font-bold">Subtotal</td>
+                        <td class="border border-gray-300 p-2 text-right font-bold">
+                            {{ number_format($subtotalPublish, 0, ',', '.') }}</td>
+                        <td class="border border-gray-300 p-2 text-right font-bold">
+                            {{ number_format($subtotalVendor, 0, ',', '.') }}</td>
+                    </tr>
+
+                    {{-- Reduction (Pengurangan) --}}
+                    <tr>
+                        <td class="border border-gray-300 p-2 font-semibold">Reduction (Pengurangan)</td>
+                        <td class="border border-gray-300 p-2 text-right text-red-600">-
+                            {{ number_format($totalDiscountAmount, 0, ',', '.') }}</td>
+                        <td class="border border-gray-300 p-2 text-right text-red-600">-
+                            {{ number_format($totalDiscountAmount, 0, ',', '.') }}</td>
+                    </tr>
+
+                    {{-- Total Paket --}}
+                    <tr class="bg-gray-50">
+                        <td class="border border-gray-300 p-2 font-bold">Total Paket</td>
+                        <td class="border border-gray-300 p-2 text-right font-bold">
+                            {{ number_format($finalPriceAfterDiscounts, 0, ',', '.') }}</td>
+                        <td class="border border-gray-300 p-2 text-right font-bold">
+                            {{ number_format($finalVendorPriceAfterDiscounts, 0, ',', '.') }}</td>
+                    </tr>
+
+                    {{-- Profit / (Loss) --}}
+                    <tr>
+                        <td class="border border-gray-300 p-2 font-bold" colspan="2">Profit / (Loss)</td>
+                        <td
+                            class="border border-gray-300 p-2 text-right font-bold {{ $profitAndLoss < 0 ? 'text-red-600' : 'text-green-600' }}">
+                            {{ number_format($profitAndLoss, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                </tbody>
             </table>
         </div>
 

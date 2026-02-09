@@ -11,7 +11,8 @@
 
         @page {
             /* margin: 2cm; */
-            margin-top: 2cm;
+            margin-top: 4cm;
+            /* Perbesar margin atas untuk header */
             margin-bottom: 2cm;
             margin-left: 1cm;
             margin-right: 1cm;
@@ -41,8 +42,13 @@
         }
 
         .header {
+            position: fixed;
+            top: -3.5cm;
+            left: 0;
+            right: 0;
+            height: 3cm;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 0px;
             padding-bottom: 10px;
             border-bottom: 1px solid #eee;
         }
@@ -235,34 +241,35 @@
 </head>
 
 <body>
-    <div class="pdf-container">
-        {{-- Header Section --}}
-        <div class="header">
-            @php
-                $logoPath = public_path('images/logomki.png');
-                $logoSrc = '';
-                if (file_exists($logoPath)) {
-                    try {
-                        $logoData = base64_encode(file_get_contents($logoPath));
-                        $mimeType = mime_content_type($logoPath);
-                        if ($mimeType) {
-                            // Pastikan mime type valid
-                            $logoSrc = 'data:' . $mimeType . ';base64,' . $logoData;
-                        }
-                    } catch (\Exception $e) {
-                        // Handle error jika file tidak bisa dibaca atau base64 gagal
-                        $logoSrc = ''; // Kosongkan jika error
+    {{-- Header Section --}}
+    <div class="header">
+        @php
+            $logoPath = public_path('images/logomki.png');
+            $logoSrc = '';
+            if (file_exists($logoPath)) {
+                try {
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                    $mimeType = mime_content_type($logoPath);
+                    if ($mimeType) {
+                        // Pastikan mime type valid
+                        $logoSrc = 'data:' . $mimeType . ';base64,' . $logoData;
                     }
+                } catch (\Exception $e) {
+                    // Handle error jika file tidak bisa dibaca atau base64 gagal
+                    $logoSrc = ''; // Kosongkan jika error
                 }
-            @endphp
-            @if ($logoSrc)
-                <img src="{{ $logoSrc }}" alt="Makna Kreatif Indonesia">
-            @endif
-            {{-- <h1>{{ $product->name }}</h1> --}}
-            <p class="mt-1">Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kec. Kemuning, Kota Palembang, Sumatera
-                Selatan 30137</p>
-            <p>PT. Makna Kreatif Indonesia | maknawedding@gmail.com | 0813 7318 3794</p>
-        </div>
+            }
+        @endphp
+        @if ($logoSrc)
+            <img src="{{ $logoSrc }}" alt="Makna Kreatif Indonesia">
+        @endif
+        {{-- <h1>{{ $product->name }}</h1> --}}
+        <p class="mt-1">Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kec. Kemuning, Kota Palembang, Sumatera
+            Selatan 30137</p>
+        <p>PT. Makna Kreatif Indonesia | maknawedding@gmail.com | 0813 7318 3794</p>
+    </div>
+
+    <div class="pdf-container">
 
         {{-- Simulation Information --}}
         <table class="details-table">
@@ -426,6 +433,10 @@
                 $totalAdditionAmount = ($product->penambahanHarga ?? collect())->sum('harga_publish');
                 $totalAdditionVendorAmount = ($product->penambahanHarga ?? collect())->sum('harga_vendor');
 
+                // Hitung Subtotal
+                $subtotalPublish = $totalPublicPrice + $totalAdditionAmount;
+                $subtotalVendor = $totalVendorPrice + $totalAdditionVendorAmount;
+
                 // Hitung harga final setelah diskon dan penambahan
                 $finalPriceAfterDiscounts = $totalPublicPrice - $totalDiscountAmount + $totalAdditionAmount;
                 $finalVendorPriceAfterDiscounts = $totalVendorPrice - $totalDiscountAmount + $totalAdditionVendorAmount;
@@ -434,52 +445,73 @@
                 $profitAndLoss = $finalPriceAfterDiscounts - $finalVendorPriceAfterDiscounts;
             @endphp
 
-            <h3 class="section-title">Price Calculation</h3> {{-- Gunakan kelas judul --}}
-            <table class="total-table">
-                <tr>
-                    <td><strong>Total Publish Price</strong></td>
-                    <td style="text-align: right; font-weight: bold;">
-                        {{ number_format($totalPublicPrice, 0, ',', '.') }}</td> {{-- Gunakan style inline untuk bold --}}
-                </tr>
-                <tr>
-                    <td>Total Vendor Price</td>
-                    <td style="text-align: right;">{{ number_format($totalVendorPrice, 0, ',', '.') }}</td>
-                </tr>
-                <tr>
-                    <td><strong>Total Reduction</strong></td>
-                    <td style="text-align: right; font-weight: bold; color: red;"> -
-                        {{ number_format($totalDiscountAmount, 0, ',', '.') }}</td>
-                </tr>
-                @if ($totalAdditionAmount > 0 || $totalAdditionVendorAmount > 0)
-                    <tr>
-                        <td><strong>Total Addition Publish</strong></td>
-                        <td style="text-align: right; font-weight: bold; color: green;"> +
-                            {{ number_format($totalAdditionAmount, 0, ',', '.') }}</td>
+            <h3 class="section-title">Price Calculation</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px;">
+                <thead>
+                    <tr style="background-color: #f3f4f6;">
+                        <th style="border: 1px solid #d1d5db; padding: 8px; text-align: left;">Keterangan</th>
+                        <th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Publish (Rp)</th>
+                        <th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Vendor (Rp)</th>
                     </tr>
+                </thead>
+                <tbody>
+                    {{-- Harga Awal --}}
                     <tr>
-                        <td><strong>Total Addition Vendor</strong></td>
-                        <td style="text-align: right; font-weight: bold; color: green;"> +
+                        <td style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Harga Awal</td>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">
+                            {{ number_format($totalPublicPrice, 0, ',', '.') }}</td>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">
+                            {{ number_format($totalVendorPrice, 0, ',', '.') }}</td>
+                    </tr>
+
+                    {{-- Addition (Penambahan) --}}
+                    <tr>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Addition (Penambahan)
+                        </td>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: green;">+
+                            {{ number_format($totalAdditionAmount, 0, ',', '.') }}</td>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: green;">+
                             {{ number_format($totalAdditionVendorAmount, 0, ',', '.') }}</td>
                     </tr>
-                @endif
-                <tr>
-                    <td><strong>Total Paket Publish</strong></td>
-                    <td style="text-align: right; font-weight: bold;">
-                        {{ number_format($finalPriceAfterDiscounts, 0, ',', '.') }}</td>
-                </tr>
-                <tr>
-                    <td><strong>Total Paket Vendor</strong></td>
-                    <td style="text-align: right; font-weight: bold;">
-                        {{ number_format($finalVendorPriceAfterDiscounts, 0, ',', '.') }}</td>
-                </tr>
-                <tr>
-                    <td><strong>Profit & Loss</strong></td>
-                    {{-- Tambahkan style kondisional untuk warna merah jika profit < 30jt --}}
-                    <td
-                        style="text-align: right; font-weight: bold; color: {{ $profitAndLoss < 30000000 ? 'red' : '#333' }};">
-                        {{ number_format($profitAndLoss, 0, ',', '.') }}
-                    </td>
-                </tr>
+
+                    {{-- Subtotal --}}
+                    <tr style="background-color: #f9fafb;">
+                        <td style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Subtotal</td>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: bold;">
+                            {{ number_format($subtotalPublish, 0, ',', '.') }}</td>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: bold;">
+                            {{ number_format($subtotalVendor, 0, ',', '.') }}</td>
+                    </tr>
+
+                    {{-- Reduction (Pengurangan) --}}
+                    <tr>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Reduction (Pengurangan)
+                        </td>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: red;">-
+                            {{ number_format($totalDiscountAmount, 0, ',', '.') }}</td>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: red;">-
+                            {{ number_format($totalDiscountAmount, 0, ',', '.') }}</td>
+                    </tr>
+
+                    {{-- Total Paket --}}
+                    <tr style="background-color: #f9fafb;">
+                        <td style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Total Paket</td>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: bold;">
+                            {{ number_format($finalPriceAfterDiscounts, 0, ',', '.') }}</td>
+                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: bold;">
+                            {{ number_format($finalVendorPriceAfterDiscounts, 0, ',', '.') }}</td>
+                    </tr>
+
+                    {{-- Profit / (Loss) --}}
+                    <tr>
+                        <td colspan="2" style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Profit /
+                            (Loss)</td>
+                        <td
+                            style="border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: bold; color: {{ $profitAndLoss < 0 ? 'red' : 'green' }};">
+                            {{ number_format($profitAndLoss, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                </tbody>
             </table>
         </div>
 

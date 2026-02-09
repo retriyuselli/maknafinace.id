@@ -2,35 +2,17 @@
 
 namespace App\Filament\Resources\Products;
 
-use App\Exports\ProductExport;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Filament\Resources\Products\Pages\ViewProduct;
 use App\Filament\Resources\Products\Schemas\ProductForm;
 use App\Filament\Resources\Products\Tables\ProductsTable;
-use App\Filament\Resources\Vendors\VendorResource;
-use App\Models\Category;
 use App\Models\Product;
-use App\Models\User;
-use App\Models\Vendor;
-use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
-use Filament\Support\Enums\FontWeight;
-use Filament\Support\RawJs;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Facades\Excel;
 
 class ProductResource extends Resource
 {
@@ -91,6 +73,10 @@ class ProductResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->with([
+                'items.vendor:id,name,harga_publish,harga_vendor,description',
+                'penambahanHarga.vendor:id,name,harga_publish,harga_vendor,description',
+            ])
             ->withCount([
                 'orders as unique_orders_count',
             ])
@@ -161,273 +147,5 @@ class ProductResource extends Resource
         $data['price'] = $data['product_price'] - $data['pengurangan'] + $data['penambahan_publish'];
 
         return $data;
-    }
-
-    public static function infolist(Schema $schema): Schema
-    {
-        return $schema
-            ->components([
-                Tabs::make('Product Details')
-                    ->tabs([
-                        Tab::make('Basic Information')
-                            ->icon('heroicon-o-information-circle')
-                            ->schema([
-                                Section::make('Product Name')
-                                    ->schema([
-                                        Grid::make(3)
-                                            ->schema([
-                                                TextEntry::make('name')
-                                                    ->placeholder('-'),
-                                                TextEntry::make('pax')
-                                                    ->label('Capacity (pax)')
-                                                    ->suffix(' people')
-                                                    ->placeholder('-'),
-                                                TextEntry::make('stock')
-                                                    ->weight('bold')
-                                                    ->suffix(' units')
-                                                    ->color(fn (string $state): string => $state > 0 ? 'primary' : 'danger'),
-                                            ]),
-                                    ]),
-                                Section::make('Facilities')
-                                    ->schema([
-                                        Grid::make(2)
-                                            ->schema([
-                                                TextEntry::make('product_price')
-                                                    ->label('Total Publish Price')
-                                                    ->weight('bold')
-                                                    ->color('primary')
-                                                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
-                                                    ->helperText('Total Harga Publish Vendor')
-                                                    ->placeholder('-'),
-                                                TextEntry::make('pengurangan')
-                                                    ->label('Pengurangan Harga')
-                                                    ->weight('bold')
-                                                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
-                                                    ->helperText('Total Pengurangan')
-                                                    ->color('danger')
-                                                    ->placeholder('-'),
-                                            ]),
-                                    ]),
-                                Section::make('Product Status')
-                                    ->schema([
-                                        Grid::make(2)
-                                            ->schema([
-                                                IconEntry::make('is_active')
-                                                    ->label('Product Status')
-                                                    ->boolean(),
-                                                IconEntry::make('is_approved')
-                                                    ->label('Approval Status')
-                                                    ->boolean()
-                                                    ->visible(function () {
-                                                        /** @var User $user */
-                                                        $user = Auth::user();
-                                                        return $user->hasRole('super_admin');
-                                                    }),
-                                            ]),
-                                    ])
-                                    ->collapsible(),
-                            ]),
-
-                        Tab::make('Basic Facilities')
-                            ->icon('heroicon-o-cube')
-                            ->schema([
-                                Section::make()
-                                    ->schema([
-                                        TextEntry::make('product_price')
-                                            ->label('Total Publish Price')
-                                            ->weight('bold')
-                                            ->color('primary') // Warna untuk total harga vendor
-                                            ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
-                                            ->helperText('Sum of all vendor prices'),
-
-                                        TextEntry::make('calculatedPriceVendor')
-                                            ->label('Total Vendor Cost')
-                                            ->weight('bold')
-                                            ->color('warning')
-                                            ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
-                                            ->helperText('Sum of all vendor prices')
-                                            ->state(function (Product $record): int {
-                                                return $record->items->sum(function ($item) {
-                                                    // Access the accessor: $item->harga_vendor * $item->quantity
-                                                    return $item->harga_vendor;
-                                                });
-                                            }),
-                                    ]),
-                                Section::make()
-                                    ->schema([
-                                        RepeatableEntry::make('items')
-                                            ->schema([
-                                                TextEntry::make('vendor.name')
-                                                    ->label('Vendor Name')
-                                                    ->placeholder('-'),
-                                                TextEntry::make('harga_publish')
-                                                    ->label('Published Price')
-                                                    ->weight('bold')
-                                                    ->color('info')
-                                                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
-                                                    ->placeholder('-'),
-                                                TextEntry::make('quantity')
-                                                    ->placeholder('-')
-                                                    ->color('gray'),
-                                                TextEntry::make('price_public')
-                                                    ->label('Calculated Public Price')
-                                                    ->weight('bold')
-                                                    ->color('primary')
-                                                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
-                                                    ->placeholder('-'),
-                                                TextEntry::make('harga_vendor')
-                                                    ->label('Vendor Unit Cost')
-                                                    ->weight('bold')
-                                                    ->color('warning')
-                                                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
-                                                    ->placeholder('-'),
-                                                TextEntry::make('calculate_price_vendor')
-                                                    ->label('Calculated Vendor Cost')
-                                                    ->weight('bold')
-                                                    ->color('warning')
-                                                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
-                                                    ->placeholder('-'), // Will use ProductVendor's accessor
-                                                TextEntry::make('description')
-                                                    ->label('Fasilitas')
-                                                    ->columnSpanFull()
-                                                    ->html()
-                                                    ->placeholder('Keterangan Fasilitas'),
-                                            ])
-                                            ->columns(4) // Adjusted columns due to new entry
-                                            ->grid(1)
-                                            ->contained(true),
-                                    ]),
-                            ]),
-
-                        Tab::make('Pengurangan Harga')
-                            ->icon('heroicon-o-receipt-refund')
-                            ->label('Pengurangan Harga (Jika Ada)')
-                            ->schema([
-                                TextEntry::make('pengurangan')
-                                    ->label('Total Pengurangan')
-                                    ->color('danger') // Warna untuk total pengurangan
-                                    ->weight('bold')
-                                    ->placeholder('-')
-                                    ->state(function (Product $record): int {
-                                        // Jika 'pengurangan' adalah kolom di tabel Product
-                                        // return $record->pengurangan ?? 0;
-                                        // Jika 'pengurangan' dihitung dari relasi itemsPengurangan
-                                        return $record->itemsPengurangan()->sum('amount');
-                                    })
-                                    ->helperText('Sum of all discount items'),
-                                RepeatableEntry::make('itemsPengurangan')
-                                    ->label('Discount Items')
-                                    ->schema([
-                                        TextEntry::make('description')
-                                            ->label('Description')
-                                            ->placeholder('-')
-                                            ->columnSpanFull(),
-                                        TextEntry::make('amount')
-                                            ->label('Discount Value')
-                                            ->color('warning') // Warna untuk nilai diskon
-                                            ->weight('bold')
-                                            ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
-                                            ->placeholder('-'),
-                                        TextEntry::make('notes')
-                                            ->label('Notes')
-                                            ->columnSpanFull()
-                                            ->html()
-                                            ->placeholder('No notes.'),
-                                    ])
-                                    ->columns(2)
-                                    ->grid(1)
-                                    ->contained(true),
-                            ]),
-
-                        Tab::make('Penambahan Harga')
-                            ->icon('heroicon-o-plus-circle')
-                            ->label('Penambahan Harga (Jika Ada)')
-                            ->schema([
-                                Grid::make(2)
-                                    ->schema([
-                                        TextEntry::make('penambahan_publish')
-                                            ->label('Total Penambahan Publish Price')
-                                            ->color('success') // Warna untuk total penambahan
-                                            ->weight('bold')
-                                            ->placeholder('-')
-                                            ->state(function (Product $record): int {
-                                                // Ambil dari kolom penambahan_publish atau hitung dari relasi harga_publish
-                                                return $record->penambahan_publish ?? $record->penambahanHarga()->sum('harga_publish');
-                                            })
-                                            ->helperText('Sum of all additional publish prices'),
-                                        TextEntry::make('penambahan_vendor')
-                                            ->label('Total Penambahan Vendor Price')
-                                            ->color('warning') // Warna untuk vendor price
-                                            ->weight('bold')
-                                            ->placeholder('-')
-                                            ->state(function (Product $record): int {
-                                                // Ambil dari kolom penambahan_vendor atau hitung dari relasi harga_vendor
-                                                return $record->penambahan_vendor ?? $record->penambahanHarga()->sum('harga_vendor');
-                                            })
-                                            ->helperText('Sum of all additional vendor prices'),
-                                    ]),
-                                RepeatableEntry::make('penambahanHarga')
-                                    ->label('Additional Items')
-                                    ->schema([
-                                        TextEntry::make('vendor.name')
-                                            ->label('Vendor Name')
-                                            ->placeholder('-')
-                                            ->weight('bold')
-                                            ->color('info'),
-                                        TextEntry::make('harga_publish')
-                                            ->label('Publish Price')
-                                            ->color('success') // Warna untuk harga publish
-                                            ->weight('bold')
-                                            ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
-                                            ->placeholder('-'),
-                                        TextEntry::make('harga_vendor')
-                                            ->label('Vendor Price')
-                                            ->color('warning') // Warna untuk harga vendor
-                                            ->weight('bold')
-                                            ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
-                                            ->placeholder('-'),
-                                        TextEntry::make('description')
-                                            ->label('Description')
-                                            ->columnSpanFull()
-                                            ->html()
-                                            ->placeholder('No description.'),
-                                    ])
-                                    ->columns(3)
-                                    ->grid(1)
-                                    ->contained(true),
-                            ]),
-                        Tab::make('Timestamps')
-                            ->icon('heroicon-o-clock')
-                            ->schema([
-                                TextEntry::make('created_at')
-                                    ->label('Created On')
-                                    ->dateTime(),
-                                TextEntry::make('updated_at')
-                                    ->label('Last Modified')
-                                    ->dateTime(),
-                                TextEntry::make('user.name') // Jika ada relasi user
-                                    ->label('Created by')
-                                    ->placeholder('-')
-                                    ->visible(fn (Product $record) => $record->user !== null),
-                                TextEntry::make('lastEditedBy.name')
-                                    ->label('Last Edited By')
-                                    ->placeholder('-')
-                                    ->state(function (Product $record): string {
-                                        if ($record->lastEditedBy) {
-                                            return $record->lastEditedBy->name;
-                                        }
-
-                                        // Fallback untuk data lama yang belum memiliki track editor
-                                        if ($record->updated_at && $record->created_at && $record->updated_at->ne($record->created_at)) {
-                                            return 'Modified on '.$record->updated_at->format('M d, Y H:i');
-                                        }
-
-                                        return 'No modifications yet';
-                                    })
-                                    ->helperText('Track who made the last changes to this product'),
-                            ])->columns(2),
-                    ])
-                    ->columnSpanFull(),
-            ]);
     }
 }

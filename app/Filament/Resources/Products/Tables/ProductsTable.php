@@ -36,12 +36,6 @@ class ProductsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->query(
-                Product::query()->with([
-                    'items.vendor:id,name,harga_publish,harga_vendor,description',
-                    'penambahanHarga.vendor:id,name,harga_publish,harga_vendor,description',
-                ])
-            )
             ->poll('5s')
             ->defaultPaginationPageOption(25)
             ->columns([
@@ -105,23 +99,17 @@ class ProductsTable
                     ->tooltip('Total quantity of this product sold across all orders.'),
 
                 TextColumn::make('price')
-                    ->label('Total Price')
-                    ->getStateUsing(function (Product $record) {
-                        return $record->product_price 
-                             - $record->pengurangans->sum('amount') 
-                             + $record->penambahanHarga->sum('harga_publish');
-                    })
+                    ->label('Product Price')
                     ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
                     ->sortable()
                     ->alignEnd()
                     ->badge(),
 
                 TextColumn::make('product_price')
-                    ->label('Harga Paket')
+                    ->label('Total Publish Price')
                     ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
                     ->sortable()
-                    ->alignEnd()
-                    ->badge(),
+                    ->alignEnd(),
 
                 TextColumn::make('pengurangan')
                     ->label('Pengurangan')
@@ -344,7 +332,7 @@ class ProductsTable
                         ->visible(function (Product $record): bool {
                             /** @var User $user */
                             $user = Auth::user();
-                            return ! $record->is_approved && $user->hasRole('super_admin');
+                            return ! $record->is_approved && $user?->hasRole('super_admin');
                         })
                         ->tooltip('Approve this product'),
 

@@ -131,7 +131,7 @@ class Product extends Model
         $originalSlug = $slug;
         $counter = 1;
 
-        while (self::where('slug', $slug)->exists()) {
+        while (self::withTrashed()->where('slug', $slug)->exists()) {
             $slug = $originalSlug.'-'.$counter;
             $counter++;
         }
