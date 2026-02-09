@@ -11,6 +11,10 @@ cd /home/u380354370/domains/thewhitefinance.com/public_html
 cd /home/u380354370/domains/patrononline.id/public_html
 https://console.cloud.google.com/
 
+git add .
+git commit -m "Update"
+git push origin main
+
 npm run dev
 composer update
 composer dump-autoload
