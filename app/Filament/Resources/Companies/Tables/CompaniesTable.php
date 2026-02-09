@@ -2,10 +2,14 @@
 
 namespace App\Filament\Resources\Companies\Tables;
 
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class CompaniesTable
@@ -14,60 +18,64 @@ class CompaniesTable
     {
         return $table
             ->columns([
+                ImageColumn::make('logo_url')
+                    ->label('Logo')
+                    ->circular(),
                 TextColumn::make('company_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->weight('bold')
+                    ->sortable(),
                 TextColumn::make('business_license')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('owner_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('email')
                     ->label('Email address')
-                    ->searchable(),
+                    ->icon('heroicon-m-envelope')
+                    ->copyable()
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('phone')
-                    ->searchable(),
+                    ->icon('heroicon-m-phone')
+                    ->copyable()
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('city')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('province')
-                    ->searchable(),
-                TextColumn::make('postal_code')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('website')
-                    ->searchable(),
-                TextColumn::make('logo_url')
-                    ->searchable(),
-                TextColumn::make('favicon_url')
-                    ->searchable(),
-                TextColumn::make('established_year'),
-                TextColumn::make('employee_count')
-                    ->numeric()
-                    ->sortable(),
+                    ->searchable()
+                    ->url(fn ($state) => $state, true)
+                    ->color('primary')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('established_year')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('legal_entity_type')
-                    ->searchable(),
-                TextColumn::make('deed_of_establishment')
-                    ->searchable(),
-                TextColumn::make('deed_date')
-                    ->date()
-                    ->sortable(),
-                TextColumn::make('notary_name')
-                    ->searchable(),
-                TextColumn::make('notary_license_number')
-                    ->searchable(),
-                TextColumn::make('nib_number')
-                    ->searchable(),
-                TextColumn::make('nib_issued_date')
-                    ->date()
-                    ->sortable(),
-                TextColumn::make('nib_valid_until')
-                    ->date()
-                    ->sortable(),
-                TextColumn::make('npwp_number')
-                    ->searchable(),
-                TextColumn::make('npwp_issued_date')
-                    ->date()
-                    ->sortable(),
-                TextColumn::make('tax_office')
-                    ->searchable(),
+                    ->searchable()
+                    ->badge(),
                 TextColumn::make('legal_document_status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'verified', 'complete' => 'success',
+                        'pending', 'review' => 'warning',
+                        'rejected', 'expired', 'incomplete' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'pending' => 'Belum diverifikasi',
+                        'review' => 'Dalam review',
+                        'verified' => 'Terverifikasi',
+                        'expired' => 'Kedaluwarsa',
+                        'rejected' => 'Ditolak',
+                        default => $state ?? '-',
+                    })
                     ->searchable(),
                 TextColumn::make('created_at')
                     ->dateTime()
@@ -79,12 +87,30 @@ class CompaniesTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('legal_entity_type')
+                    ->options([
+                        'PT' => 'PT',
+                        'CV' => 'CV',
+                        'Firma' => 'Firma',
+                        'Perorangan' => 'Perorangan',
+                    ]),
+                SelectFilter::make('legal_document_status')
+                    ->label('Status Legal Dokumen')
+                    ->options([
+                        'pending' => 'Belum diverifikasi',
+                        'review' => 'Dalam review',
+                        'verified' => 'Terverifikasi',
+                        'expired' => 'Kedaluwarsa',
+                        'rejected' => 'Ditolak',
+                    ]),
             ])
-            ->recordActions([
-                EditAction::make(),
+            ->actions([
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                ]),
             ])
-            ->toolbarActions([
+            ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
