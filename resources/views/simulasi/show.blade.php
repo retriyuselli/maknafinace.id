@@ -99,6 +99,41 @@
             font-weight: 600 !important;
         }
 
+        /* Marquee styles */
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            /* background: #2d7cfe; */
+            /* Theme color */
+            color: #ffffff;
+            padding: 8px 0;
+            margin-bottom: 20px;
+        }
+
+        .marquee-content {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 100%;
+            animation: marquee 20s linear infinite;
+        }
+
+        .marquee-content p {
+            display: inline-block;
+            margin: 0;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(-100%, 0);
+            }
+        }
+
         /* Fix for excessive spacing in description lists/paragraphs */
         .invoice-table td p,
         .invoice-table td ul,
@@ -141,6 +176,27 @@
         /* Print/PDF-specific rules */
         @media print {
 
+            /* Header Repeating Configuration */
+            thead {
+                display: table-header-group !important;
+            }
+
+            tfoot {
+                display: table-footer-group !important;
+            }
+
+            tr {
+                page-break-inside: avoid !important;
+            }
+
+            /* Ensure header layout is visible on every page */
+            header,
+            .themeholy-header {
+                position: relative;
+                width: 100%;
+                display: block;
+            }
+
             body,
             * {
                 font-family: 'Noto Sans', sans-serif !important;
@@ -149,11 +205,30 @@
                 color: #000 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                /* margin-top: 2px !important;
+                margin-bottom: 0 !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important; */
             }
 
             .no-print,
             .invoice-buttons {
                 display: none !important;
+            }
+
+            /* Hide border and reset container in print */
+            .invoice-container {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .invoice-container-wrap {
+                padding: 0 !important;
+                margin: 0 !important;
             }
 
             /* Hide vendor and public price columns for main table only, not for addition/reduction tables */
@@ -261,337 +336,409 @@ Invoice Area
                 <div class="themeholy-invoice invoice_style2">
                     <div class="download-inner" id="download_section"
                         data-event-name="{{ $simulasi->prospect->name_event ?? '' }}">
-                        <!--==============================
- Header Area
-==============================-->
-                        <header class="themeholy-header header-layout1">
-                            <div class="row align-items-center justify-content-between">
-                                <div class="col-auto">
-                                    {{-- <p class="mb-0"><b>PENAWARAN: 00{{ $simulasi->id }}</b></p> --}}
-                                </div>
-                                <div class="col-auto">
-                                    <div class="header-logo">
-                                        @php
-                                            $company = \App\Models\Company::first();
-                                            if (
-                                                $company &&
-                                                $company->logo_url &&
-                                                \Illuminate\Support\Facades\Storage::disk('public')->exists(
-                                                    $company->logo_url,
-                                                )
-                                            ) {
-                                                $logoPath = \Illuminate\Support\Facades\Storage::disk('public')->path(
-                                                    $company->logo_url,
-                                                );
-                                            } else {
-                                                $logoPath = public_path('images/logomki.png');
-                                            }
 
-                                            // Embed image for PDF reliability
-                                            $logoSrc = file_exists($logoPath)
-                                                ? 'data:' .
-                                                    mime_content_type($logoPath) .
-                                                    ';base64,' .
-                                                    base64_encode(file_get_contents($logoPath))
-                                                : '';
-                                        @endphp
-                                        @if ($logoSrc)
-                                            <a href="{{ route('filament.admin.auth.login') }}" class="cta-button">
-                                                <img src="{{ $logoSrc }}" alt="Logo Perusahaan"
-                                                    class="company-logo" style="max-height: 100px; width: auto;">
-                                            </a>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="header-bottom">
-                                <div class="row align-items-center justify-content-between">
-                                    <div class="col-auto">
-                                        <div class="header-bottom_left">
-                                            <p><b>Event Name : </b> {{ $simulasi->prospect->name_event ?? 'N/A' }}</p>
-                                            <div class="shape"></div>
-                                            <div class="shape"></div>
-                                        </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="header-bottom_right">
-                                            <div class="shape"></div>
-                                            <div class="shape"></div>
-                                            <p><b>Date : </b>{{ $simulasi->created_at->format('d F Y H:i:s') }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </header>
-                        <div class="row justify-content-between">
-                            <div class="col-auto">
-                                <div class="booking-info">
-                                    <p><b>Created By : </b> {{ $simulasi->user->name ?? 'N/A' }}</p>
-                                    <p><b>Base Product : </b> {{ $simulasi->product->name ?? 'N/A' }}</p>
-                                </div>
-                            </div>
-                            {{-- <div class="col-auto">
-                                <div class="booking-info">
-                                    <p><b>Date Akad : </b> </p>
-                                    <p><b>Date Resepsi : </b> </p>
-                                </div>
-                            </div> --}}
-                            <div class="col-auto">
-                                <div class="booking-info">
-                                    <p><b>Valid Until : </b> {{ $simulasi->created_at->addDays(4)->format('d F Y') }}
-                                    </p>
-                                    <p><b>Penawaran : </b> 00{{ $simulasi->id }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row gx-0">
-                            <div style="100%">
-                                <div class="address-box">
-                                    <b>Office Information :</b>
-                                    <address class="align-justify">
-                                        {{ $company->company_name ?? 'PT. Makna Kreatif Indonesia' }}<br>
-                                        {{ $company->address ?? 'Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kecamatan Kemuning, Kota Palembang, Sumatera Selatan 30137' }}
-                                        |
-                                        Phone: {{ $company->phone ?? '+62 822-9796-2600' }} <br>
-                                    </address>
-                                </div>
-                            </div>
-                        </div>
-                        <table class="invoice-table">
+                        <!-- Wrapper Table for Repeating Header -->
+                        <table style="width: 100%; border: none; border-collapse: collapse; margin: 0; padding: 0;">
                             <thead>
                                 <tr>
-                                    <th>Description</th>
-                                    <th class="col-vendor-price">Vendor</th>
-                                    <th class="col-public-price">Public</th>
+                                    <td style="border: none; padding: 0;">
+                                        <!--==============================
+                                         Header Area
+                                         ==============================-->
+                                        <header class="themeholy-header header-layout1">
+                                            <div class="row align-items-center gx-0">
+                                                <div class="col-12">
+                                                    <div class="d-flex align-items-center justify-content-between"
+                                                        style="border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+
+                                                        <div style="text-align: left; border: none !important;">
+                                                            <b>Office Information :</b>
+                                                            <address>
+                                                                {{ $company->company_name ?? 'PT. Makna Kreatif Indonesia' }}<br>
+                                                                {{ $company->address ?? 'Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kecamatan Kemuning, Kota Palembang, Sumatera Selatan 30137' }}
+                                                                |
+                                                                Phone: {{ $company->phone ?? '+62 822-9796-2600' }} <br>
+                                                            </address>
+                                                        </div>
+
+                                                        <div class="header-logo"
+                                                            style="max-height: 100px; text-align: left;">
+                                                            @php
+                                                                $company = \App\Models\Company::first();
+                                                                if (
+                                                                    $company &&
+                                                                    $company->logo_url &&
+                                                                    \Illuminate\Support\Facades\Storage::disk(
+                                                                        'public',
+                                                                    )->exists($company->logo_url)
+                                                                ) {
+                                                                    $logoPath = \Illuminate\Support\Facades\Storage::disk(
+                                                                        'public',
+                                                                    )->path($company->logo_url);
+                                                                } else {
+                                                                    $logoPath = public_path('images/logomki.png');
+                                                                }
+
+                                                                // Embed image for PDF reliability
+                                                                $logoSrc = file_exists($logoPath)
+                                                                    ? 'data:' .
+                                                                        mime_content_type($logoPath) .
+                                                                        ';base64,' .
+                                                                        base64_encode(file_get_contents($logoPath))
+                                                                    : '';
+                                                            @endphp
+                                                            @if ($logoSrc)
+                                                                <a href="{{ route('filament.admin.auth.login') }}"
+                                                                    class="cta-button">
+                                                                    <img src="{{ $logoSrc }}" alt="Logo Perusahaan"
+                                                                        class="company-logo"
+                                                                        style="max-height: 100px; width: auto;">
+                                                                </a>
+                                                            @endif
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {{-- <div class="header-bottom">
+                                                <div class="row align-items-center justify-content-between">
+                                                    <div class="col-auto">
+                                                        <div class="header-bottom_left">
+                                                            <p><b>Event Name : </b>
+                                                                {{ $simulasi->prospect->name_event ?? 'N/A' }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <div class="header-bottom_right">
+                                                            <p><b>Date :
+                                                                </b>{{ $simulasi->created_at->format('d F Y H:i:s') }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div> --}}
+                                        </header>
+                                        <!-- Spacer after header in print -->
+                                        <div style="height: 5px;"></div>
+                                    </td>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse ($items as $index => $item)
-                                    <tr>
-                                        <td>
-                                            <div>
-                                                <strong>{{ $item->vendor->name ?? ($item->vendor_id ? 'Vendor ID: ' . $item->vendor_id : 'N/A') }}</strong>
+                                <tr>
+                                    <td style="border: none; padding: 0;">
+                                        <!-- Main Content Body -->
+                                        <div class="row justify-content-between mb-4">
+                                            <div class="col-auto">
+                                                <div style="line-height: 1.2;">
+                                                    <p style="margin-bottom: 2px;"><b>Event Name : </b>
+                                                        {{ $simulasi->prospect->name_event ?? 'N/A' }}</p>
+                                                    <p style="margin-bottom: 2px;"><b>Created By : </b>
+                                                        {{ $simulasi->user->name ?? 'N/A' }}</p>
+                                                    <p style="margin-bottom: 2px;"><b>Base Product : </b>
+                                                        {{ $simulasi->product->name ?? 'N/A' }}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            @if ($item->description)
-                                                <div>
-                                                    {!! $item->description !!}
+                                            <div class="col-auto">
+                                                <div style="line-height: 1.2;">
+                                                    <p style="margin-bottom: 2px;"><b>Date Akad : </b>
+                                                        {{ $simulasi->prospect->date_akad ? $simulasi->prospect->date_akad->format('d F Y') : 'N/A' }}
+                                                    </p>
+                                                    <p style="margin-bottom: 2px;"><b>Date Resepsi : </b>
+                                                        {{ $simulasi->prospect->date_resepsi ? $simulasi->prospect->date_resepsi->format('d F Y') : 'N/A' }}
+                                                    </p>
+                                                    <p style="margin-bottom: 2px;"><b>Valid Until : </b>
+                                                        {{ $simulasi->created_at->addDays(4)->format('d F Y') }}
+                                                    </p>
+                                                    <p style="margin-bottom: 2px;"><b>Penawaran : </b>
+                                                        00{{ $simulasi->id }}</p>
                                                 </div>
-                                            @endif
-                                        </td>
-                                        <td class="col-vendor-price">
-                                            {{ number_format($item->harga_vendor ?? 0, 0, ',', '.') }}</td>
-                                        <td class="col-public-price">
-                                            {{ number_format($item->harga_publish ?? 0, 0, ',', '.') }}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td>
-                                            Tidak ada item spesifik yang terdaftar untuk produk ini.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                            </div>
+                                        </div>
 
-                        @php
-                            // Definisikan variabel untuk pengecekan agar lebih bersih
-                            $pengurangans = $simulasi->product->pengurangans ?? collect();
-                            $penambahanHarga = $simulasi->product->penambahanHarga ?? collect();
-                        @endphp
+                                        <table class="invoice-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Description</th>
+                                                    <th class="col-vendor-price">Vendor</th>
+                                                    <th class="col-public-price">Public</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse ($items as $index => $item)
+                                                    <tr>
+                                                        <td>
+                                                            <div>
+                                                                <strong>{{ $item->vendor->name ?? ($item->vendor_id ? 'Vendor ID: ' . $item->vendor_id : 'N/A') }}</strong>
+                                                            </div>
+                                                            @if ($item->description)
+                                                                <div style="text-transform: capitalize;">
+                                                                    {!! strtolower($item->description) !!}
+                                                                </div>
+                                                            @endif
+                                                        </td>
+                                                        <td class="col-vendor-price">
+                                                            {{ number_format($item->harga_vendor ?? 0, 0, ',', '.') }}
+                                                        </td>
+                                                        <td class="col-public-price">
+                                                            {{ number_format($item->harga_publish ?? 0, 0, ',', '.') }}
+                                                        </td>
+                                                    </tr>
+                                                @empty
+                                                    <tr>
+                                                        <td>
+                                                            Tidak ada item spesifik yang terdaftar untuk produk ini.
+                                                        </td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
 
-                        {{-- Section Penambahan --}}
-                        @if ($penambahanHarga->isNotEmpty())
-                            <b>Detail Penambahan :</b>
-                            <table class="invoice-table addition-table">
-                                <thead>
-                                    <tr>
-                                        <th>Description</th>
-                                        <th class="col-vendor-price">Vendor</th>
-                                        <th class="col-public-price">Publish</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($penambahanHarga as $penambahan_item)
-                                        <tr>
-                                            <td>
-                                                <div>
-                                                    <strong>{{ $penambahan_item->vendor->name ?? 'Penambahan Tanpa Nama' }}</strong>
+                                        @php
+                                            // Definisikan variabel untuk pengecekan agar lebih bersih
+                                            $pengurangans = $simulasi->product->pengurangans ?? collect();
+                                            $penambahanHarga = $simulasi->product->penambahanHarga ?? collect();
+                                        @endphp
+
+                                        {{-- Section Penambahan --}}
+                                        @if ($penambahanHarga->isNotEmpty())
+                                            <b>Detail Penambahan :</b>
+                                            <table class="invoice-table addition-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Description</th>
+                                                        <th class="col-vendor-price">Vendor</th>
+                                                        <th class="col-public-price">Publish</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($penambahanHarga as $penambahan_item)
+                                                        <tr>
+                                                            <td>
+                                                                <div>
+                                                                    <strong>{{ $penambahan_item->vendor->name ?? 'Penambahan Tanpa Nama' }}</strong>
+                                                                </div>
+                                                                @if (!empty($penambahan_item->description))
+                                                                    <div>
+                                                                        {!! $penambahan_item->description !!}
+                                                                    </div>
+                                                                @endif
+                                                            </td>
+                                                            <td class="col-vendor-price addition-amount">
+                                                                +
+                                                                {{ number_format($penambahan_item->harga_vendor ?? 0, 0, ',', '.') }}
+                                                            </td>
+                                                            <td class="col-public-price addition-amount">
+                                                                +
+                                                                {{ number_format($penambahan_item->harga_publish ?? 0, 0, ',', '.') }}
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        @endif
+
+                                        @if ($pengurangans->isNotEmpty())
+                                            {{-- Bagian ini hanya akan ditampilkan jika ada item pengurangan --}}
+                                            <b>Detail Pengurangan :</b>
+                                            <table class="invoice-table reduction-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Description</th>
+                                                        <th class="col-public-price">Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($pengurangans as $pengurangan_item)
+                                                        <tr>
+                                                            <td>
+                                                                <div>
+                                                                    <strong>{{ $pengurangan_item->description ?? ($pengurangan_item->name ?? 'Pengurangan Tanpa Nama') }}</strong>
+                                                                </div>
+                                                                @if (!empty($pengurangan_item->notes))
+                                                                    <div>{!! $pengurangan_item->notes !!}</div>
+                                                                @endif
+                                                            </td>
+                                                            <td class="col-public-price">
+                                                                {{ number_format($pengurangan_item->amount, 0, ',', '.') }}
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        @endif
+
+                                        @if (!empty($simulasi->notes) && trim(strip_tags($simulasi->notes)) !== '')
+                                            <table class="invoice-table">
+                                                <tbody>
+                                                    <tr>
+                                                        <td style="text-align: left;">
+                                                            <b>Notes (Jika ada) :</b>
+                                                            <p style="margin: 0;">{!! $simulasi->notes !!}</p>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        @endif
+
+                                        {{-- Price Calculation --}}
+                                        @php
+                                            // Hitung total publish price berdasarkan item-item dalam simulasi
+                                            $totalPublicPrice = collect($items)->sum(function ($item) {
+                                                return ($item->harga_publish ?? 0) * ($item->quantity ?? 1);
+                                            });
+
+                                            // Total biaya vendor berdasarkan item-item dalam simulasi
+                                            $totalVendorPrice = collect($items)->sum(function ($item) {
+                                                return ($item->harga_vendor ?? 0) * ($item->quantity ?? 1);
+                                            });
+
+                                            // Hitung total penambahan harga
+                                            $totalAdditionPublish = (
+                                                $simulasi->product->penambahanHarga ?? collect()
+                                            )->sum('harga_publish');
+                                            $totalAdditionVendor = (
+                                                $simulasi->product->penambahanHarga ?? collect()
+                                            )->sum('harga_vendor');
+
+                                            // Harga dasar paket adalah total harga publik dari item dan harga vendor dari item
+                                            $basePackagePrice = $totalPublicPrice;
+                                            $baseVendorPrice = $totalVendorPrice;
+
+                                            // Hitung total jumlah diskon
+                                            $calculationTotalReductions = (
+                                                $simulasi->product->pengurangans ?? collect()
+                                            )->sum('amount');
+
+                                            // Hitung total jumlah harga publish setelah pengurangan dan penambahan
+                                            $finalPublicPriceAfterDiscounts =
+                                                $basePackagePrice + $totalAdditionPublish - $calculationTotalReductions;
+                                            $finalVendorPriceAfterDiscounts =
+                                                $baseVendorPrice + $totalAdditionVendor - $calculationTotalReductions;
+
+                                            // Profit & Loss for this simulation
+                                            $calculationProfitLoss =
+                                                $finalPublicPriceAfterDiscounts - $finalVendorPriceAfterDiscounts;
+                                        @endphp {{-- Total Calculation Section was here, moved it down for clarity --}}
+                                        <div class="col-12">
+                                            <table class="invoice-table">
+                                                <thead class="no-print">
+                                                    <tr>
+                                                        <th>Description1</th>
+                                                        <th class="col-vendor-price">Vendor</th>
+                                                        <th class="col-public-price">Publish</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td><strong>Base Price</strong></td>
+                                                        <td class="col-vendor-price">
+                                                            {{ number_format($baseVendorPrice, 0, ',', '.') }}</td>
+                                                        <td class="col-public-price"
+                                                            style="display: table-cell !important;">
+                                                            {{ number_format($basePackagePrice, 0, ',', '.') }}</td>
+                                                    </tr>
+                                                    @if ($totalAdditionPublish > 0 || $totalAdditionVendor > 0)
+                                                        <tr>
+                                                            <td style="color: #28a745; font-weight: 600;">
+                                                                <strong>Additions</strong>
+                                                            </td>
+                                                            <td class="col-vendor-price"
+                                                                style="color: #28a745; font-weight: 600;">
+                                                                +
+                                                                {{ number_format($totalAdditionVendor, 0, ',', '.') }}
+                                                            </td>
+                                                            <td class="col-public-price"
+                                                                style="color: #28a745; font-weight: 600; display: table-cell !important;">
+                                                                +
+                                                                {{ number_format($totalAdditionPublish, 0, ',', '.') }}
+                                                            </td>
+                                                        </tr>
+                                                    @endif
+                                                    @if ($calculationTotalReductions > 0)
+                                                        <tr>
+                                                            <td style="color: #dc3545; font-weight: 600;">
+                                                                <strong>Reductions</strong>
+                                                            </td>
+                                                            <td class="col-vendor-price"
+                                                                style="color: #dc3545; font-weight: 600;">
+                                                                ({{ number_format($calculationTotalReductions, 0, ',', '.') }})
+                                                            </td>
+                                                            <td class="col-public-price"
+                                                                style="color: #dc3545; font-weight: 600; display: table-cell !important;">
+                                                                ({{ number_format($calculationTotalReductions, 0, ',', '.') }})
+                                                            </td>
+                                                        </tr>
+                                                    @endif
+                                                    <tr>
+                                                        <td><strong>TOTAL</strong></td>
+                                                        <td class="col-vendor-price">
+                                                            <strong>{{ number_format($finalVendorPriceAfterDiscounts, 0, ',', '.') }}</strong>
+                                                        </td>
+                                                        <td class="col-public-price"
+                                                            style="display: table-cell !important;">
+                                                            <strong>{{ number_format($finalPublicPriceAfterDiscounts, 0, ',', '.') }}</strong>
+                                                        </td>
+                                                    </tr>
+                                                    <tr class="no-print">
+                                                        <td colspan="2"
+                                                            style="text-align: right; font-weight: bold;">PROFIT & LOSS
+                                                        </td>
+                                                        <td class="col-public-price"
+                                                            style="{{ $calculationProfitLoss < 30000000 ? 'color: red; font-weight: bold;' : 'color: blue; font-weight: bold;' }}">
+                                                            {{ number_format($calculationProfitLoss, 0, ',', '.') }}
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {{-- Note Section was here, moved it up before Pengurangan table --}}
+                                        <div class="invoice-note col-public-price"
+                                            style="margin-top: 20px; margin-bottom: 20px;">
+                                            <div class="marquee-container no-print">
+                                                <div class="marquee-content">
+                                                    <p>Pastikan ACCOUNT MANAGER memeriksa kembali detail item, profit &
+                                                        loss sebelum
+                                                        mencetak proposal.</p>
                                                 </div>
-                                                @if (!empty($penambahan_item->description))
-                                                    <div>
-                                                        {!! $penambahan_item->description !!}
-                                                    </div>
-                                                @endif
-                                            </td>
-                                            <td class="col-vendor-price addition-amount">
-                                                + {{ number_format($penambahan_item->harga_vendor ?? 0, 0, ',', '.') }}
-                                            </td>
-                                            <td class="col-public-price addition-amount">
-                                                +
-                                                {{ number_format($penambahan_item->harga_publish ?? 0, 0, ',', '.') }}
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        @endif
+                                            </div>
+                                        </div>
 
-                        @if ($pengurangans->isNotEmpty())
-                            {{-- Bagian ini hanya akan ditampilkan jika ada item pengurangan --}}
-                            <b>Detail Pengurangan :</b>
-                            <table class="invoice-table reduction-table">
-                                <thead>
-                                    <tr>
-                                        <th>Description</th>
-                                        <th class="col-public-price">Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($pengurangans as $pengurangan_item)
-                                        <tr>
-                                            <td>
-                                                <div>
-                                                    <strong>{{ $pengurangan_item->description ?? ($pengurangan_item->name ?? 'Pengurangan Tanpa Nama') }}</strong>
-                                                </div>
-                                                @if (!empty($pengurangan_item->notes))
-                                                    <div>{!! $pengurangan_item->notes !!}</div>
-                                                @endif
-                                            </td>
-                                            <td class="col-public-price">
-                                                {{ number_format($pengurangan_item->amount, 0, ',', '.') }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        @endif
+                                        <!-- Running Text Example -->
 
-                        <div>
-                            <div class="address-notes">
-                                <b>Notes (Jika ada) :</b>
-                                <p>{!! $simulasi->notes ?? 'Tidak ada catatan tambahan untuk ini.' !!}</p>
-                            </div>
-                        </div>
 
-                        {{-- Price Calculation --}}
-                        @php
-                            // Hitung total publish price berdasarkan item-item dalam simulasi
-                            $totalPublicPrice = collect($items)->sum(function ($item) {
-                                return ($item->harga_publish ?? 0) * ($item->quantity ?? 1);
-                            });
-
-                            // Total biaya vendor berdasarkan item-item dalam simulasi
-                            $totalVendorPrice = collect($items)->sum(function ($item) {
-                                return ($item->harga_vendor ?? 0) * ($item->quantity ?? 1);
-                            });
-
-                            // Hitung total penambahan harga
-                            $totalAdditionPublish = ($simulasi->product->penambahanHarga ?? collect())->sum(
-                                'harga_publish',
-                            );
-                            $totalAdditionVendor = ($simulasi->product->penambahanHarga ?? collect())->sum(
-                                'harga_vendor',
-                            );
-
-                            // Harga dasar paket adalah total harga publik dari item dan harga vendor dari item
-                            $basePackagePrice = $totalPublicPrice;
-                            $baseVendorPrice = $totalVendorPrice;
-
-                            // Hitung total jumlah diskon
-                            $calculationTotalReductions = ($simulasi->product->pengurangans ?? collect())->sum(
-                                'amount',
-                            );
-
-                            // Hitung total jumlah harga publish setelah pengurangan dan penambahan
-                            $finalPublicPriceAfterDiscounts =
-                                $basePackagePrice + $totalAdditionPublish - $calculationTotalReductions;
-                            $finalVendorPriceAfterDiscounts =
-                                $baseVendorPrice + $totalAdditionVendor - $calculationTotalReductions;
-
-                            // Profit & Loss for this simulation
-                            $calculationProfitLoss = $finalPublicPriceAfterDiscounts - $finalVendorPriceAfterDiscounts;
-                        @endphp {{-- Total Calculation Section was here, moved it down for clarity --}}
-                        <div class="col-auto">
-                            <table class="total-table">
-                                <tr>
-                                    <th>Total Publish Price :</th>
-                                    <td>{{ number_format($basePackagePrice, 0, ',', '.') }}</td>
-                                </tr>
-                                <tr class="col-public-price">
-                                    <th>Total Vendor Price :</th>
-                                    <td>{{ number_format($baseVendorPrice, 0, ',', '.') }}</td>
-                                </tr>
-                                @if ($totalAdditionPublish > 0)
-                                    <tr>
-                                        <th style="color: #28a745; font-weight: 600;">Total Penambahan :</th>
-                                        <td style="color: #28a745; font-weight: 600;">+
-                                            {{ number_format($totalAdditionPublish, 0, ',', '.') }}</td>
-                                    </tr>
-                                @endif
-                                @if ($totalAdditionVendor > 0)
-                                    <tr class="col-public-price">
-                                        <th style="color: #28a745; font-weight: 600;">Total Penambahan Vendor :</th>
-                                        <td style="color: #28a745; font-weight: 600;">+
-                                            {{ number_format($totalAdditionVendor, 0, ',', '.') }}</td>
-                                    </tr>
-                                @endif
-                                @if ($calculationTotalReductions > 0)
-                                    <tr>
-                                        <th style="color: #dc3545; font-weight: 600;">Total Pengurangan :</th>
-                                        <td style="color: #dc3545; font-weight: 600;">
-                                            ({{ number_format($calculationTotalReductions, 0, ',', '.') }})</td>
-                                    </tr>
-                                @endif
-                                <tr>
-                                    <th>Total Paket Publishable :</th>
-                                    <td>{{ number_format($finalPublicPriceAfterDiscounts, 0, ',', '.') }}</td>
-                                </tr>
-                                <tr class="col-public-price">
-                                    <th>Total Paket Vendorable :</th>
-                                    <td>{{ number_format($finalVendorPriceAfterDiscounts, 0, ',', '.') }}</td>
-                                </tr>
-                                <tr class="col-public-price"
-                                    @if ($calculationProfitLoss < 30000000) style="color: red;" @endif> {{-- Menggunakan kelas hide-on-pdf --}}
-                                    <th
-                                        @if ($calculationProfitLoss < 30000000) style="font-weight: bold; color: red !important;" @endif>
-                                        Profit & Loss:</th>
-                                    <td
-                                        @if ($calculationProfitLoss > 30000000) style="font-weight: bold; color: blue !important;" @endif>
-                                        {{ number_format($calculationProfitLoss, 0, ',', '.') }}</td>
-                                </tr>
-                            </table>
-                        </div>
-
-                        {{-- Note Section was here, moved it up before Pengurangan table --}}
-                        <div class="invoice-note col-public-price" style="margin-top: 20px; margin-bottom: 20px;">
-                            <p style="width: 100%; overflow: auto; font-size: 12px; text-align: center; "><strong>NOTE
-                                    :</strong> Pastikan AM Malakukan Pengecekan Data Sebelum Menyerahkan Kepada Calon
-                                Klien.</p>
-                        </div>
-
-                        {{-- Signature Section --}}
-                        <div class="signature-area"
-                            style="margin-top: 60px; width: 100%; overflow: auto; font-size: 12px;">
-                            <div style="float: left; width: 40%; text-align: center; margin-left: 5%;">
-                                <p style="margin-bottom: 70px;">Hormat Kami,</p>
-                                <p style="border-top: 1px solid var(--title-color); margin: 0 10px; padding-top: 5px;">
-                                    ( {{ $simulasi->user->name ?? 'Account Manager' }} )
-                                </p>
-                                <p>{{ $company->company_name ?? 'PT. Makna Kreatif Indonesia' }}</p>
-                            </div>
-                            <div style="float: right; width: 40%; text-align: center; margin-right: 5%;">
-                                <p style="margin-bottom: 70px;">Disetujui Oleh,</p>
-                                <p style="border-top: 1px solid var(--title-color); margin: 0 10px; padding-top: 5px;">
-                                    (_________________________)</p>
-                                <p>Klien</p>
-                            </div>
-                            <div style="clear: both;"></div>
-                        </div>
-                        {{-- <p class="company-address">
+                                        {{-- Signature Section --}}
+                                        <div class="signature-area"
+                                            style="margin-top: 60px; width: 100%; overflow: auto; font-size: 12px;">
+                                            <div style="float: left; width: 40%; text-align: center; margin-left: 5%;">
+                                                <p style="margin-bottom: 70px;">Hormat Kami,</p>
+                                                <p
+                                                    style="border-top: 1px solid var(--title-color); margin: 0 10px; padding-top: 5px;">
+                                                    ( {{ $simulasi->user->name ?? 'Account Manager' }} )
+                                                </p>
+                                                <p>{{ $company->company_name ?? 'PT. Makna Kreatif Indonesia' }}</p>
+                                            </div>
+                                            <div
+                                                style="float: right; width: 40%; text-align: center; margin-right: 5%;">
+                                                <p style="margin-bottom: 70px;">Disetujui Oleh,</p>
+                                                <p
+                                                    style="border-top: 1px solid var(--title-color); margin: 0 10px; padding-top: 5px;">
+                                                    (_________________________)</p>
+                                                <p>Klien</p>
+                                            </div>
+                                            <div style="clear: both;"></div>
+                                        </div>
+                                        {{-- <p class="company-address">
                             <b>Invar Inc:</b> <br>
                             12th Floor, Plot No.5, IFIC Bank, Gausin Rod, Suite 250-20, Franchisco USA 2022.
                         </p> --}}
-                        {{-- Moved the general note outside of the main content flow for PDF if it was part of the invoice-note --}}
+                                        {{-- Moved the general note outside of the main content flow for PDF if it was part of the invoice-note --}}
 
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                     <div class="invoice-buttons no-print">
                         <button class="print_btn">

@@ -18,6 +18,7 @@ use App\Http\Controllers\InvoiceOrderController;
 use App\Http\Controllers\ProductDisplayController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\ProspectController;
+use App\Http\Controllers\ProspectAppController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SimulasiDisplayController;
 use App\Http\Controllers\UserFormPdfController;
@@ -248,6 +249,17 @@ Route::post('/prospect', [ProspectController::class, 'store'])
 
 Route::get('/prospect/success', [ProspectController::class, 'success'])
     ->name('prospect.success');
+
+// Route untuk Prospect App Proposal PDF
+Route::get('/prospect-app/{prospectApp}/proposal', [ProspectAppController::class, 'generateProposalPdf'])
+    ->name('prospect-app.proposal.pdf')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+// Route untuk Prospect App (Frontend)
+Route::get('/prospect-app', [ProspectAppController::class, 'create'])->name('prospect-app.form');
+Route::post('/prospect-app', [ProspectAppController::class, 'store'])->name('prospect-app.store');
+Route::get('/prospect-app/success', [ProspectAppController::class, 'success'])->name('prospect-app.success');
+Route::post('/prospect-app/check-email', [ProspectAppController::class, 'checkEmail'])->name('prospect-app.check-email');
 
 Route::get('/debug-report', function() {
     $query = DataPembayaran::query()->with(['order', 'paymentMethod']);

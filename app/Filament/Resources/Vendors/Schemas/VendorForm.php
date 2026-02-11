@@ -38,8 +38,7 @@ class VendorForm
                                     ->columns(3)
                                     ->schema([
                                         TextInput::make('name')
-                                            ->required()
-                                            ->live(onBlur: true),
+                                            ->required(),
                                         TextInput::make('slug')
                                             ->default(null)
                                             ->disabled()
@@ -85,7 +84,10 @@ class VendorForm
                                             ->columnSpanFull()
                                             ->minLength(10)
                                             ->required()
-                                            ->label('Description'), 
+                                            ->label('Description')
+                                            ->disableToolbarButtons([
+                                                'attachFiles',
+                                            ]), 
                                     ]),
                             ]),
 
