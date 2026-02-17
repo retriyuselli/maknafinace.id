@@ -7,6 +7,7 @@ use App\Filament\Widgets\RecentLeaveRequestsWidget;
 use Filament\Pages\Page;
 use BackedEnum;
 use Filament\Support\Icons\Heroicon;
+use Filament\Widgets\AccountWidget;
 
 class HrDashboard extends Page
 {
@@ -23,6 +24,7 @@ class HrDashboard extends Page
     protected function getHeaderWidgets(): array
     {
         return [
+            AccountWidget::class,
             LeaveUsageChartWidget::class,
             RecentLeaveRequestsWidget::class,
         ];

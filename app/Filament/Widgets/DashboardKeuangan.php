@@ -17,7 +17,6 @@ class DashboardKeuangan extends BaseWidget
 
     protected static ?int $sort = 11;
 
-
     public function getHeading(): ?string
     {
         return 'Data Finance';
