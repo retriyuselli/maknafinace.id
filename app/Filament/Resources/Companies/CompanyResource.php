@@ -19,6 +19,8 @@ class CompanyResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-home-modern';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Administrasi';
+
     public static function form(Schema $schema): Schema
     {
         return CompanyForm::configure($schema);

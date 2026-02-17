@@ -18,7 +18,7 @@ class LeaveUsageChartWidget extends ChartWidget
 
     public function getHeading(): ?string
     {
-        return 'Leave Usage Trends';
+        return 'Trend Penggunaan Cuti';
     }
 
     public ?string $filter = 'year';
@@ -243,6 +243,6 @@ class LeaveUsageChartWidget extends ChartWidget
 
     public function getDescription(): ?string
     {
-        return 'Visual representation of leave usage patterns across different time periods.';
+        return 'Visualisasi pola penggunaan cuti dalam berbagai periode waktu.';
     }
 }

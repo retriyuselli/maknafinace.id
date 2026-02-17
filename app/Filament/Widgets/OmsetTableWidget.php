@@ -22,19 +22,31 @@ class OmsetTableWidget extends BaseWidget
 
     public function table(Table $table): Table
     {
+        $monthlyQuery = Order::query()
+            ->whereNotNull('closing_date')
+            ->selectRaw('
+                MIN(id) as id,
+                DATE_FORMAT(closing_date, "%m") as month,
+                DATE_FORMAT(closing_date, "%M") as month_name,
+                YEAR(closing_date) as year,
+                CONCAT(DATE_FORMAT(closing_date, "%m"), "-", YEAR(closing_date)) as month_year_key,
+                SUM(total_price + COALESCE(penambahan, 0) - COALESCE(promo, 0) - COALESCE(pengurangan, 0)) as total_omset,
+                COUNT(*) as total_orders
+            ')
+            ->groupBy('month', 'month_name', 'year', 'month_year_key');
+
+        $aggregateModel = new class extends Model {
+            protected $table = 'monthly_orders';
+            public $incrementing = false;
+            public $timestamps = false;
+            protected $guarded = [];
+        };
+
         return $table
             ->query(
-                Order::query()
-                    ->whereNotNull('closing_date')
-                    ->selectRaw('
-                        DATE_FORMAT(closing_date, "%m") as month,
-                        DATE_FORMAT(closing_date, "%M") as month_name,
-                        YEAR(closing_date) as year,
-                        CONCAT(DATE_FORMAT(closing_date, "%m"), "-", YEAR(closing_date)) as month_year_key,
-                        SUM(total_price + COALESCE(penambahan, 0) - COALESCE(promo, 0) - COALESCE(pengurangan, 0)) as total_omset,
-                        COUNT(*) as total_orders
-                    ')
-                    ->groupBy('month', 'month_name', 'year', 'month_year_key')
+                $aggregateModel->newQuery()
+                    ->fromSub($monthlyQuery, 'monthly_orders')
+                    ->select('*')
                     ->orderBy('year', 'desc')
                     ->orderBy('month', 'desc')
             )
@@ -77,7 +89,7 @@ class OmsetTableWidget extends BaseWidget
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when(
                             $data['value'],
-                            fn (Builder $query, $year): Builder => $query->whereYear('closing_date', $year)
+                            fn (Builder $query, $year): Builder => $query->where('year', $year)
                         );
                     }),
             ])

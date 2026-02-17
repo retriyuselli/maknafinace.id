@@ -27,21 +27,33 @@ class RevenueBulananWeddingWidget extends BaseWidget
 
     public function table(Table $table): Table
     {
+        $monthlyRevenueQuery = Order::query()
+            ->join('prospects', 'orders.prospect_id', '=', 'prospects.id')
+            ->selectRaw('
+                MIN(orders.id) as id,
+                MONTH(prospects.date_resepsi) as month,
+                MONTHNAME(prospects.date_resepsi) as month_name,
+                YEAR(prospects.date_resepsi) as year,
+                COUNT(DISTINCT CASE WHEN prospects.date_resepsi IS NOT NULL THEN orders.id END) as resepsi_count,
+                COUNT(DISTINCT CASE WHEN prospects.date_akad IS NOT NULL THEN orders.id END) as akad_count,
+                COUNT(DISTINCT CASE WHEN prospects.date_lamaran IS NOT NULL THEN orders.id END) as lamaran_count,
+                SUM(orders.total_price + COALESCE(orders.penambahan, 0) - COALESCE(orders.promo, 0) - COALESCE(orders.pengurangan, 0)) as total_revenue
+            ')
+            ->whereNotNull('prospects.date_resepsi')
+            ->groupBy('year', 'month', 'month_name');
+
+        $aggregateModel = new class extends Model {
+            protected $table = 'monthly_revenue';
+            public $incrementing = false;
+            public $timestamps = false;
+            protected $guarded = [];
+        };
+
         return $table
             ->query(
-                Order::query()
-                    ->join('prospects', 'orders.prospect_id', '=', 'prospects.id')
-                    ->selectRaw('
-                        MONTH(prospects.date_resepsi) as month,
-                        MONTHNAME(prospects.date_resepsi) as month_name,
-                        YEAR(prospects.date_resepsi) as year,
-                        COUNT(DISTINCT CASE WHEN prospects.date_resepsi IS NOT NULL THEN orders.id END) as resepsi_count,
-                        COUNT(DISTINCT CASE WHEN prospects.date_akad IS NOT NULL THEN orders.id END) as akad_count,
-                        COUNT(DISTINCT CASE WHEN prospects.date_lamaran IS NOT NULL THEN orders.id END) as lamaran_count,
-                        SUM(orders.total_price + COALESCE(orders.penambahan, 0) - COALESCE(orders.promo, 0) - COALESCE(orders.pengurangan, 0)) as total_revenue
-                    ')
-                    ->whereNotNull('prospects.date_resepsi')
-                    ->groupBy('year', 'month', 'month_name')
+                $aggregateModel->newQuery()
+                    ->fromSub($monthlyRevenueQuery, 'monthly_revenue')
+                    ->select('*')
                     ->orderBy('year', 'desc')
                     ->orderBy('month', 'desc')
             )
@@ -95,7 +107,7 @@ class RevenueBulananWeddingWidget extends BaseWidget
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when(
                             $data['value'],
-                            fn (Builder $query, $year): Builder => $query->whereYear('prospects.date_resepsi', $year)
+                            fn (Builder $query, $year): Builder => $query->where('year', $year)
                         );
                     }),
             ])

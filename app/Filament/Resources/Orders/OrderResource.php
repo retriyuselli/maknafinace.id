@@ -8,6 +8,8 @@ use App\Filament\Resources\Orders\Pages\EditOrder;
 use App\Filament\Resources\Orders\Pages\Invoice;
 use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
+use App\Filament\Resources\Orders\Schemas\OrderForm;
+use App\Filament\Resources\Orders\Tables\OrdersTable;
 use App\Filament\Resources\Products\ProductResource;
 use App\Models\Employee;
 use App\Models\Expense;
@@ -84,7 +86,7 @@ class OrderResource extends Resource
     /**
      * Safely convert any value to float for calculations
      */
-    private static function safeFloatVal($value): float
+    public static function safeFloatVal($value): float
     {
         if (is_null($value)) {
             return 0.0;
@@ -124,6 +126,16 @@ class OrderResource extends Resource
     }
 
     public static function form(Schema $schema): Schema
+    {
+        return OrderForm::configure($schema);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return OrdersTable::configure($table);
+    }
+
+    public static function legacyForm(Schema $schema): Schema
     {
         return $schema->components([
             Wizard::make([
@@ -879,7 +891,7 @@ class OrderResource extends Resource
         ]);
     }
 
-    public static function table(Table $table): Table
+    public static function legacyTable(Table $table): Table
     {
         return $table
             ->defaultSort('updated_at', 'desc') // Tambahkan baris ini
@@ -1258,10 +1270,9 @@ class OrderResource extends Resource
 
                             // Jika status done, hanya super_admin yang bisa edit (finance hanya bisa view)
                             if ($record->status === OrderStatus::Done) {
-                                /** @var User $user */
                                 $user = Auth::user();
 
-                                return $user && $user->hasRole('super_admin');
+                                return $user && method_exists($user, 'hasRole') && $user->hasRole('super_admin');
                             }
 
                             // Status selain done, semua user bisa edit
@@ -1278,10 +1289,9 @@ class OrderResource extends Resource
 
                             // Jika status done dan user bukan super_admin, tampilkan view action (termasuk finance)
                             if ($record->status === OrderStatus::Done) {
-                                /** @var User $user */
                                 $user = Auth::user();
 
-                                return ! ($user && $user->hasRole('super_admin'));
+                                return ! ($user && method_exists($user, 'hasRole') && $user->hasRole('super_admin'));
                             }
 
                             // Untuk status selain done, view action tersedia tapi tidak prioritas
@@ -1428,7 +1438,7 @@ class OrderResource extends Resource
                         ->requiresConfirmation()
                         ->modalHeading('Perbarui Status Pesanan')
                         ->modalDescription('Pilih status baru untuk pesanan yang dipilih.')
-                        ->form([
+                        ->schema([
                             Select::make('status')
                                 ->label('New Status')
                                 ->options(OrderStatus::class) // Menggunakan Enum OrderStatus Anda
@@ -1479,7 +1489,7 @@ class OrderResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['number', 'prospect.name_event', 'user.name', 'employee.name', 'user.name'];
+        return ['prospect.name_event', 'number'];
     }
 
     public static function getPages(): array
@@ -1502,10 +1512,13 @@ class OrderResource extends Resource
         $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class]);
 
-        // Super admin and finance can access all orders
         if (Auth::check()) {
             $user = Auth::user();
-            if ($user && ($user->hasRole('super_admin') || $user->hasRole('Finance') || $user->hasRole('admin_am'))) {
+            if (
+                $user
+                && method_exists($user, 'hasRole')
+                && ($user->hasRole('super_admin') || $user->hasRole('Finance') || $user->hasRole('admin_am'))
+            ) {
                 return $query;
             }
         }
@@ -1649,7 +1662,7 @@ class OrderResource extends Resource
             });
     }
 
-    protected static function updateTotalPrice(Get $get, Set $set): void
+    public static function updateTotalPrice(Get $get, Set $set): void
     {
         $selectedProducts = collect($get('items'))->filter(fn ($item) => ! empty($item['product_id']) && ! empty($item['quantity']));
 
@@ -1692,7 +1705,7 @@ class OrderResource extends Resource
         self::updateDependentFinancialFields($get, $set);
     }
 
-    protected static function updateExchangePaid(Get $get, Set $set): void
+    public static function updateExchangePaid(Get $get, Set $set): void
     {
         $paidAmount = (int) $get('paid_amount') ?? 0;
         $totalPrice = (int) $get('total_price') ?? 0;
@@ -1703,7 +1716,7 @@ class OrderResource extends Resource
         $set('change_amount', $exchangePaid);
     }
 
-    protected static function updateDependentFinancialFields(Get $get, Set $set): void
+    public static function updateDependentFinancialFields(Get $get, Set $set): void
     {
         // Pertama, pastikan grand_total dihitung ulang dengan safe conversion
         $total_price = self::safeFloatVal($get('total_price'));
@@ -1735,7 +1748,7 @@ class OrderResource extends Resource
         self::updateClosingDate($get, $set);
     }
 
-    protected static function updateClosingDate(Get $get, Set $set): void
+    public static function updateClosingDate(Get $get, Set $set): void
     {
         $paymentItems = $get('Jika Ada Pembayaran') ?? [];
         if (! empty($paymentItems)) {

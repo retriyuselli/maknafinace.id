@@ -53,6 +53,8 @@ class UserResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'SDM';
 
+    protected static ?string $recordTitleAttribute = 'name';
+
     /**
      * Check if current user is super admin
      */
@@ -1418,6 +1420,11 @@ class UserResource extends Resource
             'view' => ViewUser::route('/{record}'),
             'edit' => EditUser::route('/{record}/edit'),
         ];
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'email'];
     }
 
     public static function getNavigationBadgeTooltip(): ?string

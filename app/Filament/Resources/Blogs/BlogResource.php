@@ -50,6 +50,8 @@ class BlogResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Artikel Blog';
 
+    protected static bool $isGloballySearchable = false;
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -362,11 +364,6 @@ class BlogResource extends Resource
     public static function getGlobalSearchEloquentQuery(): Builder
     {
         return parent::getGlobalSearchEloquentQuery();
-    }
-
-    public static function getGloballySearchableAttributes(): array
-    {
-        return ['title', 'excerpt', 'author_name', 'category'];
     }
 
     public static function getGlobalSearchResultDetails(Model $record): array

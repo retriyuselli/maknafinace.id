@@ -11,7 +11,6 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -29,7 +28,7 @@ class RecentLeaveRequestsWidget extends BaseWidget
 
     public function getHeading(): ?string
     {
-        return 'Recent Leave Requests';
+        return '10 Permohonan Cuti Terbaru';
     }
 
     public function table(Table $table): Table
@@ -46,13 +45,13 @@ class RecentLeaveRequestsWidget extends BaseWidget
             )
             ->columns([
                 TextColumn::make('user.name')
-                    ->label('Employee')
+                    ->label('Karyawan')
                     ->searchable()
                     ->sortable()
                     ->weight('medium'),
 
                 TextColumn::make('leaveType.name')
-                    ->label('Leave Type')
+                    ->label('Jenis Cuti')
                     ->badge()
                     ->color(fn (string $state): string => match (strtolower($state)) {
                         'annual leave' => 'success',
@@ -62,17 +61,17 @@ class RecentLeaveRequestsWidget extends BaseWidget
                     }),
 
                 TextColumn::make('start_date')
-                    ->label('Start Date')
+                    ->label('Tanggal Mulai')
                     ->date('M j, Y')
                     ->sortable(),
 
                 TextColumn::make('end_date')
-                    ->label('End Date')
+                    ->label('Tanggal Selesai')
                     ->date('M j, Y')
                     ->sortable(),
 
                 TextColumn::make('total_days')
-                    ->label('Days')
+                    ->label('Hari')
                     ->numeric()
                     ->alignCenter()
                     ->badge()
@@ -82,15 +81,16 @@ class RecentLeaveRequestsWidget extends BaseWidget
                         default => 'danger',
                     }),
 
-                BadgeColumn::make('status')
+                TextColumn::make('status')
                     ->label('Status')
-                    ->colors([
-                        'gray' => 'pending',
-                        'warning' => 'pending',
-                        'success' => 'approved',
-                        'danger' => 'rejected',
-                        'info' => 'cancelled',
-                    ])
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'approved' => 'success',
+                        'rejected' => 'danger',
+                        'cancelled' => 'info',
+                        default => 'gray',
+                    })
                     ->icons([
                         'heroicon-o-clock' => 'pending',
                         'heroicon-o-check-circle' => 'approved',
@@ -99,12 +99,12 @@ class RecentLeaveRequestsWidget extends BaseWidget
                     ]),
 
                 TextColumn::make('approver.name')
-                    ->label('Approved By')
-                    ->placeholder('Not yet approved')
+                    ->label('Disetujui Oleh')
+                    ->placeholder('Belum disetujui')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('created_at')
-                    ->label('Requested At')
+                    ->label('Diajukan Pada')
                     ->since()
                     ->sortable()
                     ->toggleable(),
@@ -252,8 +252,8 @@ class RecentLeaveRequestsWidget extends BaseWidget
             ])
             ->defaultSort('created_at', 'desc')
             ->striped()
-            ->emptyStateHeading('No recent leave requests')
-            ->emptyStateDescription('When employees submit leave requests, they will appear here.')
+            ->emptyStateHeading('Tidak ada permohonan cuti terbaru')
+            ->emptyStateDescription('Ketika karyawan mengajukan cuti, mereka akan muncul di sini.')
             ->emptyStateIcon('heroicon-o-calendar-days')
             ->poll('30s'); // Refresh every 30 seconds
     }
@@ -286,6 +286,6 @@ class RecentLeaveRequestsWidget extends BaseWidget
 
     public function getDescription(): ?string
     {
-        return 'Latest 10 leave requests submitted by employees with quick approval actions.';
+        return '10 permohonan cuti terbaru karyawan dengan aksi persetujuan cepat.';
     }
 }

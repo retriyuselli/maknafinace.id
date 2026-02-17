@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Http\Middleware\RedirectUnauthenticatedToAppUrl;
+use Filament\Enums\GlobalSearchPosition;
 use Filament\Support\Enums\Width;
 
 class AdminPanelProvider extends PanelProvider
@@ -40,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
             : asset('images/favicon_makna.png');
 
         return $panel
+            ->globalSearch(position: GlobalSearchPosition::Sidebar)  
             ->default()
             ->id('admin')
             ->path('admin')
@@ -52,7 +54,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon($favicon)
             ->sidebarCollapsibleOnDesktop(true)
             ->colors([
-                'primary' => Color::Purple,
+                'primary' => Color::Blue,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -63,7 +65,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 AccountWidget::class,
-                // Widgets\FilamentInfoWidget::class,
             ])
             ->renderHook('panels::body.end', fn () => view('filament.inactivity-redirect'))
             ->viteTheme('resources/css/filament/admin/theme.css')
@@ -85,7 +86,8 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make()
                     ->navigationLabel('Role')
-                    ->navigationGroup('SDM'),
+                    ->navigationGroup('SDM')
+                    ->globallySearchable(false),
             ]);
     }
 }

@@ -51,6 +51,8 @@ class EmployeeResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    protected static bool $isGloballySearchable = false;
+
     protected static ?string $navigationLabel = 'Karyawan';
 
     public static function form(Schema $schema): Schema

@@ -94,14 +94,6 @@ class VendorResource extends Resource
     {
         return [
             'name',
-            'pic_name',
-            'phone',
-            'bank_name',
-            'bank_account',
-            'account_holder',
-            'address',
-            'status',
-            'category.name',
         ];
     }
 

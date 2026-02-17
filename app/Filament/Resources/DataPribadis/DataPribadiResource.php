@@ -42,7 +42,9 @@ class DataPribadiResource extends Resource
 
     protected static ?string $navigationLabel = 'Data Tim';
 
-    protected static ?string $recordTitleAttribute = 'nama_lengkap'; // Atribut untuk judul record
+    protected static ?string $recordTitleAttribute = 'nama_lengkap';
+
+    protected static bool $isGloballySearchable = false;
 
     public static function form(Schema $schema): Schema
     {

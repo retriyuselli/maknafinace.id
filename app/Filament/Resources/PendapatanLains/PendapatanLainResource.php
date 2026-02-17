@@ -52,6 +52,8 @@ class PendapatanLainResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    protected static bool $isGloballySearchable = false;
+
     protected static ?string $navigationLabel = 'Pendapatan Lain';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Finance';

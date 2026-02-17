@@ -27,6 +27,8 @@ class DocumentResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'title';
 
+    protected static bool $isGloballySearchable = false;
+
     public static function form(Schema $schema): Schema
     {
         return DocumentForm::configure($schema);

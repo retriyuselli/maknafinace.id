@@ -47,6 +47,8 @@ class DataPembayaranResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'keterangan';
 
+    protected static bool $isGloballySearchable = false;
+
     protected static ?string $navigationLabel = 'Pendapatan Wedding';
 
     public static function form(Schema $schema): Schema
@@ -300,11 +302,6 @@ class DataPembayaranResource extends Resource
     public static function getNavigationGroup(): ?string
     {
         return 'Finance';
-    }
-
-    public static function getGloballySearchableAttributes(): array
-    {
-        return ['keterangan', 'order.number', 'paymentMethod.name'];
     }
 
     public static function getNavigationBadge(): ?string
