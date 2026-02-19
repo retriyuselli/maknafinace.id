@@ -101,7 +101,7 @@
                             </a>
                             @php
                                 $navUser = Auth::user();
-                                $allowedRoles = ['super_admin', 'Account Manager'];
+                                $allowedRoles = ['super_admin', 'Finance', 'Account Manager'];
                                 $canSeeProduct =
                                     $navUser &&
                                     ((method_exists($navUser, 'hasRole') &&
@@ -159,7 +159,7 @@
                                 </a>
                                 @php
                                     $navUser = Auth::user();
-                                    $allowedRoles = ['super_admin', 'Account Manager'];
+                                    $allowedRoles = ['super_admin', 'Finance', 'Account Manager'];
                                     $canSeeProduct =
                                         $navUser &&
                                         ((method_exists($navUser, 'hasRole') &&
@@ -278,7 +278,7 @@
                             @auth
                                 @php
                                     $navUser = Auth::user();
-                                    $allowedRoles = ['super_admin', 'Account Manager'];
+                                    $allowedRoles = ['super_admin', 'Finance', 'Account Manager'];
                                     $canSeeProduct =
                                         $navUser &&
                                         ((method_exists($navUser, 'hasRole') &&
