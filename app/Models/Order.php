@@ -71,30 +71,9 @@ class Order extends Model
         return $this->getBayarAttribute();
     }
 
-    public function employees(): HasMany
-    {
-        return $this->hasMany(Order::class);
-    }
-
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery();
-
-        // Super admin and finance can access all orders
-        if (Auth::check()) {
-            $user = Auth::user();
-            if ($user && ($user->hasRole('super_admin') || $user->hasRole('Finance'))) {
-                return $query;
-            }
-        }
-
-        // Other users can only access their own orders (as Account Manager)
-        return $query->where('user_id', Auth::user()->id);
     }
 
     public function expenses()
@@ -117,11 +96,6 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function users()
-    {
-        return $this->hasMany(User::class);
-    }
-
     public function lastEditedBy()
     {
         return $this->belongsTo(User::class, 'last_edited_by');
@@ -142,24 +116,9 @@ class Order extends Model
         return $this->hasMany(OrderProduct::class, 'order_id');
     }
 
-    public function itemsProspect(): HasMany
-    {
-        return $this->hasMany(Prospect::class, 'prospect_id');
-    }
-
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
-    }
-
-    public function productName()
-    {
-        return $this->belongsTo(Product::class);
-    }
-
-    public function orderProduct(): BelongsTo
-    {
-        return $this->belongsTo(OrderProduct::class);
     }
 
     public function calculateTotalPrice(): float
@@ -239,11 +198,6 @@ class Order extends Model
         $slug = $this->generateUniqueSlug($prospect->name_event);
         $this->attributes['prospect_id'] = $value;
         $this->attributes['slug'] = $slug;
-    }
-
-    public function prospects()
-    {
-        return $this->hasMany(Prospect::class);
     }
 
     public function getPendapatanAttribute()

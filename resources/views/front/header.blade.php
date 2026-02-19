@@ -99,6 +99,18 @@
                                 class="text-gray-700 ml-7 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 Dashboard
                             </a>
+                            @php
+                                $navUser = Auth::user();
+                                $allowedRoles = ['super_admin', 'Account Manager'];
+                                $canSeeProduct =
+                                    $navUser &&
+                                    ((method_exists($navUser, 'hasRole') &&
+                                        collect($allowedRoles)->contains(function ($role) use ($navUser) {
+                                            return $navUser->hasRole($role);
+                                        })) ||
+                                        (!method_exists($navUser, 'hasRole') &&
+                                            in_array($navUser->role, $allowedRoles, true)));
+                            @endphp
                         @endauth
                     </div>
                 </div>
@@ -145,6 +157,29 @@
                                     </svg>
                                     Dashboard
                                 </a>
+                                @php
+                                    $navUser = Auth::user();
+                                    $allowedRoles = ['super_admin', 'Account Manager'];
+                                    $canSeeProduct =
+                                        $navUser &&
+                                        ((method_exists($navUser, 'hasRole') &&
+                                            collect($allowedRoles)->contains(function ($role) use ($navUser) {
+                                                return $navUser->hasRole($role);
+                                            })) ||
+                                            (!method_exists($navUser, 'hasRole') &&
+                                                in_array($navUser->role, $allowedRoles, true)));
+                                @endphp
+                                @if ($canSeeProduct)
+                                    <a href="{{ route('product') }}"
+                                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <svg class="mr-3 h-4 w-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M3 3h18v4H3zM3 9h18v12H3z"></path>
+                                        </svg>
+                                        Product
+                                    </a>
+                                @endif
                                 <a href="{{ route('profile') }}"
                                     class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <svg class="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,6 +276,22 @@
                             <a href="{{ route('blog') }}"
                                 class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Blog</a>
                             @auth
+                                @php
+                                    $navUser = Auth::user();
+                                    $allowedRoles = ['super_admin', 'Account Manager'];
+                                    $canSeeProduct =
+                                        $navUser &&
+                                        ((method_exists($navUser, 'hasRole') &&
+                                            collect($allowedRoles)->contains(function ($role) use ($navUser) {
+                                                return $navUser->hasRole($role);
+                                            })) ||
+                                            (!method_exists($navUser, 'hasRole') &&
+                                                in_array($navUser->role, $allowedRoles, true)));
+                                @endphp
+                                @if ($canSeeProduct)
+                                    <a href="{{ route('product') }}"
+                                        class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('product') ? 'bg-blue-50 text-blue-600' : '' }}">Product</a>
+                                @endif
                                 <a href="{{ route('profile') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('profile') ? 'bg-blue-50 text-blue-600' : '' }}">Profile</a>
                                 <a href="{{ route('dashboard') }}"

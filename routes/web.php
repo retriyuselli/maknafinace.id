@@ -27,7 +27,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LaporanKeuanganController;
 use App\Http\Controllers\AccountManagerReportController;
 use App\Http\Controllers\NotaDinasPdfController;
-use App\Models\DataPembayaran; // Add for debug
+use App\Models\DataPembayaran;
+use App\Models\Product;
 
 // Bank Reconciliation Template Route
 Route::get('/bank-reconciliation/template', [BankReconciliationTemplateController::class, 'downloadTemplate'])
@@ -111,6 +112,30 @@ Route::get('/features/payroll', [PayrollFeatureController::class, 'index'])->nam
 
 // PRICING
 Route::view('/harga', 'front.harga')->name('harga');
+
+// PRODUCT (FRONT)
+Route::get('/product', function () {
+    $search = request('q');
+
+    $products = Product::query()
+        ->where('is_approved', true)
+        ->when($search, function ($query, $search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('description', 'like', '%' . $search . '%')
+                    ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                        $categoryQuery->where('name', 'like', '%' . $search . '%');
+                    });
+            });
+        })
+        ->orderByDesc('created_at')
+        ->get();
+
+    return view('front.product', [
+        'products' => $products,
+        'search' => $search,
+    ]);
+})->name('product');
 
 // REGISTRATION (PENDAFTARAN)
 Route::view('/pendaftaran', 'front.pendaftaran')->name('pendaftaran');

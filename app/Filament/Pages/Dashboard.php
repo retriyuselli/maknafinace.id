@@ -25,10 +25,10 @@ class Dashboard extends BaseDashboard
     {
         return [
             AccountWidget::class,
+            DocumentsPendingApprovalWidget::class,
             ChartCombinedFinancialWidget::class,
             EventManager::class,
             AccountManagerWidget::class,
-            DocumentsPendingApprovalWidget::class,
         ];
     }
 

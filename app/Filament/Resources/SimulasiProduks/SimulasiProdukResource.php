@@ -158,7 +158,7 @@ class SimulasiProdukResource extends Resource
                                             static::recalculateGrandTotal($get, $set);
                                         })
                                         ->formatStateUsing(fn ($state) => number_format((float)$state, 0, '.', ','))
-                                        ->helperText('Price from selected base product. Adjustments below.'),
+                                        ->helperText('Nilai ini otomatis diambil dari harga Produk (price) dan akan ikut berubah jika harga produk diperbarui lalu simulasi di-refresh.'),
                                     TextInput::make('promo')
                                         ->label('Potongan Harga (Promo)')
                                         ->prefix('Rp')
@@ -197,7 +197,8 @@ class SimulasiProdukResource extends Resource
                                         ->readOnly()
                                         ->dehydrated()
                                         ->default(0)
-                                        ->formatStateUsing(fn ($state) => number_format((float)$state, 0, '.', ',')),
+                                        ->formatStateUsing(fn ($state) => number_format((float)$state, 0, '.', ','))
+                                        ->helperText('Grand Total dihitung dari Base Total Price + Penambahan - Promo - Pengurangan dan akan mengikuti perubahan jika harga produk disinkronkan.'),
                                 ])
                                 ->columnSpanFull(),
                         ]),

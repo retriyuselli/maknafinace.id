@@ -22,8 +22,6 @@ class ChartCombinedFinancialWidget extends ChartWidget
 
     protected ?string $heading = 'Combined Financial Overview';
 
-    protected static ?int $sort = 11;
-
     protected int|string|array $columnSpan = 'full';
 
     protected ?string $maxHeight = '400px';

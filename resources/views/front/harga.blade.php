@@ -9,7 +9,7 @@
         style="background: linear-gradient(to bottom right, #2563eb, #7e22ce);">
         <div class="max-w-7xl mx-auto px-4 text-center">
             <h1 class="text-4xl md:text-5xl font-bold mb-6">Paket Harga Terjangkau</h1>
-            <p class="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+            <p class="text-xs md:text-lg text-blue-100 mb-8 max-w-3xl mx-auto">
                 Pilih paket yang sesuai dengan kebutuhan bisnis wedding organizer Anda.
                 Semua paket dirancang khusus untuk membantu Anda mengelola acara pernikahan dengan mudah dan profesional.
             </p>

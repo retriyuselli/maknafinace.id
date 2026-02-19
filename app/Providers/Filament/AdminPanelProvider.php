@@ -50,7 +50,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->maxContentWidth(Width::Full)
             ->brandLogo($brandLogo)
-            ->brandLogoHeight('2rem')
+            ->brandLogoHeight('1.5rem')
             ->brandName('Makna Kreatif')
             ->favicon($favicon)
             ->sidebarCollapsibleOnDesktop(true)
