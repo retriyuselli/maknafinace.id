@@ -91,8 +91,8 @@
         <tbody>
             @forelse($orders as $order)
                 @php
-                    $totalPembayaranDiterimaOrder = $order->dataPembayaran()->sum('nominal');
-                    $profitLoss = ($order->grand_total ?? 0) - ($order->expenses()->sum('amount') ?? 0);
+                    $totalPembayaranDiterimaOrder = $order->bayar ?? $order->dataPembayaran()->sum('nominal');
+                    $profitLoss = $order->laba_kotor ?? (($order->grand_total ?? 0) - ($order->tot_pengeluaran ?? $order->expenses()->sum('amount') ?? 0));
                 @endphp
                 <tr>
                     <td class="text-center">{{ $loop->iteration }}</td>
@@ -100,7 +100,7 @@
                     <td>{{ $order->closing_date ? \Carbon\Carbon::parse($order->closing_date)->format('d M Y') : '-' }}</td>
                     <td class="text-right">Rp {{ number_format($totalPembayaranDiterimaOrder ?? 0, 0, ',', '.') }}</td>
                     <td class="text-right">Rp {{ number_format($order->grand_total ?? 0, 0, ',', '.') }}</td>
-                    <td class="text-right">Rp {{ number_format($order->expenses()->sum('amount') ?? 0, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($order->tot_pengeluaran ?? $order->expenses()->sum('amount') ?? 0, 0, ',', '.') }}</td>
                     <td class="text-right {{ $profitLoss >= 0 ? 'profit' : 'loss' }}">
                         Rp {{ number_format($profitLoss, 0, ',', '.') }}
                     </td>

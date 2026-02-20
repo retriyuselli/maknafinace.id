@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\Pages;
 
+use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Resources\Orders\Widgets\OrderOverview;
 use App\Models\Order;
@@ -105,10 +106,10 @@ class ListOrders extends ListRecords
     {
         return [
             null => Tab::make('All'),
-            'pending' => Tab::make()->query(fn ($query) => $query->where('status', 'pending')),
-            'processing' => Tab::make()->query(fn ($query) => $query->where('status', 'processing')),
-            'done' => Tab::make()->query(fn ($query) => $query->where('status', 'done')),
-            'cancelled' => Tab::make()->query(fn ($query) => $query->where('status', 'cancelled')),
+            'pending' => Tab::make()->query(fn ($query) => $query->where('status', OrderStatus::Pending->value)),
+            'processing' => Tab::make()->query(fn ($query) => $query->where('status', OrderStatus::Processing->value)),
+            'done' => Tab::make()->query(fn ($query) => $query->where('status', OrderStatus::Done->value)),
+            'cancelled' => Tab::make()->query(fn ($query) => $query->where('status', OrderStatus::Cancelled->value)),
         ];
     }
 }

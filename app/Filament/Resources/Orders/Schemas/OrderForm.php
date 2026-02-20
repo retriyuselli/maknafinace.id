@@ -12,6 +12,7 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\Prospect;
 use App\Models\Vendor;
+use App\Support\Rupiah;
 use Exception;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
@@ -238,7 +239,12 @@ class OrderForm
                                 $pengurangan = OrderResource::safeFloatVal($get('pengurangan'));
                                 $promo = OrderResource::safeFloatVal($get('promo'));
                                 $penambahan = OrderResource::safeFloatVal($get('penambahan'));
-                                $grandTotal = $totalPrice + $penambahan - $promo - $pengurangan;
+                                $grandTotal = Order::computeGrandTotalFromValues(
+                                    $totalPrice,
+                                    $penambahan,
+                                    $promo,
+                                    $pengurangan
+                                );
                                 $set('grand_total', $grandTotal);
                                 OrderResource::updateDependentFinancialFields($get, $set);
                             }),
@@ -258,7 +264,12 @@ class OrderForm
                                 $pengurangan = OrderResource::safeFloatVal($get('pengurangan'));
                                 $promo = OrderResource::safeFloatVal($get('promo'));
                                 $penambahan = OrderResource::safeFloatVal($get('penambahan'));
-                                $grandTotal = $totalPrice + $penambahan - $promo - $pengurangan;
+                                $grandTotal = Order::computeGrandTotalFromValues(
+                                    $totalPrice,
+                                    $penambahan,
+                                    $promo,
+                                    $pengurangan
+                                );
                                 $set('grand_total', $grandTotal);
                                 OrderResource::updateDependentFinancialFields($get, $set);
                             }),
@@ -666,24 +677,10 @@ class OrderForm
 
                                         try {
                                             $vendor = Vendor::find($state['vendor_id']);
-                                            $vendorName = $vendor?->name ?? 'Vendor #' . $state['vendor_id'];
+                                            $vendorName = $vendor?->name ?? 'Vendor #'.$state['vendor_id'];
 
-                                            $formatCurrency = function ($value) {
-                                                if (empty($value)) {
-                                                    return 'Rp 0';
-                                                }
-
-                                                if (is_string($value)) {
-                                                    $value = preg_replace('/[^\d.,]/', '', $value);
-                                                    $value = str_replace(',', '', $value);
-                                                }
-
-                                                $numericValue = OrderResource::safeFloatVal($value);
-
-                                                return 'Rp ' . number_format($numericValue, 0, ',', '.');
-                                            };
-
-                                            $formattedAmount = $formatCurrency($state['amount'] ?? 0);
+                                            $amount = Rupiah::parse($state['amount'] ?? 0);
+                                            $formattedAmount = Rupiah::format($amount, true);
 
                                             $paymentStage = 'DP';
                                             if (isset($state['nota_dinas_detail_id'])) {
@@ -696,7 +693,7 @@ class OrderForm
 
                                             return "🏪 {$vendorName} ({$paymentStage}) - {$formattedAmount}";
                                         } catch (Exception $e) {
-                                            Log::warning('Error in expense itemLabel: ' . $e->getMessage());
+                                            Log::warning('Error in expense itemLabel: '.$e->getMessage());
 
                                             return '⚠️ Expense Item';
                                         }

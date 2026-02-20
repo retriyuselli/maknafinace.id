@@ -7,13 +7,13 @@
     <style>
         @page {
             /* Top margin adjusted to ensure content starts below the fixed header on all pages */
-            margin: 110px 50px 30px 70px;
+            margin: 110px 50px 50px 90px;
         }
 
         body {
             font-family: 'DejaVu Sans', sans-serif;
-            font-size: 12px;
-            line-height: 1;
+            font-size: 11px;
+            line-height: 1.2;
             color: #000;
             margin: 0;
         }
@@ -48,7 +48,7 @@
             bottom: 0px;
             right: 0px;
             text-align: right;
-            font-size: 10px;
+            font-size: 11px;
             color: #000000;
         }
 
@@ -75,7 +75,7 @@
             text-align: center;
             font-weight: bold;
             text-decoration: underline;
-            font-size: 14px;
+            font-size: 11px;
             margin-bottom: 5px;
             text-transform: uppercase;
         }
@@ -93,6 +93,26 @@
             margin-bottom: 5px;
             text-transform: uppercase;
             font-size: 11px;
+        }
+
+        .facility-list ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .facility-list ol ol {
+            list-style-type: none;
+            padding-left: 15px;
+            margin-top: 5px;
+        }
+
+        .facility-list ol ol>li {
+            text-indent: -10px;
+            margin-left: 10px;
+        }
+
+        .facility-list ol ol>li::before {
+            content: "- ";
         }
 
         /* Content Tables */
@@ -180,8 +200,7 @@
 
         /* Invoice Style Header Text */
         .company-name {
-            font-size: 14px;
-            /* Matches standard invoice size */
+            font-size: 11px;
             font-weight: bold;
         }
 
@@ -192,7 +211,7 @@
 </head>
 
 <body>
-    <div class="watermark">COMING SOON</div>
+    <div class="watermark"></div>
     <!-- HEADER (Fixed on every page) -->
     <header>
         <table class="header-table">
@@ -232,16 +251,16 @@
                 <td style="text-align: right; vertical-align: bottom; padding-right: 10px;">
                     www.paketpernikahan.co.id | Hal <span class="pagenum"></span>
                 </td>
-                <td style="width: 50px; vertical-align: bottom;">
+                {{-- <td style="width: 50px; vertical-align: bottom;">
                     <div style="border: 1px solid #000; width: 40px; height: 40px; margin-left: auto; margin-right: 0;">
                     </div>
-                    <div style="text-align: center; font-size: 8px; margin-top: 2px;">Paraf</div>
+                    <div style="text-align: center; font-size: 11px; margin-top: 2px;">Paraf</div>
                 </td>
                 <td style="width: 50px; vertical-align: bottom;">
                     <div style="border: 1px solid #000; width: 40px; height: 40px; margin-left: auto; margin-right: 0;">
                     </div>
-                    <div style="text-align: center; font-size: 8px; margin-top: 2px;">Paraf</div>
-                </td>
+                    <div style="text-align: center; font-size: 11px; margin-top: 2px;">Paraf</div>
+                </td> --}}
             </tr>
         </table>
     </div>
@@ -317,7 +336,13 @@
         <tr>
             <td class="label">Paket WO</td>
             <td class="separator">:</td>
-            <td>{{ $record->product->name ?? '-' }}</td>
+            <td>
+                @if ($record->product?->name)
+                    {{ \Illuminate\Support\Str::title($record->product->name) }}
+                @else
+                    -
+                @endif
+            </td>
         </tr>
         <tr>
             <td class="label">Lokasi Acara</td>
@@ -414,29 +439,61 @@
         });
     @endphp
 
-    <ol>
-        @foreach ($groupedItems as $categoryName => $categoryItems)
-            <li style="font-weight: bold; margin-top: 10px; font-size: 11px;">
-                {{ strtoupper($categoryName) }}
-                <ol type="a" style="font-weight: normal; margin-top: 5px;">
-                    @foreach ($categoryItems as $item)
+    <div class="facility-list">
+        <ul style="list-style-type: none; padding-left: 0;">
+            @foreach ($groupedItems as $categoryName => $categoryItems)
+                <li style="font-weight: normal; margin-top: 5px; font-size: 11px;">
+                    {{ strtoupper($categoryName) }}
+
+                    @if ($categoryItems->count() === 1)
                         @php
+                            $item = $categoryItems->first();
                             $description = $item->description ?? ($item->vendor->name ?? '');
                             $plainContent = trim(strip_tags($description));
-                            // Cek apakah konten dimulai dengan angka (misal: "1.", "1)", "1 ")
-                            $hideListStyle = preg_match('/^\d+[.)]/', $plainContent);
+                            $hideListStyle = preg_match('/^\s*[\da-zA-Z]+[.)]\s*/', $plainContent);
+                            $cleanContent = $hideListStyle
+                                ? preg_replace('/^\s*[\da-zA-Z]+[.)]\s*/', '', $plainContent)
+                                : $plainContent;
                         @endphp
-                        <li @if ($hideListStyle) style="list-style-type: none;" @endif>
-                            {!! $description !!}
+                        <div style="margin-top: 5px; margin-left: 20px;">
+                            @if ($hideListStyle)
+                                {{ $cleanContent }}
+                            @else
+                                {!! $description !!}
+                            @endif
                             @if ($item->quantity > 1)
                                 <b>({{ $item->quantity }}x)</b>
                             @endif
-                        </li>
-                    @endforeach
-                </ol>
-            </li>
-        @endforeach
-    </ol>
+                        </div>
+                    @else
+                        <ol style="font-weight: normal; margin-top: 5px; margin-left: 20px;">
+                            @foreach ($categoryItems as $item)
+                                @php
+                                    $description = $item->description ?? ($item->vendor->name ?? '');
+                                    $plainContent = trim(strip_tags($description));
+                                    // Cek apakah konten dimulai dengan penomoran manual (misal: "1.", "a)", "b.")
+                                    $hideListStyle = preg_match('/^\s*[\da-zA-Z]+[.)]\s*/', $plainContent);
+                                    $cleanContent = $hideListStyle
+                                        ? preg_replace('/^\s*[\da-zA-Z]+[.)]\s*/', '', $plainContent)
+                                        : $plainContent;
+                                @endphp
+                                <li style="font-size: 11px; margin-top: 5px; margin-bottom: 5px;">
+                                    @if ($hideListStyle)
+                                        {{ $cleanContent }}
+                                    @else
+                                        {!! $description !!}
+                                    @endif
+                                    @if ($item->quantity > 1)
+                                        <b>({{ $item->quantity }}x)</b>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ol>
+                    @endif
+                </li>
+            @endforeach
+        </ul>
+    </div>
 
     <!-- Terms & Confirmation -->
     <div class="section-title">KETENTUAN TAMBAHAN</div>
@@ -455,10 +512,46 @@
 
     <div class="section-title">PEMBAYARAN</div>
     <ol>
-        <li>Pembayaran DP (Down Payment) minimal sebesar Rp. 5.000.000,- (Lima Juta Rupiah) atau Booking Date.</li>
-        <li>Pembayaran Termin I sebesar 50% (Lima Puluh Persen) dari sisa pembayaran, dibayarkan 2 (dua) bulan
-            sebelum
-            hari H.</li>
+        <li>
+            Pembayaran DP (Down Payment) sebesar
+            Rp. {{ number_format($record->payment_dp_amount ?? 0, 0, ',', '.') }},-
+            sebagai Booking Date.
+        </li>
+        @php
+            $termins = $record->payment_simulation ?? [];
+            $terminCount = is_array($termins) ? count($termins) : 0;
+        @endphp
+        <li>
+            Pembayaran termin dilakukan sesuai simulasi pembayaran:
+            @if ($terminCount > 0)
+                <ol type="a" style="margin-top: 5px; margin-left: 20px;">
+                    @foreach ($termins as $index => $termin)
+                        @php
+                            $persen = $termin['persen'] ?? null;
+                            $nominal = $termin['nominal'] ?? null;
+                            $bulan = $termin['bulan'] ?? null;
+                            $tahun = $termin['tahun'] ?? null;
+                        @endphp
+                        <li>
+                            Termin {{ $index + 1 }}
+                            @if (!is_null($nominal))
+                                sebesar Rp. {{ number_format((float) $nominal, 0, ',', '.') }},-
+                            @endif
+                            @if (!is_null($persen))
+                                yaitu {{ rtrim(rtrim(number_format((float) $persen, 2, ',', '.'), '0'), ',') }}%
+                            @endif
+                            @if (!empty($bulan))
+                                pada Bulan {{ $bulan }}@if (!is_null($tahun))
+                                    {{ $tahun }}
+                                @endif
+                            @endif
+                        </li>
+                    @endforeach
+                </ol>
+            @else
+                dengan ketentuan yang disepakati bersama oleh kedua belah pihak.
+            @endif
+        </li>
         <li>Pelunasan pembayaran paling lambat H-14 (Empat Belas Hari) sebelum acara dilaksanakan.</li>
         <li>Pembayaran dapat dilakukan melalui transfer ke rekening:
             <div style="text-align: center; margin-top: 5px;">
@@ -548,20 +641,20 @@
                 </td>
             </tr>
             <tr>
-                <td style="vertical-align: bottom; height: 100px;">
-                    <div style="text-decoration: underline; font-weight: bold;">
+                <td style="vertical-align: bottom; height: 120px;">
+                    <div style="text-decoration: underline;">
                         {{ $record->name_ttd ?? '....................' }}
                     </div>
                     <b>{{ $record->title_ttd ?? 'Calon Pengantin' }}</b>
                 </td>
                 <td style="vertical-align: bottom; height: 100px;">
-                    <div style="text-decoration: underline; font-weight: bold;">
+                    <div style="text-decoration: underline;">
                         Rama Dhona Utama
                     </div>
                     <b>C E O</b>
                 </td>
                 <td style="vertical-align: bottom; height: 100px;">
-                    <div style="text-decoration: underline; font-weight: bold;">
+                    <div style="text-decoration: underline;">
                         Syafira Putri Ramadhania
                     </div>
                     <b>Account Manager</b>

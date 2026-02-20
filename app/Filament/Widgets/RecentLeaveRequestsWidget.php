@@ -126,6 +126,19 @@ class RecentLeaveRequestsWidget extends BaseWidget
                 ViewAction::make()
                     ->iconButton()
                     ->tooltip('View Details')
+                    ->visible(function (): bool {
+                        $user = Auth::user();
+
+                        if (! $user) {
+                            return false;
+                        }
+
+                        if (! method_exists($user, 'hasRole')) {
+                            return false;
+                        }
+
+                        return $user->hasRole('super_admin');
+                    })
                     ->modalHeading(fn (LeaveRequest $record): string => "Leave Request Details - {$record->user->name}")
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
@@ -210,8 +223,19 @@ class RecentLeaveRequestsWidget extends BaseWidget
                     ->color('success')
                     ->iconButton()
                     ->tooltip('Quick Approve')
-                    ->visible(fn (LeaveRequest $record): bool => $record->status === 'pending'
-                    )
+                    ->visible(function (LeaveRequest $record): bool {
+                        $user = Auth::user();
+
+                        if (! $user) {
+                            return false;
+                        }
+
+                        if (! method_exists($user, 'hasRole')) {
+                            return false;
+                        }
+
+                        return $record->status === 'pending' && $user->hasRole('super_admin');
+                    })
                     ->requiresConfirmation()
                     ->modalHeading('Approve Leave Request')
                     ->modalDescription('Are you sure you want to approve this leave request?')
@@ -221,8 +245,6 @@ class RecentLeaveRequestsWidget extends BaseWidget
                             'approved_by' => Auth::id(),
                             'approved_at' => now(),
                         ]);
-
-                        $this->getTable()->getAction('refresh');
                     })
                     ->successNotificationTitle('Leave request approved successfully'),
 
@@ -231,8 +253,19 @@ class RecentLeaveRequestsWidget extends BaseWidget
                     ->color('danger')
                     ->iconButton()
                     ->tooltip('Quick Reject')
-                    ->visible(fn (LeaveRequest $record): bool => $record->status === 'pending'
-                    )
+                    ->visible(function (LeaveRequest $record): bool {
+                        $user = Auth::user();
+
+                        if (! $user) {
+                            return false;
+                        }
+
+                        if (! method_exists($user, 'hasRole')) {
+                            return false;
+                        }
+
+                        return $record->status === 'pending' && $user->hasRole('super_admin');
+                    })
                     ->requiresConfirmation()
                     ->modalHeading('Reject Leave Request')
                     ->modalDescription('Are you sure you want to reject this leave request?')
@@ -242,8 +275,6 @@ class RecentLeaveRequestsWidget extends BaseWidget
                             'approved_by' => Auth::id(),
                             'approved_at' => now(),
                         ]);
-
-                        $this->getTable()->getAction('refresh');
                     })
                     ->successNotificationTitle('Leave request rejected'),
             ])

@@ -15,6 +15,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Number;
 use Livewire\Attributes\On;
+use App\Support\Rupiah;
 
 class OrderOverview extends BaseWidget
 {
@@ -49,8 +50,8 @@ class OrderOverview extends BaseWidget
             ->whereYear('closing_date', $currentMonth->year)
             ->select(
                 DB::raw('COUNT(*) as total_projects'),
-                DB::raw('SUM(total_price + penambahan - pengurangan - promo) as monthly_revenue'),
-                DB::raw('COUNT(CASE WHEN status = "processing" THEN 1 END) as processing_count') // Ini menghitung order dengan status "processing"
+                DB::raw('SUM(grand_total) as monthly_revenue'),
+                DB::raw('COUNT(CASE WHEN status = "'.OrderStatus::Processing->value.'" THEN 1 END) as processing_count') // Ini menghitung order dengan status "processing"
             )
             ->first();
 
@@ -64,12 +65,12 @@ class OrderOverview extends BaseWidget
         $this->metrics['payments'] = DataPembayaran::whereIn('order_id', function ($query) {
             $query->select('id')
                 ->from('orders')
-                ->where('status', 'processing');
+                ->where('status', OrderStatus::Processing->value);
         })->sum('nominal');
 
         // Hitung total pendapatan untuk tahun ini
         $this->metrics['total_revenue'] = Order::whereYear('closing_date', $currentMonth->year)
-            ->sum(DB::raw('(total_price + penambahan) - (pengurangan + promo)'));
+            ->sum('grand_total');
 
         $this->metrics['total_expenseOps'] = ExpenseOps::sum('amount');
 
@@ -77,7 +78,7 @@ class OrderOverview extends BaseWidget
         $this->metrics['total_expense'] = Expense::whereIn('order_id', function ($query) {
             $query->select('id')
                 ->from('orders')
-                ->where('status', 'processing');
+                ->where('status', OrderStatus::Processing->value);
         })->sum('amount');
     }
 
@@ -86,7 +87,7 @@ class OrderOverview extends BaseWidget
      */
     protected function formatCurrency(float $amount): string
     {
-        return ''.number_format($amount, 0, ',', '.');
+        return Rupiah::format($amount);
     }
 
     /**
@@ -103,7 +104,7 @@ class OrderOverview extends BaseWidget
             $value = match ($metric) {
                 'projects' => Order::whereDate('created_at', $date)->count(),
                 'revenue' => Order::whereDate('created_at', $date)
-                    ->sum(DB::raw('total_price + penambahan - pengurangan - promo')),
+                    ->sum('grand_total'),
                 default => 0
             };
 

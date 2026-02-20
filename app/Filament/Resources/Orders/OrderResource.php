@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders;
 
+use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\Pages\CreateOrder;
 use App\Filament\Resources\Orders\Pages\EditOrder;
 use App\Filament\Resources\Orders\Pages\Invoice;
@@ -107,7 +108,7 @@ class OrderResource extends Resource
         /** @var class-string<Model> $modelClass */
         $modelClass = static::$model;
 
-        return (string) $modelClass::where('status', 'processing')->count();
+        return (string) $modelClass::where('status', \App\Enums\OrderStatus::Processing->value)->count();
     }
 
     public static function getGloballySearchableAttributes(): array
@@ -280,7 +281,12 @@ class OrderResource extends Resource
 
                 // Hitung ulang grand_total berdasarkan nilai baru
                 $promo = self::safeFloatVal($get('promo'));
-                $grandTotal = $calculatedTotalPrice + $calculatedProductPenambahan - $promo - $calculatedProductPengurangan;
+                $grandTotal = Order::computeGrandTotalFromValues(
+                    (float) $calculatedTotalPrice,
+                    (float) $calculatedProductPenambahan,
+                    (float) $promo,
+                    (float) $calculatedProductPengurangan
+                );
                 $set('grand_total', $grandTotal); // Mengatur field 'grand_total' di form Order
             });
     }
@@ -321,7 +327,12 @@ class OrderResource extends Resource
         // Recalculate grand_total
         $promo = self::safeFloatVal($get('promo'));
         // Gunakan $calculatedProductPengurangan dan $calculatedProductPenambahan yang baru dihitung
-        $grandTotal = $calculatedTotalPrice + $calculatedProductPenambahan - $promo - $calculatedProductPengurangan;
+        $grandTotal = Order::computeGrandTotalFromValues(
+            (float) $calculatedTotalPrice,
+            (float) $calculatedProductPenambahan,
+            (float) $promo,
+            (float) $calculatedProductPengurangan
+        );
         $set('grand_total', $grandTotal);
 
         // Panggil method baru untuk update sisa dan is_paid
@@ -346,7 +357,12 @@ class OrderResource extends Resource
         $pengurangan_val = self::safeFloatVal($get('pengurangan'));
         $promo_val = self::safeFloatVal($get('promo'));
         $penambahan_val = self::safeFloatVal($get('penambahan'));
-        $grandTotal = $total_price + $penambahan_val - $promo_val - $pengurangan_val;
+        $grandTotal = Order::computeGrandTotalFromValues(
+            $total_price,
+            $penambahan_val,
+            $promo_val,
+            $pengurangan_val
+        );
         $set('grand_total', $grandTotal);
 
         // Hitung 'bayar' dari repeater 'dataPembayaran' dengan safe conversion

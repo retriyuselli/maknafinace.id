@@ -11,6 +11,7 @@ use App\Filament\Resources\SimulasiProduks\Pages\ViewSimulasiInvoice;
 use App\Models\Product;
 use App\Models\Prospect;
 use App\Models\SimulasiProduk;
+use App\Support\Rupiah;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -54,57 +55,6 @@ class SimulasiProdukResource extends Resource
                     Tab::make('Detail Simulasi')
                         ->icon('heroicon-o-document-text')
                         ->schema([
-                            Section::make('Simulation Details')
-                                ->icon('heroicon-o-identification')
-                                ->schema([
-                                    Select::make('prospect_id')
-                                        ->relationship(
-                                            name: 'prospect',
-                                            titleAttribute: 'name_event',
-                                            modifyQueryUsing: fn (Builder $query, ?SimulasiProduk $record) => $query->whereDoesntHave('orders', function (Builder $orderQuery) {
-                                                $orderQuery->whereNotNull('status'); // Hanya prospek yang TIDAK memiliki order dengan status apapun
-                                            })->when($record, fn ($q) => $q->orWhere('id', $record->prospect_id)),
-                                        )
-                                        ->label('Select Prospect (for Simulation Name & Slug)')
-                                        ->required()
-                                        ->searchable()
-                                        ->preload()
-                                        ->reactive()
-                                        ->live(onBlur: true)
-                                        ->afterStateUpdated(function (Set $set, ?string $state) {
-                                            if ($state) {
-                                                $prospect = Prospect::find($state);
-                                                if ($prospect && isset($prospect->name_event)) {
-                                                    $set('name', $prospect->name_event); // Set the hidden 'name' field
-                                                    $set('slug', Str::slug($prospect->name_event));
-                                                } else {
-                                                    $set('name', null);
-                                                    $set('slug', null);
-                                                }
-                                            } else {
-                                                $set('name', null);
-                                                $set('slug', null);
-                                            }
-                                        })
-                                        ->columnSpanFull(),
-                                    TextInput::make('name_ttd')
-                                        ->label('Name TTD')
-                                        ->maxLength(255),
-                                    TextInput::make('title_ttd')
-                                        ->label('Title TTD')
-                                        ->maxLength(255),
-                                    Hidden::make('name')
-                                        ->dehydrated(), // To store the name derived from prospect
-                                    TextInput::make('slug')
-                                        ->required()
-                                        ->maxLength(255)
-                                        ->disabled()
-                                        ->dehydrated()
-                                        ->unique(SimulasiProduk::class, 'slug', ignoreRecord: true),
-                                    RichEditor::make('notes')
-                                        ->columnSpanFull(),
-                                ])
-                                ->columns(2),
 
                             Section::make('Product & Pricing')
                                 ->icon('heroicon-o-shopping-bag')
@@ -157,7 +107,7 @@ class SimulasiProdukResource extends Resource
                                         ->afterStateUpdated(function (Get $get, Set $set) {
                                             static::recalculateGrandTotal($get, $set);
                                         })
-                                        ->formatStateUsing(fn ($state) => number_format((float)$state, 0, '.', ','))
+                                        ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ','))
                                         ->helperText('Nilai ini otomatis diambil dari harga Produk (price) dan akan ikut berubah jika harga produk diperbarui lalu simulasi di-refresh.'),
                                     TextInput::make('promo')
                                         ->label('Potongan Harga (Promo)')
@@ -168,7 +118,7 @@ class SimulasiProdukResource extends Resource
                                         ->reactive()
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(fn (Get $get, Set $set) => static::recalculateGrandTotal($get, $set))
-                                        ->formatStateUsing(fn ($state) => number_format((float)$state, 0, '.', ',')),
+                                        ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ',')),
                                     TextInput::make('penambahan')
                                         ->label('Penambahan Biaya')
                                         ->prefix('Rp')
@@ -178,7 +128,7 @@ class SimulasiProdukResource extends Resource
                                         ->reactive()
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(fn (Get $get, Set $set) => static::recalculateGrandTotal($get, $set))
-                                        ->formatStateUsing(fn ($state) => number_format((float)$state, 0, '.', ',')),
+                                        ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ',')),
                                     TextInput::make('pengurangan')
                                         ->label('Pengurangan Lain')
                                         ->prefix('Rp')
@@ -188,7 +138,7 @@ class SimulasiProdukResource extends Resource
                                         ->reactive()
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(fn (Get $get, Set $set) => static::recalculateGrandTotal($get, $set))
-                                        ->formatStateUsing(fn ($state) => number_format((float)$state, 0, '.', ',')),
+                                        ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ',')),
                                     TextInput::make('grand_total')
                                         ->label('Grand Total')
                                         ->prefix('Rp')
@@ -197,10 +147,63 @@ class SimulasiProdukResource extends Resource
                                         ->readOnly()
                                         ->dehydrated()
                                         ->default(0)
-                                        ->formatStateUsing(fn ($state) => number_format((float)$state, 0, '.', ','))
+                                        ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ','))
                                         ->helperText('Grand Total dihitung dari Base Total Price + Penambahan - Promo - Pengurangan dan akan mengikuti perubahan jika harga produk disinkronkan.'),
                                 ])
                                 ->columnSpanFull(),
+
+                            Section::make('Simulation Details')
+                                ->icon('heroicon-o-identification')
+                                ->schema([
+                                    Select::make('prospect_id')
+                                        ->relationship(
+                                            name: 'prospect',
+                                            titleAttribute: 'name_event',
+                                            modifyQueryUsing: fn (Builder $query, ?SimulasiProduk $record) => $query->whereDoesntHave('orders', function (Builder $orderQuery) {
+                                                $orderQuery->whereNotNull('status'); // Hanya prospek yang TIDAK memiliki order dengan status apapun
+                                            })->when($record, fn ($q) => $q->orWhere('id', $record->prospect_id)),
+                                        )
+                                        ->label('Select Prospect (for Simulation Name & Slug)')
+                                        ->required()
+                                        ->searchable()
+                                        ->preload()
+                                        ->reactive()
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(function (Set $set, ?string $state) {
+                                            if ($state) {
+                                                $prospect = Prospect::find($state);
+                                                if ($prospect && isset($prospect->name_event)) {
+                                                    $set('name', $prospect->name_event); // Set the hidden 'name' field
+                                                    $set('slug', Str::slug($prospect->name_event));
+                                                } else {
+                                                    $set('name', null);
+                                                    $set('slug', null);
+                                                }
+                                            } else {
+                                                $set('name', null);
+                                                $set('slug', null);
+                                            }
+                                        })
+                                        ->columnSpanFull(),
+                                    TextInput::make('name_ttd')
+                                        ->label('Name TTD')
+                                        ->maxLength(255),
+                                    TextInput::make('title_ttd')
+                                        ->label('Title TTD')
+                                        ->maxLength(255),
+                                    Hidden::make('name')
+                                        ->dehydrated(), // To store the name derived from prospect
+                                    TextInput::make('slug')
+                                        ->required()
+                                        ->maxLength(255)
+                                        ->disabled()
+                                        ->dehydrated()
+                                        ->unique(SimulasiProduk::class, 'slug', ignoreRecord: true),
+                                    RichEditor::make('notes')
+                                        ->columnSpanFull(),
+                                ])
+                                ->columns(2),
+
                         ]),
                     Tab::make('Pola Pembayaran')
                         ->icon('heroicon-o-currency-dollar')
@@ -228,7 +231,7 @@ class SimulasiProdukResource extends Resource
                                     }
                                     $set('total_simulation', $total);
                                 })
-                                ->formatStateUsing(fn ($state) => number_format((float)$state, 0, '.', ',')),
+                                ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ',')),
                             Repeater::make('payment_simulation')
                                 ->label('Simulasi Pembayaran')
                                 ->schema([
@@ -257,27 +260,30 @@ class SimulasiProdukResource extends Resource
                                         ->prefix('Rp')
                                         ->mask(RawJs::make('$money($input)'))
                                         ->stripCharacters(',')
-                                        // ->reactive()
                                         ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                             $grandTotal = static::parseCurrency($get('../../grand_total'));
                                             $dp = static::parseCurrency($get('../../payment_dp_amount'));
                                             $remaining = $grandTotal - $dp;
                                             $nominalVal = static::parseCurrency($state);
                                             if ($remaining > 0) {
-                                                    $persen = ($nominalVal / $remaining) * 100;
-                                                    $set('persen', number_format($persen, 2));
+                                                $persen = ($nominalVal / $remaining) * 100;
+                                                $set('persen', number_format($persen, 2));
                                             }
                                             $items = $get('../../payment_simulation') ?? [];
                                             $total = $dp;
                                             foreach ($items as $item) {
                                                 $total += static::parseCurrency($item['nominal'] ?? 0);
                                             }
-                                             $set('../../total_simulation', $total);
-                                         })
-                                         ->formatStateUsing(fn ($state) => number_format((float)$state, 0, '.', ',')),
+                                            $set('../../total_simulation', $total);
+                                        })
+                                        ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ',')),
                                     Select::make('bulan')
                                         ->label('Bulan / Termin')
                                         ->options(MonthEnum::class),
+                                    TextInput::make('tahun')
+                                        ->label('Tahun')
+                                        ->numeric()
+                                        ->default(date('Y')),
                                 ])
                                 ->columns(3)
                                 ->columnSpanFull(),
@@ -294,11 +300,12 @@ class SimulasiProdukResource extends Resource
                                         $grandTotal = static::parseCurrency($get('grand_total'));
                                         $currentTotal = static::parseCurrency($value);
                                         if (abs($grandTotal - $currentTotal) > 1000) {
-                                            $fail('Total Pembayaran (DP + Termin) tidak sama dengan Grand Total (Nilai Paket). Selisih: ' . number_format($grandTotal - $currentTotal, 0, '.', ','));
+                                            $difference = $grandTotal - $currentTotal;
+                                            $fail('Total Pembayaran (DP + Termin) tidak sama dengan Grand Total (Nilai Paket). Selisih: ' . number_format($difference, 0, '.', ','));
                                         }
                                     },
                                 ])
-                                ->formatStateUsing(fn ($state) => number_format((float)$state, 0, '.', ',')),
+                                ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ',')),
                         ]),
                     Tab::make('Meta Info')
                         ->icon('heroicon-o-information-circle')
@@ -425,11 +432,7 @@ class SimulasiProdukResource extends Resource
 
     public static function parseCurrency($value): float
     {
-        if (empty($value)) return 0;
-        // Format: 83,350,000 (US Standard / International)
-        // Remove commas (thousands separator)
-        $clean = str_replace(',', '', $value);
-        return (float) $clean;
+        return Rupiah::parse($value);
     }
 
     public static function recalculateGrandTotal(Get $get, Set $set, string $basePath = ''): void
@@ -441,7 +444,7 @@ class SimulasiProdukResource extends Resource
 
         $grand_total = $total_price + $penambahan - $promo - $pengurangan;
         $set($basePath.'grand_total', $grand_total);
-        $set($basePath.'grand_total_display', number_format($grand_total, 0, '.', ','));
+        $set($basePath.'grand_total_display', Rupiah::format($grand_total));
     }
 
     public static function getRelations(): array

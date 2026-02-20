@@ -265,7 +265,7 @@
                     <td>{{ $order->closing_date ? \Carbon\Carbon::parse($order->closing_date)->format('d M Y') : '-' }}
                     </td>
                     <td class="text-right number">Rp
-                        {{ number_format($totalPembayaranDiterimaOrder ?? 0, 0, ',', '.') }}</td>
+                        {{ number_format($order->bayar ?? $totalPembayaranDiterimaOrder ?? 0, 0, ',', '.') }}</td>
                     <td class="text-right number">Rp {{ number_format($order->grand_total ?? 0, 0, ',', '.') }}</td>
                     <td class="text-right number">Rp {{ number_format($order->tot_pengeluaran ?? 0, 0, ',', '.') }}
                     </td>

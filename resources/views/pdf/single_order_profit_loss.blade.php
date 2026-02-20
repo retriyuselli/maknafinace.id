@@ -537,8 +537,8 @@
                     <td class="text-right">Rp {{ number_format($order->sisa, 0, ',', '.') }}</td>
                 </tr>
                 @php
-                    $totalExpenses = $order->expenses->sum('amount') ?? 0;
-                    $profitLoss = $order->laba_kotor ?? ($order->grand_total - $totalExpenses);
+                    $totalExpenses = $order->tot_pengeluaran ?? $order->expenses->sum('amount') ?? 0;
+                    $profitLoss = $order->laba_kotor ?? (($order->grand_total ?? 0) - $totalExpenses);
                 @endphp
                 <tr>
                     <td class="bold">Total Pengeluaran</td>
@@ -685,9 +685,9 @@
 
     <!-- Analisis Laba Rugi -->
     @php
-        $totalRevenue = $order->grand_total;
-        $totalExpenses = $order->expenses->sum('amount') ?? 0;
-        $profitLoss = $totalRevenue - $totalExpenses;
+        $totalRevenue = $order->grand_total ?? 0;
+        $totalExpenses = $order->tot_pengeluaran ?? $order->expenses->sum('amount') ?? 0;
+        $profitLoss = $order->laba_bersih ?? ($totalRevenue - $totalExpenses);
         $profitMargin = $totalRevenue > 0 ? ($profitLoss / $totalRevenue) * 100 : 0;
     @endphp
     <div class="analysis-box {{ $profitLoss >= 0 ? 'profit' : 'loss' }}">

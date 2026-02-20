@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Services\OrderFinance;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,10 +11,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class Order extends Model
 {
     use HasFactory, SoftDeletes;
+
+    public static function computeGrandTotalFromValues(float $totalPrice, float $penambahan, float $promo, float $pengurangan): float
+    {
+        return OrderFinance::computeGrandTotalFromValues($totalPrice, $penambahan, $promo, $pengurangan);
+    }
 
     protected $fillable = [
         'prospect_id',
@@ -54,15 +61,25 @@ class Order extends Model
         'kategori_transaksi' => 'string',
     ];
 
+    protected function finance(): OrderFinance
+    {
+        return OrderFinance::for($this);
+    }
+
     protected static function booted(): void
     {
         static::deleting(function (Order $order) {
             // Saat sebuah Order dihapus, hapus juga semua relasi terkait.
             // Ini memastikan tidak ada data 'yatim' (orphaned records) di database.
-            $order->expenses()->each(fn ($expense) => $expense->delete());
-            $order->dataPembayaran()->each(fn ($pembayaran) => $pembayaran->delete());
-            // Anda juga bisa menambahkan relasi lain di sini jika perlu, contoh:
-            // $order->items()->each(fn ($item) => $item->delete());
+            $order->expenses()->each(fn (Expense $expense) => $expense->delete());
+            $order->dataPembayaran()->each(fn (DataPembayaran $pembayaran) => $pembayaran->delete());
+            $order->items()->each(fn (OrderProduct $item) => $item->delete());
+            if (Schema::hasTable('order_penambahans')) {
+                $order->orderPenambahans()->each(fn (OrderPenambahan $penambahan) => $penambahan->delete());
+            }
+            if (Schema::hasTable('order_pengurangans')) {
+                $order->orderPengurangans()->each(fn (OrderPengurangan $pengurangan) => $pengurangan->delete());
+            }
         });
     }
 
@@ -121,6 +138,21 @@ class Order extends Model
         return $this->belongsTo(Product::class);
     }
 
+    protected function grandTotalBase(): float
+    {
+        return $this->finance()->grandTotalBase();
+    }
+
+    protected function paymentsTotal(): float
+    {
+        return $this->finance()->paymentsTotal();
+    }
+
+    protected function expensesTotal(): float
+    {
+        return $this->finance()->expensesTotal();
+    }
+
     public function calculateTotalPrice(): float
     {
         $totalPrice = 0;
@@ -136,20 +168,14 @@ class Order extends Model
         return $this->hasMany(DataPembayaran::class);
     }
 
-    // Uang Dibayar
     public function getBayarAttribute()
     {
-        $totalPayment = $this->dataPembayaran->sum('nominal');
-
-        return $totalPayment;
+        return $this->finance()->bayar();
     }
 
-    // Sisa Pembayaran
     public function getSisaAttribute()
     {
-        $totalPayment = $this->dataPembayaran->sum('nominal');
-
-        return ($this->calculateTotalPrice() + $this->penambahan - $this->promo - $this->pengurangan) - $totalPayment;
+        return $this->finance()->sisa();
     }
 
     public function dataPengeluaran(): HasMany
@@ -157,39 +183,24 @@ class Order extends Model
         return $this->hasMany(Expense::class);
     }
 
-    // Total Pengeluaran
     public function getTotPengeluaranAttribute()
     {
-        return $this->dataPengeluaran->sum('amount');
+        return $this->finance()->totPengeluaran();
     }
 
-    // Total Paket Akhir
     public function getGrandTotalAttribute()
     {
-        return $this->total_price + $this->penambahan - $this->promo - $this->pengurangan;
+        return $this->finance()->grandTotal();
     }
 
-    // Laba Rugi
     public function getTotSisaAttribute()
     {
-        return $this->getBayarAttribute() - $this->getTotPengeluaranAttribute();
+        return $this->finance()->totSisa();
     }
 
     public function getRouteKeyName()
     {
         return 'slug';
-    }
-
-    public function getTotPriceAttribute()
-    {
-        $totalPriceClosing = $this->sum('total_price');
-
-        return $totalPriceClosing;
-    }
-
-    public function getClosing()
-    {
-        return $this->orders->totPrice;
     }
 
     public function setProspectAttribute($value)
@@ -202,49 +213,40 @@ class Order extends Model
 
     public function getPendapatanAttribute()
     {
-        return $this->getBayarAttribute() + $this->penambahan;
+        return $this->finance()->pendapatan();
     }
 
     public function getPengeluaranAttribute()
     {
-        return $this->pengurangan + $this->promo + $this->getTotPengeluaranAttribute();
+        return $this->finance()->pengeluaran();
     }
 
     // Laba Kotor
     public function getLabaKotorAttribute()
     {
-        return $this->getGrandTotalAttribute() - $this->getTotPengeluaranAttribute();
+        return $this->finance()->labaKotor();
     }
 
     public function getLabaBersihAttribute()
     {
-        return $this->getPendapatanDpAttribute() - $this->getTotPengeluaranAttribute();
+        return $this->finance()->labaBersih();
     }
 
     public function calculateProfit()
     {
-        return $this->total_price
-            - $this->promo
-            - $this->pengurangan
-            + $this->penambahan;
+        return $this->finance()->grandTotal();
     }
 
     public function getUangDiterimaAttribute()
     {
-        return $this->getBayarAttribute() - $this->getTotPengeluaranAttribute();
+        return $this->finance()->uangDiterima();
     }
 
-    /**
-     * Calculate and set grand_total before saving
-     */
     public function calculateAndSetGrandTotal()
     {
-        $this->grand_total = $this->total_price + $this->penambahan - $this->promo - $this->pengurangan;
+        $this->grand_total = $this->grandTotalBase();
     }
 
-    /**
-     * Boot method untuk auto-calculate grand_total
-     */
     protected static function boot()
     {
         parent::boot();

@@ -43,10 +43,10 @@ class OrdersTable
                 TextColumn::make('status')
                     ->badge()
                     ->colors([
-                        'warning' => 'pending',
-                        'success' => 'processing',
-                        'danger' => 'cancelled',
-                        'primary' => 'done',
+                        'warning' => OrderStatus::Pending->value,
+                        'success' => OrderStatus::Processing->value,
+                        'danger' => OrderStatus::Cancelled->value,
+                        'primary' => OrderStatus::Done->value,
                     ]),
                 TextColumn::make('payment_status')
                     ->label('Pembayaran')

@@ -305,12 +305,14 @@ class NotaDinasDetailResource extends Resource
                                 ->relationship('order', 'name', fn ($query) => $query->whereIn('status', [OrderStatus::Processing, OrderStatus::Done]))
                                 ->searchable()
                                 ->preload()
+                                ->columnSpan('full')
                                 ->visible(fn (Get $get): bool => $get('jenis_pengeluaran') === PengeluaranJenis::WEDDING->value)
                                 ->placeholder('Pilih order (Processing / Done)'),
 
                             TextInput::make('event')
                                 ->label('Event')
                                 ->maxLength(255)
+                                ->columnSpan('full')
                                 ->placeholder('Nama event/acara')
                                 ->visible(fn (Get $get): bool => $get('jenis_pengeluaran') !== PengeluaranJenis::WEDDING->value),
                         ]),

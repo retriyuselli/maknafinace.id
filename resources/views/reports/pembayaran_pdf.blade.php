@@ -231,8 +231,8 @@
                                 <td class="text-right">Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
                             </tr>
                             @php
-                                $prevGrandTotal = $currentOrderObject ? $currentOrderObject->grand_total : 0;
-                                $balanceDue = $prevGrandTotal - $subtotal;
+                                $prevGrandTotal = $currentOrderObject ? ($currentOrderObject->grand_total ?? 0) : 0;
+                                $balanceDue = $currentOrderObject ? ($currentOrderObject->sisa ?? ($prevGrandTotal - $subtotal)) : ($prevGrandTotal - $subtotal);
                                 $statusLunas = $balanceDue <= 0 ? 'LUNAS' : 'BELUM LUNAS';
                                 $statusColor = $balanceDue <= 0 ? 'green' : 'red';
                             @endphp
