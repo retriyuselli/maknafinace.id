@@ -59,8 +59,6 @@ class DatabaseSeeder extends Seeder
             NotaDinasSeeder::class,        // Nota dinas untuk pengeluaran.
             NotaDinasDetailSeeder::class,  // Detail nota dinas untuk pengeluaran.
             UpdateNotaDinasNomorSeeder::class, // Update format nomor nota dinas lama.
-            InternalMessageSeeder::class,  // Pesan internal antar user.
-
             // 7. Data Finansial (tergantung pada PaymentMethod, Order, NotaDinas)
             BankStatementSeeder::class,    // Laporan bank (opsional).
             BankTransactionSeeder::class,  // Transaksi bank per statement.

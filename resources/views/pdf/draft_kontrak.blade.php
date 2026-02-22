@@ -515,7 +515,7 @@
         <tr>
             <td class="label">Hari / Tanggal</td>
             <td class="separator">:</td>
-            <td>{{ $prospect->date_akad ? \Carbon\Carbon::parse($prospect->date_akad)->translatedFormat('l, d F Y') : '-' }}
+            <td>{{ $prospect->date_akad ? \Carbon\Carbon::parse($prospect->date_akad)->locale('id')->translatedFormat('l, d F Y') : '-' }}
             </td>
         </tr>
         <tr>
@@ -544,7 +544,7 @@
         <tr>
             <td class="label">Hari / Tanggal</td>
             <td class="separator">:</td>
-            <td>{{ $prospect->date_resepsi ? \Carbon\Carbon::parse($prospect->date_resepsi)->translatedFormat('l, d F Y') : '-' }}
+            <td>{{ $prospect->date_resepsi ? \Carbon\Carbon::parse($prospect->date_resepsi)->locale('id')->translatedFormat('l, d F Y') : '-' }}
             </td>
         </tr>
         <tr>
@@ -703,8 +703,13 @@
                     <li>
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div style="margin-right: 10px;">
-                                <div style="font-weight: normal;">
+                                <div style="font-weight: normal; overflow: hidden;">
                                     {{ strtoupper($item->vendor->name ?? 'Penambahan Tanpa Nama') }}
+                                    @if (!is_null($item->harga_publish))
+                                        <span style="float: right; margin-right: 100px;">
+                                            Rp {{ number_format((int) $item->harga_publish, 0, ',', '.') }},-
+                                        </span>
+                                    @endif
                                 </div>
                                 @if (!empty($item->description))
                                     <div>
@@ -728,8 +733,13 @@
                     <li>
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div style="margin-right: 10px;">
-                                <div style="font-weight: normal;">
+                                <div style="font-weight: normal; overflow: hidden;">
                                     {{ strtoupper($item->description ?? 'Pengurangan Tanpa Nama') }}
+                                    @if (!is_null($item->amount))
+                                        <span style="float: right; margin-right: 100px;">
+                                            Rp {{ number_format((int) $item->amount, 0, ',', '.') }},-
+                                        </span>
+                                    @endif
                                 </div>
                                 @if (!empty($item->notes))
                                     <div>
