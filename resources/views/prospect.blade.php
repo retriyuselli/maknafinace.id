@@ -148,26 +148,47 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label for="date_lamaran" class="form-label">Tanggal Lamaran</label>
-                    <input type="date" class="form-control @error('date_lamaran') is-invalid @enderror"
-                        id="date_lamaran" name="date_lamaran" value="{{ old('date_lamaran') }}">
+                    <div class="input-group">
+                        <input type="date" class="form-control @error('date_lamaran') is-invalid @enderror"
+                            id="date_lamaran" name="date_lamaran" value="{{ old('date_lamaran') }}">
+                        <input type="time" class="form-control @error('time_lamaran') is-invalid @enderror"
+                            id="time_lamaran" name="time_lamaran" value="{{ old('time_lamaran') }}">
+                    </div>
                     @error('date_lamaran')
                         <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    @error('time_lamaran')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="date_akad" class="form-label">Tanggal Akad Nikah</label>
-                    <input type="date" class="form-control @error('date_akad') is-invalid @enderror" id="date_akad"
-                        name="date_akad" value="{{ old('date_akad') }}">
+                    <div class="input-group">
+                        <input type="date" class="form-control @error('date_akad') is-invalid @enderror" id="date_akad"
+                            name="date_akad" value="{{ old('date_akad') }}">
+                        <input type="time" class="form-control @error('time_akad') is-invalid @enderror"
+                            id="time_akad" name="time_akad" value="{{ old('time_akad') }}">
+                    </div>
                     @error('date_akad')
                         <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    @error('time_akad')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="date_resepsi" class="form-label">Tanggal Resepsi</label>
-                    <input type="date" class="form-control @error('date_resepsi') is-invalid @enderror"
-                        id="date_resepsi" name="date_resepsi" value="{{ old('date_resepsi') }}">
+                    <div class="input-group">
+                        <input type="date" class="form-control @error('date_resepsi') is-invalid @enderror"
+                            id="date_resepsi" name="date_resepsi" value="{{ old('date_resepsi') }}">
+                        <input type="time" class="form-control @error('time_resepsi') is-invalid @enderror"
+                            id="time_resepsi" name="time_resepsi" value="{{ old('time_resepsi') }}">
+                    </div>
                     @error('date_resepsi')
                         <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    @error('time_resepsi')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
                 </div>
             </div>

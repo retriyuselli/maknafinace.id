@@ -7,13 +7,13 @@
     <style>
         @page {
             /* Top margin adjusted to ensure content starts below the fixed header on all pages */
-            margin: 110px 50px 50px 90px;
+            margin: 110px 45px 30px 65px;
         }
 
         body {
             font-family: 'DejaVu Sans', sans-serif;
             font-size: 11px;
-            line-height: 1.2;
+            line-height: 1;
             color: #000;
             margin: 0;
         }
@@ -39,7 +39,7 @@
 
         .logo-img {
             max-height: 60px;
-            width: auto;
+            width: 80%;
         }
 
         /* Footer */
@@ -84,35 +84,129 @@
             text-align: center;
             font-weight: bold;
             font-size: 11px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .section-title {
             font-weight: bold;
-            margin-top: 15px;
-            margin-bottom: 5px;
+            margin-top: 5px;
+            margin-bottom: 5px !important;
             text-transform: uppercase;
             font-size: 11px;
+            text-decoration: underline;
         }
 
-        .facility-list ol {
-            margin: 0;
+        .facility-list {
+            /* margin-top: 5px; */
+            margin-bottom: 5px;
+        }
+
+        .facility-list>ol {
+            margin-top: 5px;
+            margin-bottom: 5px;
             padding-left: 20px;
         }
 
-        .facility-list ol ol {
-            list-style-type: none;
-            padding-left: 15px;
+        .facility-list>ol>li {
             margin-top: 5px;
+            margin-bottom: 0px;
         }
 
-        .facility-list ol ol>li {
-            text-indent: -10px;
-            margin-left: 10px;
+        .facility-list>ol>li>ol {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            /* padding-left: 15px; */
         }
 
-        .facility-list ol ol>li::before {
-            content: "- ";
+        .facility-list p {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .facility-list li ol {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            padding-left: 10px;
+            list-style-type: lower-alpha;
+        }
+
+        .penambahan-list {
+            margin-top: 5px;
+            margin-bottom: 0px;
+        }
+
+        .penambahan-list>ol {
+            margin-top: 0px;
+            margin-bottom: 5px;
+            padding-left: 20px;
+        }
+
+        .penambahan-list>ol>li {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .penambahan-list>ol>li>ol {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            /* padding-left: 15px; */
+        }
+
+        .penambahan-list p {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .penambahan-list li ol {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            padding-left: 30px;
+            list-style-type: lower-alpha;
+        }
+
+        .pengurangan-list {
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+
+        .pengurangan-list>ol {
+            margin-top: 0;
+            margin-bottom: 5px;
+            padding-left: 20px;
+        }
+
+        .pengurangan-list>ol>li {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .pengurangan-list>ol>li>ol {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            /* padding-left: 15px; */
+        }
+
+        .pengurangan-list p {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .pengurangan-list li ol {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            padding-left: 30px;
+            list-style-type: lower-alpha;
+        }
+
+        .konfirmasi-list {
+            margin-top: 5px;
+            margin-bottom: 10px;
+            padding-left: 20px;
+        }
+
+        .konfirmasi-list>li {
+            margin-top: 5px;
+            margin-bottom: 5px;
         }
 
         /* Content Tables */
@@ -129,7 +223,7 @@
 
         .label {
             width: 130px;
-            font-weight: bold;
+            font-weight: normal;
         }
 
         .separator {
@@ -148,14 +242,13 @@
             padding-left: 20px;
         }
 
-
-
         li {
-            margin-bottom: 3px;
+            margin-bottom: 5px;
             text-align: justify;
         }
 
         li p {
+            margin-bottom: 5px;
             margin: 0;
             display: inline;
         }
@@ -212,32 +305,96 @@
 
 <body>
     <div class="watermark"></div>
+    @php
+        $companyName = '{Isi dengan nama perusahaan}';
+        $companyAddress = '{Isi dengan alamat perusahaan}';
+        $companyPhone = '{Isi dengan nomor telepon perusahaan}';
+        $companyEmail = '{Isi dengan email perusahaan}';
+        $companyOwnerName = '{Isi dengan nama pemilik perusahaan}';
+        $companyOwnerPosition = '{Isi dengan jabatan pemilik perusahaan}';
+        $companyBankName = '{Isi dengan nama bank perusahaan}';
+        $companyBankAccount = '{Isi dengan nomor rekening bank perusahaan}';
+        $companyBankHolder = '{Isi dengan nama pemegang rekening bank perusahaan}';
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('companies')) {
+            $company = \App\Models\Company::with('paymentMethod')->first();
+
+            if ($company?->company_name) {
+                $companyName = $company->company_name;
+            }
+
+            if ($company?->address) {
+                $companyAddress = $company->address;
+            }
+
+            if ($company?->phone) {
+                $companyPhone = $company->phone;
+            }
+
+            if ($company?->email) {
+                $companyEmail = $company->email;
+            }
+
+            if ($company?->owner_name) {
+                $companyOwnerName = $company->owner_name;
+            }
+
+            if ($company?->jabatan_owner) {
+                $companyOwnerPosition = $company->jabatan_owner;
+            }
+
+            if ($company?->paymentMethod) {
+                if ($company->paymentMethod->bank_name) {
+                    $companyBankName = $company->paymentMethod->bank_name;
+                }
+                if ($company->paymentMethod->no_rekening) {
+                    $companyBankAccount = $company->paymentMethod->no_rekening;
+                }
+                if ($company->paymentMethod->name) {
+                    $companyBankHolder = $company->paymentMethod->name;
+                }
+            }
+        }
+    @endphp
     <!-- HEADER (Fixed on every page) -->
     <header>
         <table class="header-table">
             <tr>
                 <td style="width: 65%;">
-                    <div class="company-name">PT. Makna Kreatif Indonesia</div>
+                    <div class="company-name">{{ $companyName }}</div>
                     <div class="company-info">
-                        Alamat : Jln. Sintraman Jaya, No. 2148, Sekip Jaya, Palembang<br>
-                        No. Tlp : +62 822-9796-2600<br>
-                        Email : maknawedding@gmail.com
+                        Alamat : {{ $companyAddress }}<br>
+                        No. Tlp : {{ $companyPhone }}<br>
+                        Email : {{ $companyEmail }}
                     </div>
                 </td>
                 <td style="text-align: right;">
                     @php
-                        $logoPath = public_path(config('invoice.logo', 'images/logo.png'));
-                        $logoBase64 = '';
-                        if (file_exists($logoPath)) {
-                            $logoType = pathinfo($logoPath, PATHINFO_EXTENSION);
-                            $logoData = file_get_contents($logoPath);
-                            $logoBase64 = 'data:image/' . $logoType . ';base64,' . base64_encode($logoData);
+                        $logoPath = null;
+                        $logoSrc = '';
+
+                        if (
+                            isset($company) &&
+                            $company?->logo_url &&
+                            \Illuminate\Support\Facades\Storage::disk('public')->exists($company->logo_url)
+                        ) {
+                            $logoPath = \Illuminate\Support\Facades\Storage::disk('public')->path($company->logo_url);
+                        } else {
+                            $logoPath = public_path('images/logomki.png');
+                        }
+
+                        if ($logoPath && file_exists($logoPath)) {
+                            $logoMime = mime_content_type($logoPath);
+                            if ($logoMime) {
+                                $logoSrc =
+                                    'data:' . $logoMime . ';base64,' . base64_encode(file_get_contents($logoPath));
+                            }
                         }
                     @endphp
-                    @if ($logoBase64)
-                        <img src="{{ $logoBase64 }}" alt="Logo" class="logo-img">
+                    @if ($logoSrc)
+                        <img src="{{ $logoSrc }}" alt="Logo Perusahaan" class="logo-img">
                     @else
-                        <b>MAKNA KREATIF</b>
+                        <b>{{ $companyName }}</b>
                     @endif
                 </td>
             </tr>
@@ -248,19 +405,16 @@
     <div class="footer">
         <table style="width: 100%; border-collapse: collapse; border: none;">
             <tr>
-                <td style="text-align: right; vertical-align: bottom; padding-right: 10px;">
-                    www.paketpernikahan.co.id | Hal <span class="pagenum"></span>
+                <td style="text-align: right; vertical-align: bottom; padding-right: 0px; font-size: 9px;">
+                    @php
+                        $printedAt = \Carbon\Carbon::now()->setTimezone('Asia/Jakarta');
+                    @endphp
+                    <span>
+                        Dokumen ini dicetak secara otomatis pada
+                        {{ $printedAt->translatedFormat('d F Y') }} pukul {{ $printedAt->translatedFormat('H:i') }} |
+                        Hal <span class="pagenum"></span> |
+                    </span>
                 </td>
-                {{-- <td style="width: 50px; vertical-align: bottom;">
-                    <div style="border: 1px solid #000; width: 40px; height: 40px; margin-left: auto; margin-right: 0;">
-                    </div>
-                    <div style="text-align: center; font-size: 11px; margin-top: 2px;">Paraf</div>
-                </td>
-                <td style="width: 50px; vertical-align: bottom;">
-                    <div style="border: 1px solid #000; width: 40px; height: 40px; margin-left: auto; margin-right: 0;">
-                    </div>
-                    <div style="text-align: center; font-size: 11px; margin-top: 2px;">Paraf</div>
-                </td> --}}
             </tr>
         </table>
     </div>
@@ -269,7 +423,7 @@
 
     <!-- Title -->
     <div class="title">KONTRAK KERJASAMA PERNIKAHAN</div>
-    <div class="subtitle">Nomor : 0{{ $nomorSurat }}</div>
+    <div class="subtitle">Nomor : {{ $nomorSurat }}</div>
 
     <!-- Pihak Pertama -->
     <table class="content-table">
@@ -277,18 +431,24 @@
             <td style="width: 20px;">I.</td>
             <td class="label">Nama</td>
             <td class="separator">:</td>
-            <td>Ramadhona Utama</td>
+            <td>{{ $companyOwnerName }}</td>
         </tr>
         <tr>
             <td></td>
             <td class="label">Jabatan</td>
             <td class="separator">:</td>
-            <td>CEO Makna Wedding</td>
+            <td>{{ $companyOwnerPosition }}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td class="label">No. Telp</td>
+            <td class="separator">:</td>
+            <td>{{ $companyPhone }}</td>
         </tr>
     </table>
     <div class="text-justify indent" style="margin-bottom: 10px;">
-        Bertindak untuk dan atas nama Makna Wedding Organizer beralamat di Jalan Sintraman Jaya I No. 2148, 20 Ilir D II
-        Kec. Kemuning, Kota Palembang, Sumatera Selatan 30137, selanjutnya disebut PIHAK PERTAMA.
+        Bertindak untuk dan atas nama {{ $companyName }} beralamat di {{ $companyAddress }}, selanjutnya disebut
+        PIHAK PERTAMA.
     </div>
 
     <!-- Pihak Kedua -->
@@ -297,8 +457,7 @@
             <td style="width: 20px;">II.</td>
             <td class="label">Nama</td>
             <td class="separator">:</td>
-            <td><b>{{ $prospect->name_cpp ?? '....................' }}</b> &
-                <b>{{ $prospect->name_cpw ?? '....................' }}</b>
+            <td>{{ $record->name_ttd ?? '{Nama Pihak Kedua}' }}
             </td>
         </tr>
         <tr>
@@ -311,7 +470,7 @@
             <td></td>
             <td class="label">Alamat</td>
             <td class="separator">:</td>
-            <td>{{ $prospect->address ?? 'Palembang' }}</td>
+            <td>{{ $prospect->address ?? '{Alamat Sesuai KTP}' }}</td>
         </tr>
     </table>
     <div class="text-justify indent" style="margin-bottom: 15px;">
@@ -362,12 +521,21 @@
         <tr>
             <td class="label">Waktu</td>
             <td class="separator">:</td>
-            <td>07:00 / 07:30 s.d Selesai</td>
+            <td>
+                @if (!empty($prospect->time_akad))
+                    Pukul {{ \Carbon\Carbon::parse($prospect->time_akad)->format('H:i') }} wib s.d Selesai
+                @else
+                    Pukul 07:00 / 07:30 wib s.d Selesai
+                @endif
+            </td>
         </tr>
         <tr>
             <td class="label">Jumlah Undangan</td>
             <td class="separator">:</td>
-            <td>50 Undangan atau 100 Pax</td>
+            <td>
+                {{ $record->product->pax_akad ?? 500 }} Pax atau
+                {{ ($record->product->pax_akad ?? 500) / 2 }} Undangan (Asumsi)
+            </td>
         </tr>
     </table>
 
@@ -382,80 +550,104 @@
         <tr>
             <td class="label">Waktu</td>
             <td class="separator">:</td>
-            <td>10:00 s.d Selesai</td>
+            <td>
+                @if (!empty($prospect->time_resepsi))
+                    Pukul {{ \Carbon\Carbon::parse($prospect->time_resepsi)->format('H:i') }} wib s.d Selesai
+                @else
+                    Pukul 10:00 wib s.d Selesai
+                @endif
+            </td>
         </tr>
         <tr>
             <td class="label">Jumlah Undangan</td>
             <td class="separator">:</td>
-            <td>{{ $record->product->pax ?? 500 }} Undangan atau {{ ($record->product->pax ?? 500) * 2 }} Pax</td>
+            <td>{{ $record->product->pax ?? 500 }} Pax atau {{ ($record->product->pax ?? 500) / 2 }} Undangan (Asumsi)
+            </td>
         </tr>
     </table>
 
-    <!-- Pricing -->
-    <div class="section-title">PERINCIAN BIAYA</div>
+    @php
+        $product = $record->product;
+        $baseTotalPrice = $product?->product_price ?? ($record->total_price ?? 0);
+        $productPenambahan = $product?->penambahan_publish ?? ($record->penambahan ?? 0);
+        $productPengurangan = $product?->pengurangan ?? ($record->pengurangan ?? 0);
+        $promo = $record->promo ?? 0;
+        $computedGrandTotal = \App\Services\OrderFinance::computeGrandTotalFromValues(
+            (float) $baseTotalPrice,
+            (float) $productPenambahan,
+            (float) $promo,
+            (float) $productPengurangan,
+        );
+    @endphp
+
+    <div class="section-title" style="margin-top: 15px;">PERINCIAN BIAYA</div>
     <table class="content-table" style="width: 100%;">
         <tr>
             <td style="padding: 5px 0;"><b>DREAM WEDDING PACKAGE</b></td>
             <td style="width: 1%; white-space: nowrap; padding: 5px 0;"><b>: Rp. </b></td>
             <td style="width: 60%; padding: 5px 0; text-align: left;">
-                <b>&nbsp;{{ number_format($record->total_price, 0, ',', '.') }},-</b>
+                <b>&nbsp;{{ number_format($baseTotalPrice, 0, ',', '.') }},-</b>
             </td>
         </tr>
-        @if ($record->penambahan > 0)
+        @if ($productPenambahan > 0)
             <tr>
-                <td>PENAMBAHAN</td>
-                <td style="width: 1%; white-space: nowrap;">: Rp. </td>
-                <td style="text-align: left;">&nbsp;{{ number_format($record->penambahan, 0, ',', '.') }},-</td>
+                <td style="padding: 5px 0;">PENAMBAHAN</td>
+                <td style="width: 1%; white-space: nowrap; padding: 5px 0;">: Rp. </td>
+                <td style="text-align: left; padding: 5px 0;">
+                    &nbsp;{{ number_format($productPenambahan, 0, ',', '.') }},-</td>
             </tr>
         @endif
-        @if ($record->pengurangan > 0)
+        @if ($productPengurangan > 0)
             <tr>
-                <td>PENGURANGAN</td>
-                <td style="width: 1%; white-space: nowrap;">: Rp. </td>
-                <td style="text-align: left;">&nbsp;({{ number_format($record->pengurangan, 0, ',', '.') }},-)</td>
+                <td style="padding: 5px 0;">PENGURANGAN</td>
+                <td style="width: 1%; white-space: nowrap; padding: 5px 0;">: Rp. </td>
+                <td style="text-align: left; padding: 5px 0;">
+                    &nbsp;({{ number_format($productPengurangan, 0, ',', '.') }},-)</td>
             </tr>
         @endif
-        @if ($record->promo > 0)
+        @if ($promo > 0)
             <tr>
-                <td>PROMO</td>
-                <td style="width: 1%; white-space: nowrap;">: Rp. </td>
-                <td style="text-align: left;">&nbsp;({{ number_format($record->promo, 0, ',', '.') }},-)</td>
+                <td style="padding: 5px 0;">PROMO</td>
+                <td style="width: 1%; white-space: nowrap; padding: 5px 0;">: Rp. </td>
+                <td style="text-align: left; padding: 5px 0;">
+                    &nbsp;({{ number_format($promo, 0, ',', '.') }},-)</td>
             </tr>
         @endif
         <tr>
             <td style="padding: 5px 0;"><b>TOTAL PEMBAYARAN</b></td>
             <td style="padding: 5px 0; width: 1%; white-space: nowrap;"><b>: Rp.</b></td>
             <td style="padding: 5px 0; text-align: left;">
-                <b>&nbsp;{{ number_format($record->grand_total, 0, ',', '.') }},-</b>
+                <b>&nbsp;{{ number_format($computedGrandTotal, 0, ',', '.') }},-</b>
             </td>
         </tr>
     </table>
 
     <!-- Facilities -->
-    <div class="section-title">DENGAN RINCIAN FASILITAS SEBAGAI BERIKUT :</div>
+    <div class="section-title" style="margin-top: 15px;">DENGAN RINCIAN FASILITAS SEBAGAI BERIKUT :</div>
     @php
         $groupedItems = $items->groupBy(function ($item) {
-            return $item->vendor->category->name ?? 'LAIN-LAIN';
+            return $item->vendor->name ?? 'LAIN-LAIN';
         });
     @endphp
 
     <div class="facility-list">
-        <ul style="list-style-type: none; padding-left: 0;">
+        <ol>
             @foreach ($groupedItems as $categoryName => $categoryItems)
-                <li style="font-weight: normal; margin-top: 5px; font-size: 11px;">
+                <li style="font-weight: normal; font-size: 11px; margin-top: 1px;">
                     {{ strtoupper($categoryName) }}
 
                     @if ($categoryItems->count() === 1)
                         @php
                             $item = $categoryItems->first();
-                            $description = $item->description ?? ($item->vendor->name ?? '');
+                            $vendor = $item->vendor;
+                            $description = $vendor?->description ?? ($item->description ?? ($vendor?->name ?? ''));
                             $plainContent = trim(strip_tags($description));
                             $hideListStyle = preg_match('/^\s*[\da-zA-Z]+[.)]\s*/', $plainContent);
                             $cleanContent = $hideListStyle
                                 ? preg_replace('/^\s*[\da-zA-Z]+[.)]\s*/', '', $plainContent)
                                 : $plainContent;
                         @endphp
-                        <div style="margin-top: 5px; margin-left: 20px;">
+                        <div style="margin-top: 8px; margin-left: 20px;">
                             @if ($hideListStyle)
                                 {{ $cleanContent }}
                             @else
@@ -466,12 +658,13 @@
                             @endif
                         </div>
                     @else
-                        <ol style="font-weight: normal; margin-top: 5px; margin-left: 20px;">
+                        <ol type="a" style="font-weight: normal; margin-top: 5px; margin-left: 20px;">
                             @foreach ($categoryItems as $item)
                                 @php
-                                    $description = $item->description ?? ($item->vendor->name ?? '');
+                                    $vendor = $item->vendor;
+                                    $description =
+                                        $vendor?->description ?? ($item->description ?? ($vendor?->name ?? ''));
                                     $plainContent = trim(strip_tags($description));
-                                    // Cek apakah konten dimulai dengan penomoran manual (misal: "1.", "a)", "b.")
                                     $hideListStyle = preg_match('/^\s*[\da-zA-Z]+[.)]\s*/', $plainContent);
                                     $cleanContent = $hideListStyle
                                         ? preg_replace('/^\s*[\da-zA-Z]+[.)]\s*/', '', $plainContent)
@@ -492,13 +685,69 @@
                     @endif
                 </li>
             @endforeach
-        </ul>
+        </ol>
     </div>
+
+    <!-- Penambahan -->
+    @php
+        $product = $record->product;
+        $penambahanItems = $product?->penambahanHarga ?? collect();
+        $penguranganItems = $product?->pengurangans ?? collect();
+    @endphp
+
+    @if ($penambahanItems->isNotEmpty())
+        <div class="section-title">PENAMBAHAN :</div>
+        <div class="penambahan-list">
+            <ol>
+                @foreach ($penambahanItems as $item)
+                    <li>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="margin-right: 10px;">
+                                <div style="font-weight: normal;">
+                                    {{ strtoupper($item->vendor->name ?? 'Penambahan Tanpa Nama') }}
+                                </div>
+                                @if (!empty($item->description))
+                                    <div>
+                                        {!! $item->description !!}
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </li>
+                @endforeach
+            </ol>
+        </div>
+    @endif
+
+    <!-- Pengurangan -->
+    @if ($penguranganItems->isNotEmpty())
+        <div class="section-title">PENGURANGAN :</div>
+        <div class="pengurangan-list">
+            <ol>
+                @foreach ($penguranganItems as $item)
+                    <li>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="margin-right: 10px;">
+                                <div style="font-weight: normal;">
+                                    {{ strtoupper($item->description ?? 'Pengurangan Tanpa Nama') }}
+                                </div>
+                                @if (!empty($item->notes))
+                                    <div>
+                                        {!! $item->notes !!}
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </li>
+                @endforeach
+            </ol>
+        </div>
+    @endif
 
     <!-- Terms & Confirmation -->
     <div class="section-title">KETENTUAN TAMBAHAN</div>
     <div class="section-title">KONFIRMASI</div>
-    <ol>
+    <ol class="konfirmasi-list">
         <li>PIHAK PERTAMA harus menerima konfirmasi dari PIHAK KEDUA tentang acara/event tersebut di atas
             selambat-lambatnya 3 (tiga) hari kerja dari Kontrak Kerjasama Paket Pernikahan ini dibuat.</li>
         <li>Pembatalan secara mendadak setelah Kontrak Kerjasama Paket Pernikahan ini ditandatangani akan dikenakan
@@ -524,7 +773,7 @@
         <li>
             Pembayaran termin dilakukan sesuai simulasi pembayaran:
             @if ($terminCount > 0)
-                <ol type="a" style="margin-top: 5px; margin-left: 20px;">
+                <ol type="a" style="margin-top: 5px; margin-left: 10px;">
                     @foreach ($termins as $index => $termin)
                         @php
                             $persen = $termin['persen'] ?? null;
@@ -554,22 +803,21 @@
         </li>
         <li>Pelunasan pembayaran paling lambat H-14 (Empat Belas Hari) sebelum acara dilaksanakan.</li>
         <li>Pembayaran dapat dilakukan melalui transfer ke rekening:
-            <div style="text-align: center; margin-top: 5px;">
-                <b>Bank Mandiri</b><br>
-                No. Rek: <b>113-00-1184732-5</b><br>
-                A.n: <b>PT. Makna Kreatif Indonesia</b>
+            <div style="text-align: center; margin-top: 10px; margin-bottom: 10px;">
+                Bank <b>{{ $companyBankName }}</b><br>
+                No. Rekening: <b>{{ $companyBankAccount }}</b><br>
+                A.n: <b>{{ $companyBankHolder }}</b>
             </div>
         </li>
-        <li>Bukti transfer dapat di email ke maknawedding@gmail.com atau datang langsung ke kantor Makna Wedding
+        <li>Bukti transfer dapat di email ke {{ $companyEmail }} atau datang langsung ke kantor {{ $companyName }}
             dengan
             menunjukkan bukti ke bagian administrasi.</li>
-        <li>Pembayaran secara tunai dilakukan langsung ke bagian administrasi di kantor Makna Wedding Organizer dan
+        <li>Pembayaran secara tunai dilakukan langsung ke bagian administrasi di kantor {{ $companyName }} dan
             PIHAK KEDUA akan menerima bukti pembayaran atau pelunasan yang telah ditandatangani oleh bagian keuangan
             atau bisa langsung menghubungi saudari <b>{{ $financeUser->name ?? 'Finance' }} di nomor
                 {{ $financeUser->phone_number ?? '-' }}</b>.</li>
         <li>Tidak dibenarkan melakukan pembayaran di luar dengan cara menitipkan kepada pihak lain selain yang
-            ditunjuk
-            oleh PIHAK PERTAMA.</li>
+            ditunjuk oleh PIHAK PERTAMA.</li>
     </ol>
 
     <div class="section-title" style="margin-top: 10px;">VENDOR</div>
@@ -627,7 +875,10 @@
 
     <!-- Signatures -->
     <div style="text-align: right; margin-bottom: 5px; margin-top: 20px;">
-        Palembang, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
+        Palembang,
+        {{ $record->created_at
+            ? $record->created_at->copy()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y')
+            : \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y') }}
     </div>
     <div class="signature-section" style="margin-top: 0;">
         <table class="signature-table">
@@ -637,7 +888,7 @@
                 </td>
                 <td colspan="2" style="width: 65%;">
                     Mengetahui,<br>
-                    Makna Wedding Organizer
+                    {{ $companyName }}
                 </td>
             </tr>
             <tr>
@@ -649,9 +900,9 @@
                 </td>
                 <td style="vertical-align: bottom; height: 100px;">
                     <div style="text-decoration: underline;">
-                        Rama Dhona Utama
+                        {{ $companyOwnerName }}
                     </div>
-                    <b>C E O</b>
+                    <b>{{ $companyOwnerPosition }}</b>
                 </td>
                 <td style="vertical-align: bottom; height: 100px;">
                     <div style="text-decoration: underline;">

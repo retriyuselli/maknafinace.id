@@ -22,6 +22,7 @@ class Product extends Model
         'price',
         'is_active',
         'pax',
+        'pax_akad',
         'description',
         'image',
         'is_approved',
@@ -42,6 +43,8 @@ class Product extends Model
         'penambahan_publish' => 'integer',
         'penambahan_vendor' => 'integer',
         'price' => 'integer',
+        'pax' => 'integer',
+        'pax_akad' => 'integer',
     ];
 
     protected static function boot()

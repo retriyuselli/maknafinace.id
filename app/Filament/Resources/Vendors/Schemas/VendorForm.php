@@ -82,8 +82,6 @@ class VendorForm
                                             ->default(false),
                                         RichEditor::make('description')
                                             ->columnSpanFull()
-                                            ->minLength(10)
-                                            ->required()
                                             ->label('Description')
                                             ->disableToolbarButtons([
                                                 'attachFiles',

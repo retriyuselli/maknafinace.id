@@ -45,6 +45,17 @@ class CompanyForm
                                                     ->minLength(3)
                                                     ->maxLength(255)
                                                     ->placeholder('Nama pemilik'),
+                                                TextInput::make('jabatan_owner')
+                                                    ->maxLength(255)
+                                                    ->placeholder('Jabatan pemilik'),
+                                                TextInput::make('inisial_wo')
+                                                    ->label('Inisial WO')
+                                                    ->maxLength(50)
+                                                    ->placeholder('MW'),
+                                                TextInput::make('inisial_kontak')
+                                                    ->label('Inisial Kontrak')
+                                                    ->maxLength(50)
+                                                    ->placeholder('KKP'),
                                                 TextInput::make('legal_entity_type')
                                                     ->maxLength(100)
                                                     ->placeholder('PT, CV, Firma'),

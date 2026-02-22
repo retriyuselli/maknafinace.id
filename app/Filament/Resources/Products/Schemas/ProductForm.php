@@ -97,13 +97,21 @@ class ProductForm
                                     ->helperText('Jika produk ini adalah varian (child), pilih produk utamanya (parent).'),
 
                                 TextInput::make('pax')
-                                    ->label('Capacity (pax)')
+                                    ->label('Resepsi (pax)')
                                     ->required()
                                     ->numeric()
                                     ->minValue(1)
                                     ->default(1000)
                                     ->suffix('people')
                                     ->placeholder('1000'),
+                                
+                                TextInput::make('pax_akad')
+                                    ->label('Akad (pax)')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->default(100)
+                                    ->suffix('people')
+                                    ->placeholder('100'),
 
                                 TextInput::make('price')
                                     ->prefix('Rp')

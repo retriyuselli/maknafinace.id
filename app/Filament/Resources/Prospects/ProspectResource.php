@@ -21,6 +21,7 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -88,6 +89,24 @@ class ProspectResource extends Resource
                                             ->label('Tanggal Resepsi')
                                             ->native(false)
                                             ->displayFormat('d M Y'),
+                                    ]),
+
+                                Grid::make(3)
+                                    ->schema([
+                                        TimePicker::make('time_lamaran')
+                                            ->label('Jam Lamaran')
+                                            ->seconds(false)
+                                            ->withoutSeconds(),
+
+                                        TimePicker::make('time_akad')
+                                            ->label('Jam Akad Nikah')
+                                            ->seconds(false)
+                                            ->withoutSeconds(),
+
+                                        TimePicker::make('time_resepsi')
+                                            ->label('Jam Resepsi')
+                                            ->seconds(false)
+                                            ->withoutSeconds(),
                                     ]),
 
                                 TextInput::make('venue')

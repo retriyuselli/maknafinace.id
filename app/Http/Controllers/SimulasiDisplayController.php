@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\SimulasiProduk;
+use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf; // Import View
 use Illuminate\View\View; // atau use PDF; jika Anda menambahkan alias
 
@@ -82,30 +84,42 @@ class SimulasiDisplayController extends Controller
             $items = $record->product->items()->with(['vendor.category'])->get();
         }
 
-        // Calculate Roman Month
         $months = [
             1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI',
-            7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'
+            7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII',
         ];
-        // Use record's creation date for consistent numbering and date suffix
-        $currentMonth = $record->created_at->month;
-        $bulanRomawi = $months[$currentMonth];
-        $tahun = $record->created_at->year;
 
-        // Calculate Sequence Number based on created_at year
-        // This ensures numbering resets every year based on the record's creation time
+        $createdAt = $record->created_at
+            ? $record->created_at->copy()->setTimezone('Asia/Jakarta')
+            : Carbon::now('Asia/Jakarta');
+
+        $currentMonth = $createdAt->month;
+        $bulanRomawi = $months[$currentMonth] ?? '';
+        $tahun = $createdAt->year;
+
         $sequence = SimulasiProduk::whereYear('created_at', $record->created_at->year)
             ->where('id', '<=', $record->id)
             ->count();
-            
-        // Format: nomor surat/MW/KKP/bulan berjalan/tahun berjalan
-        $nomorSurat = $sequence . '/MW/KKP/' . $bulanRomawi . '/' . $tahun;
+
+        $sequenceFormatted = str_pad((string) $sequence, 3, '0', STR_PAD_LEFT);
+
+        $company = Company::first();
+        $inisialWo = $company?->inisial_wo ?: 'MW';
+        $inisialKontrak = $company?->inisial_kontak ?: 'KKP';
+
+        $manualNumber = $record->contract_number;
+        if ($manualNumber && str_contains($manualNumber, '/')) {
+            $nomorSurat = $manualNumber;
+        } else {
+            $baseNumber = $manualNumber ?: $sequenceFormatted;
+            $nomorSurat = $baseNumber . '/' . $inisialWo . '/' . $inisialKontrak . '/' . $bulanRomawi . '/' . $tahun;
+        }
 
         // Find Finance User
         $financeUser = \App\Models\User::role('Finance')->first();
 
         $data = [
-            'record' => $record,
+            'record' => $record,                                      
             'items' => $items,
             'prospect' => $record->prospect,
             'nomorSurat' => $nomorSurat,

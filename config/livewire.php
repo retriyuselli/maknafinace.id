@@ -157,4 +157,21 @@ return [
     */
 
     'pagination_theme' => 'tailwind',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payload Limits
+    |--------------------------------------------------------------------------
+    |
+    | Livewire membatasi kedalaman nesting payload untuk mencegah struktur data
+    | yang terlalu dalam merusak performa atau menyebabkan error serialisasi.
+    | Nilai default biasanya 10. Aplikasi ini menggunakan konten rich text
+    | yang cukup kompleks (misalnya description dengan struktur JSON), sehingga
+    | batas ini dinaikkan agar Livewire dapat memprosesnya dengan aman.
+    |
+    */
+
+    'payload' => [
+        'max_nesting_depth' => 30,
+    ],
 ];

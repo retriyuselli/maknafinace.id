@@ -31,6 +31,7 @@ class SimulasiProduk extends Model
         'last_edited_by',
         'name_ttd',
         'title_ttd',
+        'contract_number',
     ];
 
     protected $casts = [
