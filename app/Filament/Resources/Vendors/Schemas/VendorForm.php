@@ -23,6 +23,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Support\RawJs;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Str;
+use App\Support\Rupiah;
 
 class VendorForm
 {
@@ -95,25 +96,25 @@ class VendorForm
                                     ->columns(3)
                                     ->schema([
                                         TextInput::make('harga_publish')
-                                            ->numeric()
                                             ->prefix('Rp')
-                                            ->mask(RawJs::make('$money($input)'))
-                                            ->stripCharacters(',')
-                                            ->default(0.0),
+                                            ->default(0.0)
+                                            ->extraAttributes(['inputmode' => 'numeric'])
+                                            ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
+                                            ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state)),
                                         TextInput::make('harga_vendor')
-                                            ->numeric()
                                             ->prefix('Rp')
-                                            ->mask(RawJs::make('$money($input)'))
-                                            ->stripCharacters(',')
-                                            ->default(0.0),
+                                            ->default(0.0)
+                                            ->extraAttributes(['inputmode' => 'numeric'])
+                                            ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
+                                            ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state)),
                                         TextInput::make('profit_amount')
                                             ->required()
-                                            ->numeric()
                                             ->readOnly()
                                             ->prefix('Rp')
-                                            ->mask(RawJs::make('$money($input)'))
-                                            ->stripCharacters(',')
-                                            ->default(0.0),
+                                            ->default(0.0)
+                                            ->extraAttributes(['inputmode' => 'numeric'])
+                                            ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
+                                            ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state)),
                                         TextInput::make('profit_margin')
                                             ->required()
                                             ->numeric()
@@ -331,27 +332,27 @@ class VendorForm
                                     ->reactive(),
                                 TextInput::make('harga_publish')
                                     ->label('Harga Publish')
-                                    ->numeric()
                                     ->prefix('Rp')
-                                    ->mask(RawJs::make('$money($input)'))
-                                    ->stripCharacters(',')
+                                    ->extraAttributes(['inputmode' => 'numeric'])
+                                    ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
+                                    ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state))
                                     ->debounce(500),
 
                                 TextInput::make('harga_vendor')
                                     ->label('Harga Vendor')
-                                    ->numeric()
                                     ->prefix('Rp')
-                                    ->mask(RawJs::make('$money($input)'))
-                                    ->stripCharacters(',')
+                                    ->extraAttributes(['inputmode' => 'numeric'])
+                                    ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
+                                    ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state))
                                     ->debounce(500),
 
                                 TextInput::make('profit_amount')
                                     ->label('Profit')
-                                    ->numeric()
                                     ->readOnly()
                                     ->prefix('Rp')
-                                    ->mask(RawJs::make('$money($input)'))
-                                    ->stripCharacters(',')
+                                    ->extraAttributes(['inputmode' => 'numeric'])
+                                    ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
+                                    ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state))
                                     ->default(0),
 
                                 TextInput::make('profit_margin')

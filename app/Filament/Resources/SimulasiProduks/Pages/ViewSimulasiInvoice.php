@@ -17,9 +17,7 @@ class ViewSimulasiInvoice extends ViewRecord
     public $items = [];
 
     public $subtotal = 0;
-
-    public $promo = 0;
-
+ 
     public $penambahan = 0;
 
     public $pengurangan = 0;
@@ -38,7 +36,6 @@ class ViewSimulasiInvoice extends ViewRecord
             $this->items = collect(); // Empty collection if no product is linked
         }
         $this->subtotal = $this->record->total_price;
-        $this->promo = $this->record->promo;
         $this->penambahan = $this->record->penambahan;
         $this->pengurangan = $this->record->pengurangan;
         $this->grandTotal = $this->record->grand_total;

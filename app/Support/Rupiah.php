@@ -15,13 +15,15 @@ class Rupiah
         }
 
         if (is_string($value)) {
-            $clean = preg_replace('/\D+/', '', $value);
-
-            if ($clean === '' || $clean === null) {
+            $s = trim($value);
+            if ($s === '') {
                 return 0.0;
             }
-
-            return (float) $clean;
+            if (preg_match('/^\d+\.\d{1,6}$/', $s)) {
+                return (float) $s;
+            }
+            $clean = preg_replace('/\D+/', '', $s);
+            return $clean === '' ? 0.0 : (float) $clean;
         }
 
         return (float) $value;
@@ -35,4 +37,3 @@ class Rupiah
         return $withPrefix ? 'Rp '.$formatted : $formatted;
     }
 }
-

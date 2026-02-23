@@ -6,6 +6,7 @@ use App\Enums\MonthEnum;
 use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Resources\SimulasiProduks\SimulasiProdukResource;
 use App\Models\Product;
+use App\Models\User;
 use App\Models\Prospect;
 use App\Models\SimulasiProduk;
 use Filament\Actions\Action;
@@ -101,6 +102,14 @@ class SimulasiProdukForm
                                                 }, shouldOpenInNewTab: true)
                                                 ->hidden(fn (Get $get): bool => blank($get('product_id'))))
                                         ->columnSpanFull(),
+                                    Select::make('user_id')
+                                        ->label('Account Manager')
+                                        ->options(fn () => User::role('Account Manager')->pluck('name', 'id')->toArray())
+                                        ->required()
+                                        ->searchable()
+                                        ->preload()
+                                        ->default(fn () => optional(Auth::user())->roles?->contains('name', 'Account Manager') ? Auth::id() : null)
+                                        ->columnSpanFull(),
                                     TextInput::make('total_price')
                                         ->label('Base Total Price')
                                         ->prefix('Rp')
@@ -116,16 +125,6 @@ class SimulasiProdukForm
                                         })
                                         ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ','))
                                         ->helperText('Nilai ini otomatis diambil dari Product Price (harga paket dasar sebelum potongan/pengurangan dan penambahan publish) dan akan ikut berubah jika harga produk diperbarui lalu simulasi di-refresh.'),
-                                    TextInput::make('promo')
-                                        ->label('Potongan Harga (Promo)')
-                                        ->prefix('Rp')
-                                        ->mask(RawJs::make('$money($input)'))
-                                        ->stripCharacters(',')
-                                        ->default(0)
-                                        ->reactive()
-                                        ->live(onBlur: true)
-                                        ->afterStateUpdated(fn (Get $get, Set $set) => SimulasiProdukResource::recalculateGrandTotal($get, $set))
-                                        ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ',')),
                                     TextInput::make('penambahan')
                                         ->label('Penambahan Biaya')
                                         ->prefix('Rp')
@@ -155,7 +154,7 @@ class SimulasiProdukForm
                                         ->dehydrated()
                                         ->default(0)
                                         ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ','))
-                                        ->helperText('Grand Total dihitung dari Base Total Price + Penambahan - Promo - Pengurangan dan akan mengikuti perubahan jika harga produk disinkronkan.'),
+                                        ->helperText('Grand Total dihitung dari Base Total Price + Penambahan - Pengurangan dan akan mengikuti perubahan jika harga produk disinkronkan.'),
                                 ])
                                 ->columnSpanFull(),
                             Section::make('Simulation Details')
@@ -203,6 +202,7 @@ class SimulasiProdukForm
                                         ->maxLength(255),
                                     Hidden::make('name')
                                         ->dehydrated(),
+                                    
                                     TextInput::make('slug')
                                         ->required()
                                         ->maxLength(255)
@@ -327,7 +327,7 @@ class SimulasiProdukForm
                                 ->disabled()
                                 ->preload()
                                 ->default(fn () => Auth::id())
-                                ->dehydrated(),
+                                ->dehydrated(false),
                             TextInput::make('created_at_display')
                                 ->label('Dibuat')
                                 ->disabled()

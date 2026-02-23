@@ -44,6 +44,8 @@ class RoleSeeder extends Seeder
         $accountManager = Role::firstOrCreate(['name' => 'Account Manager']);
         $admin = Role::firstOrCreate(['name' => 'admin']);
         $employee = Role::firstOrCreate(['name' => 'employee']);
+        $finance = Role::firstOrCreate(['name'=> 'finance']);
+        $eventManager = Role::firstOrCreate(['name'=> 'Event Manager']);
 
         // Assign permissions to roles
         $superAdmin->givePermissionTo(Permission::all());
@@ -74,6 +76,18 @@ class RoleSeeder extends Seeder
         ]);
 
         $employee->givePermissionTo([
+            'view_prospects',
+            'view_orders',
+            'view_products',
+        ]);
+
+        $finance->givePermissionTo([
+            'view_orders',
+            'view_products',
+            'view_reports',
+        ]);
+
+        $eventManager->givePermissionTo([
             'view_prospects',
             'view_orders',
             'view_products',

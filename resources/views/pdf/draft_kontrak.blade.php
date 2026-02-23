@@ -45,7 +45,7 @@
         /* Footer */
         .footer {
             position: fixed;
-            bottom: 0px;
+            bottom: -10px;
             right: 0px;
             text-align: right;
             font-size: 11px;
@@ -89,8 +89,8 @@
 
         .section-title {
             font-weight: bold;
-            margin-top: 5px;
-            margin-bottom: 5px !important;
+            margin-top: 0px;
+            margin-bottom: 1px !important;
             text-transform: uppercase;
             font-size: 11px;
             text-decoration: underline;
@@ -99,6 +99,7 @@
         .facility-list {
             /* margin-top: 5px; */
             margin-bottom: 5px;
+            line-height: 1;
         }
 
         .facility-list>ol {
@@ -110,92 +111,183 @@
         .facility-list>ol>li {
             margin-top: 5px;
             margin-bottom: 0px;
+            padding-left: 0px;
         }
 
         .facility-list>ol>li>ol {
             margin-top: 5px;
             margin-bottom: 5px;
-            /* padding-left: 15px; */
+            padding-left: 32px;
         }
 
         .facility-list p {
-            margin-top: 5px;
+            /* margin-top: 5px; */
             margin-bottom: 5px;
+            margin-left: 0;
+            padding-left: 0;
+            text-align: left;
+            display: block;
         }
 
         .facility-list li ol {
             margin-top: 5px;
-            margin-bottom: 5px;
-            padding-left: 10px;
+            margin-bottom: 0px;
+            padding-left: 32px;
             list-style-type: lower-alpha;
         }
 
-        .penambahan-list {
+        .facility-list li ul {
             margin-top: 5px;
-            margin-bottom: 0px;
+            margin-bottom: 5px;
+            padding-left: 28px;
+            list-style-type: circle;
+        }
+
+        .facility-list li ul li::marker {
+            font-size: 12px;
+        }
+
+        .facility-title {
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: capitalize;
+        }
+
+        .subheading {
+            display: block;
+            font-weight: bold;
+            margin-top: 6px;
+            margin-bottom: 4px;
+        }
+        .price-right {
+            float: right;
+            margin-right: 100px;
+            white-space: nowrap;
+        }
+        .list-alpha {
+            list-style-type: lower-alpha;
+            margin-top: 5px;
+            margin-left: 28px;
+            padding-left: 32px;
+        }
+        .list-decimal {
+            list-style-type: decimal;
+            margin-top: 5px;
+            margin-left: 20px;
+        }
+
+        .penambahan-list {
+            /* margin-top: 5px; */
+            margin-bottom: 5px;
+            line-height: 1;
         }
 
         .penambahan-list>ol {
-            margin-top: 0px;
+            margin-top: 5px;
             margin-bottom: 5px;
             padding-left: 20px;
         }
 
         .penambahan-list>ol>li {
             margin-top: 5px;
-            margin-bottom: 5px;
+            margin-bottom: 0px;
+            padding-left: 0px;
         }
 
         .penambahan-list>ol>li>ol {
             margin-top: 5px;
             margin-bottom: 5px;
-            /* padding-left: 15px; */
+            padding-left: 32px;
         }
 
         .penambahan-list p {
-            margin-top: 5px;
+            /* margin-top: 5px; */
             margin-bottom: 5px;
+            margin-left: 0;
+            padding-left: 0;
+            text-align: left;
+            display: block;
         }
 
         .penambahan-list li ol {
             margin-top: 5px;
             margin-bottom: 5px;
-            padding-left: 30px;
+            padding-left: 32px;
             list-style-type: lower-alpha;
         }
 
-        .pengurangan-list {
-            margin-top: 0;
+        .penambahan-list li ul {
+            margin-top: 5px;
             margin-bottom: 5px;
+            padding-left: 28px;
+            list-style-type: circle;
+        }
+
+        .penambahan-list li ul li::marker {
+            font-size: 12px;
+        }
+        
+        .penambahan-title {
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .pengurangan-list {
+            /* margin-top: 5px; */
+            margin-bottom: 5px;
+            line-height: 1;
         }
 
         .pengurangan-list>ol {
-            margin-top: 0;
+            margin-top: 5px;
             margin-bottom: 5px;
             padding-left: 20px;
         }
 
         .pengurangan-list>ol>li {
             margin-top: 5px;
-            margin-bottom: 5px;
+            margin-bottom: 0px;
+            padding-left: 0px;
         }
 
         .pengurangan-list>ol>li>ol {
             margin-top: 5px;
             margin-bottom: 5px;
-            /* padding-left: 15px; */
+            padding-left: 32px;
         }
 
         .pengurangan-list p {
             margin-top: 5px;
             margin-bottom: 5px;
+            margin-left: 0;
+            padding-left: 0;
+            text-align: left;
+            display: block;
         }
 
         .pengurangan-list li ol {
             margin-top: 5px;
             margin-bottom: 5px;
-            padding-left: 30px;
+            padding-left: 32px;
             list-style-type: lower-alpha;
+        }
+
+        .pengurangan-list li ul {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            padding-left: 28px;
+            list-style-type: circle;
+        }
+
+        .pengurangan-list li ul li::marker {
+            font-size: 12px;
+        }
+        
+        .pengurangan-title {
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
         }
 
         .konfirmasi-list {
@@ -634,7 +726,7 @@
         <ol>
             @foreach ($groupedItems as $categoryName => $categoryItems)
                 <li style="font-weight: normal; font-size: 11px; margin-top: 1px;">
-                    {{ strtoupper($categoryName) }}
+                    <span class="facility-title">{{ \Illuminate\Support\Str::title($categoryName) }}</span>
 
                     @if ($categoryItems->count() === 1)
                         @php
@@ -643,22 +735,23 @@
                             $description = $vendor?->description ?? ($item->description ?? ($vendor?->name ?? ''));
                             $plainContent = trim(strip_tags($description));
                             $hideListStyle = preg_match('/^\s*[\da-zA-Z]+[.)]\s*/', $plainContent);
-                            $cleanContent = $hideListStyle
-                                ? preg_replace('/^\s*[\da-zA-Z]+[.)]\s*/', '', $plainContent)
-                                : $plainContent;
+                            $descriptionNormalized = $hideListStyle
+                                ? preg_replace('/^\s*[\da-zA-Z]+[.)]\s*/', '', $description)
+                                : $description;
+                            $labels = ['Tent Options:', 'Fleet Available:', 'Streaming Package:', 'Peralatan:'];
+                            $replacements = array_map(function ($l) {
+                                return '<span class="subheading">' . $l . '</span>';
+                            }, $labels);
+                            $descriptionFormatted = str_replace($labels, $replacements, $descriptionNormalized);
                         @endphp
-                        <div style="margin-top: 8px; margin-left: 20px;">
-                            @if ($hideListStyle)
-                                {{ $cleanContent }}
-                            @else
-                                {!! $description !!}
-                            @endif
+                        <div class="item-desc" style="margin-top: 8px;">
+                            {!! $descriptionFormatted !!}
                             @if ($item->quantity > 1)
                                 <b>({{ $item->quantity }}x)</b>
                             @endif
                         </div>
                     @else
-                        <ol type="a" style="font-weight: normal; margin-top: 5px; margin-left: 20px;">
+                        <ol class="list-alpha">
                             @foreach ($categoryItems as $item)
                                 @php
                                     $vendor = $item->vendor;
@@ -666,16 +759,17 @@
                                         $vendor?->description ?? ($item->description ?? ($vendor?->name ?? ''));
                                     $plainContent = trim(strip_tags($description));
                                     $hideListStyle = preg_match('/^\s*[\da-zA-Z]+[.)]\s*/', $plainContent);
-                                    $cleanContent = $hideListStyle
-                                        ? preg_replace('/^\s*[\da-zA-Z]+[.)]\s*/', '', $plainContent)
-                                        : $plainContent;
+                                    $descriptionNormalized = $hideListStyle
+                                        ? preg_replace('/^\s*[\da-zA-Z]+[.)]\s*/', '', $description)
+                                        : $description;
+                                    $labels = ['Tent Options:', 'Fleet Available:', 'Streaming Package:', 'Peralatan:'];
+                                    $replacements = array_map(function ($l) {
+                                        return '<span class="subheading">' . $l . '</span>';
+                                    }, $labels);
+                                    $descriptionFormatted = str_replace($labels, $replacements, $descriptionNormalized);
                                 @endphp
                                 <li style="font-size: 11px; margin-top: 5px; margin-bottom: 5px;">
-                                    @if ($hideListStyle)
-                                        {{ $cleanContent }}
-                                    @else
-                                        {!! $description !!}
-                                    @endif
+                                    {!! $descriptionFormatted !!}
                                     @if ($item->quantity > 1)
                                         <b>({{ $item->quantity }}x)</b>
                                     @endif
@@ -697,7 +791,7 @@
 
     @if ($penambahanItems->isNotEmpty())
         <div class="section-title">PENAMBAHAN :</div>
-        <div class="penambahan-list">
+        <div class="facility-list">
             <ol>
                 @foreach ($penambahanItems as $item)
                     <li>
@@ -705,15 +799,22 @@
                             <div style="margin-right: 10px;">
                                 <div style="font-weight: normal; overflow: hidden;">
                                     {{ strtoupper($item->vendor->name ?? 'Penambahan Tanpa Nama') }}
-                                    @if (!is_null($item->harga_publish))
-                                        <span style="float: right; margin-right: 100px;">
+                                    @if ($item->harga_publish))
+                                        <span class="price-right">
                                             Rp {{ number_format((int) $item->harga_publish, 0, ',', '.') }},-
                                         </span>
                                     @endif
                                 </div>
                                 @if (!empty($item->description))
-                                    <div>
-                                        {!! $item->description !!}
+                                    @php
+                                        $labels = ['Tent Options:', 'Fleet Available:', 'Streaming Package:', 'Peralatan:'];
+                                        $replacements = array_map(function ($l) {
+                                            return '<span class="subheading">' . $l . '</span>';
+                                        }, $labels);
+                                        $descFormatted = str_replace($labels, $replacements, $item->description);
+                                    @endphp
+                                    <div class="item-desc">
+                                        {!! $descFormatted !!}
                                     </div>
                                 @endif
                             </div>
@@ -727,7 +828,7 @@
     <!-- Pengurangan -->
     @if ($penguranganItems->isNotEmpty())
         <div class="section-title">PENGURANGAN :</div>
-        <div class="pengurangan-list">
+        <div class="facility-list">
             <ol>
                 @foreach ($penguranganItems as $item)
                     <li>
@@ -736,14 +837,21 @@
                                 <div style="font-weight: normal; overflow: hidden;">
                                     {{ strtoupper($item->description ?? 'Pengurangan Tanpa Nama') }}
                                     @if (!is_null($item->amount))
-                                        <span style="float: right; margin-right: 100px;">
+                                        <span class="price-right">
                                             Rp {{ number_format((int) $item->amount, 0, ',', '.') }},-
                                         </span>
                                     @endif
                                 </div>
                                 @if (!empty($item->notes))
-                                    <div>
-                                        {!! $item->notes !!}
+                                    @php
+                                        $labels = ['Tent Options:', 'Fleet Available:', 'Streaming Package:', 'Peralatan:'];
+                                        $replacements = array_map(function ($l) {
+                                            return '<span class="subheading">' . $l . '</span>';
+                                        }, $labels);
+                                        $notesFormatted = str_replace($labels, $replacements, $item->notes);
+                                    @endphp
+                                    <div class="item-notes">
+                                        {!! $notesFormatted !!}
                                     </div>
                                 @endif
                             </div>
@@ -916,7 +1024,7 @@
                 </td>
                 <td style="vertical-align: bottom; height: 100px;">
                     <div style="text-decoration: underline;">
-                        Syafira Putri Ramadhania
+                        {{ $record->user?->name ?? 'Account Manager' }}
                     </div>
                     <b>Account Manager</b>
                 </td>

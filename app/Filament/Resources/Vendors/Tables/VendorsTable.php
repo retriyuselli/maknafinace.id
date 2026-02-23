@@ -85,19 +85,19 @@ class VendorsTable
 
                 TextColumn::make('harga_publish')
                     ->label('Published Price')
-                    ->money('IDR')
+                    ->formatStateUsing(fn ($state): string => number_format((float) ($state ?? 0), 0, '.', ','))
                     ->sortable()
                     ->alignment('end'),
 
                 TextColumn::make('harga_vendor')
                     ->label('Vendor Price')
-                    ->money('IDR')
+                    ->formatStateUsing(fn ($state): string => number_format((float) ($state ?? 0), 0, '.', ','))
                     ->sortable()
                     ->alignment('end'),
 
                 TextColumn::make('profit_amount')
                     ->label('Profit')
-                    ->money('IDR')
+                    ->formatStateUsing(fn ($state): string => number_format((float) ($state ?? 0), 0, '.', ','))
                     ->sortable()
                     ->alignment('end')
                     ->color(fn (Vendor $record): string => ($record->profit_amount ?? 0) > 0 ? 'success' : 'danger'),

@@ -33,11 +33,6 @@ class SimulasiProduksTable
                     ->money('IDR')
                     ->sortable()
                     ->alignEnd(),
-                TextColumn::make('promo')
-                    ->money('IDR')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->alignEnd(),
                 TextColumn::make('penambahan')
                     ->label('Addition')
                     ->money('IDR')->sortable()
@@ -98,4 +93,3 @@ class SimulasiProduksTable
             ->poll('60s');
     }
 }
-

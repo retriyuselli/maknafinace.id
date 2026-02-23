@@ -44,7 +44,7 @@ class UserSeeder extends Seeder
         $usersToCreate = [
             // Super Admins & Founders
             [
-                'email' => 'superadmin@maknaonline.com',
+                'email' => 'superadmin@wofins.com',
                 'name' => 'Super Admin',
                 'role' => 'super_admin',
                 'status' => 'Admin',
@@ -55,7 +55,7 @@ class UserSeeder extends Seeder
                 'hire_date' => '2020-01-01',
             ],
             [
-                'email' => 'sarah.wijaya@maknaonline.com',
+                'email' => 'sarah.wijaya@wofins.com',
                 'name' => 'Sarah Wijaya',
                 'role' => 'super_admin',
                 'status' => 'Admin',
@@ -66,7 +66,7 @@ class UserSeeder extends Seeder
                 'hire_date' => '2020-02-01',
             ],
             [
-                'email' => 'michael.chen@maknaonline.com',
+                'email' => 'michael.chen@wofins.com',
                 'name' => 'Michael Chen',
                 'role' => 'super_admin',
                 'status' => 'Admin',
@@ -79,7 +79,7 @@ class UserSeeder extends Seeder
 
             // Admins
             [
-                'email' => 'qoyyum@maknaonline.com',
+                'email' => 'qoyyum@wofins.com',
                 'name' => 'Qoyyum',
                 'role' => 'admin',
                 'status' => 'Admin',
@@ -90,7 +90,7 @@ class UserSeeder extends Seeder
                 'hire_date' => '2021-01-15',
             ],
             [
-                'email' => 'sinta.maharani@maknaonline.com',
+                'email' => 'sinta.maharani@wofins.com',
                 'name' => 'Sinta Maharani',
                 'role' => 'admin',
                 'status' => 'Finance',
@@ -101,7 +101,7 @@ class UserSeeder extends Seeder
                 'hire_date' => '2021-02-01',
             ],
             [
-                'email' => 'kartika.dewi@maknaonline.com',
+                'email' => 'kartika.dewi@wofins.com',
                 'name' => 'Kartika Dewi',
                 'role' => 'admin',
                 'status' => 'HRD',
@@ -114,7 +114,7 @@ class UserSeeder extends Seeder
 
             // Account Managers (from AccountManagerTargetSeeder)
             [
-                'email' => 'rama.dhona@maknaonline.com',
+                'email' => 'rama.dhona@wofins.com',
                 'name' => 'Rama Dhona Utama',
                 'role' => 'Account Manager',
                 'status' => 'Account Manager',
@@ -125,7 +125,7 @@ class UserSeeder extends Seeder
                 'hire_date' => '2022-01-01',
             ],
             [
-                'email' => 'rina.mardiana@maknaonline.com',
+                'email' => 'rina.mardiana@wofins.com',
                 'name' => 'Rina Mardiana',
                 'role' => 'Account Manager',
                 'status' => 'Account Manager',
@@ -136,7 +136,7 @@ class UserSeeder extends Seeder
                 'hire_date' => '2022-02-01',
             ],
             [
-                'email' => 'adel@maknaonline.com',
+                'email' => 'adel@wofins.com',
                 'name' => 'Adel',
                 'role' => 'Account Manager',
                 'status' => 'Account Manager',
@@ -147,7 +147,7 @@ class UserSeeder extends Seeder
                 'hire_date' => '2022-03-01',
             ],
             [
-                'email' => 'sari.ananda@maknaonline.com',
+                'email' => 'sari.ananda@wofins.com',
                 'name' => 'Sari Ananda',
                 'role' => 'Account Manager',
                 'status' => 'Account Manager',
@@ -158,7 +158,7 @@ class UserSeeder extends Seeder
                 'hire_date' => '2022-04-01',
             ],
             [
-                'email' => 'devi.kartika@maknaonline.com',
+                'email' => 'devi.kartika@wofins.com',
                 'name' => 'Devi Kartika',
                 'role' => 'Account Manager',
                 'status' => 'Account Manager',
@@ -171,7 +171,7 @@ class UserSeeder extends Seeder
 
             // Employees / Staff (from EmployeeSeeder)
             [
-                'email' => 'luna.kartika@maknaonline.com',
+                'email' => 'luna.kartika@wofins.com',
                 'name' => 'Luna Kartika',
                 'role' => 'employee',
                 'status' => 'Staff',
@@ -182,7 +182,7 @@ class UserSeeder extends Seeder
                 'hire_date' => '2023-01-01',
             ],
             [
-                'email' => 'agus.hermawan@maknaonline.com',
+                'email' => 'agus.hermawan@wofins.com',
                 'name' => 'Agus Hermawan',
                 'role' => 'employee',
                 'status' => 'Staff',
@@ -193,7 +193,7 @@ class UserSeeder extends Seeder
                 'hire_date' => '2023-02-01',
             ],
             [
-                'email' => 'eko.prasetyo@maknaonline.com',
+                'email' => 'eko.prasetyo@wofins.com',
                 'name' => 'Eko Prasetyo',
                 'role' => 'employee',
                 'status' => 'Staff',
