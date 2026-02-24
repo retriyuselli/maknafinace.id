@@ -22,6 +22,7 @@ use App\Http\Controllers\ProspectAppController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SimulasiDisplayController;
 use App\Http\Controllers\UserFormPdfController;
+use App\Http\Controllers\SopPrintController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LaporanKeuanganController;
@@ -102,6 +103,14 @@ Route::get('/document/{record}/stream', [DocumentController::class, 'stream'])
     ->name('document.stream')
     ->middleware(\Filament\Http\Middleware\Authenticate::class);
 
+// SOP PRINT ROUTES
+Route::get('/sops/{id}/print', [SopPrintController::class, 'show'])
+    ->name('sop.print')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+Route::get('/sops/{id}/pdf', [SopPrintController::class, 'pdf'])
+    ->name('sop.pdf')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+    
 // FRONTEND FEATURES
 Route::get('/features/invoice', [FrontInvoiceController::class, 'index'])->name('front.invoice');
 Route::get('/features/biaya', [BiayaFeatureController::class, 'index'])->name('front.biaya_feature');
