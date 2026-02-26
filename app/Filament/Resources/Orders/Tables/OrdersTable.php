@@ -39,6 +39,12 @@ class OrdersTable
         return $table
             ->defaultSort('updated_at', 'desc')
             ->poll('5s')
+            ->modifyQueryUsing(fn (Builder $query) => $query->with([
+                'prospect',
+                'employee',
+                'user',
+                'items.product',
+            ]))
             ->columns([
                 TextColumn::make('status')
                     ->badge()
@@ -382,7 +388,7 @@ class OrdersTable
                             if ($record->status === OrderStatus::Done) {
                                 $user = Auth::user();
 
-                                return $user && method_exists($user, 'hasRole') && $user->hasRole('super_admin');
+                                return $user && $user->roles->where('name', 'super_admin')->count() > 0;
                             }
 
                             return true;
@@ -397,7 +403,7 @@ class OrdersTable
                             if ($record->status === OrderStatus::Done) {
                                 $user = Auth::user();
 
-                                return ! ($user && method_exists($user, 'hasRole') && $user->hasRole('super_admin'));
+                                return ! ($user && $user->roles->where('name', 'super_admin')->count() > 0);
                             }
 
                             return false;

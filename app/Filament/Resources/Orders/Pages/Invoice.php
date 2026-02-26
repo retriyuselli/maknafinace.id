@@ -22,21 +22,22 @@ class Invoice extends Page
 
     public function mount(int|string $record): void
     {
-        // Eager load semua relasi yang diperlukan untuk mencegah masalah N+1.
         $this->order = Order::with([
             'prospect',
             'user',
             'employee',
             'items.product.vendorItems.vendor',
             'dataPembayaran.paymentMethod',
+            'expenses.vendor',
         ])->findOrFail($record);
     }
 
     protected function getViewData(): array
     {
-        // Menyediakan variabel $paymentMethods ke file view.
         return [
             'paymentMethods' => PaymentMethod::where('is_cash', false)->get(),
+            'allExpenses' => $this->order->expenses->sortByDesc('date_expense'),
+            'totalVendor' => $this->order->expenses->sum('amount'),
         ];
     }
 

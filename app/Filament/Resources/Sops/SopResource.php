@@ -318,7 +318,8 @@ class SopResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with(['category', 'creator', 'updater']);
     }
 
     public static function getRelations(): array

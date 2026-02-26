@@ -95,23 +95,38 @@ class OrderOverview extends BaseWidget
      */
     protected function calculateTrend(string $metric): array
     {
-        $trend = [];
         $days = 7;
-
+        $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
+        $dateKeys = [];
         for ($i = 0; $i < $days; $i++) {
-            $date = Carbon::now()->subDays($i);
-
-            $value = match ($metric) {
-                'projects' => Order::whereDate('created_at', $date)->count(),
-                'revenue' => Order::whereDate('created_at', $date)
-                    ->sum('grand_total'),
-                default => 0
-            };
-
-            $trend[] = $value;
+            $dateKeys[] = $startDate->copy()->addDays($i)->toDateString();
         }
 
-        return $trend;
+        if ($metric === 'projects') {
+            $rows = Order::where('created_at', '>=', $startDate)
+                ->selectRaw('DATE(created_at) as d, COUNT(*) as c')
+                ->groupBy('d')
+                ->orderBy('d', 'asc')
+                ->get()
+                ->pluck('c', 'd')
+                ->all();
+
+            return array_map(fn ($d) => (int) ($rows[$d] ?? 0), $dateKeys);
+        }
+
+        if ($metric === 'revenue') {
+            $rows = Order::where('created_at', '>=', $startDate)
+                ->selectRaw('DATE(created_at) as d, SUM(grand_total) as s')
+                ->groupBy('d')
+                ->orderBy('d', 'asc')
+                ->get()
+                ->pluck('s', 'd')
+                ->all();
+
+            return array_map(fn ($d) => (int) ($rows[$d] ?? 0), $dateKeys);
+        }
+
+        return array_fill(0, $days, 0);
     }
 
     protected function getStats(): array

@@ -339,6 +339,7 @@ class OrdersRelationManager extends RelationManager
                     ->openUrlInNewTab(),
             ])
             ->defaultSort('closing_date', 'desc')
-            ->poll('60s');
+            ->poll('60s')
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('prospect'));
     }
 }

@@ -8,7 +8,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\View;
 
 class InvoiceOrderController extends Controller
 {
@@ -30,6 +29,7 @@ class InvoiceOrderController extends Controller
             'employee',
             'user',
             'dataPembayaran.paymentMethod',
+            'expenses.vendor',
         ])->findOrFail($order->id);
 
         // Calculate total quantity across all items
@@ -49,13 +49,18 @@ class InvoiceOrderController extends Controller
         // Format dates for display
         $formattedEventDate = $eventDate ? date('d F Y', strtotime($eventDate)) : 'Not set';
 
+        $totalVendor = $order->expenses->sum('amount');
+        $allExpenses = $order->expenses->sortByDesc('date_expense');
+
         return view('invoices.show', compact(
             'order',
             'paymentMethods',
             'totalQuantity',
             'averageUnitPrice',
             'daysUntilEvent',
-            'formattedEventDate'
+            'formattedEventDate',
+            'totalVendor',
+            'allExpenses'
         ));
     }
 
@@ -74,6 +79,7 @@ class InvoiceOrderController extends Controller
             'employee',
             'user',
             'dataPembayaran.paymentMethod',
+            'expenses.vendor',
         ])->findOrFail($order->id);
 
         // Configure PDF options to handle page breaks properly
@@ -142,6 +148,7 @@ class InvoiceOrderController extends Controller
             'prospect',
             'employee',
             'dataPembayaran.paymentMethod',
+            'expenses.vendor',
         ])->findOrFail($order->id);
 
         return view('invoices.print', compact('order'));

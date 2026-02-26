@@ -46,6 +46,7 @@ class VendorsTable
                     'productPenambahans',
                 ])
             )
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['category']))
             ->poll('5s')
             ->defaultPaginationPageOption(25)
             ->columns([

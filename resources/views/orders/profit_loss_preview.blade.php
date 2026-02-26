@@ -372,7 +372,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($order->expenses()->latest('date_expense')->get() as $expense)
+                @foreach ($order->expenses->sortByDesc('date_expense') as $expense)
                 <tr>
                     <td>{{ $expense->date_expense ? \Carbon\Carbon::parse($expense->date_expense)->format('d M Y') : '-' }}</td>
                     <td>{{ $expense->vendor->name ?? 'N/A' }}</td>

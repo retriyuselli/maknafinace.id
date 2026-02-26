@@ -368,9 +368,6 @@
                             <td
                                 class="text-right px-4 py-2 border-b border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                                 Rp
-                                @php
-                                    $totalVendor = $order->expenses()->sum('amount');
-                                @endphp
                                 {{ number_format($totalVendor, 0, ',', '.') }}
                             </td>
                         </tr>
@@ -623,10 +620,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                            $allExpenses = $order->expenses()->latest('date_expense')->get();
-                            $visibleLimit = 5; // Jumlah item yang terlihat secara default
-                        @endphp
+                        @php $visibleLimit = 5; @endphp
                         @forelse($allExpenses as $expense)
                             <tr class="vendor-expense-row @if ($loop->iteration > $visibleLimit) hidden @endif">
                                 <td

@@ -256,7 +256,7 @@
                 @php
                     // Calculate sum of payments for the current order
                     // Ensure dataPembayaran relationship is loaded if dealing with many orders to avoid N+1
-                    $totalPembayaranDiterimaOrder = $order->dataPembayaran()->sum('nominal');
+                    $totalPembayaranDiterimaOrder = $order->dataPembayaran->sum('nominal');
                     $profitLoss = ($order->grand_total ?? 0) - ($order->tot_pengeluaran ?? 0);
                 @endphp
                 <tr>
