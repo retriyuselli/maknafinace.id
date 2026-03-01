@@ -29,15 +29,7 @@
 
 </head>
 
-@php
-    $companyName = 'Makna';
-    if (\Illuminate\Support\Facades\Schema::hasTable('companies')) {
-        $val = \App\Models\Company::value('company_name');
-        if ($val) {
-            $companyName = $val;
-        }
-    }
-@endphp
+ 
 
 <body class="bg-gray-100 font-poppins text-sm text-gray-800 antialiased">
 

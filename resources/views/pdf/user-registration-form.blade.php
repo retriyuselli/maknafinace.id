@@ -4,10 +4,10 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>Form Pendataan Karyawan - PT. Makna Kreatif Indonesia</title>
-    <meta name="author" content="PT. Makna Kreatif Indonesia">
-    <meta name="description" content="Slip Gaji - PT. Makna Kreatif Indonesia">
-    <meta name="keywords" content="Slip Gaji, Payroll, PT. Makna Kreatif Indonesia" />
+    <title>Form Pendataan Karyawan - {{ $companyName ?? config('app.name') }}</title>
+    <meta name="author" content="{{ $companyName ?? config('app.name') }}">
+    <meta name="description" content="Slip Gaji - {{ $companyName ?? config('app.name') }}">
+    <meta name="keywords" content="Slip Gaji, Payroll, {{ $companyName ?? config('app.name') }}" />
     <meta name="robots" content="NOINDEX,NOFOLLOW">
 
     <!-- Mobile Specific Metas -->
@@ -808,7 +808,7 @@ Invoice Area
                                 <div class="col-auto">
                                     <div class="header-logo">
                                         <a href="#"><img src="{{ asset('images/logomki.png') }}"
-                                                alt="PT. Makna Kreatif Indonesia"></a>
+                                                alt="{{ $companyName ?? config('app.name') }}"></a>
                                     </div>
                                 </div>
                             </div>
@@ -822,7 +822,7 @@ Invoice Area
                                 <div class="invoice-left" style="display: block !important; visibility: visible !important; color: black !important;">
                                     <b style="color: black !important;">Informasi Perusahaan :</b>
                                     <address style="display: block !important; visibility: visible !important; color: black !important; font-style: normal !important; margin: 5px 0 !important; line-height: 1.3 !important;">
-                                        PT. Makna Kreatif Indonesia <br>
+                                        {{ $companyName ?? config('app.name') }} <br>
                                         Jl. Sintraman Jaya I No.2148, 20 Ilir D II, <br>
                                         Kec. Kemuning, Kota Palembang, Sumatera Selatan 30137
                                     </address>

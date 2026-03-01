@@ -100,21 +100,21 @@ class ProductsTable
 
                 TextColumn::make('price')
                     ->label('Product Price')
-                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((int) $state, 0, '.', ','))
                     ->sortable()
                     ->alignEnd()
                     ->badge(),
 
                 TextColumn::make('product_price')
                     ->label('Total Publish Price')
-                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((int) $state, 0, '.', ','))
                     ->sortable()
                     ->alignEnd(),
 
                 TextColumn::make('pengurangan')
                     ->label('Pengurangan')
                     ->getStateUsing(fn ($record) => $record->pengurangans->sum('amount'))
-                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((int) $state, 0, '.', ','))
                     ->alignEnd()
                     ->sortable()
                     ->badge()
@@ -123,7 +123,7 @@ class ProductsTable
                 TextColumn::make('penambahan')
                     ->label('Penambahan Publish')
                     ->getStateUsing(fn ($record) => $record->penambahanHarga->sum('harga_publish'))
-                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((int) $state, 0, '.', ','))
                     ->alignEnd()
                     ->sortable()
                     ->badge()
@@ -332,6 +332,7 @@ class ProductsTable
                         ->visible(function (Product $record): bool {
                             /** @var User $user */
                             $user = Auth::user();
+
                             return ! $record->is_approved && $user?->hasRole('super_admin');
                         })
                         ->tooltip('Approve this product'),
@@ -348,6 +349,7 @@ class ProductsTable
                         ->visible(function (Product $record): bool {
                             /** @var User $user */
                             $user = Auth::user();
+
                             return $record->is_approved && $user?->hasRole('super_admin');
                         })
                         ->tooltip('Disapprove this product'),
@@ -414,6 +416,7 @@ class ProductsTable
                         ->visible(function (): bool {
                             /** @var User $user */
                             $user = Auth::user();
+
                             return $user->hasRole('super_admin');
                         })
                         ->deselectRecordsAfterCompletion(),

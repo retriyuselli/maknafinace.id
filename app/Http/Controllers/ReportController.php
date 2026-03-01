@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
-use App\Models\Order;
 use App\Models\DataPembayaran;
-use App\Models\Expense; // Pastikan path model ini benar
-use App\Models\ExpenseOps;
+use App\Models\Expense;
+use App\Models\ExpenseOps; // Pastikan path model ini benar
+use App\Models\Order;
 use App\Models\PaymentMethod;
+use App\Models\NotaDinasDetail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -119,7 +120,7 @@ class ReportController extends Controller
             ->select('data_pembayarans.*') // Ambil hanya kolom dari data_pembayarans agar tidak tertimpa kolom orders (misal id)
             ->with(['order' => function ($query) {
                 $query->withoutGlobalScopes()->with('product');
-            }]) 
+            }])
             ->orderBy('orders.name', 'asc')
             ->orderBy('data_pembayarans.tgl_bayar', 'asc')
             ->get();
@@ -132,7 +133,7 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('reports.pembayaran_pdf', compact('dataPembayarans'))
             ->setPaper('a4', 'portrait');
 
-        return $pdf->stream('laporan_pembayaran_' . date('Y-m-d_H-i-s') . '.pdf');
+        return $pdf->stream('laporan_pembayaran_'.date('Y-m-d_H-i-s').'.pdf');
     }
 
     public function generateExpenseOpsHtmlReport(Request $request): View
@@ -478,7 +479,7 @@ class ReportController extends Controller
         $totalExpensesAll = $orders->sum('total_expenses_incurred');
         $totalNetCashFlowAll = $orders->sum('net_cash_flow');
 
-        $pageTitle = 'Laporan Arus Kas Bersih (Net Cash Flow) - Order Status: ' . Str::ucfirst($status);
+        $pageTitle = 'Laporan Arus Kas Bersih (Net Cash Flow) - Order Status: '.Str::ucfirst($status);
 
         $pdf = Pdf::loadView('reports.net-cash-flow-pdf', [
             'orders' => $orders,
@@ -489,6 +490,32 @@ class ReportController extends Controller
             'pageTitle' => $pageTitle,
         ]);
 
-        return $pdf->stream('Laporan_Net_Cash_Flow_' . now()->format('Y-m-d_H-i') . '.pdf');
+        return $pdf->stream('Laporan_Net_Cash_Flow_'.now()->format('Y-m-d_H-i').'.pdf');
+    }
+
+    public function showNotaDinasDetailsCurrentMonth(Request $request): View
+    {
+        $year = (int) ($request->input('year') ?? now()->year);
+        $month = (int) ($request->input('month') ?? now()->month);
+        $details = NotaDinasDetail::with([
+            'notaDinas:id,no_nd,status',
+            'vendor:id,name',
+            'order:id,name',
+        ])
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $total = $details->sum('jumlah_transfer');
+        $monthName = Carbon::create()->month($month)->locale('id')->isoFormat('MMMM');
+
+        return view('reports.nota_dinas_details_current_month', [
+            'details' => $details,
+            'total' => $total,
+            'year' => $year,
+            'month' => $month,
+            'monthName' => $monthName,
+        ]);
     }
 }

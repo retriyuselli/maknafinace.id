@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail Persetujuan Cuti - {{ $record->user->name }} - PT. Makna Kreatif Indonesia</title>
-    <meta name="author" content="PT. Makna Kreatif Indonesia">
-    <meta name="description" content="Detail Persetujuan Cuti - PT. Makna Kreatif Indonesia">
-    <meta name="keywords" content="Persetujuan Cuti, Leave Approval, PT. Makna Kreatif Indonesia" />
+    <title>Detail Persetujuan Cuti - {{ $record->user->name }} - {{ $companyName ?? config('app.name') }}</title>
+    <meta name="author" content="{{ $companyName ?? config('app.name') }}">
+    <meta name="description" content="Detail Persetujuan Cuti - {{ $companyName ?? config('app.name') }}">
+    <meta name="keywords" content="Persetujuan Cuti, Leave Approval, {{ $companyName ?? config('app.name') }}" />
     <meta name="robots" content="NOINDEX,NOFOLLOW">
     
     <!-- Favicons -->
@@ -345,7 +345,7 @@
                         <div class="row align-items-center justify-content-between">
                             <div class="col-auto">
                                 <div class="header-logo">
-                                    <img src="{{ asset('images/logomki.png') }}" alt="PT. Makna Kreatif Indonesia">
+                                    <img src="{{ asset('images/logomki.png') }}" alt="{{ $companyName ?? config('app.name') }}">
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -362,7 +362,7 @@
                             <div class="invoice-left">
                                 <b>Informasi Perusahaan :</b>
                                 <address>
-                                    PT. Makna Kreatif Indonesia <br>
+                                    {{ $companyName ?? config('app.name') }} <br>
                                     Jl. Sintraman Jaya I No.2148, 20 Ilir D II, <br>
                                     Kec. Kemuning, Kota Palembang, Sumatera Selatan 30137
                                 </address>

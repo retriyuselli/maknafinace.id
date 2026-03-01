@@ -27,12 +27,12 @@ class Payroll extends Model
     protected $casts = [
         'period_month' => 'integer',
         'period_year' => 'integer',
-        'gaji_pokok' => 'decimal:2',
-        'tunjangan' => 'decimal:2',
-        'pengurangan' => 'decimal:2',
-        'monthly_salary' => 'decimal:2',
-        'annual_salary' => 'decimal:2',
-        'bonus' => 'decimal:2',
+        'gaji_pokok' => 'integer',
+        'tunjangan' => 'integer',
+        'pengurangan' => 'integer',
+        'monthly_salary' => 'integer',
+        'annual_salary' => 'integer',
+        'bonus' => 'integer',
         'last_review_date' => 'date',
         'next_review_date' => 'date',
     ];
@@ -60,22 +60,48 @@ class Payroll extends Model
             }
 
             // Otomatis hitung annual_salary setiap kali monthly_salary berubah
-            if ($payroll->monthly_salary) {
-                $payroll->annual_salary = $payroll->monthly_salary * 12;
-            }
+            $payroll->annual_salary = self::computeAnnualBase($payroll->gaji_pokok ?? 0, $payroll->tunjangan ?? 0);
         });
+    }
+
+    public static function toInt($value): int
+    {
+        return (int) str_replace(',', '', (string) $value);
+    }
+
+    public static function computeMonthly($gajiPokok, $tunjangan, $bonus, $pengurangan): int
+    {
+        return self::toInt($gajiPokok) + self::toInt($tunjangan) + self::toInt($bonus) - self::toInt($pengurangan);
+    }
+
+    public static function computeAnnual($monthly): int
+    {
+        return self::toInt($monthly) * 12;
+    }
+
+    public static function computeAnnualBase($gajiPokok, $tunjangan): int
+    {
+        return (self::toInt($gajiPokok) + self::toInt($tunjangan)) * 12;
+    }
+
+    public static function computeTotalCompensationBase($gajiPokok, $tunjangan, $pengurangan): int
+    {
+        return self::computeAnnual(
+            self::computeMonthly($gajiPokok, $tunjangan, 0, $pengurangan)
+        );
     }
 
     // Accessor untuk menghitung annual salary berdasarkan monthly salary
     public function getCalculatedAnnualSalaryAttribute(): float
     {
-        return (float) ($this->monthly_salary ?? 0) * 12;
+        return (float) self::computeAnnualBase($this->gaji_pokok ?? 0, $this->tunjangan ?? 0);
     }
 
     // Accessor untuk mendapatkan total kompensasi (bonus sudah termasuk dalam monthly_salary)
     public function getTotalCompensationAttribute(): float
     {
-        return $this->calculated_annual_salary; // Bonus sudah termasuk dalam monthly_salary
+        $baseMonthly = ($this->gaji_pokok ?? 0) + ($this->tunjangan ?? 0) - ($this->pengurangan ?? 0);
+        return (float) $baseMonthly * 12;
     }
 
     // Accessor untuk periode yang mudah dibaca

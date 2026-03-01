@@ -261,12 +261,12 @@
             }
         @endphp
         @if ($logoSrc)
-            <img src="{{ $logoSrc }}" alt="Makna Kreatif Indonesia">
+            <img src="{{ $logoSrc }}" alt="{{ $companyName ?? config('app.name') }}">
         @endif
         {{-- <h1>{{ $product->name }}</h1> --}}
         <p class="mt-1">Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kec. Kemuning, Kota Palembang, Sumatera
             Selatan 30137</p>
-        <p>PT. Makna Kreatif Indonesia | maknawedding@gmail.com | 0813 7318 3794</p>
+        <p>{{ $companyName ?? config('app.name') }} | maknawedding@gmail.com | 0813 7318 3794</p>
     </div>
 
     <div class="pdf-container">
@@ -541,7 +541,7 @@
 
         {{-- Footer (jika diperlukan di setiap halaman) --}}
         <div class="footer">
-            PT. Makna Kreatif Indonesia | {{ now()->format('d F Y H:i:s') }} {{-- Placeholder untuk nomor halaman jika library mendukung --}}
+            {{ $companyName ?? config('app.name') }} | {{ now()->format('d F Y H:i:s') }}
         </div>
     </div>
 </body>

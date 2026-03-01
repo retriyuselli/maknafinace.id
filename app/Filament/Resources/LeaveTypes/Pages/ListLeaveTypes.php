@@ -5,7 +5,6 @@ namespace App\Filament\Resources\LeaveTypes\Pages;
 use App\Filament\Resources\LeaveTypes\LeaveTypeResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
-
 use Illuminate\Support\Facades\Auth;
 
 class ListLeaveTypes extends ListRecords

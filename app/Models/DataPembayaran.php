@@ -27,6 +27,7 @@ class DataPembayaran extends Model
     protected $casts = [
         'tgl_bayar' => 'date',
         'kategori_transaksi' => 'string',
+        'nominal' => 'integer',
     ];
 
     // public function nominal(): BelongsTo

@@ -3,13 +3,12 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Document;
-use App\Models\DocumentApproval;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
-use Illuminate\Database\Eloquent\Builder;
+use Filament\Actions\Action;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Actions\Action;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class DocumentsPendingApprovalWidget extends BaseWidget
@@ -17,9 +16,9 @@ class DocumentsPendingApprovalWidget extends BaseWidget
     use HasWidgetShield {
         canView as canViewShield;
     }
-    
-    protected int | string | array $columnSpan = 'full';
-    
+
+    protected int|string|array $columnSpan = 'full';
+
     protected static ?string $heading = 'Dokumen yang telah disetujui';
 
     protected static ?int $sort = 2;
@@ -38,9 +37,9 @@ class DocumentsPendingApprovalWidget extends BaseWidget
                     $q->where('user_id', Auth::id())
                         ->where('status', 'pending');
                 })
-                ->orWhereHas('recipientsList', function (Builder $q) {
-                    $q->where('users.id', Auth::id());
-                });
+                    ->orWhereHas('recipientsList', function (Builder $q) {
+                        $q->where('users.id', Auth::id());
+                    });
             })
             ->exists();
     }
@@ -55,9 +54,9 @@ class DocumentsPendingApprovalWidget extends BaseWidget
                             $q->where('user_id', Auth::id())
                                 ->where('status', 'pending');
                         })
-                        ->orWhereHas('recipientsList', function (Builder $q) {
-                            $q->where('users.id', Auth::id());
-                        });
+                            ->orWhereHas('recipientsList', function (Builder $q) {
+                                $q->where('users.id', Auth::id());
+                            });
                     })
                     ->with(['category', 'creator'])
                     ->latest()

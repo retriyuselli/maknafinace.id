@@ -17,6 +17,7 @@ class PiutangSeeder extends Seeder
         $methods = PaymentMethod::all();
         if ($methods->isEmpty()) {
             $this->command->error('No PaymentMethod found. Please run PaymentMethodSeeder first.');
+
             return;
         }
 

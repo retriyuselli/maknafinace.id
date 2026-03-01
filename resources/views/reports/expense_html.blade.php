@@ -55,7 +55,7 @@
             @endif
 
             <h1 class="text-2xl font-bold uppercase tracking-wider text-gray-700 mt-0 mb-2">
-                Laporan Pengeluaran Klien Makna Wedding
+                Laporan Pengeluaran Klien {{ $companyName ?? config('app.name') }}
                 @isset($selectedMonth, $selectedYear)
                     @if($selectedMonth && $selectedYear)
                         <br />
@@ -77,7 +77,7 @@
                 Kecamatan Kemuning, Kota Palembang, Sumatera Selatan 30137
             </p>
             <p class="text-xs text-gray-500 mt-0">
-                PT. Makna Kreatif Indonesia | maknawedding@gmail.com | +62 822-9796-2600
+                {{ $companyName ?? config('app.name') }} | maknawedding@gmail.com | +62 822-9796-2600
             </p>
         </div>
 

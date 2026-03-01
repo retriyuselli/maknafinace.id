@@ -30,11 +30,11 @@ class BankTransaction extends Model
     protected $casts = [
         'transaction_date' => 'date',
         'value_date' => 'date',
-        'debit_amount' => 'decimal:2',
-        'credit_amount' => 'decimal:2',
-        'balance' => 'decimal:2',
+        'debit_amount' => 'integer',
+        'credit_amount' => 'integer',
+        'balance' => 'integer',
         'is_matched' => 'boolean',
-        'matching_confidence' => 'decimal:2',
+        'matching_confidence' => 'integer',
     ];
 
     public function bankStatement(): BelongsTo

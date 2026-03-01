@@ -76,6 +76,8 @@ class ProductResource extends Resource
             ->with([
                 'items.vendor:id,name,harga_publish,harga_vendor,description',
                 'penambahanHarga.vendor:id,name,harga_publish,harga_vendor,description',
+                'category:id,name',
+                'parent:id,name',
             ])
             ->withCount([
                 'orders as unique_orders_count',

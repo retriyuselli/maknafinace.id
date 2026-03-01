@@ -282,14 +282,14 @@
                 }
             @endphp
             @if ($logoSrc)
-                <img src="{{ $logoSrc }}" alt="{{ $company->company_name ?? 'Makna Kreatif Indonesia' }}"
+                <img src="{{ $logoSrc }}" alt="{{ $company->company_name ?? ($companyName ?? config('app.name')) }}"
                     class="max-h-10 mx-auto mb-4">
             @endif
             {{-- <h1 class="text-[16px] font-bold uppercase tracking-wide text-gray-800">{{ $product->name ?? 'Nama Produk Tidak Tersedia' }}</h1> --}}
             <p class="text-[12px] text-gray-600 mt-1.5">
                 {{ $company->address ?? 'Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kecamatan Kemuning, Kota Palembang, Sumatera Selatan 30137' }}
             </p>
-            <p class="text-[12px] text-gray-600 mt-0">{{ $company->company_name ?? 'PT. Makna Kreatif Indonesia' }} |
+            <p class="text-[12px] text-gray-600 mt-0">{{ $company->company_name ?? ($companyName ?? config('app.name')) }} |
                 {{ $company->email ?? 'maknawedding@gmail.com' }} | {{ $company->phone ?? '+62 822-9796-2600' }}</p>
         </div>
 

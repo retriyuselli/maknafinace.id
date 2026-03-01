@@ -11,9 +11,9 @@ use App\Filament\Resources\SimulasiProduks\Tables\SimulasiProduksTable;
 use App\Models\SimulasiProduk;
 use App\Support\Rupiah;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -75,11 +75,11 @@ class SimulasiProdukResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        // Example: If you want to scope simulations to the logged-in user (and admins see all)
-        // if (!auth()->user()->hasRole('super_admin')) {
-        //     return parent::getEloquentQuery()->where('user_id', auth()->id());
-        // }
-        return parent::getEloquentQuery();
+        return parent::getEloquentQuery()
+            ->with([
+                'prospect:id,name_event',
+                'user:id,name',
+            ]);
     }
 
     public static function getNavigationBadgeTooltip(): ?string

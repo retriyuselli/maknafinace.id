@@ -6,24 +6,11 @@ use App\Filament\Resources\ProspectApps\Pages\CreateProspectApp;
 use App\Filament\Resources\ProspectApps\Pages\EditProspectApp;
 use App\Filament\Resources\ProspectApps\Pages\ListProspectApps;
 use App\Filament\Resources\ProspectApps\Pages\ViewProspectApp;
-use App\Models\ProspectApp;
-use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Actions\RestoreBulkAction;
-use Filament\Actions\ViewAction;
 use App\Filament\Resources\ProspectApps\Schemas\ProspectAppForm;
 use App\Filament\Resources\ProspectApps\Tables\ProspectAppsTable;
+use App\Models\ProspectApp;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -40,7 +27,7 @@ class ProspectAppResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Aplikasi Prospek';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Penjualan';
+    protected static string|\UnitEnum|null $navigationGroup = 'WOFINS';
 
     protected static ?int $navigationSort = 2;
 
@@ -57,6 +44,9 @@ class ProspectAppResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->with([
+                'industry:id,industry_name',
+            ])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

@@ -22,6 +22,7 @@ class ChartOfAccountSeeder extends Seeder
                     $existing->restore();
                 }
                 $existing->update($data);
+
                 return $existing;
             }
 
@@ -303,4 +304,3 @@ class ChartOfAccountSeeder extends Seeder
         $this->command?->info('Chart of Accounts seeding completed.');
     }
 }
-

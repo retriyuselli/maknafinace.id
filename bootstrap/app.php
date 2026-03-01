@@ -11,6 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->use([
+            \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
         // Add middleware aliases for better organization
         $middleware->alias([
             'filament.auth' => \Filament\Http\Middleware\Authenticate::class,

@@ -43,7 +43,7 @@ class SimulasiProduk extends Model
     protected static function booted()
     {
         static::creating(function ($model) {
-            if (!$model->user_id) {
+            if (! $model->user_id) {
                 $model->user_id = Auth::id();
             }
         });

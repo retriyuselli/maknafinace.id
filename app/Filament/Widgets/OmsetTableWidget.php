@@ -35,10 +35,14 @@ class OmsetTableWidget extends BaseWidget
             ')
             ->groupBy('month', 'month_name', 'year', 'month_year_key');
 
-        $aggregateModel = new class extends Model {
+        $aggregateModel = new class extends Model
+        {
             protected $table = 'monthly_orders';
+
             public $incrementing = false;
+
             public $timestamps = false;
+
             protected $guarded = [];
         };
 

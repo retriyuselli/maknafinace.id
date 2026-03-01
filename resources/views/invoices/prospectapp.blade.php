@@ -290,7 +290,7 @@
     </div>
     <!-- Header -->
     <div class="header">
-        <h1>PT. MAKNA KREATIF INDONESIA</h1>
+        <h1>{{ $companyName ?? config('app.name') }}</h1>
         <h2>Wedding Organizer Financial System - {{ config('app.name', 'WOFINS') }}</h2>
         <p>Email: office@wofins.id | Phone: +62 813 7318 3794</p>
     </div>

@@ -90,7 +90,7 @@ class LaporanKeuanganController extends Controller
         ];
 
         $pdf = Pdf::loadView('pdf.profit_loss_report', $reportData);
-        
-        return $pdf->download('laporan_laba_rugi_' . now()->format('YmdHis') . '.pdf');
+
+        return $pdf->download('laporan_laba_rugi_'.now()->format('YmdHis').'.pdf');
     }
 }

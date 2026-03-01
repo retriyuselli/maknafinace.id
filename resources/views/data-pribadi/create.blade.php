@@ -7,6 +7,7 @@
     <title>Tambah Data Pribadi</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Google Fonts - Noto Sans (Filament Font) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,17 +16,84 @@
 
     <!-- Datacrew Custom CSS -->
     <link href="{{ asset('assets/datacrew/datacrew.css') }}" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f7fafc 0%, #eef2ff 100%);
+        }
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+        .page-title .badge {
+            background: #e0e7ff;
+            color: #3730a3;
+            border-radius: 9999px;
+            padding: .35rem .6rem;
+            font-size: .75rem;
+            font-weight: 600;
+        }
+        .form-card {
+            border-radius: 1rem;
+            border: 1px solid #e5e7eb;
+        }
+        .form-card .card-header {
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+        }
+        .card-header .title-wrap {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+        .card-header .subtitle {
+            opacity: .9;
+            font-size: .9rem;
+        }
+        .step-indicator .nav-link {
+            border: 1px solid #e5e7eb;
+            border-radius: 9999px;
+            padding: .4rem .9rem;
+            color: #374151;
+        }
+        .step-indicator .nav-link.active {
+            background-color: #eef2ff;
+            color: #3730a3;
+            border-color: #c7d2fe;
+            font-weight: 600;
+        }
+        .input-group-text {
+            background-color: #f3f4f6;
+            border-color: #e5e7eb;
+        }
+        .form-control, .form-select, textarea {
+            border-color: #e5e7eb;
+            padding: .6rem .8rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border: none;
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.2);
+        }
+        .btn-primary:hover {
+            filter: brightness(1.05);
+        }
+        .foto-preview-wrap {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        .foto-preview-wrap img {
+            border-radius: .75rem;
+            border: 1px solid #e5e7eb;
+        }
+    </style>
 </head>
 
-@php
-    $companyName = 'Makna Wedding & Event Planner';
-    if (\Illuminate\Support\Facades\Schema::hasTable('companies')) {
-        $val = \App\Models\Company::value('company_name');
-        if ($val) {
-            $companyName = $val;
-        }
-    }
-@endphp
+ 
 
 <body>
     @if ($errors->any())
@@ -66,20 +134,54 @@
             </div>
         </div>
     @endif
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="page-title display-6 mt-3 mb-0">Formulir Data Pribadi</h1>
-            <a href="{{ route('data-pribadi.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
-                <i class="bi bi-arrow-left me-1"></i> Kembali
-            </a>
-        </div>
+    <div class="container py-4 py-md-5">
+        <div class="card form-card shadow-lg">
+            <div class="card-header px-4 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="title-wrap">
+                        <i class="bi bi-person-badge fs-3"></i>
+                        <div>
+                            <div class="h4 mb-0">Formulir Data Pribadi</div>
+                            <div class="subtitle">Lengkapi informasi Anda untuk bergabung dengan {{ $companyName }}</div>
+                        </div>
+                    </div>
+                    <a href="{{ route('data-pribadi.index') }}" class="btn btn-light btn-sm rounded-pill px-3">
+                        <i class="bi bi-arrow-left me-1"></i> Kembali
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                <ul class="nav nav-pills justify-content-center gap-2 step-indicator mb-4" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="pill" href="#step-profil" role="tab" aria-controls="step-profil" aria-selected="true">
+                            <i class="bi bi-person-fill me-1"></i> Profil
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="pill" href="#step-kontak" role="tab" aria-controls="step-kontak" aria-selected="false">
+                            <i class="bi bi-telephone me-1"></i> Kontak
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="pill" href="#step-detail" role="tab" aria-controls="step-detail" aria-selected="false">
+                            <i class="bi bi-briefcase me-1"></i> Detail
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="pill" href="#step-motivasi" role="tab" aria-controls="step-motivasi" aria-selected="false">
+                            <i class="bi bi-chat-left-quote me-1"></i> Motivasi
+                        </a>
+                    </li>
+                </ul>
 
-        <form action="{{ route('data-pribadi.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('data-pribadi.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
+            <div class="tab-content mb-4">
 
+            <div class="tab-pane fade show active" id="step-profil" role="tabpanel">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="nama_lengkap" class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                    <label for="nama_lengkap" class="form-label">Nama Lengkap <span class="badge">Wajib</span></label>
                     <input type="text" class="form-control @error('nama_lengkap') is-invalid @enderror"
                         id="nama_lengkap" name="nama_lengkap" value="{{ old('nama_lengkap') }}" required
                         placeholder="Masukkan nama lengkap Anda" @error('nama_lengkap') aria-invalid="true" @enderror>
@@ -89,7 +191,7 @@
                 </div>
 
                 <div class="col-md-6 mb-3">
-                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                    <label for="email" class="form-label">Email <span class="badge">Wajib</span></label>
                     <input type="email" class="form-control @error('email') is-invalid @enderror" id="email"
                         name="email" value="{{ old('email') }}" required placeholder="contoh@email.com"
                         @error('email') aria-invalid="true" @enderror>
@@ -98,7 +200,9 @@
                     @enderror
                 </div>
             </div>
+            </div>
 
+            <div class="tab-pane fade" id="step-kontak" role="tabpanel">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="nomor_telepon" class="form-label">Nomor Telepon</label>
@@ -124,7 +228,9 @@
                     @enderror
                 </div>
             </div>
+            </div>
 
+            <div class="tab-pane fade" id="step-detail" role="tabpanel">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="jenis_kelamin" class="form-label">Jenis Kelamin</label>
@@ -166,9 +272,8 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="gaji" class="form-label">Fee {{ $companyName }} (Rp)</label>
-                    {{-- Kembalikan type ke number --}}
                     <input type="number" class="form-control @error('gaji') is-invalid @enderror" id="gaji"
-                        name="gaji" value="{{ old('gaji') }}" placeholder="Contoh: 5000000" min="0"
+                        name="gaji" value="{{ old('gaji') }}" placeholder="Contoh: 300,000" min="0"
                         @error('gaji') aria-invalid="true" @enderror>
                     @error('gaji')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -179,14 +284,18 @@
                     <input class="form-control @error('foto') is-invalid @enderror" type="file" id="foto"
                         name="foto" accept="image/*" required @error('foto') aria-invalid="true" @enderror>
                     <div class="form-text mt-1">Unggah foto profil (maks. 1MB, format: jpg, png, gif).</div>
-                    <img id="foto-preview" src="#" alt="Pratinjau Foto"
-                        style="max-width: 200px; max-height: 200px; margin-top: 10px; display: none;" />
+                    <div class="foto-preview-wrap">
+                        <img id="foto-preview" src="#" alt="Pratinjau Foto"
+                            style="max-width: 200px; max-height: 200px; margin-top: 10px; display: none;" />
+                    </div>
                     @error('foto')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
             </div>
+            </div>
 
+            <div class="tab-pane fade" id="step-motivasi" role="tabpanel">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="motivasi_kerja" class="form-label">Motivasi Kerja</label>
@@ -207,13 +316,16 @@
                     @enderror
                 </div>
             </div>
-
-
-
-            <div class="d-grid mt-4">
-                <button type="submit" class="btn btn-primary">Simpan Data</button>
             </div>
-        </form>
+            </div>
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-check2-circle me-1"></i> Simpan Data
+                </button>
+            </div>
+            </form>
+        </div>
+        </div>
     </div>
 
     <!-- Bootstrap JS Bundle -->
@@ -277,7 +389,10 @@
             }
         });
 
-        // Hapus script untuk format input gaji
+        var tabTriggerList = [].slice.call(document.querySelectorAll('.step-indicator [data-bs-toggle="pill"]'));
+        tabTriggerList.forEach(function (tabTriggerEl) {
+            new bootstrap.Tab(tabTriggerEl);
+        });
     </script>
 
     <!-- Footer -->

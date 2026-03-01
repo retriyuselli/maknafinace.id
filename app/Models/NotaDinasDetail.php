@@ -27,6 +27,11 @@ class NotaDinasDetail extends Model
         'order_id',
     ];
 
+    protected $casts = [
+        'jumlah_transfer' => 'integer',
+        'payment_stage' => 'string',
+    ];
+
     public function notaDinas()
     {
         return $this->belongsTo(NotaDinas::class, 'nota_dinas_id');

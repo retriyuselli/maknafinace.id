@@ -97,7 +97,7 @@ class ProjectController extends Controller
         $allowedRoles = ['super_admin', 'Account Manager', 'Finance'];
         $hasAccess = false;
         $user = Auth::user();
-        
+
         if ($user) {
             // Check if user has hasRole method (Spatie Permission)
             if (method_exists($user, 'hasRole')) {

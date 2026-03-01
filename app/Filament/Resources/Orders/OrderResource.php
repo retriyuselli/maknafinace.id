@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Orders;
 
-use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\Pages\CreateOrder;
 use App\Filament\Resources\Orders\Pages\EditOrder;
 use App\Filament\Resources\Orders\Pages\Invoice;
@@ -13,6 +12,7 @@ use App\Filament\Resources\Orders\Tables\OrdersTable;
 use App\Filament\Resources\Products\ProductResource;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -28,7 +28,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class OrderResource extends Resource
 {
@@ -43,48 +43,6 @@ class OrderResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-s-shopping-cart';
 
     protected static ?int $navigationSort = 1;
-
-    /**
-     * Safely convert any value to float for calculations
-     */
-    public static function safeFloatVal($value): float
-    {
-        if (is_null($value)) {
-            return 0.0;
-        }
-
-        if (is_numeric($value)) {
-            return floatval($value);
-        }
-
-        if (is_string($value)) {
-            // Remove any non-numeric characters except dots and commas
-            $cleaned = preg_replace('/[^\d.,]/', '', $value);
-            // Remove commas (thousand separators)
-            $cleaned = str_replace(',', '', $cleaned);
-            // Handle empty string after cleaning
-            if ($cleaned === '' || $cleaned === '.') {
-                return 0.0;
-            }
-
-            return floatval($cleaned);
-        }
-
-        if (is_array($value)) {
-            // If somehow we get an array, return 0
-            Log::warning('Received array value in safeFloatVal', ['value' => $value]);
-
-            return 0.0;
-        }
-
-        // Fallback for any other data type
-        Log::warning('Unexpected data type in safeFloatVal', [
-            'value' => $value,
-            'type' => gettype($value),
-        ]);
-
-        return 0.0;
-    }
 
     public static function form(Schema $schema): Schema
     {
@@ -136,14 +94,26 @@ class OrderResource extends Resource
         $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class]);
 
+        $query->with([
+            'prospect:id,name_event,date_lamaran,date_akad,date_resepsi',
+            'employee:id,name',
+            'user:id,name',
+            'items.product:id,name',
+        ]);
+
         if (Auth::check()) {
-            $user = Auth::user();
-            if (
-                $user
-                && method_exists($user, 'hasRole')
-                && ($user->hasRole('super_admin') || $user->hasRole('Finance') || $user->hasRole('admin_am'))
-            ) {
-                return $query;
+            $uid = Auth::id();
+            if ($uid) {
+                $isPrivileged = DB::table('model_has_roles')
+                    ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+                    ->where('model_has_roles.model_type', User::class)
+                    ->where('model_has_roles.model_id', $uid)
+                    ->whereIn('roles.name', ['super_admin', 'Finance', 'admin_am'])
+                    ->exists();
+
+                if ($isPrivileged) {
+                    return $query;
+                }
             }
         }
 
@@ -215,9 +185,9 @@ class OrderResource extends Resource
                     ->disabled()
                     ->dehydrated()
                     ->prefix('Rp. ')
-                    ->numeric()
                     ->mask(RawJs::make('$money($input)'))
                     ->stripCharacters(',')
+                    ->dehydrateStateUsing(fn ($state) => is_numeric($state) ? (int) $state : (int) preg_replace('/[^\d]/', '', (string) $state))
                     ->required()
                     ->columnSpan([
                         'md' => 3,
@@ -278,14 +248,12 @@ class OrderResource extends Resource
                 $set('pengurangan', $calculatedProductPengurangan); // Mengatur field 'pengurangan' di form Order
                 $set('penambahan', $calculatedProductPenambahan); // Mengatur field 'penambahan' dari penambahan_publish produk
                 $set('total_price', $calculatedTotalPrice); // Mengatur field 'total_price' di form Order
-
-                // Hitung ulang grand_total berdasarkan nilai baru
-                $promo = self::safeFloatVal($get('promo'));
+                $promo = $get('promo') ?? 0;
                 $grandTotal = Order::computeGrandTotalFromValues(
-                    (float) $calculatedTotalPrice,
-                    (float) $calculatedProductPenambahan,
-                    (float) $promo,
-                    (float) $calculatedProductPengurangan
+                    $calculatedTotalPrice,
+                    $calculatedProductPenambahan,
+                    $promo,
+                    $calculatedProductPengurangan
                 );
                 $set('grand_total', $grandTotal); // Mengatur field 'grand_total' di form Order
             });
@@ -306,13 +274,13 @@ class OrderResource extends Resource
 
         foreach ($selectedProducts as $item) {
             $productId = $item['product_id'];
-            $quantity = self::safeFloatVal($item['quantity'] ?? 0);
+            $quantity = $item['quantity'] ?? 0;
 
             // Check if product exists in our fetched collection and has a price
             if (isset($productsFromDb[$productId]) && isset($productsFromDb[$productId]->price)) {
-                $productPrice = self::safeFloatVal($productsFromDb[$productId]->product_price ?? 0);
-                $productPengurangan = self::safeFloatVal($productsFromDb[$productId]->pengurangan ?? 0);
-                $productPenambahanPublish = self::safeFloatVal($productsFromDb[$productId]->penambahan_publish ?? 0);
+                $productPrice = $productsFromDb[$productId]->product_price ?? 0;
+                $productPengurangan = $productsFromDb[$productId]->pengurangan ?? 0;
+                $productPenambahanPublish = $productsFromDb[$productId]->penambahan_publish ?? 0;
 
                 $calculatedTotalPrice += $productPrice * $quantity;
                 $calculatedProductPengurangan += $productPengurangan * $quantity;
@@ -325,13 +293,13 @@ class OrderResource extends Resource
         $set('penambahan', $calculatedProductPenambahan); // Set field 'penambahan' from product's penambahan_publish
 
         // Recalculate grand_total
-        $promo = self::safeFloatVal($get('promo'));
+        $promo = $get('promo') ?? 0;
         // Gunakan $calculatedProductPengurangan dan $calculatedProductPenambahan yang baru dihitung
         $grandTotal = Order::computeGrandTotalFromValues(
-            (float) $calculatedTotalPrice,
-            (float) $calculatedProductPenambahan,
-            (float) $promo,
-            (float) $calculatedProductPengurangan
+            $calculatedTotalPrice,
+            $calculatedProductPenambahan,
+            $promo,
+            $calculatedProductPengurangan
         );
         $set('grand_total', $grandTotal);
 
@@ -341,22 +309,22 @@ class OrderResource extends Resource
 
     public static function updateExchangePaid(Get $get, Set $set): void
     {
-        $paidAmount = (int) $get('paid_amount') ?? 0;
-        $totalPrice = (int) $get('total_price') ?? 0;
-        $promoPrice = (int) $get('promo') ?? 0;
-        $penambahanPrice = (int) $get('penambahan') ?? 0;
-        $penguranganPrice = (int) $get('pengurangan') ?? 0;
+        $paidAmount = $get('paid_amount') ?? 0;
+        $totalPrice = $get('total_price') ?? 0;
+        $promoPrice = $get('promo') ?? 0;
+        $penambahanPrice = $get('penambahan') ?? 0;
+        $penguranganPrice = $get('pengurangan') ?? 0;
         $exchangePaid = $totalPrice - $paidAmount - $promoPrice - $penguranganPrice + $penambahanPrice;
         $set('change_amount', $exchangePaid);
     }
 
     public static function updateDependentFinancialFields(Get $get, Set $set): void
     {
-        // Pertama, pastikan grand_total dihitung ulang dengan safe conversion
-        $total_price = self::safeFloatVal($get('total_price'));
-        $pengurangan_val = self::safeFloatVal($get('pengurangan'));
-        $promo_val = self::safeFloatVal($get('promo'));
-        $penambahan_val = self::safeFloatVal($get('penambahan'));
+        $normalize = fn ($v) => is_numeric($v) ? (int) $v : (int) preg_replace('/[^\d]/', '', (string) $v);
+        $total_price = $normalize($get('total_price') ?? 0);
+        $pengurangan_val = $normalize($get('pengurangan') ?? 0);
+        $promo_val = $normalize($get('promo') ?? 0);
+        $penambahan_val = $normalize($get('penambahan') ?? 0);
         $grandTotal = Order::computeGrandTotalFromValues(
             $total_price,
             $penambahan_val,
@@ -365,13 +333,12 @@ class OrderResource extends Resource
         );
         $set('grand_total', $grandTotal);
 
-        // Hitung 'bayar' dari repeater 'dataPembayaran' dengan safe conversion
         $paymentItems = $get('Jika Ada Pembayaran') ?? [];
         $bayar = 0;
         if (is_array($paymentItems)) {
             foreach ($paymentItems as $paymentItem) {
-                $nominalValue = $paymentItem['nominal'] ?? 0;
-                $bayar += self::safeFloatVal($nominalValue);
+                $nominalValue = $normalize($paymentItem['nominal'] ?? 0);
+                $bayar += $nominalValue;
             }
         }
         $set('bayar', $bayar);

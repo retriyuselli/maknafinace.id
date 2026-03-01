@@ -44,12 +44,12 @@ class ExpenseOps extends Model
     protected $casts = [
         'date_expense' => 'date',
         'tanggal_transfer' => 'date',
-        'amount' => 'decimal:2',
+        'amount' => 'integer',
     ];
 
     public function getFormattedAmountAttribute(): string
     {
-        return number_format($this->amount, 2);
+        return number_format((int) $this->amount, 0, ',', '.');
     }
 
     /**

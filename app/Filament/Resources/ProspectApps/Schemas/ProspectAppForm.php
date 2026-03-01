@@ -9,8 +9,9 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
+use Filament\Support\RawJs;
 
 class ProspectAppForm
 {
@@ -133,9 +134,10 @@ class ProspectAppForm
                     ->schema([
                         TextInput::make('harga')
                             ->label('Anggaran')
-                            ->numeric()
-                            ->prefix('Rp ')
-                            ->dehydrated()
+                            ->prefix('Rp. ')
+                            ->mask(RawJs::make('$money($input)'))
+                            ->stripCharacters(',')
+                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                             ->readOnly()
                             ->helperText('Anggaran otomatis terisi saat memilih paket'),
 
@@ -146,8 +148,10 @@ class ProspectAppForm
 
                         TextInput::make('bayar')
                             ->label('Jumlah Dibayar')
-                            ->numeric()
-                            ->prefix('Rp ')
+                            ->prefix('Rp. ')
+                            ->mask(RawJs::make('$money($input)'))
+                            ->stripCharacters(',')
+                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                             ->helperText('Jika ada pembayaran, isi nominalnya')
                             ->dehydrated(),
 

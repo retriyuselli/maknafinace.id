@@ -16,6 +16,7 @@ class AssetDepreciationSeeder extends Seeder
         $assets = FixedAsset::all();
         if ($assets->isEmpty()) {
             $this->command->error('No fixed assets found. Please run FixedAssetSeeder first.');
+
             return;
         }
 
@@ -70,4 +71,3 @@ class AssetDepreciationSeeder extends Seeder
         $this->command->info("Created {$created} depreciation entries.");
     }
 }
-

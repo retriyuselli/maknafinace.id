@@ -16,7 +16,7 @@ class DocumentSeeder extends Seeder
     public function run(): void
     {
         $user = User::first();
-        
+
         if (! $user) {
             // Ensure at least one user exists to assign as creator
             $user = User::factory()->create([
@@ -39,12 +39,12 @@ class DocumentSeeder extends Seeder
             $category = $categories->random();
             $status = $statuses[array_rand($statuses)];
             $confidentiality = $confidentialities[array_rand($confidentialities)];
-            
+
             // Simple format replacement logic for seed data
             $romanMonth = $this->getRomanMonth(date('n'));
             $year = date('Y');
             $seq = str_pad($i, 3, '0', STR_PAD_LEFT);
-            
+
             $docNumber = $category->format_number ?? 'DOC/{Y}/{SEQ}';
             $docNumber = str_replace(
                 ['{Y}', '{SEQ}', '{DEPT}', '{ROMAN_MONTH}'],
@@ -69,7 +69,7 @@ class DocumentSeeder extends Seeder
                 'created_by' => $user->id,
                 'metadata' => [
                     'keywords' => fake()->words(5),
-                    'version' => '1.' . rand(0, 5),
+                    'version' => '1.'.rand(0, 5),
                     'priority' => rand(0, 1) ? 'high' : 'normal',
                 ],
             ]);
@@ -80,24 +80,25 @@ class DocumentSeeder extends Seeder
     {
         $map = [
             1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI',
-            7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'
+            7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII',
         ];
+
         return $map[$month] ?? 'X';
     }
 
     private function generateHtmlContent()
     {
         return '
-            <h2>' . fake()->sentence() . '</h2>
-            <p>' . fake()->paragraph(4) . '</p>
+            <h2>'.fake()->sentence().'</h2>
+            <p>'.fake()->paragraph(4).'</p>
             <ul>
-                <li>' . fake()->sentence() . '</li>
-                <li>' . fake()->sentence() . '</li>
-                <li>' . fake()->sentence() . '</li>
+                <li>'.fake()->sentence().'</li>
+                <li>'.fake()->sentence().'</li>
+                <li>'.fake()->sentence().'</li>
             </ul>
-            <p>' . fake()->paragraph(3) . '</p>
+            <p>'.fake()->paragraph(3).'</p>
             <h3>Conclusion</h3>
-            <p>' . fake()->paragraph(2) . '</p>
+            <p>'.fake()->paragraph(2).'</p>
         ';
     }
 }

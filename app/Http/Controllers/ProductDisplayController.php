@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Exports\ProductExport;
 use App\Models\Product;
-use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductDisplayController extends Controller
 {
@@ -38,7 +38,8 @@ class ProductDisplayController extends Controller
             // Generate and download a PDF
             // Example using barryvdh/laravel-dompdf:
             $pdf = Pdf::loadView('products.details-preview', compact('product'));
-            return $pdf->download($product->slug . '-details.pdf');
+
+            return $pdf->download($product->slug.'-details.pdf');
 
             // Placeholder if PDF library is not set up yet
             return response("PDF download for '{$product->name}' not implemented yet.", 501);
@@ -66,7 +67,7 @@ class ProductDisplayController extends Controller
         // $pdf->setPaper('A4', 'portrait'); // Contoh: set ukuran kertas dan orientasi
 
         // Buat nama file yang dinamis
-        $fileName = 'product-' . $product->slug . '-' . now()->format('Ymd') . '.pdf';
+        $fileName = 'product-'.$product->slug.'-'.now()->format('Ymd').'.pdf';
 
         // Kembalikan sebagai unduhan
         return $pdf->download($fileName);
@@ -79,7 +80,7 @@ class ProductDisplayController extends Controller
     {
         return Excel::download(
             new ProductExport([$product->id]), // Menggunakan ProductExport yang sudah ada
-            'product_detail_' . Str::slug($product->name) . '_' . now()->format('YmdHis') . '.xlsx'
+            'product_detail_'.Str::slug($product->name).'_'.now()->format('YmdHis').'.xlsx'
         );
     }
 }

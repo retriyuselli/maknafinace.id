@@ -220,7 +220,6 @@ class LeaveBalanceWidget extends BaseWidget
     // Make the widget refreshable
     protected static ?string $maxHeight = '300px';
 
-
     // You can add custom styling
     protected function getViewData(): array
     {

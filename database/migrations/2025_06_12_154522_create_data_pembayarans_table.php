@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->onDelete('cascade'); //
             $table->foreignId('payment_method_id')->nullable()->constrained('payment_methods')->onDelete('set null'); //
-            $table->decimal('nominal', 15, 2); //
+            $table->bigInteger('nominal'); //
             $table->string('image')->nullable(); //
             $table->date('tgl_bayar'); //
             $table->text('keterangan')->nullable(); //

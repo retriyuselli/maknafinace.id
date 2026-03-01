@@ -17,7 +17,7 @@ class ViewSimulasiInvoice extends ViewRecord
     public $items = [];
 
     public $subtotal = 0;
- 
+
     public $penambahan = 0;
 
     public $pengurangan = 0;

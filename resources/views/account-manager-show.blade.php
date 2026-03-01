@@ -6,9 +6,9 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <title>Laporan Account Manager - {{ $accountManager->name ?? 'Unknown' }} - {{ $monthName ?? 'Unknown Month' }}
         {{ $year ?? 'Unknown Year' }}</title>
-    <meta name="author" content="Makna Kreatif">
+    <meta name="author" content="{{ $companyName ?? config('app.name') }}">
     <meta name="description" content="Laporan Kinerja Account Manager">
-    <meta name="keywords" content="Account Manager, Report, Performance, Makna Kreatif" />
+    <meta name="keywords" content="Account Manager, Report, Performance, {{ $companyName ?? config('app.name') }}" />
     <meta name="robots" content="INDEX,FOLLOW">
 
     <!-- Mobile Specific Metas -->
@@ -206,15 +206,18 @@ Invoice Area
                                             <div class="row align-items-center justify-content-between">
                                                 <div class="col-auto">
                                                     <div class="header-logo">
-                                                        <a href="#"><img src="{{ asset('images/logomki.png') }}"
-                                                                alt="Makna Kreatif" width="250" height="auto"
+                                                        <a href="#"><img src="{{ $companyLogoUrl ?? asset('images/logomki.png') }}"
+                                                                alt="{{ $companyName ?? config('app.name') }}" width="150" height="auto"
                                                                 style="max-width: 250px; height: auto;"></a>
+                                                        <div style="margin-top: 6px; font-size: 12px; color: #555; line-height: 1.4;">
+                                                            <div style="font-weight: 600; color: #333;">{{ $companyName ?? config('app.name') }}</div>
+                                                            <div>{{ $companyAddress ?? 'Griya Antasena Kav No.B-1, Sembung, Balecatur, Gamping, Sleman Regency, Special Region of Yogyakarta' }}</div>
+                                                            <div>Email: {{ $companyEmail ?? 'maknawedding@gmail.com' }} | Tlp: {{ $companyPhone ?? '+62 857-2907-0664' }}</div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-auto">
-                                                    <h1 class="big-title">Laporan Account Manager</h1>
-                                                    <span><b>Periode: </b> {{ $monthName ?? 'Unknown Month' }}
-                                                        {{ $year ?? 'Unknown Year' }}</span>
+ 
                                                 </div>
                                             </div>
                                         </header>
@@ -225,6 +228,7 @@ Invoice Area
                                 <tr>
                                     <td style="border: none; padding: 0;">
                                         <div class="content-wrapper">
+                                            <h1 class="big-title" style="margin: 6px 0 12px 0; font-size: 16px; text-align: center;">Laporan Kinerja Account Manager</h1>
                                             <div class="row justify-content-between mb-4">
                                                 <div class="col-auto">
                                                     <div class="invoice-left">
@@ -243,18 +247,7 @@ Invoice Area
                                                         </address>
                                                     </div>
                                                 </div>
-                                                <div class="col-auto">
-                                                    <div class="invoice-right">
-                                                        <b>PT. Makna Kreatif Indonesia</b>
-                                                        <address>
-                                                            Jl. Sintraman Jaya I No. 2148 <br>
-                                                            20 Ilir D II, Kec. Kemuning, Kota Palembang<br>
-                                                            Sumatera Selatan 30137<br>
-                                                            Email: info@maknawedding.id<br>
-                                                            Tlp: +62 813 7318 3794
-                                                        </address>
-                                                    </div>
-                                                </div>
+ 
                                             </div>
                                             <hr class="style1">
 
@@ -598,7 +591,7 @@ Invoice Area
                                                     <tr>
                                                         {{-- <td><b>Periode: </b> {{ \Carbon\Carbon::parse($reportData['target']->start_date ?? now())->format('F Y') }}</td> --}}
                                                         <td><b>Generated: </b> {{ now()->format('d/m/Y H:i') }}</td>
-                                                        <td><b>System: </b> Makna Kreatif CRM</td>
+                                                        <td><b>System: </b> {{ $companyName ?? config('app.name') }} CRM</td>
                                                     </tr>
                                                 </thead>
                                                 {{-- <tbody>
@@ -722,7 +715,7 @@ Invoice Area
                                     <p style="margin: 10px 0 5px 0; font-weight: 600; color: #333;">Rama Dhona Utama
                                     </p>
                                     <p style="margin: 0; font-size: 12px; color: #666;">
-                                        PT. Makna Kreatif Indonesia
+                                        {{ $companyName ?? config('app.name') }}
                                     </p>
                                 </div>
                             </div>
@@ -737,7 +730,7 @@ Invoice Area
                             </svg>
 
                             <b>CATATAN: </b>Laporan ini telah diverifikasi oleh Account Manager dan disetujui oleh
-                            Direktur PT. Makna Kreatif Indonesia sebagai dokumen resmi evaluasi kinerja periode
+                            Direktur {{ $companyName ?? config('app.name') }} sebagai dokumen resmi evaluasi kinerja periode
                             {{ $monthName ?? 'Unknown Month' }} {{ $year ?? 'Unknown Year' }}.
                         </p>
                     </div>

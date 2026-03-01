@@ -69,7 +69,7 @@
         </div>
         <!-- Header Perusahaan -->
         <div class="header-section mb-8 text-center border-b-2 border-gray-300 pb-6">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">PT. MAKNA SPACE</h1>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ strtoupper($companyName ?? config('app.name')) }}</h1>
             <p class="text-gray-600 text-sm">Jl. Contoh Alamat No. 123, Jakarta Selatan</p>
             <p class="text-gray-600 text-sm">Telp: (021) 1234-5678 | Email: info@maknaspace.com</p>
             <div class="mt-4">

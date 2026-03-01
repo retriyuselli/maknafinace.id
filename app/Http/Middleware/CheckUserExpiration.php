@@ -43,6 +43,7 @@ class CheckUserExpiration
 
                 // Redirect with message
                 $appUrl = config('app.url') ?: url('/');
+
                 return redirect()->to($appUrl)
                     ->with('error', 'Akun Anda telah kedaluwarsa. Silakan hubungi administrator untuk memperpanjang akses.');
             }

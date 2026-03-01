@@ -175,33 +175,55 @@ class PaymentMethod extends ViewRecord
     private function getMonthlyFinancialData($record): array
     {
         $startDate = $this->parseDate($record->opening_balance_date) ?? now()->subYear();
-        $monthlyData = [];
+        $endDate = $startDate->copy()->addMonths(11)->endOfMonth();
 
+        $paymentsAgg = $record->payments()
+            ->whereBetween('tgl_bayar', [$startDate, $endDate])
+            ->whereNull('deleted_at')
+            ->selectRaw('YEAR(tgl_bayar) as y, MONTH(tgl_bayar) as m, SUM(nominal) as total')
+            ->groupBy('y', 'm')
+            ->get()
+            ->mapWithKeys(fn ($row) => [sprintf('%04d-%02d', $row->y, $row->m) => (float) $row->total]);
+
+        $otherIncomeAgg = $record->pendapatanLains()
+            ->whereBetween('tgl_bayar', [$startDate, $endDate])
+            ->whereNull('deleted_at')
+            ->selectRaw('YEAR(tgl_bayar) as y, MONTH(tgl_bayar) as m, SUM(nominal) as total')
+            ->groupBy('y', 'm')
+            ->get()
+            ->mapWithKeys(fn ($row) => [sprintf('%04d-%02d', $row->y, $row->m) => (float) $row->total]);
+
+        $expensesAgg = $record->expenses()
+            ->whereBetween('date_expense', [$startDate, $endDate])
+            ->whereNull('deleted_at')
+            ->selectRaw('YEAR(date_expense) as y, MONTH(date_expense) as m, SUM(amount) as total')
+            ->groupBy('y', 'm')
+            ->get()
+            ->mapWithKeys(fn ($row) => [sprintf('%04d-%02d', $row->y, $row->m) => (float) $row->total]);
+
+        $expenseOpsAgg = $record->expenseOps()
+            ->whereBetween('date_expense', [$startDate, $endDate])
+            ->whereNull('deleted_at')
+            ->selectRaw('YEAR(date_expense) as y, MONTH(date_expense) as m, SUM(amount) as total')
+            ->groupBy('y', 'm')
+            ->get()
+            ->mapWithKeys(fn ($row) => [sprintf('%04d-%02d', $row->y, $row->m) => (float) $row->total]);
+
+        $otherExpensesAgg = $record->pengeluaranLains()
+            ->whereBetween('date_expense', [$startDate, $endDate])
+            ->whereNull('deleted_at')
+            ->selectRaw('YEAR(date_expense) as y, MONTH(date_expense) as m, SUM(amount) as total')
+            ->groupBy('y', 'm')
+            ->get()
+            ->mapWithKeys(fn ($row) => [sprintf('%04d-%02d', $row->y, $row->m) => (float) $row->total]);
+
+        $monthlyData = [];
         for ($i = 0; $i < 12; $i++) {
             $monthStart = $startDate->copy()->addMonths($i)->startOfMonth();
-            $monthEnd = $monthStart->copy()->endOfMonth();
+            $key = $monthStart->format('Y-m');
 
-            $income = $record->payments()
-                ->whereBetween('tgl_bayar', [$monthStart, $monthEnd])
-                ->whereNull('deleted_at')
-                ->sum('nominal') +
-                $record->pendapatanLains()
-                    ->whereBetween('tgl_bayar', [$monthStart, $monthEnd])
-                    ->whereNull('deleted_at')
-                    ->sum('nominal');
-
-            $expense = $record->expenses()
-                ->whereBetween('date_expense', [$monthStart, $monthEnd])
-                ->whereNull('deleted_at')
-                ->sum('amount') +
-                $record->expenseOps()
-                    ->whereBetween('date_expense', [$monthStart, $monthEnd])
-                    ->whereNull('deleted_at')
-                    ->sum('amount') +
-                $record->pengeluaranLains()
-                    ->whereBetween('date_expense', [$monthStart, $monthEnd])
-                    ->whereNull('deleted_at')
-                    ->sum('amount');
+            $income = ($paymentsAgg[$key] ?? 0) + ($otherIncomeAgg[$key] ?? 0);
+            $expense = ($expensesAgg[$key] ?? 0) + ($expenseOpsAgg[$key] ?? 0) + ($otherExpensesAgg[$key] ?? 0);
 
             $monthlyData[] = [
                 'month' => $monthStart->format('M Y'),

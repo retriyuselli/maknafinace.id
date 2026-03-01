@@ -26,7 +26,8 @@ class EditDocument extends EditRecord
                 ->label('Download PDF')
                 ->icon('heroicon-o-printer')
                 ->action(function ($record) {
-                    $filename = 'document-' . Str::slug($record->document_number) . '.pdf';
+                    $filename = 'document-'.Str::slug($record->document_number).'.pdf';
+
                     return response()->streamDownload(function () use ($record) {
                         echo Pdf::loadView('documents.pdf', ['record' => $record])->output();
                     }, $filename);
@@ -39,16 +40,16 @@ class EditDocument extends EditRecord
                 ->requiresConfirmation()
                 ->action(function ($record) {
                     $record->update(['status' => 'pending']);
-                    
+
                     // Create Approval Entry for current user (Demo: Self-Approval)
                     // In real app, look up Department Manager or defined workflow
                     DocumentApproval::create([
                         'document_id' => $record->id,
-                        'user_id' => Auth::id(), 
+                        'user_id' => Auth::id(),
                         'step_order' => 1,
                         'status' => 'pending',
                     ]);
-                    
+
                     Notification::make()
                         ->title('Submitted successfully')
                         ->success()
@@ -66,19 +67,19 @@ class EditDocument extends EditRecord
                         ->where('user_id', Auth::id())
                         ->where('status', 'pending')
                         ->first();
-                        
+
                     if ($approval) {
                         $approval->update([
                             'status' => 'approved',
                             'signed_at' => now(),
                         ]);
                     }
-                    
+
                     // Check if all approvals are done
                     $pendingCount = DocumentApproval::where('document_id', $record->id)
                         ->where('status', 'pending')
                         ->count();
-                        
+
                     if ($pendingCount === 0) {
                         $record->update(['status' => 'approved']);
                         Notification::make()
@@ -104,20 +105,20 @@ class EditDocument extends EditRecord
                         ->required(),
                 ])
                 ->action(function ($record, array $data) {
-                     $approval = DocumentApproval::where('document_id', $record->id)
+                    $approval = DocumentApproval::where('document_id', $record->id)
                         ->where('user_id', Auth::id())
                         ->where('status', 'pending')
                         ->first();
-                        
+
                     if ($approval) {
                         $approval->update([
                             'status' => 'rejected',
                             'note' => $data['note'],
                         ]);
                     }
-                    
+
                     $record->update(['status' => 'rejected']);
-                    
+
                     Notification::make()
                         ->title('Document Rejected')
                         ->danger()

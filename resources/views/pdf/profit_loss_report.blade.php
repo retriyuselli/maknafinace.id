@@ -220,7 +220,7 @@
                 <p class="company-address">Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kec. Kemuning, Kota Palembang,
                     Sumatera Selatan 30137</p>
                 <p class="company-address">
-                    PT. Makna Kreatif Indonesia | maknawedding@gmail.com | +62 822-9796-2600
+                    {{ $companyName ?? config('app.name') }} | maknawedding@gmail.com | +62 822-9796-2600
                 </p>
             @endif
             <h1>Laporan Laba Rugi Klien</h1>

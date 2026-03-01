@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\ProspectApps\Pages;
 
 use App\Filament\Resources\ProspectApps\ProspectAppResource;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditProspectApp extends EditRecord

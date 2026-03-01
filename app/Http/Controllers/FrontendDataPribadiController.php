@@ -65,7 +65,7 @@ class FrontendDataPribadiController extends Controller
 
         DataPribadi::create($data);
 
-        return redirect()->route('data-pribadi.index')->with('success', 'Data pribadi berhasil disimpan!');
+        return redirect()->route('data-pribadi.success')->with('success', 'Data pribadi berhasil disimpan!');
     }
 
     public function index(Request $request) // Tambahkan Request $request
@@ -82,5 +82,15 @@ class FrontendDataPribadiController extends Controller
         $dataPribadis = $query->orderBy('created_at', 'desc')->paginate(10);
 
         return view('data-pribadi.index', compact('dataPribadis'));
+    }
+
+    /**
+     * Show success thank-you page after storing data.
+     *
+     * @return View
+     */
+    public function success(): View
+    {
+        return view('data-pribadi.success');
     }
 }

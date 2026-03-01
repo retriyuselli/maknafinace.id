@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\OrderResource;
-use App\Filament\Resources\Products\ProductResource;
 use App\Models\Expense;
 use App\Models\NotaDinas;
 use App\Models\NotaDinasDetail;
@@ -24,7 +23,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -49,7 +47,7 @@ class OrderForm
                     ->description('Detail dasar proyek')
                     ->schema([
                         TextInput::make('number')
-                            ->default('MW-' . random_int(100000, 999999))
+                            ->default('MW-'.random_int(100000, 999999))
                             ->disabled()
                             ->dehydrated()
                             ->required()
@@ -163,16 +161,18 @@ class OrderForm
                                                 ->required()
                                                 ->label('Metode Pembayaran'),
                                             TextInput::make('nominal')
-                                                ->numeric()
                                                 ->prefix('Rp. ')
                                                 ->label('Nominal')
                                                 ->required()
                                                 ->mask(RawJs::make('$money($input)'))
                                                 ->stripCharacters(',')
+                                                // ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                                 ->debounce(800)
-                                                ->lazy()
+                                                ->live(onBlur: true)
                                                 ->afterStateUpdated(function ($state, Get $get, Set $set) {
                                                     if ($state !== null) {
+                                                        $sanitized = is_numeric($state) ? (int) $state : (int) preg_replace('/[^\d]/', '', (string) $state);
+                                                        $set('nominal', $sanitized);
                                                         OrderResource::updateDependentFinancialFields($get, $set);
                                                     }
                                                 }),
@@ -194,7 +194,7 @@ class OrderForm
                                                 ->image()
                                                 ->maxSize(1280)
                                                 ->disk('public')
-                                                ->directory('payment-proofs/' . date('Y/m'))
+                                                ->directory('payment-proofs/'.date('Y/m'))
                                                 ->visibility('public')
                                                 ->downloadable()
                                                 ->openable()
@@ -205,17 +205,39 @@ class OrderForm
                                     ->afterStateUpdated(function (Get $get, Set $set) {
                                         OrderResource::updateDependentFinancialFields($get, $set);
                                     })
-                                    ->collapsible()
-                                    ->reorderable()
-                                    ->cloneable()
-                                    ->live(onBlur: true)
+                                    ->addActionLabel('Tambah Pembayaran')
+                                    ->label('Pembayaran')
+                                    ->collapsed()
                                     ->itemLabel(
-                                        fn (array $state): ?string => $state['keterangan'] ?? 'New Payment',
+                                        function (array $state): ?string {
+                                            $keterangan = $state['keterangan'] ?? 'Pembayaran';
+                                            $tglRaw = $state['tgl_bayar'] ?? null;
+                                            $tanggal = $tglRaw ? \Illuminate\Support\Carbon::parse($tglRaw)->format('d M Y') : 'Tanggal?';
+                                            $nominalRaw = $state['nominal'] ?? 0;
+                                            $nominalVal = is_numeric($nominalRaw)
+                                                ? (int) $nominalRaw
+                                                : (int) preg_replace('/[^\d]/', '', (string) $nominalRaw);
+                                            $nominalFmt = 'Rp. '.number_format($nominalVal, 0, '.', ',');
+
+                                            $methodLabel = 'Metode?';
+                                            try {
+                                                if (isset($state['payment_method_id']) && $state['payment_method_id']) {
+                                                    $pm = \App\Models\PaymentMethod::find($state['payment_method_id']);
+                                                    if ($pm) {
+                                                        $methodLabel = $pm->is_cash
+                                                            ? 'Kas/Tunai'
+                                                            : ($pm->bank_name ? "{$pm->bank_name} - {$pm->no_rekening}" : $pm->name);
+                                                    }
+                                                }
+                                            } catch (\Exception $e) {
+                                            }
+
+                                            return "{$keterangan} | {$tanggal} | {$methodLabel} | {$nominalFmt}";
+                                        }
                                     ),
                             ])
                             ->columnSpanFull(),
                         TextInput::make('total_price')
-                            ->numeric()
                             ->prefix('Rp. ')
                             ->label('Total Paket Awal')
                             ->readOnly()
@@ -226,19 +248,23 @@ class OrderForm
                             ->dehydrated(false),
                         TextInput::make('promo')
                             ->default(0)
-                            ->numeric()
                             ->prefix('Rp. ')
                             ->readOnly()
                             ->label('Promo')
                             ->mask(RawJs::make('$money($input)'))
                             ->stripCharacters(',')
+                            ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
                             ->reactive()
                             ->live(onBlur: true)
                             ->afterStateUpdated(function (Get $get, Set $set) {
-                                $totalPrice = OrderResource::safeFloatVal($get('total_price'));
-                                $pengurangan = OrderResource::safeFloatVal($get('pengurangan'));
-                                $promo = OrderResource::safeFloatVal($get('promo'));
-                                $penambahan = OrderResource::safeFloatVal($get('penambahan'));
+                                $tpRaw = $get('total_price');
+                                $pgRaw = $get('pengurangan');
+                                $pmRaw = $get('promo');
+                                $pnRaw = $get('penambahan');
+                                $totalPrice = is_numeric($tpRaw) ? (int) $tpRaw : (int) preg_replace('/[^\d]/', '', (string) $tpRaw);
+                                $pengurangan = is_numeric($pgRaw) ? (int) $pgRaw : (int) preg_replace('/[^\d]/', '', (string) $pgRaw);
+                                $promo = is_numeric($pmRaw) ? (int) $pmRaw : (int) preg_replace('/[^\d]/', '', (string) $pmRaw);
+                                $penambahan = is_numeric($pnRaw) ? (int) $pnRaw : (int) preg_replace('/[^\d]/', '', (string) $pnRaw);
                                 $grandTotal = Order::computeGrandTotalFromValues(
                                     $totalPrice,
                                     $penambahan,
@@ -250,20 +276,24 @@ class OrderForm
                             }),
                         TextInput::make('penambahan')
                             ->default(0)
-                            ->numeric()
                             ->prefix('Rp. ')
                             ->readOnly()
                             ->label('Penambahan Harga')
                             ->helperText('Auto-calculated from selected products penambahan publish price')
                             ->mask(RawJs::make('$money($input)'))
                             ->stripCharacters(',')
+                            ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
                             ->reactive()
                             ->live(onBlur: true)
                             ->afterStateUpdated(function (Get $get, Set $set) {
-                                $totalPrice = OrderResource::safeFloatVal($get('total_price'));
-                                $pengurangan = OrderResource::safeFloatVal($get('pengurangan'));
-                                $promo = OrderResource::safeFloatVal($get('promo'));
-                                $penambahan = OrderResource::safeFloatVal($get('penambahan'));
+                                $tpRaw = $get('total_price');
+                                $pgRaw = $get('pengurangan');
+                                $pmRaw = $get('promo');
+                                $pnRaw = $get('penambahan');
+                                $totalPrice = is_numeric($tpRaw) ? (int) $tpRaw : (int) preg_replace('/[^\d]/', '', (string) $tpRaw);
+                                $pengurangan = is_numeric($pgRaw) ? (int) $pgRaw : (int) preg_replace('/[^\d]/', '', (string) $pgRaw);
+                                $promo = is_numeric($pmRaw) ? (int) $pmRaw : (int) preg_replace('/[^\d]/', '', (string) $pmRaw);
+                                $penambahan = is_numeric($pnRaw) ? (int) $pnRaw : (int) preg_replace('/[^\d]/', '', (string) $pnRaw);
                                 $grandTotal = Order::computeGrandTotalFromValues(
                                     $totalPrice,
                                     $penambahan,
@@ -275,12 +305,12 @@ class OrderForm
                             }),
                         TextInput::make('pengurangan')
                             ->default(0)
-                            ->numeric()
                             ->prefix('Rp. ')
                             ->label('Total Pengurangan dari Produk (Otomatis)')
                             ->mask(RawJs::make('$money($input)'))
                             ->stripCharacters(',')
                             ->dehydrated()
+                            ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
                             ->readOnly()
                             ->helperText('Nilai ini dihitung otomatis dari total pengurangan semua produk dalam order.'),
                     ]),
@@ -291,35 +321,48 @@ class OrderForm
                         Section::make()
                             ->schema([
                                 TextInput::make('bayar')
+                                    ->reactive()
                                     ->label('Uang dibayar')
                                     ->readOnly()
+                                    ->default(0)
                                     ->helperText('Pembayaran klien ke rek makna')
-                                    ->default(0)
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->mask(RawJs::make('$money($input)'))
-                                    ->stripCharacters(','),
-                                TextInput::make('grand_total')
-                                    ->label('Grand Total')
-                                    ->readOnly()
-                                    ->helperText('Grand Total = Total Paket + Penambahan - Promo - Pengurangan')
-                                    ->default(0)
-                                    ->numeric()
-                                    ->dehydrated(true)
-                                    ->prefix('Rp')
-                                    ->mask(RawJs::make('$money($input)'))
-                                    ->stripCharacters(','),
-                                TextInput::make('tot_pengeluaran')
-                                    ->label('Pengeluaran')
-                                    ->readOnly()
-                                    ->numeric()
-                                    ->helperText('Total Pembayaran Ke Vendor')
-                                    ->reactive()
-                                    ->default(0)
                                     ->prefix('Rp')
                                     ->mask(RawJs::make('$money($input)'))
                                     ->stripCharacters(',')
                                     ->dehydrated(true)
+                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
+                                    ->afterStateHydrated(function ($component, $state, $record) {
+                                        if ($record) {
+                                            $component->state($record->bayar);
+                                        }
+                                    }),
+                                TextInput::make('grand_total')
+                                    ->reactive()
+                                    ->label('Grand Total')
+                                    ->readOnly()
+                                    ->default(0)
+                                    ->helperText('Grand Total = Total Paket + Penambahan - Promo - Pengurangan')
+                                    ->prefix('Rp')
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
+                                    ->dehydrated(true)
+                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
+                                    ->afterStateHydrated(function ($component, $state, $record) {
+                                        if ($record) {
+                                            $component->state($record->grand_total);
+                                        }
+                                    }),
+                                TextInput::make('tot_pengeluaran')
+                                    ->reactive()
+                                    ->label('Pengeluaran')
+                                    ->readOnly()
+                                    ->default(0)
+                                    ->helperText('Total Pembayaran Ke Vendor')
+                                    ->prefix('Rp')
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
+                                    ->dehydrated(true)
+                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
                                     ->afterStateHydrated(function ($component, $state, $record) {
                                         if ($record) {
                                             $component->state($record->tot_pengeluaran);
@@ -330,11 +373,11 @@ class OrderForm
                                     ->readOnly()
                                     ->default(0)
                                     ->helperText('Sisa uang yang harus di bayar ke makna')
-                                    ->numeric()
                                     ->prefix('Rp')
                                     ->mask(RawJs::make('$money($input)'))
                                     ->stripCharacters(',')
                                     ->dehydrated(true)
+                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
                                     ->afterStateHydrated(function ($component, $state, $record) {
                                         if ($record) {
                                             $component->state($record->sisa);
@@ -343,12 +386,13 @@ class OrderForm
                                 TextInput::make('laba_kotor')
                                     ->label('Laba Kotor')
                                     ->readOnly()
-                                    ->numeric()
+                                    ->default(0)
                                     ->helperText('Grand total - Pembayaran ke vendor')
                                     ->prefix('Rp')
                                     ->mask(RawJs::make('$money($input)'))
                                     ->stripCharacters(',')
                                     ->dehydrated(true)
+                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
                                     ->afterStateHydrated(function ($component, $state, $record) {
                                         if ($record) {
                                             $component->state($record->laba_kotor);
@@ -359,11 +403,11 @@ class OrderForm
                                     ->readOnly()
                                     ->default(0)
                                     ->helperText('Sisa uang yang diterima dari klien')
-                                    ->numeric()
                                     ->prefix('Rp')
                                     ->mask(RawJs::make('$money($input)'))
                                     ->stripCharacters(',')
                                     ->dehydrated(true)
+                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
                                     ->afterStateHydrated(function ($component, $state, $record) {
                                         if ($record) {
                                             $component->state($record->uang_diterima);
@@ -416,7 +460,34 @@ class OrderForm
                             ->schema([
                                 Repeater::make('expenses')
                                     ->relationship('expenses')
-                                    ->live()
+                                    ->itemLabel(function (array $state): ?string {
+                                        if (! isset($state['vendor_id']) || ! $state['vendor_id']) {
+                                            return '🆕 Expense Baru';
+                                        }
+
+                                        try {
+                                            $vendor = Vendor::find($state['vendor_id']);
+                                            $vendorName = $vendor?->name ?? 'Vendor #'.$state['vendor_id'];
+
+                                            $amount = Rupiah::parse($state['amount'] ?? 0);
+                                            $formattedAmount = 'Rp '.number_format((int) $amount, 0, '.', ',');
+
+                                            $paymentStage = 'DP';
+                                            if (isset($state['nota_dinas_detail_id'])) {
+                                                try {
+                                                    $notaDinasDetail = NotaDinasDetail::find($state['nota_dinas_detail_id']);
+                                                    $paymentStage = $notaDinasDetail?->payment_stage ?? 'DP';
+                                                } catch (Exception $e) {
+                                                }
+                                            }
+
+                                            return "🏪 {$vendorName} ({$paymentStage}) - {$formattedAmount}";
+                                        } catch (Exception $e) {
+                                            Log::warning('Error in expense itemLabel: '.$e->getMessage());
+
+                                            return '⚠️ Expense Item';
+                                        }
+                                    })
                                     ->schema([
                                         Grid::make(3)
                                             ->schema([
@@ -518,7 +589,7 @@ class OrderForm
                                                                 return [$detail->id => $label];
                                                             })->toArray();
                                                         } catch (Exception $e) {
-                                                            Log::error('Error in nota_dinas_detail_id options: ' . $e->getMessage(), [
+                                                            Log::error('Error in nota_dinas_detail_id options: '.$e->getMessage(), [
                                                                 'nota_dinas_id' => $notaDinasId,
                                                                 'trace' => $e->getTraceAsString(),
                                                             ]);
@@ -554,7 +625,7 @@ class OrderForm
 
                                                             return "Pilih detail nota dinas yang akan dibayar (Sudah dipilih: {$actualUsedCount}/{$totalCount})";
                                                         } catch (Exception $e) {
-                                                            Log::warning('Error in helperText: ' . $e->getMessage());
+                                                            Log::warning('Error in helperText: '.$e->getMessage());
 
                                                             return 'Pilih detail nota dinas yang akan dibayar';
                                                         }
@@ -578,11 +649,11 @@ class OrderForm
                                                                 $set('account_holder', $notaDinasDetail->account_holder ?? $notaDinasDetail->vendor->account_holder);
                                                                 $set('bank_name', $notaDinasDetail->bank_name ?? $notaDinasDetail->vendor->bank_name);
                                                                 $set('bank_account', $notaDinasDetail->bank_account ?? $notaDinasDetail->vendor->bank_account);
-                                                                $set('amount', OrderResource::safeFloatVal($notaDinasDetail->jumlah_transfer ?? 0));
+                                                                $set('amount', $notaDinasDetail->jumlah_transfer ?? 0);
                                                                 $set('note', $notaDinasDetail->keperluan ?? null);
                                                             }
                                                         } catch (Exception $e) {
-                                                            Log::error('Error in afterStateUpdated: ' . $e->getMessage());
+                                                            Log::error('Error in afterStateUpdated: '.$e->getMessage());
                                                         }
                                                     })
                                                     ->required()
@@ -611,11 +682,10 @@ class OrderForm
                                             ->schema([
                                                 TextInput::make('amount')
                                                     ->label('Jumlah Transfer')
-                                                    ->numeric()
                                                     ->prefix('Rp. ')
                                                     ->mask(RawJs::make('$money($input)'))
                                                     ->stripCharacters(',')
-                                                    ->dehydrateStateUsing(fn ($state) => floatval(str_replace([',', '.'], ['', '.'], $state ?? 0)))
+                                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
                                                     ->required(),
                                                 Select::make('payment_method_id')
                                                     ->label('Metode Pembayaran')
@@ -641,7 +711,8 @@ class OrderForm
                                                             $at = $state ? \Carbon\Carbon::parse($state) : now();
                                                             $active = $vendor->activePrice($at);
 
-                                                            $currentAmount = OrderResource::safeFloatVal($get('amount'));
+                                                            $amRaw = $get('amount');
+                                                            $currentAmount = is_numeric($amRaw) ? (int) $amRaw : (int) preg_replace('/[^\d]/', '', (string) $amRaw);
                                                             if (($currentAmount ?? 0) <= 0 && $active) {
                                                                 $set('amount', $active->harga_vendor);
                                                             }
@@ -667,43 +738,11 @@ class OrderForm
                                                     ->columnSpan(1),
                                             ]),
                                     ])
-                                    ->defaultItems(0)
-                                    ->collapsible()
-                                    ->collapsed(false)
-                                    ->itemLabel(function (array $state): ?string {
-                                        if (! isset($state['vendor_id']) || ! $state['vendor_id']) {
-                                            return '🆕 Expense Baru';
-                                        }
-
-                                        try {
-                                            $vendor = Vendor::find($state['vendor_id']);
-                                            $vendorName = $vendor?->name ?? 'Vendor #'.$state['vendor_id'];
-
-                                            $amount = Rupiah::parse($state['amount'] ?? 0);
-                                            $formattedAmount = Rupiah::format($amount, true);
-
-                                            $paymentStage = 'DP';
-                                            if (isset($state['nota_dinas_detail_id'])) {
-                                                try {
-                                                    $notaDinasDetail = NotaDinasDetail::find($state['nota_dinas_detail_id']);
-                                                    $paymentStage = $notaDinasDetail?->payment_stage ?? 'DP';
-                                                } catch (Exception $e) {
-                                                }
-                                            }
-
-                                            return "🏪 {$vendorName} ({$paymentStage}) - {$formattedAmount}";
-                                        } catch (Exception $e) {
-                                            Log::warning('Error in expense itemLabel: '.$e->getMessage());
-
-                                            return '⚠️ Expense Item';
-                                        }
-                                    })
                                     ->addActionLabel('Tambah Expense')
-                                    ->reorderable()
-                                    ->cloneable()
-                                    ->afterStateUpdated(function ($state, $livewire) {
-                                        $livewire->dispatch('refreshForm');
-                                    }),
+                                    ->label('Pengeluaran Wedding')
+                                    ->collapsed()
+                                    ->reorderable(true)
+                                    ->reorderableWithButtons(),
                             ])->columnSpanFull(),
                     ]),
                 Step::make('Riwayat Modifikasi')
@@ -730,7 +769,7 @@ class OrderForm
                             ->dehydrated(false)
                             ->afterStateHydrated(function ($component, $state, ?Order $record): void {
                                 if ($record?->lastEditedBy) {
-                                    $component->state($record->lastEditedBy->name . ' pada ' . $record->updated_at?->format('d M Y H:i'));
+                                    $component->state($record->lastEditedBy->name.' pada '.$record->updated_at?->format('d M Y H:i'));
                                 } else {
                                     $component->state('Belum dilacak');
                                 }

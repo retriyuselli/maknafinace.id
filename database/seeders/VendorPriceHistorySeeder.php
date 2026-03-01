@@ -14,12 +14,14 @@ class VendorPriceHistorySeeder extends Seeder
 
         if (! \Illuminate\Support\Facades\Schema::hasTable('vendor_price_histories')) {
             $this->command->warn('Table vendor_price_histories not found. Skipping VendorPriceHistorySeeder.');
+
             return;
         }
 
         $vendors = Vendor::all();
         if ($vendors->isEmpty()) {
             $this->command->error('No Vendor found. Please run VendorSeeder first.');
+
             return;
         }
 

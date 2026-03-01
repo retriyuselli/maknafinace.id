@@ -5,10 +5,10 @@
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <title>Laporan Account Manager - {{ $accountManager->name ?? 'Unknown' }} - {{ $monthName ?? 'Unknown Month' }}
-        {{ $year ?? 'Unknown Year' }}</title>
-    <meta name="author" content="Makna Kreatif">
+        {{ $year ?? 'Unknown Year' }} - {{ $companyName ?? config('app.name') }}</title>
+    <meta name="author" content="{{ $companyName ?? config('app.name') }}">
     <meta name="description" content="Laporan Kinerja Account Manager">
-    <meta name="keywords" content="Account Manager, Report, Performance, Makna Kreatif" />
+    <meta name="keywords" content="Account Manager, Report, Performance, {{ $companyName ?? config('app.name') }}" />
     <meta name="robots" content="INDEX,FOLLOW">
 
     <!-- Mobile Specific Metas -->
@@ -230,13 +230,13 @@ Invoice Area
                                                     <td style="width: 50%; text-align: left; vertical-align: middle;">
                                                         <div class="header-logo">
                                                             <img src="{{ public_path('images/logomki.png') }}"
-                                                                alt="Makna Kreatif" width="250"
+                                                                alt="{{ $companyName ?? config('app.name') }}" width="250"
                                                                 style="max-width: 250px; height: auto;">
                                                         </div>
                                                     </td>
                                                     <td style="width: 50%; text-align: right; vertical-align: middle;">
                                                         <h1 class="big-title" style="margin: 0; font-size: 24px;">
-                                                            Laporan Account Manager</h1>
+                                                            Laporan Kinerja Account Manager</h1>
                                                         <span style="display: block; margin-top: 5px;"><b>Periode: </b>
                                                             {{ $monthName ?? 'Unknown Month' }}
                                                             {{ $year ?? 'Unknown Year' }}</span>
@@ -271,7 +271,7 @@ Invoice Area
                                                 </div>
                                                 <div class="col-auto">
                                                     <div class="invoice-right">
-                                                        <b>PT. Makna Kreatif Indonesia</b>
+                                                        <b>{{ $companyName ?? config('app.name') }}</b>
                                                         <address>
                                                             Jl. Sintraman Jaya I No. 2148 <br>
                                                             20 Ilir D II, Kec. Kemuning, Kota Palembang<br>
@@ -624,7 +624,7 @@ Invoice Area
                                                     <tr>
                                                         {{-- <td><b>Periode: </b> {{ \Carbon\Carbon::parse($reportData['target']->start_date ?? now())->format('F Y') }}</td> --}}
                                                         <td><b>Generated: </b> {{ now()->format('d/m/Y H:i') }}</td>
-                                                        <td><b>System: </b> Makna Kreatif CRM</td>
+                                                        <td><b>System: </b> {{ $companyName ?? config('app.name') }} CRM</td>
                                                     </tr>
                                                 </thead>
                                                 {{-- <tbody>
@@ -753,7 +753,7 @@ Invoice Area
                                             Utama
                                         </p>
                                         <p style="margin: 0; font-size: 12px; color: #666;">
-                                            PT. Makna Kreatif Indonesia
+                                            {{ $companyName ?? config('app.name') }}
                                         </p>
                                     </td>
                                 </tr>
@@ -769,7 +769,7 @@ Invoice Area
                             </svg>
 
                             <b>CATATAN: </b>Laporan ini telah diverifikasi oleh Account Manager dan disetujui oleh
-                            Direktur PT. Makna Kreatif Indonesia sebagai dokumen resmi evaluasi kinerja periode
+                            Direktur {{ $companyName ?? config('app.name') }} sebagai dokumen resmi evaluasi kinerja periode
                             {{ $monthName ?? 'Unknown Month' }} {{ $year ?? 'Unknown Year' }}.
                         </p>
                     </div>

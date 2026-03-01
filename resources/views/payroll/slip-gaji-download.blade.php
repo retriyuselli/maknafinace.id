@@ -4,10 +4,10 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>Slip Gaji - {{ $user->name }} - PT. Makna Kreatif Indonesia</title>
-    <meta name="author" content="PT. Makna Kreatif Indonesia">
-    <meta name="description" content="Slip Gaji - PT. Makna Kreatif Indonesia">
-    <meta name="keywords" content="Slip Gaji, Payroll, PT. Makna Kreatif Indonesia" />
+    <title>Slip Gaji - {{ $user->name }} - {{ $companyName ?? config('app.name') }}</title>
+    <meta name="author" content="{{ $companyName ?? config('app.name') }}">
+    <meta name="description" content="Slip Gaji - {{ $companyName ?? config('app.name') }}">
+    <meta name="keywords" content="Slip Gaji, Payroll, {{ $companyName ?? config('app.name') }}" />
     <meta name="robots" content="NOINDEX,NOFOLLOW">
 
     <!-- Mobile Specific Metas -->
@@ -276,7 +276,7 @@ Invoice Area
                             <div class="row align-items-center justify-content-between">
                                 <div class="col-auto">
                                     <div class="header-logo">
-                                        <a href="#"><img src="{{ asset('images/logomki.png') }}" alt="PT. Makna Kreatif Indonesia"></a>
+                                        <a href="#"><img src="{{ asset('images/logomki.png') }}" alt="{{ $companyName ?? config('app.name') }}"></a>
                                     </div>
                                 </div>
                                 <div class="col-auto">
@@ -291,7 +291,7 @@ Invoice Area
                                 <div class="invoice-left">
                                     <b>Informasi Perusahaan :</b>
                                     <address>
-                                        PT. Makna Kreatif Indonesia <br>
+                                        {{ $companyName ?? config('app.name') }} <br>
                                         Jl. Sintraman Jaya I No.2148, 20 Ilir D II, <br>
                                         Kec. Kemuning, Kota Palembang, Sumatera Selatan 30137
                                     </address>

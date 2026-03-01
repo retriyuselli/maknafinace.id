@@ -19,8 +19,8 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontWeight;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -46,7 +46,6 @@ class VendorsTable
                     'productPenambahans',
                 ])
             )
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['category']))
             ->poll('5s')
             ->defaultPaginationPageOption(25)
             ->columns([
@@ -57,12 +56,13 @@ class VendorsTable
                     ->copyable()
                     ->formatStateUsing(fn ($state): string => $state ? Str::title($state) : '-')
                     ->copyMessage('Vendor copied')
-                    ->description(fn (Vendor $record): string => $record->category?->name ?? '-'),
+                    ->description(fn (Vendor $record): string => Str::title($record->category?->name ?? '-')),
 
                 TextColumn::make('pic_name')
                     ->label('PIC')
                     ->searchable()
                     ->sortable()
+                    ->formatStateUsing(fn ($state): string => $state ? Str::title($state) : '-')
                     ->toggleable(),
 
                 TextColumn::make('phone')
@@ -76,7 +76,12 @@ class VendorsTable
                     ->label('Status')
                     ->searchable()
                     ->sortable()
-                    ->badge(),
+                    ->badge()
+                    ->color(function ($state): string {
+                        $value = is_string($state) ? $state : (property_exists($state, 'value') ? $state->value : (string) $state);
+
+                        return $value === 'vendor' ? 'danger' : 'info';
+                    }),
 
                 IconColumn::make('is_master')
                     ->label('Master')
@@ -86,26 +91,31 @@ class VendorsTable
 
                 TextColumn::make('harga_publish')
                     ->label('Published Price')
-                    ->formatStateUsing(fn ($state): string => number_format((float) ($state ?? 0), 0, '.', ','))
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable()
                     ->alignment('end'),
 
                 TextColumn::make('harga_vendor')
                     ->label('Vendor Price')
-                    ->formatStateUsing(fn ($state): string => number_format((float) ($state ?? 0), 0, '.', ','))
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable()
                     ->alignment('end'),
 
                 TextColumn::make('profit_amount')
                     ->label('Profit')
-                    ->formatStateUsing(fn ($state): string => number_format((float) ($state ?? 0), 0, '.', ','))
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable()
                     ->alignment('end')
                     ->color(fn (Vendor $record): string => ($record->profit_amount ?? 0) > 0 ? 'success' : 'danger'),
 
                 TextColumn::make('profit_margin')
                     ->label('Margin')
-                    ->formatStateUsing(fn ($state): string => number_format((float) ($state ?? 0), 2).' %')
+                    ->numeric()
+                    ->sortable()
+                    ->prefix('Rp. ')
                     ->alignment('end')
                     ->toggleable(isToggledHiddenByDefault: true),
 

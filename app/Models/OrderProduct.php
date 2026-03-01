@@ -13,6 +13,11 @@ class OrderProduct extends Model
         'unit_price',
     ];
 
+    protected $casts = [
+        'quantity' => 'integer',
+        'unit_price' => 'integer',
+    ];
+
     public function product()
     {
         return $this->belongsTo(Product::class);

@@ -11,6 +11,14 @@ cd /home/u380354370/domains/thewhitefinance.com/public_html
 cd /home/u380354370/domains/patrononline.id/public_html
 https://console.cloud.google.com/
 
+->prefix('Rp. ')
+->mask(RawJs::make('$money($input)'))
+->stripCharacters(',')
+->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+->placeholder('0'),
+
+->formatStateUsing(fn ($state): string => $state ? Str::ucfirst($state) : '-')
+
 git add .
 git commit -m "Update"
 git push origin main

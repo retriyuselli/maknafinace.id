@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>{{ $title }} - PT. Makna Kreatif Indonesia</title>
-    <meta name="author" content="PT. Makna Kreatif Indonesia">
-    <meta name="description" content="{{ $title }} - PT. Makna Kreatif Indonesia">
-    <meta name="keywords" content="Form Pendaftaran, Karyawan, PT. Makna Kreatif Indonesia" />
+    <title>{{ $title }} - {{ $companyName ?? config('app.name') }}</title>
+    <meta name="author" content="{{ $companyName ?? config('app.name') }}">
+    <meta name="description" content="{{ $title }} - {{ $companyName ?? config('app.name') }}">
+    <meta name="keywords" content="Form Pendaftaran, Karyawan, {{ $companyName ?? config('app.name') }}" />
     <meta name="robots" content="NOINDEX,NOFOLLOW">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -389,7 +389,7 @@
     <header class="themeholy-header">
         <div class="header-row">
             <div class="header-logo">
-                <img src="{{ asset('images/logomki.png') }}" alt="PT. Makna Kreatif Indonesia">
+                <img src="{{ asset('images/logomki.png') }}" alt="{{ $companyName ?? config('app.name') }}">
             </div>
             <div class="header-info">
                 <h1 class="big-title">{{ $title }}</h1>
@@ -406,7 +406,7 @@
         <div>
             <b>Informasi Perusahaan :</b>
             <address>
-                PT. Makna Kreatif Indonesia <br>
+                {{ $companyName ?? config('app.name') }} <br>
                 Jl. Sintraman Jaya I No.2148, 20 Ilir D II, <br>
                 Kec. Kemuning, Kota Palembang, Sumatera Selatan 30137
             </address>

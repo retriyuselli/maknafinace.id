@@ -17,6 +17,7 @@ class SopRevisionSeeder extends Seeder
         $users = User::all();
         if ($sops->isEmpty() || $users->isEmpty()) {
             $this->command->error('Need SOPs and Users. Run SopSeeder & UserSeeder first.');
+
             return;
         }
 
@@ -46,4 +47,3 @@ class SopRevisionSeeder extends Seeder
         $this->command->info('SOP revisions seeded.');
     }
 }
-

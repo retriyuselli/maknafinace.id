@@ -67,7 +67,7 @@ class Employee extends Model
             'date_of_birth' => 'date',
             'date_of_join' => 'date',
             'date_of_out' => 'date',
-            'salary' => 'decimal:2', // Sesuaikan dengan tipe data di database Anda
+            'salary' => 'integer',
         ];
     }
 }

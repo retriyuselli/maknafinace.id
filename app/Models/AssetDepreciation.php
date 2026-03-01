@@ -26,11 +26,11 @@ class AssetDepreciation extends Model
 
     protected $casts = [
         'depreciation_date' => 'date',
-        'depreciation_amount' => 'decimal:2',
-        'accumulated_depreciation_before' => 'decimal:2',
-        'accumulated_depreciation_after' => 'decimal:2',
-        'book_value_before' => 'decimal:2',
-        'book_value_after' => 'decimal:2',
+        'depreciation_amount' => 'integer',
+        'accumulated_depreciation_before' => 'integer',
+        'accumulated_depreciation_after' => 'integer',
+        'book_value_before' => 'integer',
+        'book_value_after' => 'integer',
         'is_adjustment' => 'boolean',
     ];
 

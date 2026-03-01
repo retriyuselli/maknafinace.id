@@ -20,8 +20,8 @@ class BankReconciliationItem extends Model
 
     protected $casts = [
         'date' => 'date',
-        'debit' => 'decimal:2',
-        'credit' => 'decimal:2',
+        'debit' => 'integer',
+        'credit' => 'integer',
     ];
 
     // ========================

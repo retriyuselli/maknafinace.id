@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kontak Perusahaan - Makna Wedding Organizer</title>
+    <title>Kontak Perusahaan - {{ $companyName ?? config('app.name') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -228,7 +228,7 @@
                         </h3>
                         <div class="space-y-4">
                             <div>
-                                <h4 class="font-semibold text-gray-800 mb-2">PT. Makna Kreatif Indonesia</h4>
+                                <h4 class="font-semibold text-gray-800 mb-2">{{ $companyName ?? config('app.name') }}</h4>
                                 <p class="text-gray-600">Perusahaan yang bergerak di bidang wedding organizer dan event
                                     planner dengan pengalaman lebih dari 10 tahun dalam industri ini.</p>
                             </div>
@@ -365,7 +365,7 @@
                         </h3>
                         <div class="space-y-3">
                             <p class="text-gray-700">
-                                <strong>PT. Makna Kreatif Indonesia</strong><br>
+                                <strong>{{ $companyName ?? config('app.name') }}</strong><br>
                                 Jl. Sudirman No. 123, Lantai 15<br>
                                 Gedung Makna Tower<br>
                                 Jakarta Pusat, DKI Jakarta 10220

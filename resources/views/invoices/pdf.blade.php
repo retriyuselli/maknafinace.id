@@ -440,7 +440,7 @@
             <tr>
                 <td style="line-height: 1;">
                     <div>
-                        <b>{{ $company->company_name ?? 'PT. Makna Kreatif Indonesia' }}</b><br>
+                        <b>{{ $company->company_name ?? ($companyName ?? config('app.name')) }}</b><br>
                         Alamat : {{ $company->address ?? 'Jln. Sintraman Jaya, No. 2148, Sekip Jaya, Palembang' }}<br>
                         No. Tlp : {{ $company->phone ?? '+62 822-9796-2600' }}<br>
                         Email : {{ $company->email ?? 'maknawedding@gmail.com' }}

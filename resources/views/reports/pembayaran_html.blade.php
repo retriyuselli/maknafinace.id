@@ -235,7 +235,7 @@
             @else
                 <p class="company-address">Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, <br>
                     Kecamatan Kemuning, Kota Palembang, Sumatera Selatan 30137</p>
-                <p class="company-address" style="margin-top:0;">PT. Makna Kreatif Indonesia | maknawedding@gmail.com |
+                <p class="company-address" style="margin-top:0;">{{ $companyName ?? config('app.name') }} | maknawedding@gmail.com |
                     +62
                     822-9796-2600</p>
             @endif

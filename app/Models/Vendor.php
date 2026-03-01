@@ -7,7 +7,6 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -37,10 +36,10 @@ class Vendor extends Model
     ];
 
     protected $casts = [
-        'profit_amount' => 'decimal:2',
-        'profit_margin' => 'decimal:2',
-        'harga_publish' => 'decimal:2',
-        'harga_vendor' => 'decimal:2',
+        'profit_amount' => 'integer',
+        'profit_margin' => 'integer',
+        'harga_publish' => 'integer',
+        'harga_vendor' => 'integer',
         'status' => StatusVendor::class,
         'is_master' => 'boolean',
     ];

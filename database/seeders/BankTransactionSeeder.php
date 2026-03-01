@@ -16,6 +16,7 @@ class BankTransactionSeeder extends Seeder
         $statements = BankStatement::all();
         if ($statements->isEmpty()) {
             $this->command->error('No BankStatement found. Please run BankStatementSeeder first.');
+
             return;
         }
 

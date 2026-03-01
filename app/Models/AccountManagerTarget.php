@@ -22,8 +22,8 @@ class AccountManagerTarget extends Model
     ];
 
     protected $casts = [
-        'target_amount' => 'decimal:2',
-        'achieved_amount' => 'decimal:2',
+        'target_amount' => 'integer',
+        'achieved_amount' => 'integer',
         'year' => 'integer',
         'month' => 'integer',
     ];

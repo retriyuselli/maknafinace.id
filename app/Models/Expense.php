@@ -40,19 +40,14 @@ class Expense extends Model
     ];
 
     protected $casts = [
-        'date_expense' => 'date', // Atau 'datetime' jika Anda menyimpan waktu juga
-        'amount' => 'float', // Pastikan amount juga di-cast jika perlu
+        'date_expense' => 'date',
+        'amount' => 'integer',
     ];
 
     public function setAmountAttribute($value)
     {
-        if (is_string($value)) {
-            // Remove any formatting and convert to float
-            $value = preg_replace('/[^\d.,]/', '', $value);
-            $value = str_replace(',', '', $value);
-        }
-
-        $this->attributes['amount'] = floatval($value);
+        $raw = is_string($value) ? preg_replace('/[^\d]/', '', $value) : $value;
+        $this->attributes['amount'] = (int) $raw;
     }
 
     public function category(): BelongsTo

@@ -20,15 +20,14 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
-use Filament\Support\Enums\Alignment;
-use Filament\Support\Enums\FontWeight;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -39,12 +38,6 @@ class OrdersTable
         return $table
             ->defaultSort('updated_at', 'desc')
             ->poll('5s')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with([
-                'prospect',
-                'employee',
-                'user',
-                'items.product',
-            ]))
             ->columns([
                 TextColumn::make('status')
                     ->badge()
@@ -66,7 +59,7 @@ class OrdersTable
 
                         $percentage = min(round(($paid / $total) * 100), 100);
 
-                        return $percentage . '%';
+                        return $percentage.'%';
                     })
                     ->color(fn (Order $record): string => $record->is_paid ? 'success' : ($record->bayar > 0 ? 'warning' : 'danger'))
                     ->alignment(Alignment::Center)
@@ -130,7 +123,7 @@ class OrdersTable
                     ->label('Grand Total')
                     ->money('IDR')
                     ->alignEnd()
-                    ->description(fn (Order $record): string => $record->promo > 0 || $record->pengurangan > 0 ? 'Pengurangan: -' . number_format($record->promo + $record->pengurangan, 0, ',', '.') : '')
+                    ->description(fn (Order $record): string => $record->promo > 0 || $record->pengurangan > 0 ? 'Pengurangan: -'.number_format($record->promo + $record->pengurangan, 0, ',', '.') : '')
                     ->color('success'),
                 TextColumn::make('bayar')
                     ->label('Jumlah Dibayar')
@@ -231,7 +224,7 @@ class OrdersTable
                                                 COALESCE(date_lamaran, '9999-12-31'),
                                                 COALESCE(date_akad, '9999-12-31'),
                                                 COALESCE(date_resepsi, '9999-12-31')
-                                            ) " . $data['sort_order'],
+                                            ) ".$data['sort_order'],
                                         );
                                     }
                                 } else {
@@ -278,11 +271,11 @@ class OrdersTable
                             };
 
                             if ($data['from_date'] ?? null) {
-                                $indicators[] = 'From: ' . Carbon::parse($data['from_date'])->format('d M Y');
+                                $indicators[] = 'From: '.Carbon::parse($data['from_date'])->format('d M Y');
                             }
 
                             if ($data['until_date'] ?? null) {
-                                $indicators[] = 'Until: ' . Carbon::parse($data['until_date'])->format('d M Y');
+                                $indicators[] = 'Until: '.Carbon::parse($data['until_date'])->format('d M Y');
                             }
 
                             if (! empty($indicators)) {
@@ -336,11 +329,11 @@ class OrdersTable
 
                         if ($data['employee_id'] ?? null) {
                             $employee = Employee::find($data['employee_id']);
-                            $indicators['em'] = 'EM: ' . ($employee?->name ?? 'Unknown');
+                            $indicators['em'] = 'EM: '.($employee?->name ?? 'Unknown');
                         }
                         if ($data['user_id'] ?? null) {
                             $user = User::find($data['user_id']);
-                            $indicators['am'] = 'AM: ' . ($user?->name ?? 'Unknown');
+                            $indicators['am'] = 'AM: '.($user?->name ?? 'Unknown');
                         }
 
                         return $indicators;
@@ -363,12 +356,12 @@ class OrdersTable
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
                         if (isset($data['year']) && $data['year'] !== '' && is_numeric($data['year'])) {
-                            $indicators[] = 'Closing Year: ' . $data['year'];
+                            $indicators[] = 'Closing Year: '.$data['year'];
                         }
                         if (isset($data['month']) && $data['month'] !== '' && is_numeric($data['month'])) {
                             $monthNum = (int) $data['month'];
                             if ($monthNum >= 1 && $monthNum <= 12) {
-                                $indicators[] = 'Closing Month: ' . Carbon::create()->month($monthNum)->format('F');
+                                $indicators[] = 'Closing Month: '.Carbon::create()->month($monthNum)->format('F');
                             }
                         }
 
@@ -499,7 +492,7 @@ class OrdersTable
                                 Notification::make()
                                     ->danger()
                                     ->title('Some Deletions Prevented')
-                                    ->body("Could not delete {$preventedDeletions} order(s) due to existing items: " . implode(', ', $preventedOrderNumbers))
+                                    ->body("Could not delete {$preventedDeletions} order(s) due to existing items: ".implode(', ', $preventedOrderNumbers))
                                     ->persistent()
                                     ->send();
                             }

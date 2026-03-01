@@ -64,4 +64,13 @@ class PayrollResource extends Resource
     }
 
     protected static string|\UnitEnum|null $navigationGroup = 'SDM';
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'user:id,name,email,department',
+                'user.status:id,status_name',
+            ]);
+    }
 }

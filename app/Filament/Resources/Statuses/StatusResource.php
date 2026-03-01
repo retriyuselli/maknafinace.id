@@ -5,17 +5,11 @@ namespace App\Filament\Resources\Statuses;
 use App\Filament\Resources\Statuses\Pages\CreateStatus;
 use App\Filament\Resources\Statuses\Pages\EditStatus;
 use App\Filament\Resources\Statuses\Pages\ListStatuses;
+use App\Filament\Resources\Statuses\Schemas\StatusForm;
+use App\Filament\Resources\Statuses\Tables\StatusesTable;
 use App\Models\Status;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class StatusResource extends Resource
@@ -30,47 +24,12 @@ class StatusResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                TextInput::make('status_name')
-                    ->required()
-                    ->maxLength(255),
-            ]);
+        return StatusForm::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('status_name')
-                    ->searchable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                //
-            ])
-            ->recordActions([
-                ActionGroup::make([
-                    ViewAction::make(),
-                    EditAction::make(),
-                    DeleteAction::make(),
-                ]),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ])
-            ->striped()
-            ->defaultPaginationPageOption(10)
-            ->paginationPageOptions([10, 25, 50]);
+        return StatusesTable::configure($table);
     }
 
     public static function getRelations(): array

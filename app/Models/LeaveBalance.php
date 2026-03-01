@@ -55,11 +55,11 @@ class LeaveBalance extends Model
     public function calculateRemainingDays()
     {
         $year = $this->year ?? now()->year;
-        
+
         // Logic for Carry Over Expiration (March 31st)
         $carriedOver = $this->carried_over_days ?? 0;
         $allocated = $this->allocated_days;
-        
+
         // We need to know how many days were used in Jan-Mar of this balance year
         $usedJanMar = $this->user->leaveRequests()
             ->where('leave_type_id', $this->leave_type_id)
@@ -67,19 +67,19 @@ class LeaveBalance extends Model
             ->whereYear('start_date', $year)
             ->whereMonth('start_date', '<=', 3) // Jan, Feb, Mar
             ->sum('total_days');
-            
+
         // If today > March 31 of this balance year
         $cutoffDate = \Carbon\Carbon::create($year, 3, 31)->endOfDay();
-        
+
         if (now()->gt($cutoffDate)) {
-            // Expired. 
+            // Expired.
             // The amount effectively used from carry over is min(carriedOver, usedJanMar).
             $effectiveCarryOver = min($carriedOver, $usedJanMar);
         } else {
             // Not yet expired. Full carry over available.
             $effectiveCarryOver = $carriedOver;
         }
-        
+
         // Use $this->used_days which should be set before calling this
         $this->remaining_days = $allocated + $effectiveCarryOver - ($this->used_days ?? 0);
     }
@@ -88,7 +88,7 @@ class LeaveBalance extends Model
     public function calculateUsedDays()
     {
         $year = $this->year ?? now()->year;
-        
+
         $totalUsed = $this->user->leaveRequests()
             ->where('leave_type_id', $this->leave_type_id)
             ->where('status', 'approved')
@@ -98,9 +98,9 @@ class LeaveBalance extends Model
         $this->used_days = $totalUsed;
 
         $this->calculateRemainingDays();
-        
+
         $this->saveQuietly(); // Use saveQuietly to avoid triggering events if any
-        
+
         return $totalUsed;
     }
 
@@ -170,18 +170,18 @@ class LeaveBalance extends Model
                     if (stripos($leaveType->name, 'pengganti') === false && stripos($leaveType->name, 'replacement') === false) {
                         $allocatedDays = $leaveType->max_days_per_year;
                         $needsUpdate = false;
-                        
+
                         if ($leaveBalance->allocated_days != $allocatedDays) {
                             $leaveBalance->allocated_days = $allocatedDays;
                             $needsUpdate = true;
                         }
-                        
+
                         // Update carry over if it was missing
                         if ($carryOver > 0 && $leaveBalance->carried_over_days == 0) {
                             $leaveBalance->carried_over_days = $carryOver;
                             $needsUpdate = true;
                         }
-                        
+
                         if ($needsUpdate) {
                             $leaveBalance->save();
                             $updated++;

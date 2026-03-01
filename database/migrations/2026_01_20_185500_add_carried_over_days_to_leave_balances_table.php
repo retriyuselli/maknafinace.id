@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('leave_balances', 'carried_over_days')) {
+        if (! Schema::hasColumn('leave_balances', 'carried_over_days')) {
             Schema::table('leave_balances', function (Blueprint $table) {
                 $table->integer('carried_over_days')->default(0)->after('allocated_days');
             });

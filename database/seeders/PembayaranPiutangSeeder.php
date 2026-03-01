@@ -18,6 +18,7 @@ class PembayaranPiutangSeeder extends Seeder
 
         if ($methods->isEmpty() || $piutangs->isEmpty()) {
             $this->command->error('Need PaymentMethod and Piutang. Run PaymentMethodSeeder & PiutangSeeder first.');
+
             return;
         }
 

@@ -3,11 +3,11 @@
 namespace App\Filament\Resources\DocumentCategories\Schemas;
 
 use App\Enums\DocumentCategoryType;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 
 class DocumentCategoryForm
 {

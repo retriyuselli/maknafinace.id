@@ -152,7 +152,7 @@
                          class="h-12 w-auto">
                 </div>
                 <div class="text-right">
-                    <h2 class="text-lg font-semibold text-gray-800">PT. Makna Kreatif Indonesia</h2>
+                    <h2 class="text-lg font-semibold text-gray-800">{{ $companyName ?? config('app.name') }}</h2>
                     <p class="text-sm text-gray-600">Jl. Contoh No. 123, Jakarta</p>
                     <p class="text-sm text-gray-600">Tel: (021) 123-4567</p>
                 </div>

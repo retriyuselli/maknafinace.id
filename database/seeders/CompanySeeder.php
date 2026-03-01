@@ -20,7 +20,7 @@ class CompanySeeder extends Seeder
                 'legal_entity_type' => 'PT',
                 'established_year' => 2015,
                 'employee_count' => 25,
-                
+
                 // Kontak & Alamat
                 'email' => 'info@maknaonline.com',
                 'phone' => '+62 21 1234 5678', // Format sesuai regex /^[0-9+\s\-]+$/
@@ -44,7 +44,7 @@ class CompanySeeder extends Seeder
                 'npwp_number' => '12.345.678.9-012.345', // Format sesuai regex /^[0-9\.\-]+$/
                 'npwp_issued_date' => '2020-02-10',
                 'tax_office' => 'KPP Pratama Jakarta Selatan',
-                
+
                 // Dokumen
                 'legal_documents' => [],
                 'legal_document_status' => 'complete',

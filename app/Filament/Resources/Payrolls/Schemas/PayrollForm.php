@@ -109,8 +109,10 @@ class PayrollForm
 
                                                 $hireDate = $user->hire_date?->format('d/m/Y') ?? 'No Date';
 
-                                                $month = $get('period_month');
-                                                $year = $get('period_year');
+                                                $monthVal = $get('period_month');
+                                                $yearVal = $get('period_year');
+                                                $month = $monthVal instanceof \Illuminate\Support\Carbon ? $monthVal->month : (int) (is_numeric($monthVal) ? $monthVal : preg_replace('/[^\d]/', '', (string) $monthVal));
+                                                $year = $yearVal instanceof \Illuminate\Support\Carbon ? $yearVal->year : (int) (is_numeric($yearVal) ? $yearVal : preg_replace('/[^\d]/', '', (string) $yearVal));
 
                                                 $existingPayroll = null;
                                                 if ($month && $year) {
@@ -128,7 +130,7 @@ class PayrollForm
                                                         5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
                                                         9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
                                                     ];
-                                                    $monthName = $months[$month];
+                                                    $monthName = $months[$month] ?? 'Unknown';
                                                     $info .= "\n⚠️ Payroll untuk {$monthName} {$year} sudah ada!";
                                                 }
 
@@ -149,183 +151,166 @@ class PayrollForm
                                                 TextInput::make('gaji_pokok')
                                                     ->label('Gaji Pokok')
                                                     ->required()
-                                                    ->numeric()
                                                     ->prefix('Rp')
                                                     ->suffixIcon('heroicon-m-currency-dollar')
-                                                    ->placeholder('4000000')
-                                                    ->extraAttributes(['class' => 'bg-blue-50 text-right'])
+                                                    ->placeholder('2,000,000')
+                                                    ->mask(RawJs::make('$money($input)'))
                                                     ->stripCharacters(',')
+                                                    ->extraAttributes(['class' => 'bg-blue-50 text-right'])
+                                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace(',', '', (string) $state))
                                                     ->live(onBlur: true)
-                                                    ->dehydrateStateUsing(fn ($state): ?float => static::parseCurrencyToFloat($state))
-                                                    ->afterStateUpdated(function (Get $get, Set $set, ?string $state, $record) {
-                                                        $gajiPokok = static::parseCurrencyToFloat($state) ?? 0;
-                                                        $tunjangan = static::parseCurrencyToFloat($get('tunjangan')) ?? 0;
-                                                        $bonus = static::parseCurrencyToFloat($get('bonus')) ?? 0;
-                                                        $pengurangan = static::parseCurrencyToFloat($get('pengurangan')) ?? 0;
-                                                        $monthlySalary = ($gajiPokok + $tunjangan + $bonus) - $pengurangan;
+                                                    ->afterStateUpdated(function (Get $get, Set $set, ?string $state) {
+                                                        $monthlySalary = Payroll::computeMonthly(
+                                                            $state,
+                                                            $get('tunjangan'),
+                                                            $get('bonus'),
+                                                            $get('pengurangan'),
+                                                        );
 
-                                                        $set('monthly_salary', number_format($monthlySalary, 0, ',', '.'));
+                                                        $set('monthly_salary', (string) $monthlySalary);
 
-                                                        $tempPayroll = new Payroll;
-                                                        $tempPayroll->monthly_salary = $monthlySalary;
-
-                                                        $set('annual_salary', number_format($monthlySalary * 12, 0, ',', '.'));
-                                                        $set('total_compensation', number_format($monthlySalary * 12, 0, ',', '.'));
+                                                        $set('annual_salary', (string) Payroll::computeAnnualBase($state, $get('tunjangan')));
+                                                        $set('total_compensation', (string) Payroll::computeTotalCompensationBase($state, $get('tunjangan'), $get('pengurangan')));
                                                     })
                                                     ->helperText('Gaji pokok tanpa tunjangan'),
 
                                                 TextInput::make('tunjangan')
                                                     ->label('Tunjangan')
-                                                    ->numeric()
                                                     ->prefix('Rp')
                                                     ->suffixIcon('heroicon-m-plus')
                                                     ->placeholder('1000000')
                                                     ->default(0)
-                                                    ->extraAttributes(['class' => 'bg-gray-50 text-right'])
+                                                    ->mask(RawJs::make('$money($input)'))
                                                     ->stripCharacters(',')
+                                                    ->extraAttributes(['class' => 'bg-gray-50 text-right'])
                                                     ->live(onBlur: true)
-                                                    ->dehydrateStateUsing(fn ($state): ?float => static::parseCurrencyToFloat($state))
-                                                    ->afterStateUpdated(function (Get $get, Set $set, ?string $state, $record) {
-                                                        $gajiPokok = static::parseCurrencyToFloat($get('gaji_pokok')) ?? 0;
-                                                        $tunjangan = static::parseCurrencyToFloat($state) ?? 0;
-                                                        $bonus = static::parseCurrencyToFloat($get('bonus')) ?? 0;
-                                                        $pengurangan = static::parseCurrencyToFloat($get('pengurangan')) ?? 0;
-                                                        $monthlySalary = $gajiPokok + $tunjangan + $bonus - $pengurangan;
+                                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace(',', '', (string) $state))
+                                                    ->afterStateUpdated(function (Get $get, Set $set, ?string $state) {
+                                                        $monthlySalary = Payroll::computeMonthly(
+                                                            $get('gaji_pokok'),
+                                                            $state,
+                                                            $get('bonus'),
+                                                            $get('pengurangan'),
+                                                        );
 
-                                                        $set('monthly_salary', number_format($monthlySalary, 0, ',', '.'));
+                                                        $set('monthly_salary', (string) $monthlySalary);
 
-                                                        $tempPayroll = new Payroll;
-                                                        $tempPayroll->monthly_salary = $monthlySalary;
-
-                                                        $set('annual_salary', number_format($monthlySalary * 12, 0, ',', '.'));
-                                                        $set('total_compensation', number_format($monthlySalary * 12, 0, ',', '.'));
+                                                        $set('annual_salary', (string) Payroll::computeAnnualBase($get('gaji_pokok'), $state));
+                                                        $set('total_compensation', (string) Payroll::computeTotalCompensationBase($get('gaji_pokok'), $state, $get('pengurangan')));
                                                     })
                                                     ->helperText('Tunjangan dan benefit lainnya'),
 
                                                 TextInput::make('pengurangan')
                                                     ->label('Pengurangan')
-                                                    ->numeric()
                                                     ->prefix('Rp')
                                                     ->suffixIcon('heroicon-m-minus')
                                                     ->placeholder('BPJS, keterlambatan dan lainnya')
                                                     ->default(0)
+                                                    ->mask(RawJs::make('$money($input)'))
+                                                    ->stripCharacters(',')
                                                     ->extraAttributes(['class' => 'bg-gray-50 text-right'])
                                                     ->live(onBlur: true)
-                                                    ->dehydrateStateUsing(fn ($state): ?float => static::parseCurrencyToFloat($state))
-                                                    ->afterStateUpdated(function (Get $get, Set $set, ?string $state, $record) {
-                                                        $gajiPokok = static::parseCurrencyToFloat($get('gaji_pokok')) ?? 0;
-                                                        $tunjangan = static::parseCurrencyToFloat($get('tunjangan')) ?? 0;
-                                                        $bonus = static::parseCurrencyToFloat($get('bonus')) ?? 0;
-                                                        $pengurangan = static::parseCurrencyToFloat($state) ?? 0;
-                                                        $monthlySalary = $gajiPokok + $tunjangan + $bonus - $pengurangan;
+                                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace(',', '', (string) $state))
+                                                    ->afterStateUpdated(function (Get $get, Set $set, ?string $state) {
+                                                        $monthlySalary = Payroll::computeMonthly(
+                                                            $get('gaji_pokok'),
+                                                            $get('tunjangan'),
+                                                            $get('bonus'),
+                                                            $state,
+                                                        );
 
-                                                        $set('monthly_salary', number_format($monthlySalary, 0, ',', '.'));
+                                                        $set('monthly_salary', (string) $monthlySalary);
 
-                                                        $tempPayroll = new Payroll;
-                                                        $tempPayroll->monthly_salary = $monthlySalary;
-
-                                                        $set('annual_salary', number_format($monthlySalary * 12, 0, ',', '.'));
-                                                        $set('total_compensation', number_format($monthlySalary * 12, 0, ',', '.'));
+                                                        $set('annual_salary', (string) Payroll::computeAnnualBase($get('gaji_pokok'), $get('tunjangan')));
+                                                        $set('total_compensation', (string) Payroll::computeTotalCompensationBase($get('gaji_pokok'), $get('tunjangan'), $state));
                                                     })
                                                     ->helperText('BPJS, keterlambatan dan lainnya'),
+TextInput::make('bonus')
+                                                    ->label('Bonus')
+                                                    ->prefix('Rp')
+                                                    ->suffixIcon('heroicon-m-gift')
+                                                    ->placeholder('1000000')
+                                                    ->mask(RawJs::make('$money($input)'))
+                                                    ->stripCharacters(',')
+                                                    ->default(0)
+                                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace(',', '', (string) $state))
+                                                    ->live()
+                                                    ->extraAttributes(['class' => 'bg-gray-50 text-right'])
+                                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                                        $monthlySalary = Payroll::computeMonthly(
+                                                            $get('gaji_pokok'),
+                                                            $get('tunjangan'),
+                                                            $state,
+                                                            $get('pengurangan'),
+                                                        );
 
+                                                        $set('monthly_salary', (string) $monthlySalary);
+
+                                                        $set('annual_salary', (string) Payroll::computeAnnualBase($get('gaji_pokok'), $get('tunjangan')));
+                                                        $set('total_compensation', (string) Payroll::computeTotalCompensationBase($get('gaji_pokok'), $get('tunjangan'), $get('pengurangan')));
+                                                    })
+                                                    ->helperText('Bonus bulanan (termasuk dalam gaji bulanan)'),
+                                                
+                                            ]),
+
+                                        Grid::make(3)
+                                            ->schema([
                                                 TextInput::make('monthly_salary')
                                                     ->label('Total Gaji Bulanan')
                                                     ->prefix('Rp')
                                                     ->suffixIcon('heroicon-m-calculator')
                                                     ->readOnly()
-                                                    ->dehydrated(false)
                                                     ->mask(RawJs::make('$money($input)'))
+                                                    ->stripCharacters(',')
+                                                    ->formatStateUsing(fn ($state) => $state === null ? null : number_format((int) str_replace(',', '', (string) $state), 0, '.', ','))
+                                                    ->dehydrated(false)
                                                     ->afterStateHydrated(function (TextInput $component, $state, $record) {
                                                         if ($record) {
-                                                            $monthly = (float) ($record->gaji_pokok ?? 0)
-                                                                + (float) ($record->tunjangan ?? 0)
-                                                                + (float) ($record->bonus ?? 0)
-                                                                - (float) ($record->pengurangan ?? 0);
+                                                            $monthly = Payroll::computeMonthly(
+                                                                $record->gaji_pokok ?? 0,
+                                                                $record->tunjangan ?? 0,
+                                                                $record->bonus ?? 0,
+                                                                $record->pengurangan ?? 0,
+                                                            );
 
                                                             $component->state((string) (int) $monthly);
                                                         }
                                                     })
                                                     ->helperText('Otomatis: (Gaji Pokok + Tunjangan + Bonus) - Pengurangan')
-                                                    ->extraAttributes(['class' => 'bg-blue-50'])
-                                                    ->disabled(),
-                                            ]),
-
-                                        Grid::make(1)
-                                            ->schema([
+                                                    ->extraAttributes(['class' => 'bg-blue-50 text-right']),
                                                 TextInput::make('annual_salary')
                                                     ->label('Gaji Tahunan')
                                                     ->prefix('Rp')
-                                                    ->suffixIcon('heroicon-m-calendar')
+                                                    ->suffixIcon('heroicon-m-calculator')
                                                     ->readOnly()
-                                                    ->dehydrated(false)
                                                     ->mask(RawJs::make('$money($input)'))
+                                                    ->stripCharacters(',')
+                                                    ->formatStateUsing(fn ($state) => $state === null ? null : number_format((int) str_replace(',', '', (string) $state), 0, '.', ','))
+                                                    ->dehydrated(false)
                                                     ->afterStateHydrated(function (TextInput $component, $state, $record) {
                                                         if ($record) {
-                                                            $monthly = (float) ($record->gaji_pokok ?? 0)
-                                                                + (float) ($record->tunjangan ?? 0)
-                                                                + (float) ($record->bonus ?? 0)
-                                                                - (float) ($record->pengurangan ?? 0);
-
-                                                            $component->state((string) (int) ($monthly * 12));
+                                                            $component->state((string) (int) Payroll::computeAnnualBase($record->gaji_pokok ?? 0, $record->tunjangan ?? 0));
                                                         }
                                                     })
-                                                    ->helperText('Otomatis dihitung oleh sistem: Gaji Bulanan × 12 bulan')
-                                                    ->extraAttributes(['class' => 'bg-gray-50'])
-                                                    ->disabled(),
-                                            ]),
-
-                                        Grid::make(2)
-                                            ->schema([
-                                                TextInput::make('bonus')
-                                                    ->label('Bonus')
-                                                    ->numeric()
-                                                    ->prefix('Rp')
-                                                    ->suffixIcon('heroicon-m-gift')
-                                                    ->placeholder('1000000')
-                                                    ->default(0)
-                                                    ->mask(RawJs::make('$money($input)'))
-                                                    ->dehydrateStateUsing(fn ($state): ?float => static::parseCurrencyToFloat($state))
-                                                    ->live()
-                                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                                        $gajiPokok = static::parseCurrencyToFloat($get('gaji_pokok')) ?? 0;
-                                                        $tunjangan = static::parseCurrencyToFloat($get('tunjangan')) ?? 0;
-                                                        $bonus = static::parseCurrencyToFloat($state) ?? 0;
-                                                        $pengurangan = static::parseCurrencyToFloat($get('pengurangan')) ?? 0;
-                                                        $monthlySalary = $gajiPokok + $tunjangan + $bonus - $pengurangan;
-
-                                                        $set('monthly_salary', $monthlySalary);
-
-                                                        $tempPayroll = new Payroll;
-                                                        $tempPayroll->monthly_salary = $monthlySalary;
-
-                                                        $set('annual_salary', number_format($monthlySalary * 12, 0, ',', '.'));
-                                                        $set('total_compensation', number_format($monthlySalary * 12, 0, ',', '.'));
-                                                    })
-                                                    ->helperText('Bonus bulanan (termasuk dalam gaji bulanan)'),
-
+                                                    ->helperText('Otomatis: (Gaji Pokok + Tunjangan) × 12')
+                                                    ->extraAttributes(['class' => 'bg-gray-50 text-right']),
                                                 TextInput::make('total_compensation')
                                                     ->label('Total Kompensasi')
                                                     ->prefix('Rp')
                                                     ->suffixIcon('heroicon-m-calculator')
                                                     ->readOnly()
                                                     ->dehydrated(false)
+                                                    ->live()
                                                     ->mask(RawJs::make('$money($input)'))
                                                     ->stripCharacters(',')
-                                                    ->live()
+                                                    ->formatStateUsing(fn ($state) => $state === null ? null : number_format((int) str_replace(',', '', (string) $state), 0, '.', ','))
                                                     ->afterStateHydrated(function (TextInput $component, $state, $record) {
                                                         if ($record) {
-                                                            $monthly = (float) ($record->gaji_pokok ?? 0)
-                                                                + (float) ($record->tunjangan ?? 0)
-                                                                + (float) ($record->bonus ?? 0)
-                                                                - (float) ($record->pengurangan ?? 0);
-
-                                                            $component->state((string) (int) ($monthly * 12));
+                                                            $component->state((string) (int) Payroll::computeTotalCompensationBase($record->gaji_pokok ?? 0, $record->tunjangan ?? 0, $record->pengurangan ?? 0));
                                                         }
                                                     })
-                                                    ->helperText('Total: Gaji Tahunan + Bonus (dihitung otomatis)')
-                                                    ->extraAttributes(['class' => 'bg-gray-50'])
-                                                    ->disabled(),
+                                                    ->helperText('Total: Gaji Tahunan (tanpa bonus terpisah)')
+                                                    ->extraAttributes(['class' => 'bg-gray-50 text-right']),
                                             ]),
                                     ]),
                             ]),
@@ -365,20 +350,4 @@ class PayrollForm
             ]);
     }
 
-    private static function parseCurrencyToFloat(?string $value): float
-    {
-        if ($value === null) {
-            return 0;
-        }
-
-        // Hapus semua karakter non-digit (titik/koma ribuan dan simbol)
-        $clean = preg_replace('/\D+/', '', $value);
-
-        if ($clean === '' || $clean === null) {
-            return 0;
-        }
-
-        // Kembalikan sebagai float dari digit utuh Rupiah (tanpa desimal)
-        return (float) $clean;
-    }
 }

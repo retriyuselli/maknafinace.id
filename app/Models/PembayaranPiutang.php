@@ -21,7 +21,7 @@ class PembayaranPiutang extends Model
         'tanggal_pembayaran',
         'tanggal_dicatat',
         'nomor_referensi',
-        'dibayar_oleh', // customer yang membayar
+        'dibayar_oleh',
         'dikonfirmasi_oleh',
         'bukti_pembayaran',
         'catatan',
@@ -32,10 +32,10 @@ class PembayaranPiutang extends Model
         'tanggal_pembayaran' => 'date',
         'tanggal_dicatat' => 'date',
         'bukti_pembayaran' => 'array',
-        'jumlah_pembayaran' => 'decimal:2',
-        'jumlah_bunga' => 'decimal:2',
-        'denda' => 'decimal:2',
-        'total_pembayaran' => 'decimal:2',
+        'jumlah_pembayaran' => 'integer',
+        'jumlah_bunga' => 'integer',
+        'denda' => 'integer',
+        'total_pembayaran' => 'integer',
     ];
 
     // Relationships

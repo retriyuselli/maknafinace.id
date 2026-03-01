@@ -29,7 +29,7 @@ class PendapatanLain extends Model
 
     protected $casts = [
         'tgl_bayar' => 'date',
-        'nominal' => 'decimal:2',
+        'nominal' => 'integer',
         'kategori_transaksi' => 'string',
     ];
 

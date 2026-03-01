@@ -170,7 +170,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-8">
                     <p class="text-sm font-medium text-black uppercase tracking-wide">
-                        PT. Makna Kreatif Indonesia telah banyak melakukan kerjasama dengan berbagai perusahaan <br>
+                        {{ $companyName ?? config('app.name') }} telah banyak melakukan kerjasama dengan berbagai perusahaan <br>
                         industri pernikahan di Sumatera Selatan dan sekitarnya, antara lain:
                     </p>
                 </div>

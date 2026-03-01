@@ -19,6 +19,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -107,7 +108,8 @@ class PayrollsTable
 
                 TextColumn::make('gaji_pokok')
                     ->label('Gaji Pokok')
-                    ->money('IDR')
+                    ->formatStateUsing(fn ($state): string => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->alignment(Alignment::Right)
                     ->sortable()
                     ->weight(FontWeight::Medium)
                     ->color('info')
@@ -115,7 +117,8 @@ class PayrollsTable
 
                 TextColumn::make('tunjangan')
                     ->label('Tunjangan')
-                    ->money('IDR')
+                    ->formatStateUsing(fn ($state): string => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->alignment(Alignment::Right)
                     ->sortable()
                     ->weight(FontWeight::Medium)
                     ->color('warning')
@@ -123,7 +126,8 @@ class PayrollsTable
 
                 TextColumn::make('pengurangan')
                     ->label('Pengurangan')
-                    ->money('IDR')
+                    ->formatStateUsing(fn ($state): string => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->alignment(Alignment::Right)
                     ->sortable()
                     ->weight(FontWeight::Medium)
                     ->color('danger')
@@ -132,38 +136,57 @@ class PayrollsTable
 
                 TextColumn::make('monthly_salary')
                     ->label('Total Gaji')
-                    ->money('IDR')
+                    ->formatStateUsing(fn ($state): string => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->alignment(Alignment::Right)
                     ->sortable()
+                    ->badge()
                     ->weight(FontWeight::SemiBold)
                     ->color('success')
                     ->description(function ($record): string {
-                        $gajiPokok = number_format($record->gaji_pokok ?? 0, 0, ',', '.');
-                        $tunjangan = number_format($record->tunjangan ?? 0, 0, ',', '.');
-                        $bonus = number_format($record->bonus ?? 0, 0, ',', '.');
-                        $pengurangan = number_format($record->pengurangan ?? 0, 0, ',', '.');
+                        $gajiPokok = number_format($record->gaji_pokok ?? 0, 0, '.', ',');
+                        $tunjangan = number_format($record->tunjangan ?? 0, 0, '.', ',');
+                        $bonus = number_format($record->bonus ?? 0, 0, '.', ',');
+                        $pengurangan = number_format($record->pengurangan ?? 0, 0, '.', ',');
 
                         return "({$gajiPokok} + {$tunjangan} + {$bonus}) - {$pengurangan}";
                     }),
 
                 TextColumn::make('annual_salary')
                     ->label('Gaji Tahunan')
-                    ->money('IDR')
+                    ->formatStateUsing(fn ($state): string => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->alignment(Alignment::Right)
                     ->sortable()
+                    ->badge()
+                    ->color('info')
+                    ->description(function ($record): string {
+                        $gajiPokok = number_format($record->gaji_pokok ?? 0, 0, '.', ',');
+                        $tunjangan = number_format($record->tunjangan ?? 0, 0, '.', ',');
+                        return "({$gajiPokok} + {$tunjangan}) × 12";
+                    })
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('bonus')
                     ->label('Bonus')
-                    ->money('IDR')
+                    ->formatStateUsing(fn ($state): string => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->alignment(Alignment::Right)
                     ->sortable()
                     ->placeholder('Rp 0')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('total_compensation')
                     ->label('Total Kompensasi')
-                    ->money('IDR')
+                    ->formatStateUsing(fn ($state): string => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->alignment(Alignment::Right)
                     ->sortable()
                     ->getStateUsing(function ($record): float {
                         return $record->total_compensation; // Menggunakan accessor dari model
+                    })
+                    ->badge()
+                    ->description(function ($record): string {
+                        $gajiPokok = number_format($record->gaji_pokok ?? 0, 0, '.', ',');
+                        $tunjangan = number_format($record->tunjangan ?? 0, 0, '.', ',');
+                        $pengurangan = number_format($record->pengurangan ?? 0, 0, '.', ',');
+                        return "({$gajiPokok} + {$tunjangan} - {$pengurangan}) × 12";
                     })
                     ->weight(FontWeight::Bold)
                     ->color('success'),
@@ -352,6 +375,7 @@ class PayrollsTable
                                 'period_month' => ['value' => now()->month],
                                 'period_year' => ['value' => now()->year],
                             ],
+                            'resetTableFilters' => true,
                         ]);
                     }),
 
@@ -367,6 +391,7 @@ class PayrollsTable
                                 'period_month' => ['value' => $lastMonth->month],
                                 'period_year' => ['value' => $lastMonth->year],
                             ],
+                            'resetTableFilters' => true,
                         ]);
                     }),
 
@@ -382,6 +407,7 @@ class PayrollsTable
                                 'period_month' => ['value' => $twoMonthsAgo->month],
                                 'period_year' => ['value' => $twoMonthsAgo->year],
                             ],
+                            'resetTableFilters' => true,
                         ]);
                     }),
             ])

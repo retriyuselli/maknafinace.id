@@ -37,7 +37,7 @@ class PengeluaranLain extends Model
     protected $casts = [
         'date_expense' => 'date',
         'tanggal_transfer' => 'date',
-        'amount' => 'decimal:2',
+        'amount' => 'integer',
         'kategori_transaksi' => 'string',
     ];
 

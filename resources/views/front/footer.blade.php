@@ -48,7 +48,7 @@
 
         <div class="mt-5 pt-2 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center">
             <p class="text-sm text-gray-800">
-                © {{ now()->year }} PT. Makna Kreatif Indonesia. All rights reserved.
+                © {{ now()->year }} {{ $companyName ?? config('app.name') }}. All rights reserved.
             </p>
         </div>
     </div>

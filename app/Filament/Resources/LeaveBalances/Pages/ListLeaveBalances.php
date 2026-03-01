@@ -3,17 +3,16 @@
 namespace App\Filament\Resources\LeaveBalances\Pages;
 
 use App\Filament\Resources\LeaveBalances\LeaveBalanceResource;
-use Filament\Actions;
-use Filament\Resources\Pages\ListRecords;
 use App\Filament\Resources\LeaveBalances\Widgets\LeaveBalanceWidget;
-use Filament\Actions\Action;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DatePicker;
-use Illuminate\Support\Facades\Auth;
-use App\Models\LeaveType;
 use App\Models\LeaveBalance;
-use Filament\Notifications\Notification;
+use App\Models\LeaveType;
 use Carbon\Carbon;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Facades\Auth;
 
 class ListLeaveBalances extends ListRecords
 {
@@ -55,13 +54,14 @@ class ListLeaveBalances extends ListRecords
                     $leaveType = LeaveType::where('name', 'like', '%Pengganti%')
                         ->orWhere('name', 'like', '%Replacement%')
                         ->first();
-                    
-                    if (!$leaveType) {
+
+                    if (! $leaveType) {
                         Notification::make()
                             ->title('Gagal')
                             ->body('Jenis Cuti Pengganti tidak ditemukan.')
                             ->danger()
                             ->send();
+
                         return;
                     }
 
@@ -83,9 +83,9 @@ class ListLeaveBalances extends ListRecords
 
                     if ($status === 'approved') {
                         $balance->allocated_days += $data['days_to_add'];
-                        $balance->save(); 
+                        $balance->save();
                     }
-                    
+
                     $balance->histories()->create([
                         'amount' => $data['days_to_add'],
                         'transaction_date' => $data['date'],
@@ -125,8 +125,8 @@ class ListLeaveBalances extends ListRecords
                     $leaveType = LeaveType::where('name', 'like', '%Pengganti%')
                         ->orWhere('name', 'like', '%Replacement%')
                         ->first();
-                    
-                    if (!$leaveType) {
+
+                    if (! $leaveType) {
                         return 'Jenis Cuti Pengganti tidak ditemukan.';
                     }
 
@@ -134,9 +134,9 @@ class ListLeaveBalances extends ListRecords
                         ->where('leave_type_id', $leaveType->id)
                         ->where('year', now()->year)
                         ->first();
-                        
-                    if (!$record) {
-                         return 'Belum ada riwayat top up.';
+
+                    if (! $record) {
+                        return 'Belum ada riwayat top up.';
                     }
 
                     return view('filament.resources.leave-balances.history-modal', ['record' => $record]);

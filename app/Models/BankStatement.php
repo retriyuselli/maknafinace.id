@@ -46,12 +46,12 @@ class BankStatement extends Model
         'period_end' => 'date',
         'uploaded_at' => 'datetime',
         'processed_at' => 'datetime',
-        'opening_balance' => 'decimal:2',
-        'closing_balance' => 'decimal:2',
-        'tot_debit' => 'decimal:2',
-        'tot_credit' => 'decimal:2',
-        'total_debit_reconciliation' => 'decimal:2',
-        'total_credit_reconciliation' => 'decimal:2',
+        'opening_balance' => 'integer',
+        'closing_balance' => 'integer',
+        'tot_debit' => 'integer',
+        'tot_credit' => 'integer',
+        'total_debit_reconciliation' => 'integer',
+        'total_credit_reconciliation' => 'integer',
     ];
 
     public function paymentMethod(): BelongsTo // Corrected typo
@@ -67,6 +67,11 @@ class BankStatement extends Model
     public function lastEditedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'last_edited_by');
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(BankTransaction::class);
     }
 
     public function bankReconciliationItems(): HasMany

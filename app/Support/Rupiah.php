@@ -23,6 +23,7 @@ class Rupiah
                 return (float) $s;
             }
             $clean = preg_replace('/\D+/', '', $s);
+
             return $clean === '' ? 0.0 : (float) $clean;
         }
 

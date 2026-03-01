@@ -82,8 +82,7 @@ class JournalEntriesRelationManager extends RelationManager
                     ->schema([
                         TextInput::make('debit_amount')
                             ->label('Jumlah Debit')
-                            ->numeric()
-                            ->prefix('IDR')
+                            ->prefix('Rp. ')
                             ->mask(RawJs::make('$money($input)'))
                             ->stripCharacters(',')
                             ->default(0)
@@ -92,8 +91,7 @@ class JournalEntriesRelationManager extends RelationManager
 
                         TextInput::make('credit_amount')
                             ->label('Jumlah Kredit')
-                            ->numeric()
-                            ->prefix('IDR')
+                            ->prefix('Rp. ')
                             ->mask(RawJs::make('$money($input)'))
                             ->stripCharacters(',')
                             ->default(0)
@@ -138,15 +136,17 @@ class JournalEntriesRelationManager extends RelationManager
 
                 TextColumn::make('debit_amount')
                     ->label('Debit')
-                    ->money('IDR')
+                    ->prefix('Rp. ')
                     ->alignEnd()
+                    ->numeric()
                     ->color('success')
                     ->getStateUsing(fn ($record) => $record->debit_amount > 0 ? $record->debit_amount : null),
 
                 TextColumn::make('credit_amount')
                     ->label('Kredit')
-                    ->money('IDR')
+                    ->prefix('Rp. ')
                     ->alignEnd()
+                    ->numeric()
                     ->color('info')
                     ->getStateUsing(fn ($record) => $record->credit_amount > 0 ? $record->credit_amount : null),
 

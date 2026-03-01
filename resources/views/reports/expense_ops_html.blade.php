@@ -53,7 +53,7 @@
             </h1>
             <p class="text-xs text-gray-500 mt-1">Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, <br>
                 Kecamatan Kemuning, Kota Palembang, Sumatera Selatan 30137</p>
-            <p class="text-xs text-gray-500 mt-0">PT. Makna Kreatif Indonesia | maknawedding@gmail.com | +62 822-9796-2600</p>
+            <p class="text-xs text-gray-500 mt-0">{{ $companyName ?? config('app.name') }} | maknawedding@gmail.com | +62 822-9796-2600</p>
         </div>
 
         <form action="{{ route('expense-ops.html-report') }}" method="GET" class="mb-6 p-5 bg-blue-50 rounded-md flex flex-wrap gap-4 items-center">

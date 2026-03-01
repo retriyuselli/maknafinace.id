@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\SimulasiProduk;
-use Carbon\Carbon;
-use Barryvdh\DomPDF\Facade\Pdf; // Import View
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon; // Import View
 use Illuminate\View\View; // atau use PDF; jika Anda menambahkan alias
 
 class SimulasiDisplayController extends Controller
@@ -112,14 +112,14 @@ class SimulasiDisplayController extends Controller
             $nomorSurat = $manualNumber;
         } else {
             $baseNumber = $manualNumber ?: $sequenceFormatted;
-            $nomorSurat = $baseNumber . '/' . $inisialWo . '/' . $inisialKontrak . '/' . $bulanRomawi . '/' . $tahun;
+            $nomorSurat = $baseNumber.'/'.$inisialWo.'/'.$inisialKontrak.'/'.$bulanRomawi.'/'.$tahun;
         }
 
         // Find Finance User
         $financeUser = \App\Models\User::role('Finance')->first();
 
         $data = [
-            'record' => $record,                                      
+            'record' => $record,
             'items' => $items,
             'prospect' => $record->prospect,
             'nomorSurat' => $nomorSurat,
@@ -128,7 +128,7 @@ class SimulasiDisplayController extends Controller
 
         $pdf = Pdf::loadView('pdf.draft_kontrak', $data);
         $pdf->setPaper('a4', 'portrait');
-        
+
         // Configure DomPDF for better compatibility
         $pdf->setOptions([
             'isHtml5ParserEnabled' => true,
@@ -136,7 +136,7 @@ class SimulasiDisplayController extends Controller
             'defaultFont' => 'sans-serif',
         ]);
 
-        $fileName = 'Draft_Kontrak_' . $record->slug . '_' . now()->format('Ymd') . '.pdf';
+        $fileName = 'Draft_Kontrak_'.$record->slug.'_'.now()->format('Ymd').'.pdf';
 
         return $pdf->stream($fileName);
     }

@@ -33,6 +33,7 @@ class Prospect extends Model
         'date_lamaran' => 'date',
         'date_akad' => 'date',
         'date_resepsi' => 'date',
+        'total_penawaran' => 'integer',
     ];
 
     protected static function boot()
@@ -55,6 +56,11 @@ class Prospect extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function latestOrder()
+    {
+        return $this->hasOne(Order::class)->latestOfMany();
     }
 
     public function expense()

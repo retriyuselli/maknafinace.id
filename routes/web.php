@@ -1,9 +1,12 @@
 <?php
 
-use App\Http\Controllers\BankReconciliationTemplateController;
+use App\Http\Controllers\AccountManagerReportController;
 use App\Http\Controllers\BankReconciliationPageController;
+use App\Http\Controllers\BankReconciliationTemplateController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\Front\AsetFeatureController;
 use App\Http\Controllers\Front\AuthController;
 use App\Http\Controllers\Front\BiayaFeatureController;
 use App\Http\Controllers\Front\HomeController;
@@ -11,25 +14,22 @@ use App\Http\Controllers\Front\HrisFeatureController;
 use App\Http\Controllers\Front\InvoiceController as FrontInvoiceController;
 use App\Http\Controllers\Front\LaporanFeatureController;
 use App\Http\Controllers\Front\PayrollFeatureController;
-use App\Http\Controllers\Front\AsetFeatureController;
 use App\Http\Controllers\FrontendDataPribadiController;
-use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\InvoiceOrderController;
+use App\Http\Controllers\LaporanKeuanganController;
+use App\Http\Controllers\NotaDinasPdfController;
 use App\Http\Controllers\ProductDisplayController;
 use App\Http\Controllers\Profile\ProfileController;
-use App\Http\Controllers\ProspectController;
 use App\Http\Controllers\ProspectAppController;
+use App\Http\Controllers\ProspectController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SimulasiDisplayController;
-use App\Http\Controllers\UserFormPdfController;
 use App\Http\Controllers\SopPrintController;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\LaporanKeuanganController;
-use App\Http\Controllers\AccountManagerReportController;
-use App\Http\Controllers\NotaDinasPdfController;
+use App\Http\Controllers\UserFormPdfController;
 use App\Models\DataPembayaran;
 use App\Models\Product;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 // Bank Reconciliation Template Route
 Route::get('/bank-reconciliation/template', [BankReconciliationTemplateController::class, 'downloadTemplate'])
@@ -110,7 +110,7 @@ Route::get('/sops/{id}/print', [SopPrintController::class, 'show'])
 Route::get('/sops/{id}/pdf', [SopPrintController::class, 'pdf'])
     ->name('sop.pdf')
     ->middleware(\Filament\Http\Middleware\Authenticate::class);
-    
+
 // FRONTEND FEATURES
 Route::get('/features/invoice', [FrontInvoiceController::class, 'index'])->name('front.invoice');
 Route::get('/features/biaya', [BiayaFeatureController::class, 'index'])->name('front.biaya_feature');
@@ -130,10 +130,10 @@ Route::get('/product', function () {
         ->where('is_approved', true)
         ->when($search, function ($query, $search) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('description', 'like', '%' . $search . '%')
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('description', 'like', '%'.$search.'%')
                     ->orWhereHas('category', function ($categoryQuery) use ($search) {
-                        $categoryQuery->where('name', 'like', '%' . $search . '%');
+                        $categoryQuery->where('name', 'like', '%'.$search.'%');
                     });
             });
         })
@@ -244,13 +244,17 @@ Route::get('/data-pribadi', [FrontendDataPribadiController::class, 'index'])
 Route::post('/data-pribadi', [FrontendDataPribadiController::class, 'store'])
     ->name('data-pribadi.store');
 
+// Route untuk halaman sukses setelah submit
+Route::get('/data-pribadi/success', [FrontendDataPribadiController::class, 'success'])
+    ->name('data-pribadi.success');
+
 // AUTHENTICATION
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('front.login');
     Route::post('/login', [AuthController::class, 'login'])->name('front.login.submit');
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('front.register');
     Route::post('/register', [AuthController::class, 'register'])->name('front.register.submit');
-    
+
     // Google Login
     Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
     Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
@@ -264,12 +268,13 @@ Route::middleware(\Filament\Http\Middleware\Authenticate::class)->group(function
     Route::get('/dashboard', function () {
         return redirect()->route('filament.admin.pages.dashboard');
     })->name('dashboard');
-    
+
     // Logout
     Route::post('/logout', function () {
         Auth::logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();
+
         return redirect('/');
     })->name('logout');
 });
@@ -295,7 +300,7 @@ Route::post('/prospect-app', [ProspectAppController::class, 'store'])->name('pro
 Route::get('/prospect-app/success', [ProspectAppController::class, 'success'])->name('prospect-app.success');
 Route::post('/prospect-app/check-email', [ProspectAppController::class, 'checkEmail'])->name('prospect-app.check-email');
 
-Route::get('/debug-report', function() {
+Route::get('/debug-report', function () {
     $query = DataPembayaran::query()->with(['order', 'paymentMethod']);
 
     // Check raw count before join
@@ -305,7 +310,7 @@ Route::get('/debug-report', function() {
     $joinedQuery = $query
         ->join('orders', 'data_pembayarans.order_id', '=', 'orders.id')
         ->select('data_pembayarans.*');
-    
+
     $joinedCount = (clone $joinedQuery)->count();
     $joinedSql = $joinedQuery->toSql();
     $data = $joinedQuery->limit(5)->get();
@@ -314,7 +319,7 @@ Route::get('/debug-report', function() {
         'raw_count' => $rawCount,
         'joined_count' => $joinedCount,
         'sql' => $joinedSql,
-        'sample_data' => $data
+        'sample_data' => $data,
     ];
 });
 
@@ -350,6 +355,10 @@ Route::get('/nota-dinas/{notaDinas}/preview-web', [NotaDinasPdfController::class
 
 Route::get('/nota-dinas/{notaDinas}/preview-pdf', [NotaDinasPdfController::class, 'previewPdf'])
     ->name('nota-dinas.preview-pdf')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+Route::get('/laporan/nota-dinas-details/bulan-ini', [ReportController::class, 'showNotaDinasDetailsCurrentMonth'])
+    ->name('nota-dinas-details.current-month')
     ->middleware(\Filament\Http\Middleware\Authenticate::class);
 
 // BANK STATEMENT RECONCILIATION ROUTE

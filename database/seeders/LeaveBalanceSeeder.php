@@ -14,4 +14,3 @@ class LeaveBalanceSeeder extends Seeder
         $this->command->info($result['message']);
     }
 }
-

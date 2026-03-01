@@ -6,9 +6,9 @@ use App\Enums\MonthEnum;
 use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Resources\SimulasiProduks\SimulasiProdukResource;
 use App\Models\Product;
-use App\Models\User;
 use App\Models\Prospect;
 use App\Models\SimulasiProduk;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
@@ -202,7 +202,7 @@ class SimulasiProdukForm
                                         ->maxLength(255),
                                     Hidden::make('name')
                                         ->dehydrated(),
-                                    
+
                                     TextInput::make('slug')
                                         ->required()
                                         ->maxLength(255)
@@ -243,6 +243,18 @@ class SimulasiProdukForm
                                 ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ',')),
                             Repeater::make('payment_simulation')
                                 ->label('Simulasi Pembayaran')
+                                ->collapsed()
+                                ->itemLabel(function (array $state): ?string {
+                                    $bulanRaw = $state['bulan'] ?? null;
+                                    $bulan = is_object($bulanRaw)
+                                        ? (method_exists($bulanRaw, 'getLabel') ? $bulanRaw->getLabel() : (property_exists($bulanRaw, 'value') ? $bulanRaw->value : (string) $bulanRaw))
+                                        : (is_string($bulanRaw) ? $bulanRaw : 'Termin');
+                                    $tahun = (string) ($state['tahun'] ?? '');
+                                    $nominalRaw = $state['nominal'] ?? 0;
+                                    $nominalVal = is_numeric($nominalRaw) ? (float) $nominalRaw : (float) \App\Filament\Resources\SimulasiProduks\SimulasiProdukResource::parseCurrency($nominalRaw);
+
+                                    return $bulan.' '.$tahun.' - Rp '.number_format($nominalVal, 0, '.', ',');
+                                })
                                 ->schema([
                                     TextInput::make('persen')
                                         ->label('Persen (%)')
@@ -268,6 +280,7 @@ class SimulasiProdukForm
                                         ->label('Nominal')
                                         ->prefix('Rp')
                                         ->mask(RawJs::make('$money($input)'))
+                                        ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                         ->stripCharacters(',')
                                         ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                             $grandTotal = SimulasiProdukResource::parseCurrency($get('../../grand_total'));
@@ -295,6 +308,9 @@ class SimulasiProdukForm
                                         ->default(date('Y')),
                                 ])
                                 ->columns(3)
+                                ->addActionLabel('Tambah Pembayaran')
+                                ->reorderable(true)
+                                ->reorderableWithButtons()
                                 ->columnSpanFull(),
                             TextInput::make('total_simulation')
                                 ->label('Total Pembayaran (DP + Termin)')
@@ -310,7 +326,7 @@ class SimulasiProdukForm
                                         $currentTotal = SimulasiProdukResource::parseCurrency($value);
                                         if (abs($grandTotal - $currentTotal) > 1000) {
                                             $difference = $grandTotal - $currentTotal;
-                                            $fail('Total Pembayaran (DP + Termin) tidak sama dengan Grand Total (Nilai Paket). Selisih: ' . number_format($difference, 0, '.', ','));
+                                            $fail('Total Pembayaran (DP + Termin) tidak sama dengan Grand Total (Nilai Paket). Selisih: '.number_format($difference, 0, '.', ','));
                                         }
                                     },
                                 ])

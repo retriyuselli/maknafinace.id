@@ -4,20 +4,18 @@ namespace App\Models;
 
 use App\Enums\OrderStatus;
 use App\Services\OrderFinance;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 
 class Order extends Model
 {
     use HasFactory, SoftDeletes;
 
-    public static function computeGrandTotalFromValues(float $totalPrice, float $penambahan, float $promo, float $pengurangan): float
+    public static function computeGrandTotalFromValues($totalPrice, $penambahan, $promo, $pengurangan)
     {
         return OrderFinance::computeGrandTotalFromValues($totalPrice, $penambahan, $promo, $pengurangan);
     }
@@ -51,12 +49,12 @@ class Order extends Model
         'bukti' => 'array',
         'status' => OrderStatus::class,
         'is_paid' => 'boolean',
-        'total_price' => 'decimal:2',
-        'promo' => 'decimal:2',
-        'penambahan' => 'decimal:2',
-        'pengurangan' => 'decimal:2',
-        'grand_total' => 'decimal:2',
-        'bayar' => 'decimal:2',
+        'total_price' => 'integer',
+        'promo' => 'integer',
+        'penambahan' => 'integer',
+        'pengurangan' => 'integer',
+        'grand_total' => 'integer',
+        'bayar' => 'integer',
         'closing_date' => 'date',
         'kategori_transaksi' => 'string',
     ];
@@ -138,22 +136,22 @@ class Order extends Model
         return $this->belongsTo(Product::class);
     }
 
-    protected function grandTotalBase(): float
+    protected function grandTotalBase()
     {
         return $this->finance()->grandTotalBase();
     }
 
-    protected function paymentsTotal(): float
+    protected function paymentsTotal()
     {
         return $this->finance()->paymentsTotal();
     }
 
-    protected function expensesTotal(): float
+    protected function expensesTotal()
     {
         return $this->finance()->expensesTotal();
     }
 
-    public function calculateTotalPrice(): float
+    public function calculateTotalPrice()
     {
         $totalPrice = 0;
         foreach ($this->items as $item) {

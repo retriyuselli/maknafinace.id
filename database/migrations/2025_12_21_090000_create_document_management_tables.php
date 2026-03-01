@@ -36,17 +36,17 @@ return new class extends Migration
             $table->json('metadata')->nullable(); // Dynamic fields
             $table->date('date_effective')->nullable();
             $table->date('date_expired')->nullable();
-            
+
             // Status Flow: draft -> pending (review) -> approved -> published -> archived
             $table->enum('status', ['draft', 'pending', 'approved', 'published', 'archived', 'rejected'])->default('draft');
-            
+
             // Confidentiality Level
             $table->enum('confidentiality', ['public', 'internal', 'confidential', 'secret'])->default('internal');
-            
+
             // Ownership
             // $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
             $table->foreignId('created_by')->constrained('users'); // Uploader/Creator
-            
+
             $table->timestamps();
             $table->softDeletes();
         });
@@ -68,11 +68,11 @@ return new class extends Migration
         Schema::create('document_recipients', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->constrained('documents')->cascadeOnDelete();
-            
+
             // Bisa kirim ke User spesifik ATAU ke Department
             $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
             // $table->foreignId('department_id')->nullable()->constrained('departments')->cascadeOnDelete();
-            
+
             $table->timestamp('read_at')->nullable();
             $table->boolean('is_cc')->default(false);
             $table->timestamps();

@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>MAKNA - Simulasi Paket Pernikahan - PT. Makna Kreatif Indonesia</title>
+    <title>{{ strtoupper($companyName ?? config('app.name')) }} - Simulasi Paket Pernikahan - {{ $companyName ?? config('app.name') }}</title>
     <meta name="author" content="themeholy">
     <meta name="description" content="Invar - Invoice HTML Template">
     <meta name="keywords" content="Invar - Invoice HTML Template" />
@@ -354,7 +354,7 @@ Invoice Area
                                                         <div style="text-align: left; border: none !important;">
                                                             <b>Office Information :</b>
                                                             <address>
-                                                                {{ $company->company_name ?? 'PT. Makna Kreatif Indonesia' }}<br>
+                                                                {{ $company->company_name ?? ($companyName ?? config('app.name')) }}<br>
                                                                 {{ $company->address ?? 'Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kecamatan Kemuning, Kota Palembang, Sumatera Selatan 30137' }}
                                                                 |
                                                                 Phone: {{ $company->phone ?? '+62 822-9796-2600' }} <br>
@@ -717,7 +717,7 @@ Invoice Area
                                                     style="border-top: 1px solid var(--title-color); margin: 0 10px; padding-top: 5px;">
                                                     ( {{ $simulasi->user->name ?? 'Account Manager' }} )
                                                 </p>
-                                                <p>{{ $company->company_name ?? 'PT. Makna Kreatif Indonesia' }}</p>
+                                                <p>{{ $company->company_name ?? ($companyName ?? config('app.name')) }}</p>
                                             </div>
                                             <div
                                                 style="float: right; width: 40%; text-align: center; margin-right: 5%;">

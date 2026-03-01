@@ -6,34 +6,16 @@ use App\Filament\Resources\PembayaranPiutangs\Pages\CreatePembayaranPiutang;
 use App\Filament\Resources\PembayaranPiutangs\Pages\EditPembayaranPiutang;
 use App\Filament\Resources\PembayaranPiutangs\Pages\ListPembayaranPiutangs;
 use App\Filament\Resources\PembayaranPiutangs\Pages\ViewPembayaranPiutang;
+use App\Filament\Resources\PembayaranPiutangs\Schemas\PembayaranPiutangForm;
+use App\Filament\Resources\PembayaranPiutangs\Tables\PembayaranPiutangsTable;
 use App\Models\PembayaranPiutang;
-use App\Models\Piutang;
-use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 
 class PembayaranPiutangResource extends Resource
 {
@@ -53,277 +35,22 @@ class PembayaranPiutangResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                Section::make('Informasi Pembayaran')
-                    ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                Select::make('piutang_id')
-                                    ->label('Piutang')
-                                    ->relationship('piutang', 'nomor_piutang', function (Builder $query) {
-                                        return $query->whereIn('status', ['aktif', 'dibayar_sebagian', 'jatuh_tempo']);
-                                    })
-                                    ->searchable()
-                                    ->preload()
-                                    ->required()
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Set $set) {
-                                        if ($state) {
-                                            $piutang = Piutang::find($state);
-                                            $set('max_pembayaran', $piutang->sisa_piutang);
-                                        }
-                                    }),
-
-                                TextInput::make('nomor_pembayaran')
-                                    ->label('Nomor Pembayaran')
-                                    ->default(fn () => PembayaranPiutang::generateNomorPembayaran())
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->required(),
-                            ]),
-
-                        Grid::make(1)
-                            ->schema([
-                                Placeholder::make('info_piutang')
-                                    ->label('Informasi Piutang')
-                                    ->content(function (Get $get) {
-                                        $piutangId = $get('piutang_id');
-                                        if (! $piutangId) {
-                                            return 'Pilih piutang terlebih dahulu';
-                                        }
-
-                                        $piutang = Piutang::find($piutangId);
-
-                                        return "
-                                            Debitur: {$piutang->nama_debitur}
-                                            Total Piutang: Rp ".number_format($piutang->total_piutang, 0, ',', '.').'
-                                            Sudah Dibayar: Rp '.number_format($piutang->sudah_dibayar, 0, ',', '.').'
-                                            Sisa Piutang: Rp '.number_format($piutang->sisa_piutang, 0, ',', '.').'
-                                        ';
-                                    })
-                                    ->visible(fn (Get $get) => $get('piutang_id')),
-                            ]),
-                    ]),
-
-                Section::make('Detail Pembayaran')
-                    ->schema([
-                        Grid::make(3)
-                            ->schema([
-                                TextInput::make('jumlah_pembayaran')
-                                    ->label('Jumlah Pembayaran')
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->required()
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                        $pembayaran = (float) $state;
-                                        $bunga = (float) $get('jumlah_bunga') ?? 0;
-                                        $denda = (float) $get('denda') ?? 0;
-                                        $set('total_pembayaran', $pembayaran + $bunga + $denda);
-                                    }),
-
-                                TextInput::make('jumlah_bunga')
-                                    ->label('Bunga')
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->default(0)
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                        $pembayaran = (float) $get('jumlah_pembayaran') ?? 0;
-                                        $bunga = (float) $state ?? 0;
-                                        $denda = (float) $get('denda') ?? 0;
-                                        $set('total_pembayaran', $pembayaran + $bunga + $denda);
-                                    }),
-
-                                TextInput::make('denda')
-                                    ->label('Denda')
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->default(0)
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                        $pembayaran = (float) $get('jumlah_pembayaran') ?? 0;
-                                        $bunga = (float) $get('jumlah_bunga') ?? 0;
-                                        $denda = (float) $state ?? 0;
-                                        $set('total_pembayaran', $pembayaran + $bunga + $denda);
-                                    }),
-                            ]),
-
-                        TextInput::make('total_pembayaran')
-                            ->label('Total Pembayaran')
-                            ->numeric()
-                            ->prefix('Rp')
-                            ->disabled()
-                            ->dehydrated(),
-                    ]),
-
-                Section::make('Metode & Tanggal')
-                    ->schema([
-                        Grid::make(3)
-                            ->schema([
-                                Select::make('payment_method_id')
-                                    ->label('Metode Pembayaran')
-                                    ->relationship('paymentMethod', 'name')
-                                    ->required(),
-
-                                DatePicker::make('tanggal_pembayaran')
-                                    ->label('Tanggal Pembayaran')
-                                    ->required()
-                                    ->default(now()),
-
-                                DatePicker::make('tanggal_dicatat')
-                                    ->label('Tanggal Dicatat')
-                                    ->default(now())
-                                    ->required(),
-                            ]),
-                    ]),
-
-                Section::make('Referensi & Konfirmasi')
-                    ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                TextInput::make('nomor_referensi')
-                                    ->label('Nomor Referensi')
-                                    ->placeholder('Nomor referensi bank/transfer'),
-
-                                Select::make('dikonfirmasi_oleh')
-                                    ->label('Dikonfirmasi Oleh')
-                                    ->relationship('dikonfirmasiOleh', 'name')
-                                    ->default(Auth::id()),
-                            ]),
-                    ]),
-
-                Section::make('Status & Catatan')
-                    ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                Select::make('status')
-                                    ->label('Status')
-                                    ->options([
-                                        'pending' => 'Pending',
-                                        'dikonfirmasi' => 'Dikonfirmasi',
-                                        'dibatalkan' => 'Dibatalkan',
-                                    ])
-                                    ->default('pending')
-                                    ->required(),
-
-                                FileUpload::make('bukti_pembayaran')
-                                    ->label('Bukti Pembayaran')
-                                    ->multiple()
-                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                    ->maxSize(2048),
-                            ]),
-
-                        Textarea::make('catatan')
-                            ->label('Catatan')
-                            ->placeholder('Catatan tambahan pembayaran')
-                            ->columnSpanFull(),
-                    ]),
-
-                Hidden::make('dibayar_oleh')
-                    ->default(Auth::id()),
-            ]);
+        return PembayaranPiutangForm::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('nomor_pembayaran')
-                    ->label('Nomor Pembayaran')
-                    ->searchable()
-                    ->sortable()
-                    ->weight(FontWeight::Bold),
+        return PembayaranPiutangsTable::configure($table);
+    }
 
-                TextColumn::make('piutang.nomor_piutang')
-                    ->label('Nomor Piutang')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('piutang.nama_debitur')
-                    ->label('Debitur')
-                    ->searchable()
-                    ->limit(20),
-
-                TextColumn::make('total_pembayaran')
-                    ->label('Total Pembayaran')
-                    ->money('IDR')
-                    ->sortable()
-                    ->weight(FontWeight::Bold),
-
-                TextColumn::make('paymentMethod.name')
-                    ->label('Metode'),
-
-                TextColumn::make('tanggal_pembayaran')
-                    ->label('Tanggal')
-                    ->date('d M Y')
-                    ->sortable(),
-
-                TextColumn::make('status')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'pending' => 'warning',
-                        'dikonfirmasi' => 'success',
-                        'dibatalkan' => 'danger',
-                        default => 'gray',
-                    }),
-
-                TextColumn::make('dikonfirmasiOleh.name')
-                    ->label('Dikonfirmasi Oleh')
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                SelectFilter::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'dikonfirmasi' => 'Dikonfirmasi',
-                        'dibatalkan' => 'Dibatalkan',
-                    ]),
-
-                SelectFilter::make('payment_method_id')
-                    ->label('Metode Pembayaran')
-                    ->relationship('paymentMethod', 'name'),
-
-                Filter::make('tanggal_pembayaran')
-                    ->schema([
-                        DatePicker::make('dari'),
-                        DatePicker::make('sampai'),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when(
-                                $data['dari'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal_pembayaran', '>=', $date),
-                            )
-                            ->when(
-                                $data['sampai'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal_pembayaran', '<=', $date),
-                            );
-                    }),
-            ])
-            ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
-                Action::make('konfirmasi')
-                    ->label('Konfirmasi')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->action(function (PembayaranPiutang $record) {
-                        $record->update([
-                            'status' => 'dikonfirmasi',
-                            'dikonfirmasi_oleh' => Auth::id(),
-                        ]);
-                    })
-                    ->visible(fn (PembayaranPiutang $record) => $record->status === 'pending'),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ])
-            ->defaultSort('created_at', 'desc');
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'piutang:id,nomor_piutang,nama_debitur,total_piutang,sudah_dibayar,sisa_piutang',
+                'paymentMethod:id,name',
+                'dikonfirmasiOleh:id,name',
+            ]);
     }
 
     public static function infolist(Schema $schema): Schema

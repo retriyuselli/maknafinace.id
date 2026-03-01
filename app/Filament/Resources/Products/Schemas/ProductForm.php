@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Products\Schemas;
 
 use App\Filament\Resources\Vendors\VendorResource;
 use App\Models\Category;
-use App\Models\Product;
 use App\Models\User;
 use App\Models\Vendor;
 use Filament\Actions\Action;
@@ -16,12 +15,12 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -104,7 +103,7 @@ class ProductForm
                                     ->default(1000)
                                     ->suffix('people')
                                     ->placeholder('1000'),
-                                
+
                                 TextInput::make('pax_akad')
                                     ->label('Akad (pax)')
                                     ->numeric()
@@ -165,6 +164,7 @@ class ProductForm
                                         ->visible(function () {
                                             /** @var User $user */
                                             $user = Auth::user();
+
                                             return $user->hasRole('super_admin');
                                         }),
                                 ])
@@ -192,6 +192,7 @@ class ProductForm
                                                     $qty = (int) ($item->quantity ?? 1);
                                                     $publish = (int) ($item->harga_publish ?? 0);
                                                     $pricePublic = (int) ($item->price_public ?? ($publish * $qty));
+
                                                     return $pricePublic;
                                                 });
                                                 $component->state($total);
@@ -287,6 +288,9 @@ class ProductForm
         return Repeater::make('items')
             ->label('Vendors')
             ->relationship()
+            ->addActionLabel('Tambah Vendor')
+            ->reorderable(true)
+            ->reorderableWithButtons()
             ->schema([
                 Grid::make(4)
                     ->schema([
@@ -383,10 +387,21 @@ class ProductForm
             ])
             ->defaultItems(1)
             ->collapsed()
-            ->itemLabel(fn (array $state): ?string => $state['vendor_id']
-                    ? static::getVendorData($state['vendor_id'])?->name ?? 'Unnamed Vendor'
-                    : 'New Facility'
-            )
+            ->itemLabel(function (array $state): ?string {
+                $vendorName = 'New Facility';
+                if (! empty($state['vendor_id'])) {
+                    $vendor = static::getVendorData($state['vendor_id']);
+                    $vendorName = $vendor?->name ?? 'Unnamed Vendor';
+                }
+                $pubRaw = $state['price_public'] ?? 0;
+                $venRaw = $state['total_price'] ?? 0;
+                $pubVal = is_numeric($pubRaw) ? (int) $pubRaw : self::stripCurrency($pubRaw);
+                $venVal = is_numeric($venRaw) ? (int) $venRaw : self::stripCurrency($venRaw);
+                $pubFmt = 'Rp '.number_format($pubVal, 0, '.', ',');
+                $venFmt = 'Rp '.number_format($venVal, 0, '.', ',');
+
+                return "{$vendorName} | {$pubFmt} | {$venFmt}";
+            })
             ->reorderable()
             ->cloneable()
             ->reactive()
@@ -397,6 +412,7 @@ class ProductForm
                 $totalProductPrice = collect($itemsArray)
                     ->sum(function ($item) {
                         $val = $item['price_public'] ?? 0;
+
                         return self::stripCurrency($val);
                     });
 
@@ -405,6 +421,7 @@ class ProductForm
                 $totalVendorPrice = collect($itemsArray)
                     ->sum(function ($item) {
                         $val = $item['harga_vendor'] ?? 0;
+
                         return self::stripCurrency($val);
                     });
 
@@ -454,6 +471,7 @@ class ProductForm
                 $totalPengurangan = collect($state)
                     ->sum(function ($item) {
                         $amountStr = $item['amount'] ?? '0';
+
                         return self::stripCurrency($amountStr);
                     });
 
@@ -554,12 +572,14 @@ class ProductForm
                 $totalPenambahanPublish = collect($state)
                     ->sum(function ($item) {
                         $val = $item['harga_publish'] ?? 0;
+
                         return self::stripCurrency($val);
                     });
 
                 $totalPenambahanVendor = collect($state)
                     ->sum(function ($item) {
                         $val = $item['harga_vendor'] ?? 0;
+
                         return self::stripCurrency($val);
                     });
 
@@ -591,7 +611,7 @@ class ProductForm
             $active = $vendor->activePrice();
             $h_publish = $active?->harga_publish ?? $vendor->harga_publish;
             $h_vendor = $active?->harga_vendor ?? $vendor->harga_vendor;
-            
+
             $set('harga_publish', self::formatCurrency((int) $h_publish));
             $set('harga_vendor', self::formatCurrency((int) $h_vendor));
             $set('description', $vendor->description);
@@ -605,7 +625,7 @@ class ProductForm
             $active = $vendor->activePrice();
             $h_publish = $active?->harga_publish ?? $vendor->harga_publish;
             $h_vendor = $active?->harga_vendor ?? $vendor->harga_vendor;
-            
+
             $set('harga_publish', self::formatCurrency((int) $h_publish));
             $set('harga_vendor', self::formatCurrency((int) $h_vendor));
             $set('description', $vendor->description);
@@ -630,6 +650,7 @@ class ProductForm
         if (is_string($val)) {
             $val = str_replace(['.', ','], '', $val);
         }
+
         return (int) ($val ?? 0);
     }
 
@@ -643,7 +664,7 @@ class ProductForm
         $harga_publish = self::getCleanInt($get, 'harga_publish');
         $harga_vendor = self::getCleanInt($get, 'harga_vendor');
         $quantity = (int) ($get('quantity') ?? 1);
-        
+
         $price_public = $harga_publish * $quantity;
         $set('price_public', self::formatCurrency($price_public));
 
@@ -660,6 +681,7 @@ class ProductForm
         $total_price = collect($items)
             ->sum(function ($item) {
                 $val = $item['price_public'] ?? 0;
+
                 return self::stripCurrency($val);
             });
 
@@ -668,9 +690,10 @@ class ProductForm
         $total_vendor_price = collect($items)
             ->sum(function ($item) {
                 $val = $item['harga_vendor'] ?? 0;
+
                 return self::stripCurrency($val);
             });
-        
+
         $set('../../vendorTotal', self::formatCurrency($total_vendor_price));
 
         self::updateFinalProductPrice($get, $set);
@@ -683,12 +706,14 @@ class ProductForm
         $total_publish_price = collect($additionItems)
             ->sum(function ($item) {
                 $val = $item['harga_publish'] ?? 0;
+
                 return self::stripCurrency($val);
             });
 
         $total_vendor_price = collect($additionItems)
             ->sum(function ($item) {
                 $val = $item['harga_vendor'] ?? 0;
+
                 return self::stripCurrency($val);
             });
 

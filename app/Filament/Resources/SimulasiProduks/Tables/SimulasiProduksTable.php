@@ -26,7 +26,7 @@ class SimulasiProduksTable
                     ->searchable()->sortable()
                     ->weight('bold')
                     ->formatStateUsing(fn (string $state): string => Str::title($state))
-                    ->description(fn (SimulasiProduk $record): string => $record->product ?  ''.$record
+                    ->description(fn (SimulasiProduk $record): string => $record->product ? ''.$record
                         ->product->name : Str::limit($record->notes ?? '', 30)),
                 TextColumn::make('total_price')
                     ->label('Base Price')

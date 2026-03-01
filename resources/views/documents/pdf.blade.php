@@ -202,7 +202,7 @@
                     @endif
                 </td>
                 <td style="text-align: right; width: 25%;">
-                    PT. Makna Kreatif Indonesia
+                    {{ $companyName ?? config('app.name') }}
                 </td>
             </tr>
         </table>
@@ -211,8 +211,7 @@
         <table style="width: 100%; margin-bottom: 1px; padding-bottom: 3px;">
             <tr>
                 <td style="line-height: 1; text-align: left;">
-                    <div style="font-size: 14px; font-weight: bold; text-transform: uppercase;">PT. Makna Kreatif
-                        Indonesia</div>
+                    <div style="font-size: 14px; font-weight: bold; text-transform: uppercase;">{{ strtoupper($companyName ?? config('app.name')) }}</div>
                     <div style="font-size: 12px;">
                         Alamat : Jln. Sintraman Jaya, No. 2148, Sekip Jaya, Palembang<br>
                         No. Tlp : +62 822-9796-2600<br>
@@ -314,7 +313,7 @@
                 @endif
             </td>
             <td style="width: 50%; text-align: center; vertical-align: top;">
-                <p>PT. Makna Kreatif Indonesia,</p>
+                <p>{{ $companyName ?? config('app.name') }},</p>
 
                 @php
                     $signatureBase64 = '';

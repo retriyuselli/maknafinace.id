@@ -2,18 +2,16 @@
 
 namespace App\Filament\Resources\LeaveBalances\RelationManagers;
 
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Forms;
-use Filament\Schemas\Schema;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Actions\Action;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 
 class HistoriesRelationManager extends RelationManager
@@ -96,12 +94,12 @@ class HistoriesRelationManager extends RelationManager
                     ->action(function ($record) {
                         $record->status = 'approved';
                         $record->save();
-                        
+
                         // Update balance
                         $balance = $record->leaveBalance;
                         $balance->allocated_days += $record->amount;
                         $balance->save();
-                        
+
                         Notification::make()
                             ->title('Top Up Disetujui')
                             ->body("Saldo cuti user bertambah {$record->amount} hari.")
@@ -117,7 +115,7 @@ class HistoriesRelationManager extends RelationManager
                     ->action(function ($record) {
                         $record->status = 'rejected';
                         $record->save();
-                        
+
                         Notification::make()
                             ->title('Top Up Ditolak')
                             ->success()

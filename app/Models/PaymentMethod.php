@@ -18,7 +18,7 @@ class PaymentMethod extends Model
     ];
 
     protected $casts = [
-        'opening_balance' => 'decimal:2',
+        'opening_balance' => 'integer',
         'opening_balance_date' => 'date',
     ];
 

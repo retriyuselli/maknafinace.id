@@ -16,7 +16,6 @@ class UserRolesChartWidget extends ChartWidget
 
     protected static ?int $sort = 22; // Sesuaikan urutan widget di dashboard
 
-
     public ?string $selectedAccountId = null;
 
     public function getHeading(): string

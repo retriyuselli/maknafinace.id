@@ -3,27 +3,24 @@
 namespace App\Filament\Resources\Vendors\Schemas;
 
 use App\Models\Category;
-use App\Models\Vendor;
+use App\Support\Rupiah;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ViewField;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
-use Filament\Notifications\Notification;
 use Illuminate\Support\Str;
-use App\Support\Rupiah;
 
 class VendorForm
 {
@@ -86,7 +83,7 @@ class VendorForm
                                             ->label('Description')
                                             ->disableToolbarButtons([
                                                 'attachFiles',
-                                            ]), 
+                                            ]),
                                     ]),
                             ]),
 
@@ -96,25 +93,28 @@ class VendorForm
                                     ->columns(3)
                                     ->schema([
                                         TextInput::make('harga_publish')
-                                            ->prefix('Rp')
                                             ->default(0.0)
-                                            ->extraAttributes(['inputmode' => 'numeric'])
-                                            ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
-                                            ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state)),
+                                            ->prefix('Rp. ')
+                                            ->mask(RawJs::make('$money($input)'))
+                                            ->stripCharacters(',')
+                                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                            ->placeholder('0'),
                                         TextInput::make('harga_vendor')
-                                            ->prefix('Rp')
                                             ->default(0.0)
-                                            ->extraAttributes(['inputmode' => 'numeric'])
-                                            ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
-                                            ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state)),
+                                            ->prefix('Rp. ')
+                                            ->mask(RawJs::make('$money($input)'))
+                                            ->stripCharacters(',')
+                                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                            ->placeholder('0'),
                                         TextInput::make('profit_amount')
                                             ->required()
                                             ->readOnly()
-                                            ->prefix('Rp')
                                             ->default(0.0)
-                                            ->extraAttributes(['inputmode' => 'numeric'])
-                                            ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
-                                            ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state)),
+                                            ->prefix('Rp. ')
+                                            ->mask(RawJs::make('$money($input)'))
+                                            ->stripCharacters(',')
+                                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                            ->placeholder('0'),
                                         TextInput::make('profit_margin')
                                             ->required()
                                             ->numeric()
@@ -132,30 +132,29 @@ class VendorForm
                                     ->columns(3)
                                     ->schema([
                                         TextInput::make('bank_name')
-                                                ->label('Bank Name')
-                                                ->prefix('Bank '),
+                                            ->label('Bank Name')
+                                            ->prefix('Bank '),
 
-                                            TextInput::make('bank_account')
-                                                ->label('Account Number')
-                                                ->numeric(),
+                                        TextInput::make('bank_account')
+                                            ->label('Account Number')
+                                            ->numeric(),
 
-                                            TextInput::make('account_holder')
-                                                ->label('Account Holder Name'),
+                                        TextInput::make('account_holder')
+                                            ->label('Account Holder Name'),
 
-                                            FileUpload::make('kontrak_kerjasama')
-                                                ->label('Partnership Agreement')
-                                                ->directory('vendor-contracts')
-                                                ->preserveFilenames()
-                                                ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'])
-                                                ->maxSize(2048)
-                                                ->downloadable()
-                                                ->openable()
-                                                ->helperText('Upload PDF file (max 2MB) or image file (max 2MB)')
-                                                ->columnSpanFull(),
+                                        FileUpload::make('kontrak_kerjasama')
+                                            ->label('Partnership Agreement')
+                                            ->directory('vendor-contracts')
+                                            ->preserveFilenames()
+                                            ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'])
+                                            ->maxSize(2048)
+                                            ->downloadable()
+                                            ->openable()
+                                            ->helperText('Upload PDF file (max 2MB) or image file (max 2MB)')
+                                            ->columnSpanFull(),
                                     ]),
                             ]),
 
-                        
                         Tab::make('Usage Information')
                             ->icon('heroicon-m-chart-bar')
                             ->schema([
@@ -173,6 +172,7 @@ class VendorForm
                                                         $basicFacilitiesCount = $record->productVendors()->count();
                                                         $additionsCount = $record->productPenambahans()->count();
                                                         $total = $basicFacilitiesCount + $additionsCount;
+
                                                         return $total.' items';
                                                     })
                                                     ->helperText(function ($record): string {
@@ -188,6 +188,7 @@ class VendorForm
                                                         if ($additionsCount > 0) {
                                                             $details[] = $additionsCount.' in Additions';
                                                         }
+
                                                         return ! empty($details) ? implode(', ', $details) : 'No usage';
                                                     }),
 
@@ -199,6 +200,7 @@ class VendorForm
                                                             return '0 transactions';
                                                         }
                                                         $count = (int) ($record->usage_details['expenseCount'] ?? 0);
+
                                                         return $count.' transactions';
                                                     }),
 
@@ -209,6 +211,7 @@ class VendorForm
                                                         if (! $record) {
                                                             return 'Unknown';
                                                         }
+
                                                         return $record->usage_status === 'In Use' ? 'Protected' : 'Can be deleted';
                                                     }),
                                             ]),
@@ -303,7 +306,7 @@ class VendorForm
                                             ->columnSpanFull(),
                                     ])
                                     ->collapsible(),
-                            ])
+                            ]),
                     ])
                     ->columnSpanFull(),
                 Section::make('Pengaturan Master')
@@ -323,6 +326,7 @@ class VendorForm
                                     ->format('Y-m-d')
                                     ->displayFormat('d / m / Y')
                                     ->reactive(),
+                                    
                                 DatePicker::make('effective_to')
                                     ->label('Tgl Akhir')
                                     ->required()
@@ -330,35 +334,42 @@ class VendorForm
                                     ->format('Y-m-d')
                                     ->displayFormat('d / m / Y')
                                     ->reactive(),
+
                                 TextInput::make('harga_publish')
                                     ->label('Harga Publish')
-                                    ->prefix('Rp')
-                                    ->extraAttributes(['inputmode' => 'numeric'])
-                                    ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
-                                    ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state))
+                                    ->prefix('Rp. ')
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
+                                    ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                    ->placeholder('0')
                                     ->debounce(500),
 
                                 TextInput::make('harga_vendor')
                                     ->label('Harga Vendor')
-                                    ->prefix('Rp')
-                                    ->extraAttributes(['inputmode' => 'numeric'])
-                                    ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
-                                    ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state))
+                                    ->prefix('Rp. ')
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
+                                    ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                    ->placeholder('0')
                                     ->debounce(500),
 
                                 TextInput::make('profit_amount')
                                     ->label('Profit')
                                     ->readOnly()
-                                    ->prefix('Rp')
-                                    ->extraAttributes(['inputmode' => 'numeric'])
-                                    ->formatStateUsing(fn ($state) => number_format((float) Rupiah::parse($state), 0, '.', ','))
-                                    ->dehydrateStateUsing(fn ($state) => Rupiah::parse($state))
+                                    ->prefix('Rp. ')
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
+                                    ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                    ->placeholder('0')
                                     ->default(0),
 
                                 TextInput::make('profit_margin')
                                     ->label('Profit Margin')
-                                    ->numeric()
                                     ->readOnly()
+                                    ->prefix('Rp. ')
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
+                                    ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                     ->prefix('%')
                                     ->default(0),
 
@@ -369,6 +380,7 @@ class VendorForm
                                     ->acceptedFileTypes(['application/pdf'])
                                     ->maxSize(10240)
                                     ->downloadable()
+                                    ->columnSpanFull()
                                     ->openable(),
                                 TextInput::make('description')
                                     ->label('Deskripsi')

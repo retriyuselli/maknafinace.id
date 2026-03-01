@@ -25,25 +25,25 @@ class AmPerformanceChart extends ChartWidget
     {
         $currentYear = now()->year;
         $options = [];
-        
+
         // Generate options for recent years
         for ($year = $currentYear - 1; $year <= $currentYear + 1; $year++) {
             $options[$year] = $year;
         }
-        
+
         return $options;
     }
 
     public function getHeading(): ?string
     {
         $user = Auth::user();
-        
+
         $selectedYear = (int) ($this->filter ?? now()->year);
         $selectedUserId = 'all';
 
         // Check permissions
         $isSuperAdmin = $user && $user->roles->where('name', 'super_admin')->count() > 0;
-        
+
         if (! $isSuperAdmin && $user && $user->roles->where('name', 'Account Manager')->count() > 0) {
             $selectedUserId = $user->id;
         }
@@ -62,25 +62,25 @@ class AmPerformanceChart extends ChartWidget
         } else {
             $query->whereHas('user', function ($q) {
                 $q->whereNull('last_working_date')
-                    ->orWhereRaw("(account_manager_targets.year * 100 + account_manager_targets.month) <= (YEAR(last_working_date) * 100 + MONTH(last_working_date))");
+                    ->orWhereRaw('(account_manager_targets.year * 100 + account_manager_targets.month) <= (YEAR(last_working_date) * 100 + MONTH(last_working_date))');
             });
         }
 
         $totalAchievement = $query->sum('achieved_amount');
-        
-        return "Performance Trend - {$name} (Total Achievement: Rp " . number_format($totalAchievement, 0, ',', '.') . ")";
+
+        return "Performance Trend - {$name} (Total Achievement: Rp ".number_format($totalAchievement, 0, ',', '.').')';
     }
 
     protected function getData(): array
     {
         $user = Auth::user();
-        
+
         $selectedYear = (int) ($this->filter ?? now()->year);
         $selectedUserId = 'all';
 
         // Check permissions: if user is not super_admin, force their own data if they are AM
         $isSuperAdmin = $user && $user->roles->where('name', 'super_admin')->count() > 0;
-        
+
         // If regular AM, force selection to themselves
         if (! $isSuperAdmin && $user && $user->roles->where('name', 'Account Manager')->count() > 0) {
             $selectedUserId = $user->id;
@@ -136,13 +136,13 @@ class AmPerformanceChart extends ChartWidget
         }
 
         // Logic for ALL users: Show Total Target + Individual AM Achievements
-        
+
         // 1. Get Total Target (Sum of all active AMs)
         $targetQuery = AccountManagerTarget::query()
             ->where('year', $selectedYear)
             ->whereHas('user', function ($q) {
                 $q->whereNull('last_working_date')
-                    ->orWhereRaw("(account_manager_targets.year * 100 + account_manager_targets.month) <= (YEAR(last_working_date) * 100 + MONTH(last_working_date))");
+                    ->orWhereRaw('(account_manager_targets.year * 100 + account_manager_targets.month) <= (YEAR(last_working_date) * 100 + MONTH(last_working_date))');
             });
 
         $monthlyTarget = $targetQuery->selectRaw('month, SUM(target_amount) as total_target')
@@ -151,13 +151,13 @@ class AmPerformanceChart extends ChartWidget
             ->all();
 
         $datasets = [];
-        
+
         // Add Total Target Dataset
         $targetsData = [];
         for ($i = 1; $i <= 12; $i++) {
             $targetsData[] = ($monthlyTarget[$i] ?? 0) / 1000000;
         }
-        
+
         $datasets[] = [
             'label' => 'Total Target (Juta Rp)',
             'data' => $targetsData,
@@ -173,7 +173,7 @@ class AmPerformanceChart extends ChartWidget
             ->where('year', $selectedYear)
             ->whereHas('user', function ($q) {
                 $q->whereNull('last_working_date')
-                    ->orWhereRaw("(account_manager_targets.year * 100 + account_manager_targets.month) <= (YEAR(last_working_date) * 100 + MONTH(last_working_date))");
+                    ->orWhereRaw('(account_manager_targets.year * 100 + account_manager_targets.month) <= (YEAR(last_working_date) * 100 + MONTH(last_working_date))');
             })
             ->get()
             ->groupBy('user_id');
@@ -195,7 +195,7 @@ class AmPerformanceChart extends ChartWidget
         foreach ($userAchievements as $userId => $records) {
             $userName = $records->first()->user->name ?? 'Unknown';
             $achievementsData = array_fill(0, 12, 0);
-            
+
             foreach ($records as $record) {
                 $monthIndex = $record->month - 1;
                 $achievementsData[$monthIndex] = $record->achieved_amount / 1000000;

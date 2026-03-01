@@ -21,7 +21,7 @@
 </head>
 <body class="font-sans bg-gray-100 text-gray-800 leading-relaxed">
     <div class="bg-gray-800 text-white py-4 px-6 sm:px-8 mb-8">
-        <h1 class="m-0 text-xl sm:text-2xl font-semibold">Makna Wedding Organizer - Laporan Pembayaran</h1>
+        <h1 class="m-0 text-xl sm:text-2xl font-semibold">{{ $companyName ?? config('app.name') }} - Laporan Pembayaran</h1>
     </div>
     <div class="max-w-6xl mx-auto p-4 sm:p-5 bg-white rounded-lg shadow-md">
         <h1 class="text-blue-600 border-b-2 border-gray-200 pb-2.5 mt-0 text-2xl sm:text-3xl font-bold mb-6">{{ $pageTitle }}</h1>

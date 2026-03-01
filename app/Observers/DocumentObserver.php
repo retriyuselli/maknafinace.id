@@ -4,7 +4,6 @@ namespace App\Observers;
 
 use App\Models\Document;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class DocumentObserver
 {
@@ -55,7 +54,7 @@ class DocumentObserver
                     ->count();
                 $lastNumber = $count;
             }
-            
+
             $sequence = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
             $number = str_replace('{SEQ}', $sequence, $number);
         }
@@ -67,8 +66,9 @@ class DocumentObserver
     {
         $map = [
             1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI',
-            7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'
+            7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII',
         ];
+
         return $map[$month] ?? '';
     }
 }

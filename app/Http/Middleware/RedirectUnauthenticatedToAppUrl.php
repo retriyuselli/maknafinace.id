@@ -20,6 +20,7 @@ class RedirectUnauthenticatedToAppUrl
             }
 
             $appUrl = config('app.url') ?: url('/');
+
             return redirect()->to($appUrl);
         }
 

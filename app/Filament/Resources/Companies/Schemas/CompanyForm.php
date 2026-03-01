@@ -225,18 +225,6 @@ class CompanyForm
                                                     ->openable()
                                                     ->multiple()
                                                     ->dehydrateStateUsing(fn ($state) => $state ? (is_array($state) ? $state : [$state]) : []),
-                                                Select::make('legal_document_status')
-                                                    ->label('Status Legal Dokumen')
-                                                    ->options([
-                                                        'pending' => 'Belum diverifikasi',
-                                                        'review' => 'Dalam review',
-                                                        'verified' => 'Terverifikasi',
-                                                        'expired' => 'Kedaluwarsa',
-                                                        'rejected' => 'Ditolak',
-                                                    ])
-                                                    ->default('pending')
-                                                    ->required()
-                                                    ->native(false),
                                             ]),
                                     ]),
                             ]),

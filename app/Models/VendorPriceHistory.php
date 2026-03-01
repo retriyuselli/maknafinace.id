@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -24,10 +23,10 @@ class VendorPriceHistory extends Model
     ];
 
     protected $casts = [
-        'harga_publish' => 'decimal:2',
-        'harga_vendor' => 'decimal:2',
-        'profit_amount' => 'decimal:2',
-        'profit_margin' => 'decimal:2',
+        'harga_publish' => 'integer',
+        'harga_vendor' => 'integer',
+        'profit_amount' => 'integer',
+        'profit_margin' => 'integer',
         'effective_from' => 'datetime',
         'effective_to' => 'datetime',
     ];
@@ -53,7 +52,7 @@ class VendorPriceHistory extends Model
 
                     if ($existsOtherActive) {
                         throw \Illuminate\Validation\ValidationException::withMessages([
-                            'priceHistories' => 'Hanya satu riwayat harga dapat berstatus active untuk setiap vendor.'
+                            'priceHistories' => 'Hanya satu riwayat harga dapat berstatus active untuk setiap vendor.',
                         ]);
                     }
                 }
@@ -90,5 +89,4 @@ class VendorPriceHistory extends Model
     {
         return $this->belongsTo(Vendor::class);
     }
-
 }

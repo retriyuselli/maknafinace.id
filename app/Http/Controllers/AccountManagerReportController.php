@@ -12,7 +12,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Filament\Notifications\Notification;
 
 class AccountManagerReportController extends Controller
 {
@@ -25,7 +24,7 @@ class AccountManagerReportController extends Controller
         $year = (int) $request->input('year');
         $month = (int) $request->input('month');
 
-        if (!$userId || !$year || !$month) {
+        if (! $userId || ! $year || ! $month) {
             abort(400, 'Missing required parameters');
         }
 
@@ -110,7 +109,7 @@ class AccountManagerReportController extends Controller
             ]);
 
         } catch (Exception $e) {
-            return response()->make('Terjadi kesalahan: ' . $e->getMessage(), 500);
+            return response()->make('Terjadi kesalahan: '.$e->getMessage(), 500);
         }
     }
 
@@ -123,7 +122,7 @@ class AccountManagerReportController extends Controller
         $year = (int) $request->input('year');
         $month = (int) $request->input('month');
 
-        if (!$userId || !$year || !$month) {
+        if (! $userId || ! $year || ! $month) {
             abort(400, 'Missing required parameters');
         }
 
@@ -190,10 +189,10 @@ class AccountManagerReportController extends Controller
             // Get Yearly Performance Data
             $currentYear = (int) date('Y');
             $currentMonth = (int) date('n');
-            
+
             // Detail Tahun Berjalan (Current Year)
             $currentYearData = $this->getYearlyPerformanceData($userId, $currentYear, $currentMonth);
-            
+
             // Detail Tahun Sebelumnya (Previous Year)
             $previousYearData = $this->getYearlyPerformanceData($userId, $currentYear - 1, 12);
 
@@ -221,7 +220,7 @@ class AccountManagerReportController extends Controller
             return $pdf->download("AM_Report_{$accountManager->name}_{$year}_{$month}.pdf");
 
         } catch (Exception $e) {
-            return response()->make('Terjadi kesalahan: ' . $e->getMessage(), 500);
+            return response()->make('Terjadi kesalahan: '.$e->getMessage(), 500);
         }
     }
 
@@ -234,7 +233,7 @@ class AccountManagerReportController extends Controller
         $year = (int) $request->input('year');
         $month = (int) $request->input('month');
 
-        if (!$userId || !$year || !$month) {
+        if (! $userId || ! $year || ! $month) {
             abort(400, 'Missing required parameters');
         }
 
@@ -301,10 +300,10 @@ class AccountManagerReportController extends Controller
             // Get Yearly Performance Data
             $currentYear = (int) date('Y');
             $currentMonth = (int) date('n');
-            
+
             // Detail Tahun Berjalan (Current Year)
             $currentYearData = $this->getYearlyPerformanceData($userId, $currentYear, $currentMonth);
-            
+
             // Detail Tahun Sebelumnya (Previous Year)
             $previousYearData = $this->getYearlyPerformanceData($userId, $currentYear - 1, 12);
 
@@ -332,7 +331,7 @@ class AccountManagerReportController extends Controller
             return $pdf->stream("AM_Report_{$accountManager->name}_{$year}_{$month}.pdf");
 
         } catch (Exception $e) {
-            return response()->make('Terjadi kesalahan: ' . $e->getMessage(), 500);
+            return response()->make('Terjadi kesalahan: '.$e->getMessage(), 500);
         }
     }
 
@@ -345,7 +344,7 @@ class AccountManagerReportController extends Controller
         $year = (int) $request->input('year');
         $month = (int) $request->input('month');
 
-        if (!$userId || !$year || !$month) {
+        if (! $userId || ! $year || ! $month) {
             abort(400, 'Missing required parameters');
         }
 
@@ -400,11 +399,11 @@ class AccountManagerReportController extends Controller
                 $leaveData = LeaveRequest::where('user_id', $userId)
                     ->where(function ($query) use ($year, $month) {
                         $query->whereYear('start_date', $year)
-                        ->whereMonth('start_date', $month);
+                            ->whereMonth('start_date', $month);
                     })
                     ->orWhere(function ($query) use ($year, $month) {
                         $query->whereYear('end_date', $year)
-                        ->whereMonth('end_date', $month);
+                            ->whereMonth('end_date', $month);
                     })
                     ->with('leaveType')
                     ->get();
@@ -413,10 +412,10 @@ class AccountManagerReportController extends Controller
             // Get Yearly Performance Data
             $currentYear = (int) date('Y');
             $currentMonth = (int) date('n');
-            
+
             // Detail Tahun Berjalan (Current Year)
             $currentYearData = $this->getYearlyPerformanceData($userId, $currentYear, $currentMonth);
-            
+
             // Detail Tahun Sebelumnya (Previous Year)
             // For previous year, we show full 12 months
             $previousYearData = $this->getYearlyPerformanceData($userId, $currentYear - 1, 12);
@@ -445,7 +444,7 @@ class AccountManagerReportController extends Controller
             ]);
 
         } catch (Exception $e) {
-            return response()->make('Terjadi kesalahan: ' . $e->getMessage(), 500);
+            return response()->make('Terjadi kesalahan: '.$e->getMessage(), 500);
         }
     }
 
@@ -509,7 +508,7 @@ class AccountManagerReportController extends Controller
                 'revenue' => $totalRevenue,
                 'target' => $totalTarget,
                 'achievement' => $totalTarget > 0 ? ($totalRevenue / $totalTarget) * 100 : 0,
-            ]
+            ],
         ];
     }
 }

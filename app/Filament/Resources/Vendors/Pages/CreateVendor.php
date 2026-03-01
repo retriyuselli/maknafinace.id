@@ -5,9 +5,9 @@ namespace App\Filament\Resources\Vendors\Pages;
 use App\Filament\Resources\Vendors\VendorResource;
 use App\Models\Vendor;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
-use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Validation\ValidationException;
 
 class CreateVendor extends CreateRecord
@@ -34,6 +34,7 @@ class CreateVendor extends CreateRecord
                     ]);
                 }
             }
+
             return Vendor::create($data);
         } catch (QueryException $e) {
             if ($e->getCode() === '23000') {

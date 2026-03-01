@@ -27,6 +27,7 @@ class FixedAssetSeeder extends Seeder
 
         if (! $assetAccounts['EQUIPMENT'] || ! $assetAccounts['VEHICLE'] || ! $assetAccounts['COMPUTER']) {
             $this->command->error('Fixed Asset accounts not found. Please run FixedAssetChartOfAccountsSeeder first.');
+
             return;
         }
 
@@ -120,4 +121,3 @@ class FixedAssetSeeder extends Seeder
         $this->command->info("Created {$created} fixed assets.");
     }
 }
-

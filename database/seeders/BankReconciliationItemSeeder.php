@@ -16,6 +16,7 @@ class BankReconciliationItemSeeder extends Seeder
         $statements = BankStatement::all();
         if ($statements->isEmpty()) {
             $this->command->error('No BankStatement found. Please run BankStatementSeeder first.');
+
             return;
         }
 
@@ -54,4 +55,3 @@ class BankReconciliationItemSeeder extends Seeder
         $this->command->info('Bank reconciliation items seeded.');
     }
 }
-

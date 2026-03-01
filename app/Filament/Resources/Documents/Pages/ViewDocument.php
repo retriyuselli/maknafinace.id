@@ -3,11 +3,8 @@
 namespace App\Filament\Resources\Documents\Pages;
 
 use App\Filament\Resources\Documents\DocumentResource;
-use Filament\Resources\Pages\ViewRecord;
 use Filament\Actions\Action;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
+use Filament\Resources\Pages\ViewRecord;
 
 class ViewDocument extends ViewRecord
 {

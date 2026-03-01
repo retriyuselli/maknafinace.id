@@ -9,18 +9,8 @@ use App\Filament\Resources\Vendors\Pages\ViewVendor;
 use App\Filament\Resources\Vendors\Schemas\VendorForm;
 use App\Filament\Resources\Vendors\Tables\VendorsTable;
 use App\Models\Vendor;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Grid;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\ViewEntry;
-use Filament\Support\Enums\FontWeight;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -41,7 +31,7 @@ class VendorResource extends Resource
     {
         return static::getModel()::count();
     }
-    
+
     public static function form(Schema $schema): Schema
     {
         return VendorForm::configure($schema);
@@ -80,6 +70,7 @@ class VendorResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->with(['category'])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

@@ -4,9 +4,7 @@ namespace App\Filament\Resources\AccountManagerTargets\Pages;
 
 use App\Filament\Resources\AccountManagerTargets\AccountManagerTargetResource;
 use App\Models\AccountManagerTarget;
-use App\Models\LeaveRequest;
 use App\Models\Order;
-use App\Models\Payroll;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -323,8 +321,6 @@ class ListAccountManagerTargets extends ListRecords
                 ->send();
         }
     }
-
-
 
     protected function getHeaderWidgets(): array
     {

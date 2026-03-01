@@ -42,10 +42,14 @@ class RevenueBulananWeddingWidget extends BaseWidget
             ->whereNotNull('prospects.date_resepsi')
             ->groupBy('year', 'month', 'month_name');
 
-        $aggregateModel = new class extends Model {
+        $aggregateModel = new class extends Model
+        {
             protected $table = 'monthly_revenue';
+
             public $incrementing = false;
+
             public $timestamps = false;
+
             protected $guarded = [];
         };
 

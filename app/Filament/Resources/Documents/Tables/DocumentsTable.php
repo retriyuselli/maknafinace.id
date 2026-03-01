@@ -10,7 +10,6 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -24,7 +23,7 @@ class DocumentsTable
         return $table
             ->modifyQueryUsing(function (Builder $query) {
                 $user = Auth::user();
-                if (!$user) {
+                if (! $user) {
                     return;
                 }
 
