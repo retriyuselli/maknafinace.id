@@ -4,30 +4,29 @@
     $latestPayroll = $user->payrolls()->latest()->first();
     $currentYear = date('Y');
     
-    // Calculate leave statistics for current year
+    $period = request()->get('period', 'year');
+    $leaveQueryForPeriod = function () use ($user, $period, $currentYear) {
+        $q = $user->leaveRequests();
+        if ($period === 'year') {
+            $q->whereYear('start_date', $currentYear);
+        } elseif ($period === 'last_year') {
+            $q->whereYear('start_date', (int) $currentYear - 1);
+        }
+        return $q;
+    };
+
     $leaveStats = [
-        'approved' => $user->leaveRequests()
-            ->where('status', 'approved')
-            ->whereYear('start_date', $currentYear)
-            ->sum('total_days'),
-        'pending' => $user->leaveRequests()
-            ->where('status', 'pending')
-            ->whereYear('start_date', $currentYear)
-            ->sum('total_days'),
-        'rejected' => $user->leaveRequests()
-            ->where('status', 'rejected')
-            ->whereYear('start_date', $currentYear)
-            ->sum('total_days')
+        'approved' => $leaveQueryForPeriod()->where('status', 'approved')->sum('total_days'),
+        'pending' => $leaveQueryForPeriod()->where('status', 'pending')->sum('total_days'),
+        'rejected' => $leaveQueryForPeriod()->where('status', 'rejected')->sum('total_days'),
     ];
     
-    // Leave breakdown by type for approved leaves only
-    $leaveByType = $user->leaveRequests()
+    $leaveByType = $leaveQueryForPeriod()
         ->with('leaveType')
         ->where('status', 'approved')
-        ->whereYear('start_date', $currentYear)
         ->get()
         ->groupBy('leaveType.name')
-        ->map(function($leaves) {
+        ->map(function ($leaves) {
             return $leaves->sum('total_days');
         });
     
@@ -65,6 +64,10 @@
         ->whereYear('start_date', $prevYear)
         ->sum('total_days');
     $prevUsagePercentage = $annualLeaveAllowance > 0 ? round(($prevUsedLeave / $annualLeaveAllowance) * 100) : 0;
+    $currentMonth = (int) date('n');
+    $prevRemaining = max(0, $annualLeaveAllowance - $prevUsedLeave);
+    $carryOver = $currentMonth <= 2 ? $prevRemaining : 0;
+    $effectiveAllowanceYear = $annualLeaveAllowance + $carryOver;
 @endphp
 
 <!-- HR Salary & Leave Information Section -->
@@ -199,7 +202,7 @@
                         <div class="flex items-center justify-between mb-4">
                             <h5 class="font-semibold text-purple-800">Saldo Cuti Tahunan</h5>
                             <span class="text-sm font-medium text-purple-600">
-                                {{ $usedLeave }} digunakan / {{ $annualLeaveAllowance }} total
+                                {{ $usedLeave }} digunakan / {{ $period === 'year' ? $effectiveAllowanceYear : $annualLeaveAllowance }} total
                             </span>
                         </div>
                         
@@ -207,7 +210,8 @@
                         <div class="w-full bg-gray-300 rounded-full h-5 mb-3 shadow-inner overflow-hidden">
                             @php
                                 // Calculate usage percentage with clear step-by-step logic
-                                $actualUsagePercentage = $annualLeaveAllowance > 0 ? (($usedLeave / $annualLeaveAllowance) * 100) : 0;
+                                $displayAllowance = $period === 'year' ? $effectiveAllowanceYear : $annualLeaveAllowance;
+                                $actualUsagePercentage = $displayAllowance > 0 ? (($usedLeave / $displayAllowance) * 100) : 0;
                                 $usagePercentage = round($actualUsagePercentage, 1);
                                 
                                 // For progress bar display, cap at 100% but show actual percentage in text
@@ -274,7 +278,7 @@
                                     <div class="w-4 h-4 rounded-full border-2 border-white shadow-md bg-red-500 mr-3 relative">
                                         <div class="absolute inset-0 bg-red-600 rounded-full animate-ping opacity-75"></div>
                                     </div>
-                                    <span class="font-bold text-red-600">MELEBIHI KUOTA sebanyak {{ $usedLeave - $annualLeaveAllowance }} hari</span>
+                                    <span class="font-bold text-red-600">MELEBIHI KUOTA sebanyak {{ $usedLeave - $displayAllowance }} hari</span>
                                 @else
                                     <div class="w-4 h-4 rounded-full border-2 border-white shadow-md 
                                         {{ $displayUsagePercentage <= 50 ? 'bg-emerald-500' : ($displayUsagePercentage <= 80 ? 'bg-amber-500' : 'bg-red-500') }} 
@@ -289,7 +293,7 @@
                         
                         <!-- Additional info row -->
                         <div class="mt-4 pt-3 border-t border-purple-200 flex justify-between text-sm text-purple-700">
-                            <span class="font-medium">Digunakan: {{ $usedLeave }}/{{ $annualLeaveAllowance }} hari</span>
+                            <span class="font-medium">Digunakan: {{ $usedLeave }}/{{ $displayAllowance }} hari</span>
                             @if($usagePercentage > 100)
                                 <span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded">⚠️ Melebihi kuota</span>
                             @elseif($remainingLeave > 0)
@@ -333,6 +337,23 @@
                     </div>
 
                     <!-- Leave Statistics -->
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-gray-700">Periode</span>
+                        <div class="inline-flex rounded-md overflow-hidden border border-gray-200">
+                            <a href="{{ request()->fullUrlWithQuery(['period' => 'year']) }}"
+                               class="px-3 py-1 text-xs {{ $period === 'year' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700' }}">
+                                Tahun berjalan
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['period' => 'last_year']) }}"
+                               class="px-3 py-1 text-xs border-l border-gray-200 {{ $period === 'last_year' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700' }}">
+                                Tahun lalu
+                            </a>
+                            <a href="{{ request()->fullUrlWithQuery(['period' => 'all']) }}"
+                               class="px-3 py-1 text-xs border-l border-gray-200 {{ $period === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700' }}">
+                                Semua tahun
+                            </a>
+                        </div>
+                    </div>
                     <div class="grid grid-cols-3 gap-3">
                         <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center hover:shadow-sm transition-all duration-200">
                             <div class="text-2xl font-bold text-green-600 mb-1">{{ $leaveStats['approved'] }}</div>
