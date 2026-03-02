@@ -35,8 +35,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            // Redirect to home page after successful login
-            return redirect()->route('home');
+            return redirect()->route('profile');
         }
 
         throw ValidationException::withMessages([
@@ -121,7 +120,7 @@ class AuthController extends Controller
 
             Auth::login($user, true);
 
-            return redirect()->route('home')->with('success', 'Berhasil masuk dengan Google.');
+            return redirect()->route('profile')->with('success', 'Berhasil masuk dengan Google.');
         } catch (\Throwable $e) {
             return redirect()->route('front.login')->with('error', 'Login Google gagal: '.$e->getMessage());
         }

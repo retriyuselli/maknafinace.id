@@ -57,6 +57,14 @@
         ->latest()
         ->take(5)
         ->get();
+
+    // Previous year summary
+    $prevYear = (int) $currentYear - 1;
+    $prevUsedLeave = $user->leaveRequests()
+        ->where('status', 'approved')
+        ->whereYear('start_date', $prevYear)
+        ->sum('total_days');
+    $prevUsagePercentage = $annualLeaveAllowance > 0 ? round(($prevUsedLeave / $annualLeaveAllowance) * 100) : 0;
 @endphp
 
 <!-- HR Salary & Leave Information Section -->
@@ -66,7 +74,7 @@
             <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2V7a2 2 0 012-2h2a2 2 0 002 2v2a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 00-2 2h-2a2 2 0 00-2 2v6a2 2 0 01-2 2H9z"></path>
             </svg>
-                        Kompensasi Karyawan & Manajemen Cuti {{ $currentYear }}
+                Kompensasi Karyawan & Manajemen Cuti {{ $currentYear }}
         </h3>
     </div>
     <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100" style="font-family: 'Poppins', sans-serif;">
@@ -98,7 +106,7 @@
                                     <div>
                                         <p class="text-sm font-medium text-emerald-700">Gaji Bulanan</p>
                                         <p class="text-2xl font-bold text-emerald-800">
-                                            {{ 'Rp ' . (int) ($latestPayroll->monthly_salary ?? 0) }}
+                                            {{ $latestPayroll->formatted_monthly_salary_with_prefix }}
                                         </p>
                                     </div>
                                     <div class="p-3 bg-emerald-100 rounded-full">
@@ -115,9 +123,9 @@
                                     <div>
                                         <p class="text-sm font-medium text-blue-700">Gaji Tahunan</p>
                                         <p class="text-2xl font-bold text-blue-800">
-                                            {{ 'Rp ' . (int) ($latestPayroll->calculated_annual_salary ?? 0) }}
+                                            {{ $latestPayroll->formatted_calculated_annual_salary_with_prefix }}
                                         </p>
-                                        <p class="text-xs text-blue-600 mt-1">Bulanan × 12 bulan</p>
+                                        <p class="text-xs text-blue-600 mt-1">Gaji Pokok + Tunjangan × 12</p>
                                     </div>
                                     <div class="p-3 bg-blue-100 rounded-full">
                                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,15 +138,15 @@
                             <!-- Bonus & Benefits -->
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4 text-center">
-                                    <p class="text-xs font-medium text-purple-700 mb-1">Bonus Tahunan</p>
+                                    <p class="text-xs font-medium text-purple-700 mb-1">Bonus</p>
                                     <p class="text-lg font-bold text-purple-800">
-                                        {{ 'Rp ' . (int) ($latestPayroll->bonus ?? 0) }}
+                                        {{ $latestPayroll->formatted_bonus_with_prefix }}
                                     </p>
                                 </div>
                                 <div class="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-4 text-center">
                                     <p class="text-xs font-medium text-orange-700 mb-1">Total Kompensasi</p>
                                     <p class="text-lg font-bold text-orange-800">
-                                        {{ 'Rp ' . (int) (($latestPayroll->monthly_salary ?? 0) * 12) }}
+                                        {{ $latestPayroll->formatted_total_compensation_with_prefix }}
                                     </p>
                                 </div>
                             </div>
@@ -154,7 +162,7 @@
                                 <div class="flex items-center justify-between text-sm mt-2">
                                     <span class="text-gray-600">Periode Gaji:</span>
                                     <span class="font-medium text-gray-800">
-                                        {{ $latestPayroll->pay_period ?? 'Bulanan' }}
+                                        {{ $latestPayroll->period_name }}
                                     </span>
                                 </div>
                             </div>
@@ -289,6 +297,38 @@
                             @else
                                 <span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded">⚠️ Tidak ada hari tersisa</span>
                             @endif
+                        </div>
+                    </div>
+
+                    <!-- Cuti tahun sebelumnya -->
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h5 class="font-semibold text-gray-800 mb-3 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Cuti Tahun Sebelumnya ({{ $prevYear }})
+                        </h5>
+                        <div class="grid grid-cols-3 gap-3 text-center">
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <div class="text-2xl font-bold text-gray-800 mb-1">{{ $prevUsedLeave }}</div>
+                                <div class="text-xs font-medium text-gray-600">Digunakan</div>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <div class="text-2xl font-bold text-gray-800 mb-1">{{ $annualLeaveAllowance }}</div>
+                                <div class="text-xs font-medium text-gray-600">Kuota</div>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <div class="text-2xl font-bold text-purple-700 mb-1">{{ number_format($prevUsagePercentage) }}%</div>
+                                <div class="text-xs font-medium text-gray-600">Persentase</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex items-center text-xs bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 text-yellow-700">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Sisa cuti tahun sebelumnya akan hangus jika tidak digunakan sampai akhir Februari {{ $currentYear }}.
+                            </div>
                         </div>
                     </div>
 

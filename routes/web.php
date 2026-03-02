@@ -98,6 +98,27 @@ Route::get('/leave-request/{leaveRequest}/approval-detail', [App\Http\Controller
     ->name('leave-request.approval-detail')
     ->middleware(\Filament\Http\Middleware\Authenticate::class);
 
+// LEAVE REQUEST FORM
+Route::get('/leave/show', [\App\Http\Controllers\LeaveRequestController::class, 'create'])
+    ->name('leave.show')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+Route::get('/leave/create', [\App\Http\Controllers\LeaveRequestController::class, 'create'])
+    ->name('leave.create')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+Route::post('/leave', [\App\Http\Controllers\LeaveRequestController::class, 'store'])
+    ->name('leave.store')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+Route::put('/leave/{id}', [\App\Http\Controllers\LeaveRequestController::class, 'update'])
+    ->name('leave.update')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
+Route::get('/leave/status', [\App\Http\Controllers\LeaveRequestController::class, 'status'])
+    ->name('leave.status')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+
 // DOCUMENT
 Route::get('/document/{record}/stream', [DocumentController::class, 'stream'])
     ->name('document.stream')
