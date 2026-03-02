@@ -41,7 +41,7 @@ class AdminPanelProvider extends PanelProvider
             : asset('images/favicon_makna.png');
 
         return $panel
-            ->globalSearch(position: GlobalSearchPosition::Sidebar)
+            ->globalSearch(position: GlobalSearchPosition::Topbar)
             ->default()
             ->id('admin')
             ->path('admin')
