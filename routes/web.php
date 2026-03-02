@@ -259,15 +259,18 @@ Route::get('/data-pribadi/tambah', [FrontendDataPribadiController::class, 'creat
 
 // Route untuk menampilkan daftar data pribadi
 Route::get('/data-pribadi', [FrontendDataPribadiController::class, 'index'])
-    ->name('data-pribadi.index');
+    ->name('data-pribadi.index')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
 
 // Route untuk menyimpan data baru dari form
 Route::post('/data-pribadi', [FrontendDataPribadiController::class, 'store'])
-    ->name('data-pribadi.store');
+    ->name('data-pribadi.store')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
 
 // Route untuk halaman sukses setelah submit
 Route::get('/data-pribadi/success', [FrontendDataPribadiController::class, 'success'])
-    ->name('data-pribadi.success');
+    ->name('data-pribadi.success')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
 
 // AUTHENTICATION
 Route::middleware('guest')->group(function () {
