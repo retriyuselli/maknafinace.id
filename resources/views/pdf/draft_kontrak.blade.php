@@ -746,9 +746,6 @@
                         @endphp
                         <div class="item-desc" style="margin-top: 8px;">
                             {!! $descriptionFormatted !!}
-                            @if ($item->quantity > 1)
-                                <b>({{ $item->quantity }}x)</b>
-                            @endif
                         </div>
                     @else
                         <ol class="list-alpha">
@@ -770,9 +767,6 @@
                                 @endphp
                                 <li style="font-size: 11px; margin-top: 5px; margin-bottom: 5px;">
                                     {!! $descriptionFormatted !!}
-                                    @if ($item->quantity > 1)
-                                        <b>({{ $item->quantity }}x)</b>
-                                    @endif
                                 </li>
                             @endforeach
                         </ol>
