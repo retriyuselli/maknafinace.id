@@ -54,7 +54,8 @@ class PaymentMethodsTable
                     ->fontFamily('mono'),
                 TextColumn::make('opening_balance')
                     ->label('Saldo Awal')
-                    ->money('idr')
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable()
                     ->color('gray')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -65,7 +66,8 @@ class PaymentMethodsTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('saldo')
                     ->label('Saldo Saat Ini')
-                    ->money('idr')
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable()
                     ->weight('bold')
                     ->color(fn ($state) => $state < 0 ? 'danger' : ($state == 0 ? 'warning' : 'success'))

@@ -58,12 +58,14 @@ class FixedAssetsTable
 
                 TextColumn::make('purchase_price')
                     ->label('Harga Beli')
-                    ->money('IDR')
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable(),
 
                 TextColumn::make('current_book_value')
                     ->label('Nilai Buku')
-                    ->money('IDR')
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable()
                     ->color(fn ($record) => $record->current_book_value <= $record->salvage_value ? 'danger' : 'success'),
 

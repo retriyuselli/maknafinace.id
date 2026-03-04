@@ -52,17 +52,20 @@ class PiutangsTable
 
                 TextColumn::make('total_piutang')
                     ->label('Total Piutang')
-                    ->money('IDR')
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable(),
 
                 TextColumn::make('sudah_dibayar')
                     ->label('Sudah Dibayar')
-                    ->money('IDR')
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable(),
 
                 TextColumn::make('sisa_piutang')
                     ->label('Sisa Piutang')
-                    ->money('IDR')
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable()
                     ->weight(FontWeight::Bold),
 

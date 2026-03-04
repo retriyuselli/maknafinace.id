@@ -39,7 +39,8 @@ class PembayaranPiutangsTable
 
                 TextColumn::make('total_pembayaran')
                     ->label('Total Pembayaran')
-                    ->money('IDR')
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable()
                     ->weight(FontWeight::Bold),
 

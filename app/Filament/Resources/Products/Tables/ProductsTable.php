@@ -51,10 +51,10 @@ class ProductsTable
                     ->description(function (Product $record): string {
                         $priceValue = $record->price;
                         if ($priceValue === null || ! is_numeric($priceValue)) {
-                            return 'Rp -';
+                            return 'Rp. -';
                         }
 
-                        return 'Rp '.number_format((int) $priceValue, 0, '.', ',');
+                        return 'Rp. '.number_format((int) $priceValue, 0, '.', ',');
                     }),
 
                 TextColumn::make('slug')
@@ -100,21 +100,21 @@ class ProductsTable
 
                 TextColumn::make('price')
                     ->label('Product Price')
-                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state) => 'Rp. '.number_format((int) $state, 0, '.', ','))
                     ->sortable()
                     ->alignEnd()
                     ->badge(),
 
                 TextColumn::make('product_price')
                     ->label('Total Publish Price')
-                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state) => 'Rp. '.number_format((int) $state, 0, '.', ','))
                     ->sortable()
                     ->alignEnd(),
 
                 TextColumn::make('pengurangan')
                     ->label('Pengurangan')
                     ->getStateUsing(fn ($record) => $record->pengurangans->sum('amount'))
-                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state) => 'Rp. '.number_format((int) $state, 0, '.', ','))
                     ->alignEnd()
                     ->sortable()
                     ->badge()
@@ -123,7 +123,7 @@ class ProductsTable
                 TextColumn::make('penambahan')
                     ->label('Penambahan Publish')
                     ->getStateUsing(fn ($record) => $record->penambahanHarga->sum('harga_publish'))
-                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state) => 'Rp. '.number_format((int) $state, 0, '.', ','))
                     ->alignEnd()
                     ->sortable()
                     ->badge()

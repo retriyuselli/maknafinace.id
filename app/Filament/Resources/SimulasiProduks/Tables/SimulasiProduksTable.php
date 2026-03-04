@@ -26,26 +26,33 @@ class SimulasiProduksTable
                     ->searchable()->sortable()
                     ->weight('bold')
                     ->formatStateUsing(fn (string $state): string => Str::title($state))
-                    ->description(fn (SimulasiProduk $record): string => $record->product ? ''.$record
-                        ->product->name : Str::limit($record->notes ?? '', 30)),
+                    ->description(fn (SimulasiProduk $record): string => $record->product
+                        ? Str::title(Str::lower($record->product->name ?? ''))
+                        : Str::title(Str::lower(Str::limit($record->notes ?? '', 30)))),
                 TextColumn::make('total_price')
                     ->label('Base Price')
-                    ->money('IDR')
+                    ->numeric()
+                    ->prefix('Rp. ')
                     ->sortable()
                     ->alignEnd(),
                 TextColumn::make('penambahan')
                     ->label('Addition')
-                    ->money('IDR')->sortable()
+                    ->prefix('Rp. ')
+                    ->sortable()
+                    ->numeric()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignEnd(),
                 TextColumn::make('pengurangan')
                     ->label('Reduction')
-                    ->money('IDR')
+                    ->prefix('Rp. ')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)->alignEnd(),
+                    ->numeric()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->alignEnd(),
                 TextColumn::make('grand_total')
-                    ->money('IDR')
+                    ->prefix('Rp. ')
                     ->sortable()
+                    ->numeric() 
                     ->alignEnd()
                     ->weight('bold'),
                 TextColumn::make('user.name')

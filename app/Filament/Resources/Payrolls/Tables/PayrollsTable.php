@@ -108,7 +108,7 @@ class PayrollsTable
 
                 TextColumn::make('gaji_pokok')
                     ->label('Gaji Pokok')
-                    ->formatStateUsing(fn ($state): string => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state): string => 'Rp. '.number_format((int) $state, 0, '.', ','))
                     ->alignment(Alignment::Right)
                     ->sortable()
                     ->weight(FontWeight::Medium)
@@ -117,7 +117,7 @@ class PayrollsTable
 
                 TextColumn::make('tunjangan')
                     ->label('Tunjangan')
-                    ->formatStateUsing(fn ($state): string => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state): string => 'Rp. '.number_format((int) $state, 0, '.', ','))
                     ->alignment(Alignment::Right)
                     ->sortable()
                     ->weight(FontWeight::Medium)
@@ -126,7 +126,7 @@ class PayrollsTable
 
                 TextColumn::make('pengurangan')
                     ->label('Pengurangan')
-                    ->formatStateUsing(fn ($state): string => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state): string => 'Rp. '.number_format((int) $state, 0, '.', ','))
                     ->alignment(Alignment::Right)
                     ->sortable()
                     ->weight(FontWeight::Medium)
@@ -136,7 +136,7 @@ class PayrollsTable
 
                 TextColumn::make('monthly_salary')
                     ->label('Total Gaji')
-                    ->formatStateUsing(fn ($state): string => 'Rp '.number_format((int) $state, 0, '.', ','))
+                    ->formatStateUsing(fn ($state): string => 'Rp. '.number_format((int) $state, 0, '.', ','))
                     ->alignment(Alignment::Right)
                     ->sortable()
                     ->badge()
@@ -274,11 +274,11 @@ class PayrollsTable
                         TextInput::make('monthly_salary_from')
                             ->label('Dari')
                             ->numeric()
-                            ->prefix('Rp'),
+                            ->prefix('Rp. '),
                         TextInput::make('monthly_salary_to')
                             ->label('Sampai')
                             ->numeric()
-                            ->prefix('Rp'),
+                            ->prefix('Rp. '),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
