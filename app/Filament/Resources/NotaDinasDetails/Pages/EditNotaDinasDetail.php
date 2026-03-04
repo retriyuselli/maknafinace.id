@@ -40,7 +40,9 @@ class EditNotaDinasDetail extends EditRecord
                                          $record->expenseOps()->exists() ||
                                          $record->pengeluaranLains()->exists();
 
-                    if ($hasExpenseRelations) {
+                    $hasOrderRelation = $record->order()->exists();
+
+                    if ($hasExpenseRelations || $hasOrderRelation) {
                         return false;
                     }
 
@@ -204,7 +206,8 @@ class EditNotaDinasDetail extends EditRecord
                     // Show this action only for details with expense relations
                     return $record->expenses()->exists() ||
                            $record->expenseOps()->exists() ||
-                           $record->pengeluaranLains()->exists();
+                           $record->pengeluaranLains()->exists() ||
+                           $record->order()->exists();
                 })
                 ->action(function () {
                     /** @var NotaDinasDetail $record */
@@ -220,6 +223,11 @@ class EditNotaDinasDetail extends EditRecord
                         }
                         if ($record->pengeluaranLains()->exists()) {
                             $expenseRelations[] = 'Pengeluaran Lain: '.$record->pengeluaranLains()->count().' record';
+                        }
+                        if ($record->order()->exists()) {
+                            $order = $record->order()->first();
+                            $orderNumber = $order?->number ?? ' terkait Order';
+                            $expenseRelations[] = 'Order: '.$orderNumber;
                         }
 
                         Notification::make()

@@ -48,6 +48,28 @@ class PayrollForm
                                                     ->preload()
                                                     ->required()
                                                     ->live()
+                                                    ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                        if (! $state) {
+                                                            return;
+                                                        }
+                                                        $user = User::find($state);
+                                                        if (! $user) {
+                                                            return;
+                                                        }
+                                                        $baseGaji = (int) ($user->gaji_pokok_base ?? 0);
+                                                        $baseTunjangan = (int) ($user->tunjangan_base ?? 0);
+                                                        $set('gaji_pokok', (string) $baseGaji);
+                                                        $set('tunjangan', (string) $baseTunjangan);
+                                                        $monthlySalary = Payroll::computeMonthly(
+                                                            $baseGaji,
+                                                            $baseTunjangan,
+                                                            (int) $get('bonus'),
+                                                            (int) $get('pengurangan'),
+                                                        );
+                                                        $set('monthly_salary', (string) $monthlySalary);
+                                                        $set('annual_salary', (string) Payroll::computeAnnualBase($baseGaji, $baseTunjangan));
+                                                        $set('total_compensation', (string) Payroll::computeTotalCompensationBase($baseGaji, $baseTunjangan, (int) $get('pengurangan')));
+                                                    })
                                                     ->getOptionLabelUsing(function ($value): ?string {
                                                         $user = User::find($value);
 

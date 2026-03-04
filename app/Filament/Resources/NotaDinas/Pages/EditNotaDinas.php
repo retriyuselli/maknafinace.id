@@ -22,9 +22,9 @@ class EditNotaDinas extends EditRecord
         return [
             DeleteAction::make()
                 ->requiresConfirmation()
-                ->modalHeading('Delete Nota Dinas')
-                ->modalDescription('Are you sure you want to delete this Nota Dinas? This action cannot be undone.')
-                ->modalSubmitActionLabel('Yes, delete')
+                ->modalHeading('Hapus Nota Dinas')
+                ->modalDescription('Apakah Anda yakin ingin menghapus Nota Dinas ini? Tindakan ini tidak dapat dibatalkan.')
+                ->modalSubmitActionLabel('Ya, hapus')
                 ->modalIcon('heroicon-o-exclamation-triangle')
                 ->modalIconColor('danger')
                 ->visible(function (): bool {
@@ -42,16 +42,40 @@ class EditNotaDinas extends EditRecord
                     if ($detailCount > 0) {
                         Notification::make()
                             ->danger()
-                            ->title('Cannot Delete Nota Dinas')
-                            ->body("This Nota Dinas cannot be deleted because it has {$detailCount} related detail record(s). Please remove all details first.")
+                            ->title('Tidak Dapat Menghapus Nota Dinas')
+                            ->body("Nota Dinas ini tidak dapat dihapus karena memiliki {$detailCount} detail terkait. Silakan hapus detail terlebih dahulu.")
                             ->persistent()
                             ->send();
 
                         return false;
                     }
                 }),
+            Action::make('cannot_delete_info')
+                ->label('Tidak Dapat Dihapus')
+                ->icon('heroicon-m-shield-exclamation')
+                ->color('warning')
+                ->tooltip('Nota Dinas ini tidak dapat dihapus karena memiliki detail terkait')
+                ->visible(function (): bool {
+                    /** @var NotaDinas $record */
+                    $record = $this->getRecord();
+                    $detailCount = $record->details()->count();
+
+                    return $detailCount > 0;
+                })
+                ->action(function () {
+                    /** @var NotaDinas $record */
+                    $record = $this->getRecord();
+                    $detailCount = $record->details()->count();
+
+                    Notification::make()
+                        ->warning()
+                        ->title('Tidak Dapat Menghapus Nota Dinas')
+                        ->body("'{$record->no_nd}' tidak dapat dihapus karena memiliki {$detailCount} detail terkait. Silakan hapus detail terlebih dahulu.")
+                        ->persistent()
+                        ->send();
+                }),
             Action::make('view_details')
-                ->label('View Details')
+                ->label('Lihat Detail')
                 ->icon('heroicon-o-list-bullet')
                 ->color('info')
                 ->visible(function (): bool {
@@ -65,27 +89,33 @@ class EditNotaDinas extends EditRecord
                     /** @var NotaDinas $record */
                     $record = $this->getRecord();
 
-                    return 'Nota Dinas Details - '.$record->no_nd;
+                    return 'Detail Nota Dinas - '.$record->no_nd;
                 })
-                ->modalDescription('This Nota Dinas has related details and cannot be deleted.')
+                ->modalDescription('Nota Dinas ini memiliki detail terkait dan tidak dapat dihapus.')
                 ->modalContent(function (): HtmlString {
                     /** @var NotaDinas $record */
                     $record = $this->getRecord();
-                    $details = $record->details()->with('vendor', 'order')->get();
+                    $details = $record->details()->with('vendor', 'order.prospect')->get();
 
                     $content = '<div class="space-y-4">';
                     $content .= '<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">';
-                    $content .= '<h3 class="font-semibold text-yellow-800 mb-3">⚠️ Protected from Deletion</h3>';
-                    $content .= '<p class="text-sm text-yellow-700 mb-3">This Nota Dinas has '.$details->count().' related detail record(s) and cannot be deleted.</p>';
+                    $content .= '<h3 class="font-semibold text-yellow-800 mb-3">⚠️ Penghapusan Diblokir</h3>';
+                    $content .= '<p class="text-sm text-yellow-700 mb-3">Nota Dinas ini memiliki '.$details->count().' detail terkait dan tidak dapat dihapus.</p>';
 
                     if ($details->count() > 0) {
                         $content .= '<div class="space-y-2">';
                         foreach ($details as $detail) {
                             $content .= '<div class="border-l-4 border-yellow-400 pl-3 py-2 bg-white rounded">';
-                            $content .= '<p class="text-sm font-medium">Purpose: '.($detail->keperluan ?? 'Not specified').'</p>';
-                            $content .= '<p class="text-sm text-gray-600">Amount: Rp '.number_format($detail->jumlah_transfer, 0, ',', '.').'</p>';
+                            $content .= '<p class="text-sm font-medium">Keperluan: '.($detail->keperluan ?? 'Tidak ditentukan').'</p>';
+                            $content .= '<p class="text-sm text-gray-600">Jumlah: Rp '.number_format($detail->jumlah_transfer, 0, ',', '.').'</p>';
                             if ($detail->vendor) {
                                 $content .= '<p class="text-sm text-gray-600">Vendor: '.$detail->vendor->name.'</p>';
+                            }
+                            if ($detail->order) {
+                                $orderNumber = $detail->order->number ?? 'Tidak tersedia';
+                                $prospekName = $detail->order->prospect->name_event ?? '';
+                                $prospekText = $prospekName ? ' (Prospek: '.$prospekName.')' : '';
+                                $content .= '<p class="text-sm text-gray-600">Order: '.$orderNumber.$prospekText.'</p>';
                             }
                             $content .= '</div>';
                         }
@@ -98,20 +128,20 @@ class EditNotaDinas extends EditRecord
                     return new HtmlString($content);
                 })
                 ->modalSubmitAction(false)
-                ->modalCancelActionLabel('Close'),
+                ->modalCancelActionLabel('Tutup'),
             RestoreAction::make()
                 ->requiresConfirmation()
-                ->modalHeading('Restore Nota Dinas')
-                ->modalDescription('Are you sure you want to restore this deleted Nota Dinas?')
-                ->modalSubmitActionLabel('Yes, restore')
+                ->modalHeading('Pulihkan Nota Dinas')
+                ->modalDescription('Apakah Anda yakin ingin memulihkan Nota Dinas yang dihapus ini?')
+                ->modalSubmitActionLabel('Ya, pulihkan')
                 ->modalIcon('heroicon-o-arrow-path')
                 ->modalIconColor('success')
-                ->successNotificationTitle('Nota Dinas Restored'),
+                ->successNotificationTitle('Nota Dinas Dipulihkan'),
             ForceDeleteAction::make()
                 ->requiresConfirmation()
-                ->modalHeading('Permanently Delete Nota Dinas')
-                ->modalDescription('Are you sure you want to PERMANENTLY delete this Nota Dinas? This action cannot be undone and will also delete all related details.')
-                ->modalSubmitActionLabel('Yes, permanently delete')
+                ->modalHeading('Hapus Permanen Nota Dinas')
+                ->modalDescription('Apakah Anda yakin ingin MENGHAPUS PERMANEN Nota Dinas ini? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua detail terkait.')
+                ->modalSubmitActionLabel('Ya, hapus permanen')
                 ->modalIcon('heroicon-o-exclamation-triangle')
                 ->modalIconColor('danger')
                 ->before(function () {
@@ -121,8 +151,8 @@ class EditNotaDinas extends EditRecord
                     if ($detailCount > 0) {
                         Notification::make()
                             ->danger()
-                            ->title('Cascade Deletion Warning')
-                            ->body("⚠️ This will permanently delete the Nota Dinas and {$detailCount} related detail record(s). This action is IRREVERSIBLE!")
+                            ->title('Peringatan Penghapusan Bertingkat')
+                            ->body("⚠️ Tindakan ini akan menghapus permanen Nota Dinas dan {$detailCount} detail terkait. Tindakan ini TIDAK DAPAT DIBATALKAN.")
                             ->persistent()
                             ->send();
                     }
@@ -136,14 +166,14 @@ class EditNotaDinas extends EditRecord
 
                         Notification::make()
                             ->success()
-                            ->title('Permanently Deleted')
-                            ->body("Nota Dinas and {$detailCount} related details permanently deleted.")
+                            ->title('Dihapus Permanen')
+                            ->body("Nota Dinas dan {$detailCount} detail terkait dihapus permanen.")
                             ->send();
                     } catch (Exception $e) {
                         Notification::make()
                             ->danger()
-                            ->title('Force Delete Failed')
-                            ->body('An error occurred: '.$e->getMessage())
+                            ->title('Gagal Hapus Permanen')
+                            ->body('Terjadi kesalahan: '.$e->getMessage())
                             ->persistent()
                             ->send();
                     }

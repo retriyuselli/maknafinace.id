@@ -50,6 +50,19 @@ class Payroll extends Model
                 $payroll->period_year = now()->year;
             }
 
+            // Defaultkan gaji pokok & tunjangan dari User jika tidak diisi (snapshot nilai dasar)
+            if ($payroll->user_id && ($payroll->gaji_pokok === null || $payroll->tunjangan === null)) {
+                $user = $payroll->relationLoaded('user') ? $payroll->user : $payroll->user()->first();
+                if ($user) {
+                    if ($payroll->gaji_pokok === null) {
+                        $payroll->gaji_pokok = (int) ($user->gaji_pokok_base ?? 0);
+                    }
+                    if ($payroll->tunjangan === null) {
+                        $payroll->tunjangan = (int) ($user->tunjangan_base ?? 0);
+                    }
+                }
+            }
+
             // Otomatis hitung monthly_salary dari (gaji_pokok + tunjangan + bonus) - pengurangan
             if ($payroll->gaji_pokok !== null || $payroll->tunjangan !== null || $payroll->bonus !== null || $payroll->pengurangan !== null) {
                 $gajiPokok = $payroll->gaji_pokok ?? 0;

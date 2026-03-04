@@ -34,13 +34,13 @@ class ProspectsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(function (Builder $query) {
-                $user = Auth::user();
-                if (! $user) {
-                    return;
-                }
-                $query->where('user_id', $user->id);
-            })
+            // ->modifyQueryUsing(function (Builder $query) {
+            //     $user = Auth::user();
+            //     if (! $user) {
+            //         return;
+            //     }
+            //     $query->where('user_id', $user->id);
+            // })
             ->columns([
                 TextColumn::make('order_status_display')
                     ->label('Status Pesanan')

@@ -125,17 +125,27 @@ class OrderForm
                             ->directory('doc_kontrak')
                             ->downloadable()
                             ->acceptedFileTypes(['application/pdf']),
-                        RichEditor::make('note')
-                            ->label('Keterangan Tambahan')
-                            ->fileAttachmentsDirectory('orders')
-                            ->columnSpan(2)
-                            ->fileAttachmentsDisk('public'),
+                        FileUpload::make('agreement_product')
+                            ->label('File Persetujuan Produk')
+                            ->reorderable()
+                            ->required()
+                            ->helperText('pastikan file persetujuan produk sudah semua ditanda tangani (one up level)')
+                            ->openable()
+                            ->directory('agreement_product')
+                            ->downloadable()
+                            ->acceptedFileTypes(['application/pdf']),
                         ToggleButtons::make('status')
                             ->inline()
                             ->options(OrderStatus::class)
                             ->label('Status Pesanan')
+                            ->columnSpan(2)
                             ->required()
                             ->helperText('Status Done: Finance hanya bisa view, Super Admin bisa edit.'),
+                        RichEditor::make('note')
+                            ->label('Keterangan Tambahan')
+                            ->fileAttachmentsDirectory('orders')
+                            ->columnSpan(3)
+                            ->fileAttachmentsDisk('public'),
                     ]),
                 Step::make('Detail Pembayaran')
                     ->icon('heroicon-o-currency-dollar')

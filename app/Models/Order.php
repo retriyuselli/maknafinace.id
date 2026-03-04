@@ -30,6 +30,7 @@ class Order extends Model
         'last_edited_by',
         'no_kontrak',
         'doc_kontrak',
+        'agreement_product',
         'pax',
         'note',
         'total_price',

@@ -51,6 +51,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         'department',
         'annual_leave_quota',
         'status',
+        'gaji_pokok_base',
+        'tunjangan_base',
 
         // Avatar - Allowed for file upload
         'avatar_url',
@@ -121,6 +123,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             'hire_date' => 'date',
             'last_working_date' => 'date',
             'additional_documents' => 'array',
+            'gaji_pokok_base' => 'integer',
+            'tunjangan_base' => 'integer',
         ];
     }
 
