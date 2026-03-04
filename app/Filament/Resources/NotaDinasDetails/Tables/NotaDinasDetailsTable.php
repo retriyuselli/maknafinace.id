@@ -47,18 +47,24 @@ class NotaDinasDetailsTable
 
                         $statuses = [];
 
-                        $expense = Expense::where('nota_dinas_detail_id', $record->id)->first();
-                        if ($expense) {
+                        $hasExpense = $record->relationLoaded('expenses')
+                            ? $record->expenses->count() > 0
+                            : $record->expenses()->exists();
+                        if ($hasExpense) {
                             $statuses[] = 'Expense (Wedding)';
                         }
 
-                        $expenseOps = ExpenseOps::where('nota_dinas_detail_id', $record->id)->first();
-                        if ($expenseOps) {
+                        $hasExpenseOps = $record->relationLoaded('expenseOps')
+                            ? $record->expenseOps->count() > 0
+                            : $record->expenseOps()->exists();
+                        if ($hasExpenseOps) {
                             $statuses[] = 'Expense Ops';
                         }
 
-                        $pengeluaranLain = PengeluaranLain::where('nota_dinas_detail_id', $record->id)->first();
-                        if ($pengeluaranLain) {
+                        $hasPengeluaranLain = $record->relationLoaded('pengeluaranLains')
+                            ? $record->pengeluaranLains->count() > 0
+                            : $record->pengeluaranLains()->exists();
+                        if ($hasPengeluaranLain) {
                             $statuses[] = 'Pengeluaran Lain';
                         }
 

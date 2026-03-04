@@ -45,12 +45,12 @@ class NotaDinasDetailOverviewWidget extends BaseWidget
                 ->description('Semua detail ND')
                 ->descriptionIcon('heroicon-m-clipboard-document-list')
                 ->color('primary'),
-            Stat::make('Transfer Tahun Ini', 'Rp '.Number::format($totalTransferThisYear, 0))
+            Stat::make('Transfer Tahun Ini', ''.Number::format($totalTransferThisYear, 0))
                 ->description('Tahun '.$currentYear)
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('info')
                 ->chart($transferTrend),
-            Stat::make('Total Transaksi Bulan Ini', 'Rp '.Number::format($totalTransferCurrentMonth, 0))
+            Stat::make('Total Transaksi Bulan Ini', ''.Number::format($totalTransferCurrentMonth, 0))
                 ->description('Bulan '.Carbon::now()->translatedFormat('F').' '.$currentYear)
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('primary')
@@ -69,7 +69,7 @@ class NotaDinasDetailOverviewWidget extends BaseWidget
                 ->color('warning'),
             Stat::make(
                 'Transaksi Terbesar Bulan Ini',
-                'Rp '.Number::format($largestTransactionThisMonth, 0)
+                ''.Number::format($largestTransactionThisMonth, 0)
             )
                 ->description('Bulan '.Carbon::now()->translatedFormat('F').' '.$currentYear)
                 ->descriptionIcon('heroicon-m-arrow-trending-up')

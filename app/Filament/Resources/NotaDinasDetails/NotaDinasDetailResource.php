@@ -40,6 +40,9 @@ class NotaDinasDetailResource extends Resource
                 'order',
                 'notaDinas:id,no_nd,status',
                 'vendor:id,name',
+                'expenses:id,nota_dinas_detail_id',
+                'expenseOps:id,nota_dinas_detail_id',
+                'pengeluaranLains:id,nota_dinas_detail_id',
             ])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
