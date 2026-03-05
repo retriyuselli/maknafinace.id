@@ -22,13 +22,18 @@ class ViewClosing extends Page
 
     public function mount(): void
     {
-        $monthQuery = request()->query('month');
-        $yearNumeric = request()->query('year');
-        $monthNumeric = request()->query('month');
+        $monthParam = request()->query('month');
+        $yearParam = request()->query('year');
 
-        if (is_numeric($yearNumeric) && is_numeric($monthNumeric)) {
-            $year = (int) $yearNumeric;
-            $month = (int) $monthNumeric;
+        if (is_numeric($yearParam) && is_string($monthParam) && $monthParam === 'all') {
+            $this->year = (int) $yearParam;
+            $this->month = 0;
+            return;
+        }
+
+        if (is_numeric($yearParam) && is_numeric($monthParam)) {
+            $year = (int) $yearParam;
+            $month = (int) $monthParam;
             if ($year >= 2000 && $month >= 1 && $month <= 12) {
                 $this->year = $year;
                 $this->month = $month;
@@ -36,8 +41,8 @@ class ViewClosing extends Page
             }
         }
 
-        if (is_string($monthQuery) && preg_match('/^\d{4}-\d{2}$/', $monthQuery)) {
-            $parsed = Carbon::createFromFormat('Y-m', $monthQuery);
+        if (is_string($monthParam) && preg_match('/^\d{4}-\d{2}$/', $monthParam)) {
+            $parsed = Carbon::createFromFormat('Y-m', $monthParam);
             $this->year = (int) $parsed->year;
             $this->month = (int) $parsed->month;
             return;
@@ -50,11 +55,13 @@ class ViewClosing extends Page
 
     protected function getViewData(): array
     {
-        $target = Carbon::create($this->year, $this->month, 1);
+        $target = Carbon::create($this->year, max($this->month, 1), 1);
         $orders = Order::query()
             ->with(['prospect:id,name_event', 'employee:id,name', 'user:id,name', 'items:order_id,quantity,unit_price'])
             ->whereNotNull('closing_date')
-            ->whereMonth('closing_date', $this->month)
+            ->when($this->month !== 0, function ($query) {
+                $query->whereMonth('closing_date', $this->month);
+            })
             ->whereYear('closing_date', $this->year)
             ->orderBy('closing_date', 'desc')
             ->get([
@@ -68,10 +75,19 @@ class ViewClosing extends Page
                 'user_id',
             ]);
 
+        $years = Order::query()
+            ->whereNotNull('closing_date')
+            ->selectRaw('YEAR(closing_date) as y')
+            ->distinct()
+            ->orderBy('y', 'desc')
+            ->pluck('y')
+            ->all();
+
         return [
             'orders' => $orders,
-            'monthLabel' => $target->translatedFormat('F Y'),
-            'selectedMonth' => sprintf('%04d-%02d', $this->year, $this->month),
+            'monthLabel' => $this->month === 0 ? (string) $this->year : $target->translatedFormat('F Y'),
+            'selectedMonth' => $this->month === 0 ? 'all' : sprintf('%04d-%02d', $this->year, $this->month),
+            'years' => $years,
             'totals' => [
                 'projects' => $orders->count(),
                 'revenue' => (int) $orders->sum('grand_total'),

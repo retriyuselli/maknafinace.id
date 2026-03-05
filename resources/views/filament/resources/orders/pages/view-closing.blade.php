@@ -8,6 +8,7 @@
                         <div>
                             <label for="month" class="text-xs text-gray-500">Bulan</label>
                             <select id="month" name="month" class="fi-input w-28">
+                                <option value="all" @selected($selectedMonth === 'all')>All</option>
                                 @for ($m = 1; $m <= 12; $m++)
                                     <option value="{{ $m }}" @selected($m === (int) \Illuminate\Support\Str::after($selectedMonth, '-'))>
                                         {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
@@ -18,9 +19,9 @@
                         <div>
                             <label for="year" class="text-xs text-gray-500">Tahun</label>
                             <select id="year" name="year" class="fi-input w-24">
-                                @for ($y = now()->year + 1; $y >= now()->year - 5; $y--)
+                                @foreach ($years as $y)
                                     <option value="{{ $y }}" @selected($y === (int) \Illuminate\Support\Str::before($selectedMonth, '-'))>{{ $y }}</option>
-                                @endfor
+                                @endforeach
                             </select>
                         </div>
                     </div>

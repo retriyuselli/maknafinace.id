@@ -157,7 +157,8 @@ class OrderOverview extends BaseWidget
             Stat::make('Total Pengeluaran Pelanggan', $this->formatCurrency($this->metrics['total_expense']))
                 ->description('Total pengeluaran')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->color('danger'),
+                ->color('danger')
+                ->url(\App\Filament\Resources\Orders\OrderResource::getUrl('customer-expenses', ['status' => OrderStatus::Processing->value]), true),
 
             // Total Sisa Uang Pelanggan
             Stat::make('Total Sisa Uang Pelanggan', $this->formatCurrency($this->metrics['payments'] - $this->metrics['total_expense']))
