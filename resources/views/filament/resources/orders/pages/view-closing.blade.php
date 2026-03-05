@@ -27,20 +27,21 @@
                     <button type="submit" class="fi-btn fi-btn-primary">Terapkan</button>
                     <a href="{{ route('filament.admin.resources.orders.view-closing') }}" class="fi-btn">Reset</a>
                 </form>
-                <div class="flex items-center gap-3">
-                    <div class="bg-success-50 border border-success-200 rounded-lg px-4 py-3">
-                        <div class="text-xs text-success-700">Pendapatan</div>
-                        <div class="text-lg font-semibold text-success-900">{{ number_format($totals['revenue'], 0, ',', '.') }}</div>
-                    </div>
-                    <div class="bg-info-50 border border-info-200 rounded-lg px-4 py-3">
-                        <div class="text-xs text-info-700">Dibayar</div>
-                        <div class="text-lg font-semibold text-info-900">{{ number_format($totals['paid'], 0, ',', '.') }}</div>
-                    </div>
-                    <div class="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3">
-                        <div class="text-xs text-danger-700">Sisa</div>
-                        <div class="text-lg font-semibold text-danger-900">{{ number_format($totals['remaining'], 0, ',', '.') }}</div>
-                    </div>
-                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
+            <div class="bg-success-50 border border-success-200 rounded-lg px-4 py-3">
+                <div class="text-xs text-success-700">Pendapatan</div>
+                <div class="text-lg font-semibold text-success-900">{{ number_format($totals['revenue'], 0, ',', '.') }}</div>
+            </div>
+            <div class="bg-info-50 border border-info-200 rounded-lg px-4 py-3">
+                <div class="text-xs text-info-700">Dibayar</div>
+                <div class="text-lg font-semibold text-info-900">{{ number_format($totals['paid'], 0, ',', '.') }}</div>
+            </div>
+            <div class="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3">
+                <div class="text-xs text-danger-700">Sisa</div>
+                <div class="text-lg font-semibold text-danger-900">{{ number_format($totals['remaining'], 0, ',', '.') }}</div>
             </div>
         </div>
 

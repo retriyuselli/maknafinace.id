@@ -80,6 +80,7 @@ class OrderResource extends Resource
             'index' => ListOrders::route('/'),
             'create' => CreateOrder::route('/create'),
             'view-closing' => Pages\ViewClosing::route('/view-closing'),
+            'customer-payments' => Pages\CustomerPayments::route('/customer-payments'),
             'view' => ViewOrder::route('/{record}'),
             'edit' => EditOrder::route('/{record}/edit'),
             'invoice' => Invoice::route('/{record}/invoice'),

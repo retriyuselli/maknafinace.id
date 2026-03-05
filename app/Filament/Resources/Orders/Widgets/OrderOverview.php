@@ -151,7 +151,7 @@ class OrderOverview extends BaseWidget
                 ->description('Total pembayaran diterima')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success')
-                ->url(route('reports.customer-payments', ['status' => OrderStatus::Processing->value])),
+                ->url(\App\Filament\Resources\Orders\OrderResource::getUrl('customer-payments', ['status' => OrderStatus::Processing->value]), true),
 
             // Ringkasan Pengeluaran Pelanggan
             Stat::make('Total Pengeluaran Pelanggan', $this->formatCurrency($this->metrics['total_expense']))
