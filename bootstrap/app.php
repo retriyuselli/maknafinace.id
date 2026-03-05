@@ -41,8 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Unauthenticated'], 401);
             }
-
-            return redirect()->to(config('app.url'));
+            return response()->redirectTo(config('app.url'));
         });
 
         $exceptions->render(function (Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException $e, $request) {
@@ -53,8 +52,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     'allowed_methods' => $e->getHeaders()['Allow'] ?? 'GET, POST',
                 ], 405);
             }
-
-            return redirect()->route('home')->with('error', 'Method tidak diizinkan untuk halaman ini.');
+            return response()->redirectToRoute('home')->with('error', 'Method tidak diizinkan untuk halaman ini.');
         });
 
         $exceptions->render(function (Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
@@ -64,7 +62,6 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'The requested resource was not found.',
                 ], 404);
             }
-
-            return redirect()->route('home')->with('error', 'Halaman tidak ditemukan.');
+            return response()->redirectToRoute('home')->with('error', 'Halaman tidak ditemukan.');
         });
     })->create();

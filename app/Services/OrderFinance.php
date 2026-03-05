@@ -20,11 +20,26 @@ class OrderFinance
 
     public function grandTotalBase()
     {
+        $totalPrice = (int) ($this->order->total_price ?? 0);
+
+        if ($totalPrice === 0) {
+            $items = $this->order->relationLoaded('items')
+                ? $this->order->items
+                : $this->order->items()->get(['quantity', 'unit_price']);
+
+            $totalPrice = $items->sum(function ($item) {
+                $qty = (int) ($item->quantity ?? 0);
+                $unit = (int) ($item->unit_price ?? 0);
+
+                return $qty * $unit;
+            });
+        }
+
         return self::computeGrandTotalFromValues(
-            $this->order->total_price,
-            $this->order->penambahan,
-            $this->order->promo,
-            $this->order->pengurangan
+            $totalPrice,
+            (int) ($this->order->penambahan ?? 0),
+            (int) ($this->order->promo ?? 0),
+            (int) ($this->order->pengurangan ?? 0)
         );
     }
 

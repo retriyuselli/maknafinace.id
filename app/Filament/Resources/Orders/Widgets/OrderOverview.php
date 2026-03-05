@@ -170,7 +170,8 @@ class OrderOverview extends BaseWidget
                 ->description('Proyek di '.now()->format('F Y'))
                 ->descriptionIcon('heroicon-m-document-plus')
                 ->chart($projectTrend)
-                ->color('primary'),
+                ->color('primary')
+                ->url(\App\Filament\Resources\Orders\OrderResource::getUrl('view-closing', ['month' => now()->format('Y-m')]), true),
 
             // Ringkasan Pendapatan Bulanan
             Stat::make('Pendapatan Bulanan', $this->formatCurrency($this->metrics['revenue']))
