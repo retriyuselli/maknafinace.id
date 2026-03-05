@@ -67,7 +67,13 @@ class ViewClosing extends Page
     {
         $target = Carbon::create($this->year, max($this->month, 1), 1);
         $orders = Order::query()
-            ->with(['prospect:id,name_event', 'employee:id,name', 'user:id,name', 'items:order_id,quantity,unit_price'])
+            ->with([
+                'prospect:id,name_event',
+                'employee:id,name',
+                'user:id,name',
+                'items:order_id,quantity,unit_price',
+                'dataPembayaran:id,order_id,nominal',
+            ])
             ->whereNotNull('closing_date')
             ->when($this->status !== 'all', function ($query) {
                 $query->where('status', $this->status);
@@ -80,12 +86,15 @@ class ViewClosing extends Page
             ->get([
                 'id',
                 'number',
-                'grand_total',
                 'status',
                 'closing_date',
                 'prospect_id',
                 'employee_id',
                 'user_id',
+                'total_price',
+                'promo',
+                'penambahan',
+                'pengurangan',
             ]);
 
         $years = Order::query()
