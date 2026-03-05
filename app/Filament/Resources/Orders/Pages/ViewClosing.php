@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\Pages;
 
+use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
 use Carbon\Carbon;
@@ -19,9 +20,18 @@ class ViewClosing extends Page
 
     public int $year;
     public int $month;
+    public string $status;
 
     public function mount(): void
     {
+        $status = request()->query('status');
+        if (is_string($status)) {
+            $valid = in_array($status, array_map(fn ($s) => $s->value, OrderStatus::cases()), true);
+            $this->status = $status === 'all' ? 'all' : ($valid ? $status : 'all');
+        } else {
+            $this->status = 'all';
+        }
+
         $monthParam = request()->query('month');
         $yearParam = request()->query('year');
 
@@ -59,6 +69,9 @@ class ViewClosing extends Page
         $orders = Order::query()
             ->with(['prospect:id,name_event', 'employee:id,name', 'user:id,name', 'items:order_id,quantity,unit_price'])
             ->whereNotNull('closing_date')
+            ->when($this->status !== 'all', function ($query) {
+                $query->where('status', $this->status);
+            })
             ->when($this->month !== 0, function ($query) {
                 $query->whereMonth('closing_date', $this->month);
             })
@@ -77,6 +90,9 @@ class ViewClosing extends Page
 
         $years = Order::query()
             ->whereNotNull('closing_date')
+            ->when($this->status !== 'all', function ($query) {
+                $query->where('status', $this->status);
+            })
             ->selectRaw('YEAR(closing_date) as y')
             ->distinct()
             ->orderBy('y', 'desc')
@@ -88,6 +104,13 @@ class ViewClosing extends Page
             'monthLabel' => $this->month === 0 ? (string) $this->year : $target->translatedFormat('F Y'),
             'selectedMonth' => $this->month === 0 ? 'all' : sprintf('%04d-%02d', $this->year, $this->month),
             'years' => $years,
+            'status' => $this->status,
+            'statusOptions' => array_merge(
+                [['value' => 'all', 'label' => 'All']],
+                collect(OrderStatus::cases())
+                    ->map(fn (OrderStatus $s) => ['value' => $s->value, 'label' => $s->getLabel()])
+                    ->all()
+            ),
             'totals' => [
                 'projects' => $orders->count(),
                 'revenue' => (int) $orders->sum('grand_total'),

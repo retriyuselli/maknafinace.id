@@ -80,6 +80,9 @@
                             </td>
                             <td class="px-4 py-2 text-sm text-gray-900">
                                 {{ $exp->paymentMethod?->is_cash ? 'Kas/Tunai' : ($exp->paymentMethod?->bank_name ?: $exp->paymentMethod?->name) }}
+                                @if (!$exp->paymentMethod?->is_cash && $exp->paymentMethod?->no_rekening)
+                                    <div class="text-xs text-gray-500">{{ $exp->paymentMethod->no_rekening }}</div>
+                                @endif
                             </td>
                             <td class="px-4 py-2 text-sm text-gray-900 text-right">
                                 Rp. {{ number_format($exp->amount, 0, ',', '.') }}

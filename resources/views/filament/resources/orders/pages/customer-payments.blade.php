@@ -79,6 +79,9 @@
                             </td>
                             <td class="px-4 py-2 text-sm text-gray-900">
                                 {{ $pay->paymentMethod?->is_cash ? 'Kas/Tunai' : ($pay->paymentMethod?->bank_name ?: $pay->paymentMethod?->name) }}
+                                @if (!$pay->paymentMethod?->is_cash && $pay->paymentMethod?->no_rekening)
+                                    <div class="text-xs text-gray-500">{{ $pay->paymentMethod->no_rekening }}</div>
+                                @endif
                             </td>
                             <td class="px-4 py-2 text-sm text-gray-900 text-right">
                                 Rp. {{ number_format($pay->nominal, 0, ',', '.') }}

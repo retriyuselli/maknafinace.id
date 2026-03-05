@@ -151,14 +151,14 @@ class OrderOverview extends BaseWidget
                 ->description('Total pembayaran diterima')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success')
-                ->url(\App\Filament\Resources\Orders\OrderResource::getUrl('customer-payments', ['status' => OrderStatus::Processing->value]), true),
+                ->url(\App\Filament\Resources\Orders\OrderResource::getUrl('customer-payments', ['status' => 'all']), true),
 
             // Ringkasan Pengeluaran Pelanggan
             Stat::make('Total Pengeluaran Pelanggan', $this->formatCurrency($this->metrics['total_expense']))
                 ->description('Total pengeluaran')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('danger')
-                ->url(\App\Filament\Resources\Orders\OrderResource::getUrl('customer-expenses', ['status' => OrderStatus::Processing->value]), true),
+                ->url(\App\Filament\Resources\Orders\OrderResource::getUrl('customer-expenses', ['status' => 'all']), true),
 
             // Total Sisa Uang Pelanggan
             Stat::make('Total Sisa Uang Pelanggan', $this->formatCurrency($this->metrics['payments'] - $this->metrics['total_expense']))

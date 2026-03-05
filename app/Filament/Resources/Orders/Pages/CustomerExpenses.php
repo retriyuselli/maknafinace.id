@@ -27,9 +27,9 @@ class CustomerExpenses extends Page
         $status = request()->query('status');
         if (is_string($status)) {
             $valid = in_array($status, array_map(fn ($s) => $s->value, OrderStatus::cases()), true);
-            $this->status = $status === 'all' ? 'all' : ($valid ? $status : OrderStatus::Processing->value);
+            $this->status = $status === 'all' ? 'all' : ($valid ? $status : 'all');
         } else {
-            $this->status = OrderStatus::Processing->value;
+            $this->status = 'all';
         }
 
         $yearParam = request()->query('year');

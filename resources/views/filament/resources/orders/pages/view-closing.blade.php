@@ -24,6 +24,14 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div>
+                            <label for="status" class="text-xs text-gray-500">Status</label>
+                            <select id="status" name="status" class="fi-input w-36">
+                                @foreach ($statusOptions as $opt)
+                                    <option value="{{ $opt['value'] }}" @selected($opt['value'] === $status)>{{ $opt['label'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <button type="submit" class="fi-btn fi-btn-primary">Terapkan</button>
                     <a href="{{ route('filament.admin.resources.orders.view-closing') }}" class="fi-btn">Reset</a>
