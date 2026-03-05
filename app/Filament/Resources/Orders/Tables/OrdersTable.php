@@ -38,6 +38,14 @@ class OrdersTable
         return $table
             ->defaultSort('updated_at', 'desc')
             ->poll('5s')
+            ->modifyQueryUsing(function (Builder $query) {
+                $agreement = request()->query('agreement');
+                if ($agreement === 'missing') {
+                    $query->whereNull('agreement_product');
+                } elseif ($agreement === 'uploaded') {
+                    $query->whereNotNull('agreement_product');
+                }
+            })
             ->columns([
                 TextColumn::make('status')
                     ->badge()

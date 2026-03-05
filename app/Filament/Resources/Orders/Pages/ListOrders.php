@@ -109,6 +109,10 @@ class ListOrders extends ListRecords
             'processing' => Tab::make()->query(fn ($query) => $query->where('status', OrderStatus::Processing->value)),
             'done' => Tab::make()->query(fn ($query) => $query->where('status', OrderStatus::Done->value)),
             'cancelled' => Tab::make()->query(fn ($query) => $query->where('status', OrderStatus::Cancelled->value)),
+            'agreement_missing' => Tab::make('Belum Upload Persetujuan')
+                ->query(fn ($query) => $query->whereNull('agreement_product')),
+            'agreement_uploaded' => Tab::make('Sudah Upload Persetujuan')
+                ->query(fn ($query) => $query->whereNotNull('agreement_product')),
         ];
     }
 }

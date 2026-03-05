@@ -72,7 +72,8 @@ class ViewClosing extends Page
                 'employee:id,name',
                 'user:id,name',
                 'items:order_id,quantity,unit_price',
-                'dataPembayaran:id,order_id,nominal',
+                'dataPembayaran:id,order_id,payment_method_id,nominal,tgl_bayar',
+                'dataPembayaran.paymentMethod:id,name,is_cash,bank_name,no_rekening',
             ])
             ->whereNotNull('closing_date')
             ->when($this->status !== 'all', function ($query) {

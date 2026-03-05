@@ -29,6 +29,8 @@ class OrderOverview extends BaseWidget
         'total_revenue' => 0,
         'documents' => 0,
         'pending_documents' => 0,
+        'agreement_uploaded' => 0,
+        'agreement_pending' => 0,
     ];
 
     public function mount(): void
@@ -60,6 +62,8 @@ class OrderOverview extends BaseWidget
         $this->metrics['processing'] = $monthlyData->processing_count ?? 0; // Menyimpan hasil hitungan
         $this->metrics['documents'] = Order::whereNotNull('doc_kontrak')->count();
         $this->metrics['pending_documents'] = Order::whereNull('doc_kontrak')->count();
+        $this->metrics['agreement_uploaded'] = Order::whereNotNull('agreement_product')->count();
+        $this->metrics['agreement_pending'] = Order::whereNull('agreement_product')->count();
 
         // Dapatkan pembayaran untuk order dengan status "processing"
         $this->metrics['payments'] = DataPembayaran::whereIn('order_id', function ($query) {
@@ -160,11 +164,11 @@ class OrderOverview extends BaseWidget
                 ->color('danger')
                 ->url(\App\Filament\Resources\Orders\OrderResource::getUrl('customer-expenses', ['status' => 'all']), true),
 
-            // Total Sisa Uang Pelanggan
-            Stat::make('Total Sisa Uang Pelanggan', $this->formatCurrency($this->metrics['payments'] - $this->metrics['total_expense']))
-                ->description('Total sisa uang')
-                ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->color('success'),
+            // File Persetujuan Produk
+            Stat::make('File Persetujuan Produk', (string) $this->metrics['agreement_uploaded'])
+                ->description('Belum upload: '.$this->metrics['agreement_pending'])
+                ->descriptionIcon('heroicon-m-document-check')
+                ->color('primary'),
 
             // Ringkasan Proyek Bulanan
             Stat::make('Proyek Baru Bulan Ini', $this->metrics['projects'])

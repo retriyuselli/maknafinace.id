@@ -62,6 +62,7 @@
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nama Acara</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Closing</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Metode Pembayaran</th>
                         <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Grand Total</th>
                         <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Dibayar</th>
                         <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Sisa</th>
@@ -78,6 +79,26 @@
                             </td>
                             <td class="px-4 py-2 text-sm text-gray-900">{{ $order->prospect?->name_event }}</td>
                             <td class="px-4 py-2 text-sm text-gray-500">{{ \Illuminate\Support\Carbon::parse($order->closing_date)->format('d M Y') }}</td>
+                            <td class="px-4 py-2 text-sm text-gray-900">
+                                @php
+                                    $payments = ($order->dataPembayaran ?? collect())->sortByDesc('tgl_bayar');
+                                    $methods = $payments->map(fn ($p) => $p->paymentMethod)->filter()->unique('id')->values();
+                                @endphp
+                                @if ($methods->isNotEmpty())
+                                    @foreach ($methods as $pm)
+                                        @if ($pm->is_cash)
+                                            <div>Kas/Tunai</div>
+                                        @else
+                                            <div>{{ $pm->bank_name ?: $pm->name }}</div>
+                                            @if ($pm->no_rekening)
+                                                <div class="text-xs text-gray-500">{{ $pm->no_rekening }}</div>
+                                            @endif
+                                        @endif
+                                    @endforeach
+                                @else
+                                    <div>-</div>
+                                @endif
+                            </td>
                             <td class="px-4 py-2 text-sm text-gray-900 text-right">{{ number_format($order->grand_total, 0, ',', '.') }}</td>
                             <td class="px-4 py-2 text-sm text-gray-900 text-right">{{ number_format($order->bayar, 0, ',', '.') }}</td>
                             <td class="px-4 py-2 text-sm text-gray-900 text-right">{{ number_format($order->sisa, 0, ',', '.') }}</td>
