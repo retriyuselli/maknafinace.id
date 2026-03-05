@@ -61,6 +61,7 @@ class ViewClosing extends Page
                 'id',
                 'number',
                 'grand_total',
+                'status',
                 'closing_date',
                 'prospect_id',
                 'employee_id',

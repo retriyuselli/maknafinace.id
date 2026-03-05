@@ -1,7 +1,7 @@
 <x-filament::page>
     <div class="space-y-6">
         <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <h2 class="text-xl font-semibold">Closing Bulan Ini - {{ $monthLabel }}</h2>
+            <h2 class="text-xl font-semibold">Closing Bulan - {{ $monthLabel }}</h2>
             <div class="flex flex-col md:flex-row md:items-end gap-4">
                 <form method="GET" action="{{ route('filament.admin.resources.orders.view-closing') }}" class="flex items-end gap-3">
                     <div class="flex items-end gap-3">
@@ -49,6 +49,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">No</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nama Acara</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Closing</th>
                         <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Grand Total</th>
@@ -60,6 +61,11 @@
                     @forelse ($orders as $order)
                         <tr>
                             <td class="px-4 py-2 text-sm text-gray-900">{{ $loop->iteration }}</td>
+                            <td class="px-4 py-2 text-sm text-gray-900">
+                                <x-filament::badge color="{{ $order->status?->getColor() }}">
+                                    {{ $order->status?->getLabel() }}
+                                </x-filament::badge>
+                            </td>
                             <td class="px-4 py-2 text-sm text-gray-900">{{ $order->prospect?->name_event }}</td>
                             <td class="px-4 py-2 text-sm text-gray-500">{{ \Illuminate\Support\Carbon::parse($order->closing_date)->format('d M Y') }}</td>
                             <td class="px-4 py-2 text-sm text-gray-900 text-right">{{ number_format($order->grand_total, 0, ',', '.') }}</td>
