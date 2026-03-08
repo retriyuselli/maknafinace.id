@@ -1015,11 +1015,11 @@
     </p>
 
     <!-- Signatures -->
-    <div style="text-align: right; margin-bottom: 5px; margin-top: 20px;">
-        Palembang,
+    <div style="text-align: right; margin-bottom: 10px; margin-top: 20px;">
+        {{ $company->city ?? 'Palembang' }},
         {{ $record->created_at
-            ? $record->created_at->copy()->setTimezone('Asia/Jakarta')->translatedFormat('d F Y')
-            : \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y') }}
+            ? $record->created_at->copy()->setTimezone('Asia/Jakarta')->locale('id')->translatedFormat('d F Y')
+            : \Carbon\Carbon::now('Asia/Jakarta')->locale('id')->translatedFormat('d F Y') }}
     </div>
     <div class="signature-section" style="margin-top: 0;">
         <table class="signature-table">

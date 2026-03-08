@@ -124,6 +124,7 @@ class SimulasiDisplayController extends Controller
             'prospect' => $record->prospect,
             'nomorSurat' => $nomorSurat,
             'financeUser' => $financeUser,
+            'company' => $company,
         ];
 
         $pdf = Pdf::loadView('pdf.draft_kontrak', $data);

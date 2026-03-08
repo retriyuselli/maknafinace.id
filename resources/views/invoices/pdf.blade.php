@@ -1,12 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 @php
-    $company = null;
-    if (\Illuminate\Support\Facades\Schema::hasTable('companies')) {
-        $company = \App\Models\Company::with('paymentMethod')->first();
-    }
     $paymentDetails = 'Please contact us for payment details.';
-    if ($company && $company->paymentMethod) {
+    if (isset($company) && $company && $company->paymentMethod) {
         $paymentDetails =
             $company->paymentMethod->no_rekening .
             ' ' .
@@ -21,11 +17,10 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice #{{ $order->prospect->name_event }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         @page {
             size: a4 portrait;
-            margin: 180px 1cm 1.5cm 1cm;
+            margin: 220px 1cm 1.5cm 1cm;
             /* top, right, bottom, left */
         }
 
@@ -53,7 +48,7 @@
         /* Header */
         header {
             position: fixed;
-            top: -150px;
+            top: -160px;
             left: 0px;
             right: 0px;
             height: 150px;
@@ -399,6 +394,30 @@
             color: rgba(40, 167, 69, 0.15);
         }
 
+        .notes-content ul {
+            padding-left: 0px;
+            margin: 0;
+        }
+
+        .notes-content li {
+            margin-bottom: 0px;
+            padding-left: 0px;
+            margin-left: 15px;
+        }
+
+        /* Menghilangkan margin default pada elemen p pertama agar sejajar dengan bullet */
+        .notes-content p:first-child {
+            margin-top: 0px;
+            margin-bottom: 0px;
+        }
+
+        /* Memberikan jarak antar paragraf jika ada lebih dari satu */
+        .notes-content p {
+            margin-bottom: 5px;
+            margin-left: 0;
+            padding-left: 0;
+        }
+
         .watermark.pending {
             color: rgba(255, 193, 7, 0.15);
         }
@@ -487,30 +506,76 @@
     <!-- Invoice Details -->
     <table class="invoice-details">
         <tr>
-            <td>
+            <td style="width: 60%;">
                 <div class="bold">Billed To :</div>
-                <address>
-                    Event : {{ $order->prospect->name_event }}<br>
-                    Nama : {{ $order->prospect->name_cpp }} & {{ $order->prospect->name_cpw }}<br>
-                    Alamat : {{ $order->prospect->address }}<br>
-                    No. Tlp : {{ $order->prospect->phone ? '+62' . $order->prospect->phone : 'N/A' }}<br>
-                    Venue : {{ $order->prospect->venue ?? 'N/A' }} / {{ $order->pax ?? 'N/A' }} Pax<br>
-                    Account Manager : {{ $order->employee->name ?? 'N/A' }}<br>
-                </address>
+                <table style="width: 100%; font-size: 15px; line-height: 1;">
+                    <tr>
+                        <td style="width: 130px; vertical-align: top; padding: 2px 0;">Event</td>
+                        <td style="width: 10px; vertical-align: top; padding: 2px 0;">:</td>
+                        <td style="vertical-align: top; padding: 2px 0;">{{ $order->prospect->name_event }}</td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; padding: 2px 0;">Nama</td>
+                        <td style="vertical-align: top; padding: 2px 0;">:</td>
+                        <td style="vertical-align: top; padding: 2px 0;">{{ $order->prospect->name_cpp }} &
+                            {{ $order->prospect->name_cpw }}</td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; padding: 2px 0;">Alamat</td>
+                        <td style="vertical-align: top; padding: 2px 0;">:</td>
+                        <td style="vertical-align: top; padding: 2px 0;">{{ $order->prospect->address }}</td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; padding: 2px 0;">No. Tlp</td>
+                        <td style="vertical-align: top; padding: 2px 0;">:</td>
+                        <td style="vertical-align: top; padding: 2px 0;">
+                            {{ $order->prospect->phone ? '+62' . $order->prospect->phone : 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; padding: 2px 0;">Venue</td>
+                        <td style="vertical-align: top; padding: 2px 0;">:</td>
+                        <td style="vertical-align: top; padding: 2px 0;">{{ $order->prospect->venue ?? 'N/A' }} /
+                            {{ $order->pax ?? 'N/A' }} Pax</td>
+                    </tr>
+                </table>
             </td>
-            <td class="text-right">
+            <td style="padding-left: 60px;">
                 <div class="bold">Invoice Information :</div>
-                <address>
-                    Invoice Date : {{ now()->format('d F Y') }}<br>
-                    Due Date :
-                    {{ $order->due_date ? \Carbon\Carbon::parse($order->due_date)->format('d F Y') : now()->addDays(config('invoice.payment_days', 7))->format('d F Y') }}<br>
-                    Tgl Lamaran :
-                    {{ $order->prospect->date_lamaran ? \Carbon\Carbon::parse($order->prospect->date_lamaran)->format('d F Y') : '-' }}<br>
-                    Tgl Akad :
-                    {{ $order->prospect->date_akad ? \Carbon\Carbon::parse($order->prospect->date_akad)->format('d F Y') : '-' }}<br>
-                    Tgl Resepsi:
-                    {{ $order->prospect->date_resepsi ? \Carbon\Carbon::parse($order->prospect->date_resepsi)->format('d F Y') : '-' }}<br>
-                </address>
+                <table style="width: 100%; font-size: 15px; line-height: 1;">
+                    <tr>
+                        <td style="width: 120px; vertical-align: top; padding: 2px 0;">Invoice Date</td>
+                        <td style="width: 10px; vertical-align: top; padding: 2px 0;">:</td>
+                        <td style="vertical-align: top; padding: 2px 0;">{{ now()->format('d F Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; padding: 2px 0;">Due Date</td>
+                        <td style="vertical-align: top; padding: 2px 0;">:</td>
+                        <td style="vertical-align: top; padding: 2px 0;">
+                            {{ $order->due_date ? \Carbon\Carbon::parse($order->due_date)->format('d F Y') : now()->addDays(config('invoice.payment_days', 7))->format('d F Y') }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; padding: 2px 0;">Tgl Lamaran</td>
+                        <td style="vertical-align: top; padding: 2px 0;">:</td>
+                        <td style="vertical-align: top; padding: 2px 0;">
+                            {{ $order->prospect->date_lamaran ? \Carbon\Carbon::parse($order->prospect->date_lamaran)->format('d F Y') : '-' }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; padding: 2px 0;">Tgl Akad</td>
+                        <td style="vertical-align: top; padding: 2px 0;">:</td>
+                        <td style="vertical-align: top; padding: 2px 0;">
+                            {{ $order->prospect->date_akad ? \Carbon\Carbon::parse($order->prospect->date_akad)->format('d F Y') : '-' }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: top; padding: 2px 0;">Tgl Resepsi</td>
+                        <td style="vertical-align: top; padding: 2px 0;">:</td>
+                        <td style="vertical-align: top; padding: 2px 0;">
+                            {{ $order->prospect->date_resepsi ? \Carbon\Carbon::parse($order->prospect->date_resepsi)->format('d F Y') : '-' }}
+                        </td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>
@@ -612,7 +677,7 @@
     @if ($allProductPenambahanHarga->isNotEmpty())
         <div class="section-container" style="margin-top: 20px;">
             <h3 class="sub-section-title"
-                style="font-size: 1.1em; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
+                style="font-size: 1em; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
                 Rincian Item Penambahan Produk</h3>
             <table class="bordered" style="font-size: 18px;">
                 <thead>
@@ -629,7 +694,7 @@
                             <td>
                                 {{ $itemPenambahan->vendor->name ?? 'N/A' }}
                                 @if ($itemPenambahan->description)
-                                    <div style="font-size: 15px; margin-left: 30px; color: #555; margin-top: 0px;">
+                                    <div class="notes-content" style="font-size: 15px; margin-left: 15px; color: #000000;">
                                         {!! strip_tags($itemPenambahan->description, '<li><strong><ul><li><br><span><div>') !!}
                                     </div>
                                 @endif
@@ -662,7 +727,7 @@
     @if ($allProductPengurangans->isNotEmpty())
         <div class="section-container" style="margin-top: 20px;">
             <h3 class="sub-section-title"
-                style="font-size: 1.1em; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
+                style="font-size: 1em; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
                 Rincian Item Pengurangan Produk</h3>
             <table class="bordered" style="font-size: 18px;">
                 <thead>
@@ -679,12 +744,12 @@
                             <td>
                                 {{ $itemPengurangan->description ?? 'N/A' }}
                                 @if ($itemPengurangan->notes)
-                                    <div style="font-size: 15px; margin-left: 30px; color: #555; margin-top: 0px;">
-                                        {!! strip_tags($itemPengurangan->notes, '<li><strong><ul><li><br><span><div>') !!}
+                                    <div class="notes-content" style="font-size: 15px; margin-left: 15px; color: #030303;">
+                                        {!! strip_tags($itemPengurangan->notes, '<li><strong><ul><li><br><span><div><p>') !!}
                                     </div>
                                 @endif
                             </td>
-                            <td style="text-align: right;">Rp
+                            <td style="text-align: right; color: #dc3545; font-weight: bold;">- Rp
                                 {{ number_format($itemPengurangan->amount ?? 0, 0, ',', '.') }}</td>
                         </tr>
                     @endforeach
@@ -728,10 +793,12 @@
             <td style="width: 65%; vertical-align: top;">
                 <div class="bold">Terms & Conditions</div>
                 <ul>
-                    <li>Please make payments via bank transfer to the account provided <br>{{ $paymentDetails }}</li>
-                    <li>Payment is due within {{ config('invoice.payment_days', 7) }} days from the invoice date.</li>
-                    <li>Please make payments via bank transfer to the account provided</li>
-                    <li>For questions, contact our customer service</li>
+                    <li>Silakan lakukan pembayaran melalui transfer bank ke rekening yang tertera. <br>{{ $paymentDetails }}</li>
+                    <li>Pembayaran diharapkan lunas dalam waktu {{ config('invoice.payment_days', 7) }} hari dari tanggal invoice.</li>
+                    <li>Mohon lakukan pembayaran sesuai nominal yang tertera.</li>
+                    <li>Setelah melakukan pembayaran, silakan kirim bukti pembayaran ke email kami.</li>
+                    <li>Dilarang melakukan transfer ke rekening selain yang tertera.</li>
+                    <li>Jika ada pertanyaan, silakan hubungi layanan pelanggan kami.</li>
                 </ul>
             </td>
             <td style="width: 35%; text-align: center; vertical-align: top;">

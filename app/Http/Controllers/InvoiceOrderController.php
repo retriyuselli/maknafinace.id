@@ -75,6 +75,7 @@ class InvoiceOrderController extends Controller
         $order = Order::with([
             'items.product.category',
             'items.product.vendorItems.vendor',
+            'items.product.penambahanHarga',
             'prospect',
             'employee',
             'user',
@@ -82,8 +83,13 @@ class InvoiceOrderController extends Controller
             'expenses.vendor',
         ])->findOrFail($order->id);
 
+        $company = null;
+        if (\Illuminate\Support\Facades\Schema::hasTable('companies')) {
+            $company = \App\Models\Company::with('paymentMethod')->first();
+        }
+
         // Configure PDF options to handle page breaks properly
-        $pdf = PDF::loadView('invoices.pdf', compact('order'));
+        $pdf = PDF::loadView('invoices.pdf', compact('order', 'company'));
 
         // Set PDF options for better rendering
         $pdf->setPaper('a4', 'portrait');
