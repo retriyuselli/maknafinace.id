@@ -35,14 +35,17 @@ class ReconciliationController extends Controller
         ]);
 
         try {
+            // Get bank item
+            $bankItem = BankReconciliationItem::findOrFail($request->bank_item_id);
+            
+            // Authorization check
+            \Illuminate\Support\Facades\Gate::authorize('update', $bankItem);
+
             // Create a mock transaction object for the service
             $mockTransaction = (object) [
                 'source_table' => $request->source_table,
                 'source_id' => $request->source_id,
             ];
-
-            // Get bank item
-            $bankItem = BankReconciliationItem::findOrFail($request->bank_item_id);
 
             // Mark as matched
             $this->reconciliationService->markAsMatched(
@@ -77,6 +80,9 @@ class ReconciliationController extends Controller
         ]);
 
         try {
+            $paymentMethod = PaymentMethod::findOrFail($request->payment_method_id);
+            \Illuminate\Support\Facades\Gate::authorize('view', $paymentMethod);
+
             $results = $this->reconciliationService->reconcile(
                 $request->payment_method_id,
                 $request->start_date,
@@ -123,6 +129,9 @@ class ReconciliationController extends Controller
         ]);
 
         try {
+            $paymentMethod = PaymentMethod::findOrFail($request->payment_method_id);
+            \Illuminate\Support\Facades\Gate::authorize('view', $paymentMethod);
+
             $results = $this->reconciliationService->reconcile(
                 $request->payment_method_id,
                 $request->start_date,
@@ -173,6 +182,10 @@ class ReconciliationController extends Controller
         ]);
 
         try {
+            // Get bank item and authorize
+            $bankItem = BankReconciliationItem::findOrFail($request->bank_item_id);
+            \Illuminate\Support\Facades\Gate::authorize('update', $bankItem);
+
             // Reset reconciliation status in source table
             $table = $request->source_table;
 

@@ -18,6 +18,8 @@ class InvoiceOrderController extends Controller
      */
     public function show(Order $order)
     {
+        \Illuminate\Support\Facades\Gate::authorize('view', $order);
+        
         // Get payment methods for the view
         $paymentMethods = PaymentMethod::where('is_cash', false)->get();
 
@@ -71,6 +73,8 @@ class InvoiceOrderController extends Controller
      */
     public function download(Order $order)
     {
+        \Illuminate\Support\Facades\Gate::authorize('view', $order);
+        
         // Get order details with eager loading for improved performance
         $order = Order::with([
             'items.product.category',
@@ -117,6 +121,8 @@ class InvoiceOrderController extends Controller
      */
     public function downloadSimulation(Order $order)
     {
+        \Illuminate\Support\Facades\Gate::authorize('view', $order);
+        
         // Get order details with eager loading
         $order = Order::with([
             'items.product.category',

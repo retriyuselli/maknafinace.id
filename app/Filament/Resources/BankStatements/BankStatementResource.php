@@ -5,7 +5,7 @@ namespace App\Filament\Resources\BankStatements;
 use App\Filament\Resources\BankStatements\Pages\CreateBankStatement;
 use App\Filament\Resources\BankStatements\Pages\EditBankStatement;
 use App\Filament\Resources\BankStatements\Pages\ListBankStatements;
-use App\Filament\Resources\BankStatements\Pages\ReconciliationComparison;
+use App\Filament\Resources\BankStatements\Pages\ViewReconciliation;
 use App\Filament\Resources\BankStatements\Pages\ViewBankStatement;
 use App\Filament\Resources\BankStatements\RelationManagers\BankReconciliationItemsRelationManager;
 use App\Filament\Resources\BankStatements\Schemas\BankStatementForm;
@@ -60,11 +60,11 @@ class BankStatementResource extends Resource
     public static function getPages(): array
     {
         return [
+            'reconciliation' => ViewReconciliation::route('/{record}/reconciliation'),
             'index' => ListBankStatements::route('/'),
             'create' => CreateBankStatement::route('/create'),
             'view' => ViewBankStatement::route('/{record}'),
             'edit' => EditBankStatement::route('/{record}/edit'),
-            'reconciliation' => ReconciliationComparison::route('/{record}/reconciliation'),
         ];
     }
 

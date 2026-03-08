@@ -241,7 +241,7 @@ class BankStatementsTable
                             $record->reconciliationItems()->count() > 0
                         )
                         ->tooltip('Bandingkan transaksi aplikasi dengan mutasi bank')
-                        ->url(fn (BankStatement $record): string => route('bank-statements.reconciliation-alt', $record))
+                        ->url(fn (BankStatement $record): string => BankStatementResource::getUrl('reconciliation', ['record' => $record]))
                         ->openUrlInNewTab(false),
                     Action::make('download')
                         ->label('Unduh File')

@@ -925,38 +925,40 @@ class UsersTable
                             $failedCount = 0;
                             $failedUsers = [];
 
+                            $recordIds = $records->pluck('id')->toArray();
+                            $constraintsByUserId = [];
+
+                            $tablesToCheck = [
+                                'nota_dinas' => ['approved_by', 'pengirim_id'],
+                                'leave_requests' => ['user_id', 'replacement_employee_id'],
+                                'payrolls' => ['user_id'],
+                                'leave_balances' => ['user_id'],
+                                'annual_summaries' => ['user_id'],
+                            ];
+
+                            foreach ($tablesToCheck as $table => $columns) {
+                                if (! DBSchema::hasTable($table)) {
+                                    continue;
+                                }
+                                foreach ($columns as $column) {
+                                    $foundIds = DB::table($table)
+                                        ->whereIn($column, $recordIds)
+                                        ->pluck($column)
+                                        ->unique();
+
+                                    foreach ($foundIds as $id) {
+                                        $constraintsByUserId[$id][] = $table;
+                                    }
+                                }
+                            }
+
                             foreach ($records as $record) {
                                 try {
-                                    $hasConstraints = false;
-                                    $constraintTables = [];
-
-                                    $tablesToCheck = [
-                                        'nota_dinas' => ['approved_by', 'pengirim_id'],
-                                        'leave_requests' => ['user_id', 'replacement_employee_id'],
-                                        'payrolls' => ['user_id'],
-                                        'leave_balances' => ['user_id'],
-                                        'annual_summaries' => ['user_id'],
-                                    ];
-
-                                    foreach ($tablesToCheck as $table => $columns) {
-                                        if (! DBSchema::hasTable($table)) {
-                                            continue;
-                                        }
-                                        foreach ($columns as $column) {
-                                            $count = DB::table($table)->where($column, $record->id)->count();
-                                            if ($count > 0) {
-                                                $hasConstraints = true;
-                                                $constraintTables[] = $table;
-                                                break;
-                                            }
-                                        }
-                                    }
-
-                                    if ($hasConstraints) {
+                                    if (isset($constraintsByUserId[$record->id])) {
                                         $failedCount++;
                                         $failedUsers[] = [
                                             'name' => $record->name,
-                                            'tables' => array_unique($constraintTables),
+                                            'tables' => array_unique($constraintsByUserId[$record->id]),
                                         ];
                                     } else {
                                         $record->delete();

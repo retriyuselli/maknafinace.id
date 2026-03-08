@@ -180,15 +180,16 @@ Route::get('/blog/category/{category}', [BlogController::class, 'category'])->na
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.detail');
 
 // INVOICE
-Route::get('/invoice/{order}', [InvoiceOrderController::class, 'show'])
-    ->name('invoice.show');
-Route::get('/invoice/{order}/download', [InvoiceOrderController::class, 'download'])
-    ->name('invoice.download');
-Route::get('/invoice/{order}/print', [InvoiceOrderController::class, 'print'])
-    ->name('invoice.print');
-Route::post('/invoice/{order}/update-payment', [InvoiceOrderController::class, 'updatePayment'])
-    ->name('invoice.update-payment')
-    ->middleware(['web']);
+Route::middleware([\Filament\Http\Middleware\Authenticate::class])->group(function () {
+    Route::get('/invoice/{order}', [InvoiceOrderController::class, 'show'])
+        ->name('invoice.show');
+    Route::get('/invoice/{order}/download', [InvoiceOrderController::class, 'download'])
+        ->name('invoice.download');
+    Route::get('/invoice/{order}/print', [InvoiceOrderController::class, 'print'])
+        ->name('invoice.print');
+    Route::post('/invoice/{order}/update-payment', [InvoiceOrderController::class, 'updatePayment'])
+        ->name('invoice.update-payment');
+});
 
 // WIDGET ROUTE
 // Widget yang langsung link ke processing
@@ -386,6 +387,4 @@ Route::get('/laporan/nota-dinas-details/bulan-ini', [ReportController::class, 's
     ->middleware(\Filament\Http\Middleware\Authenticate::class);
 
 // BANK STATEMENT RECONCILIATION ROUTE
-Route::get('/bank-statements/{bankStatement}/reconciliation-alt', [BankReconciliationPageController::class, 'show'])
-    ->name('bank-statements.reconciliation-alt')
-    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+// Dihapus karena sudah menggunakan standard Filament Page di ViewReconciliation
