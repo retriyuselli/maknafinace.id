@@ -7,6 +7,7 @@ use App\Filament\Pages\ProjectDashboard;
 use App\Http\Middleware\RedirectUnauthenticatedToAppUrl;
 use App\Models\Company;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use CmsMulti\FilamentClearCache\FilamentClearCachePlugin;
 use Filament\Enums\GlobalSearchPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -86,6 +87,7 @@ class AdminPanelProvider extends PanelProvider
                     ->navigationLabel('Role')
                     ->navigationGroup('SDM')
                     ->globallySearchable(false),
+                FilamentClearCachePlugin::make(),
             ]);
     }
 }

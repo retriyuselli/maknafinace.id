@@ -14,6 +14,7 @@ use App\Observers\DocumentObserver;
 use App\Observers\LeaveRequestObserver;
 use App\Observers\OrderObserver;
 use App\Observers\UserObserver;
+use CmsMulti\FilamentClearCache\Facades\FilamentClearCache;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -115,5 +116,7 @@ class AppServiceProvider extends ServiceProvider
 
             return asset('images/logomki.png');
         }));
+        
+        FilamentClearCache::addCommand('optimize:clear');
     }
 }

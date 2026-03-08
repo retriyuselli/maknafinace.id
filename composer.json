@@ -12,6 +12,7 @@
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
         "bezhansalleh/filament-shield": "^4.0",
+        "cms-multi/filament-clear-cache": "^3.0",
         "filament/filament": "^5.0",
         "laravel/framework": "^12.0",
         "laravel/socialite": "^5.23",
