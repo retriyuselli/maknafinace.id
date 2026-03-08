@@ -133,45 +133,84 @@
             {{-- <div class="mt-6 grid grid-cols-2 gap-4 text-sm"> --}}
             <div>
                 <h2 class="text-gray-700 dark:text-white font-bold mb-2">Billed To :</h2>
-                <p class="text-gray-600 dark:text-white">Event :
-                    {{ $order->prospect->name_event ?? 'N/A' }}</p>
-                <p class="text-gray-600 dark:text-white">Name Nama : CPP_{{ $order->prospect->name_cpp }} &
-                    CPW_{{ $order->prospect->name_cpw }}</p>
-                <p class="text-gray-600 dark:text-white">Alamat :
-                    {{ ucwords(strtolower($order->prospect->address ?? 'N/A')) }}
-                </p>
-                <p class="text-gray-600 dark:text-white">No Tlp :
-                    +62{{ $order->prospect->phone ?? 'N/A' }}</p>
-                <p class="text-gray-600 dark:text-white">Venue :
-                    {{ $order->prospect->venue ?? 'N/A' }} /
-                    {{ $order->pax ?? 'N/A' }}
-                    Pax</p>
-                <p class="text-gray-600 dark:text-white">Account Manager :
-                    {{ $order->user->name ?? 'N/A' }}</p>
-                <p class="text-gray-600 dark:text-white">Event Manager :
-                    {{ $order->employee->name ?? 'N/A' }}</p>
+                <table class="w-full text-gray-600 dark:text-white">
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Event</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">{{ $order->prospect->name_event ?? 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Name Nama</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">CPP_{{ $order->prospect->name_cpp }} & CPW_{{ $order->prospect->name_cpw }}</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Alamat</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">{{ ucwords(strtolower($order->prospect->address ?? 'N/A')) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">No Tlp</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">+62{{ $order->prospect->phone ?? 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Venue</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">{{ $order->prospect->venue ?? 'N/A' }} / {{ $order->pax ?? 'N/A' }} Pax</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Account Manager</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">{{ $order->user->name ?? 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Event Manager</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">{{ $order->employee->name ?? 'N/A' }}</td>
+                    </tr>
+                </table>
             </div>
             <div>
                 <h2 class="text-sm font-semibold mb-2 text-gray-900 dark:text-white">Invoice Information :</h2>
-                <p class="text-gray-600 dark:text-white">Invoice Date : {{ now()->format('d F Y') }}</p>
-                <p class="text-gray-600 dark:text-white">Due Date :
-                    {{ now()->addDays(30)->format('d F Y') }}</p>
-                <p class="status-bayar text-gray-900 dark:text-white">Status Pembayaran :
-                    @if ($order->is_paid)
-                        <span class="text-green-600 font-semibold">Paid</span>
-                    @else
-                        <span class="text-red-600 font-semibold">Unpaid</span>
-                    @endif
-                </p>
-                <p class="text-gray-600 dark:text-white">Tgl Lamaran :
-                    {{ $order->prospect->date_lamaran ? \Carbon\Carbon::parse($order->prospect->date_lamaran)->format('d F Y') : '-' }}
-                </p>
-                <p class="text-gray-600 dark:text-white">Tgl Akad :
-                    {{ $order->prospect->date_akad ? \Carbon\Carbon::parse($order->prospect->date_akad)->format('d F Y') : '-' }}
-                </p>
-                <p class="text-gray-600 dark:text-white">Tgl Resepsi:
-                    {{ $order->prospect->date_resepsi ? \Carbon\Carbon::parse($order->prospect->date_resepsi)->format('d F Y') : '-' }}
-                </p>
+                <table class="w-full text-gray-600 dark:text-white">
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Invoice Date</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">{{ now()->format('d F Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Due Date</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">{{ now()->addDays(30)->format('d F Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Status Pembayaran</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top status-bayar">
+                            @if ($order->is_paid)
+                                <span class="text-green-600 font-semibold">Paid</span>
+                            @else
+                                <span class="text-red-600 font-semibold">Unpaid</span>
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Tgl Lamaran</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">{{ $order->prospect->date_lamaran ? \Carbon\Carbon::parse($order->prospect->date_lamaran)->format('d F Y') : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Tgl Akad</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">{{ $order->prospect->date_akad ? \Carbon\Carbon::parse($order->prospect->date_akad)->format('d F Y') : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="align-top whitespace-nowrap pr-2">Tgl Resepsi</td>
+                        <td class="align-top px-2">:</td>
+                        <td class="align-top">{{ $order->prospect->date_resepsi ? \Carbon\Carbon::parse($order->prospect->date_resepsi)->format('d F Y') : '-' }}</td>
+                    </tr>
+                </table>
             </div>
         </div>
 
