@@ -602,6 +602,35 @@
         </tr>
     </table>
 
+    <div class="section-title">Lamaran / Pengajian / Siraman</div>
+    <table class="content-table">
+        <tr>
+            <td class="label">Hari / Tanggal</td>
+            <td class="separator">:</td>
+            <td>{{ $prospect->date_lamaran ? \Carbon\Carbon::parse($prospect->date_lamaran)->locale('id')->translatedFormat('l, d F Y') : '-' }}
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Waktu</td>
+            <td class="separator">:</td>
+            <td>
+                @if (!empty($prospect->time_lamaran))
+                    Pukul {{ \Carbon\Carbon::parse($prospect->time_lamaran)->format('H:i') }} wib s.d Selesai
+                @else
+                    Pukul 07:00 / 07:30 wib s.d Selesai
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Jumlah Undangan</td>
+            <td class="separator">:</td>
+            <td>
+                {{ $record->product->pax_akad ?? 500 }} Pax atau
+                {{ ($record->product->pax_akad ?? 500) / 2 }} Undangan (Asumsi)
+            </td>
+        </tr>
+    </table>
+
     <div class="section-title">Akad Nikah</div>
     <table class="content-table">
         <tr>

@@ -15,17 +15,42 @@ class LeaveApprovalController extends Controller
             abort(404, 'Approval detail not found or request not approved.');
         }
 
-        // Load necessary relationships
-        $leaveRequest->load(['user', 'leaveType', 'approver', 'leaveBalanceHistory']);
+        $leaveRequest->load(['user', 'leaveType', 'approver', 'leaveBalanceHistory', 'replacementEmployee']);
 
-        // Get leave balance information
+        $year = $leaveRequest->start_date ? $leaveRequest->start_date->year : now()->year;
         $leaveBalance = LeaveBalance::where('user_id', $leaveRequest->user_id)
             ->where('leave_type_id', $leaveRequest->leave_type_id)
+            ->where('year', $year)
             ->first();
+
+        $start = \Carbon\Carbon::parse($leaveRequest->start_date);
+        $end = \Carbon\Carbon::parse($leaveRequest->end_date);
+        $workingDays = 0;
+        for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+            $dayIso = (int) $date->isoWeekday();
+            if (! in_array($dayIso, [6, 7], true)) {
+                $workingDays++;
+            }
+        }
+
+        $carryOver = $leaveBalance->carried_over_days ?? 0;
+        $usedJanMar = \App\Models\LeaveRequest::query()
+            ->where('user_id', $leaveRequest->user_id)
+            ->where('leave_type_id', $leaveRequest->leave_type_id)
+            ->where('status', 'approved')
+            ->whereYear('start_date', $year)
+            ->whereMonth('start_date', '<=', 3)
+            ->sum('total_days');
+        $cutoffDate = \Carbon\Carbon::create($year, 3, 31)->endOfDay();
+        $effectiveCarryOver = now()->gt($cutoffDate) ? min($carryOver, $usedJanMar) : $carryOver;
 
         return view('leave-approval.detail', [
             'record' => $leaveRequest,
             'leaveBalance' => $leaveBalance,
+            'workingDays' => $workingDays,
+            'carryOver' => $carryOver,
+            'usedJanMar' => $usedJanMar,
+            'effectiveCarryOver' => $effectiveCarryOver,
         ]);
     }
 }

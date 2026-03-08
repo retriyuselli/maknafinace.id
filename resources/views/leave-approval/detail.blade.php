@@ -427,6 +427,22 @@
                                 <th>Tanggal Selesai</th>
                                 <td>{{ \Carbon\Carbon::parse($record->end_date)->format('d F Y') }}</td>
                             </tr>
+                            <tr>
+                                <th>Hari Kerja</th>
+                                <td><strong>{{ $workingDays }} hari</strong></td>
+                                <th>Total Hari</th>
+                                <td><strong>{{ $record->total_days }} hari</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Karyawan Pengganti</th>
+                                <td>{{ $record->replacementEmployee->name ?? '-' }}</td>
+                                <th>Email Pengganti</th>
+                                <td>{{ $record->replacementEmployee->email ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Departemen Pengganti</th>
+                                <td colspan="3">{{ ucfirst($record->replacementEmployee->department ?? 'N/A') }}</td>
+                            </tr>
                             @if($record->reason)
                             <tr>
                                 <th>Alasan Cuti</th>
@@ -490,6 +506,7 @@
                     <!-- Dampak pada Saldo Cuti -->
                     <p class="table-title"><b>Dampak pada Saldo Cuti :</b></p>
                     @if($leaveBalance)
+                    <div class="text-muted small mb-1">Tahun {{ $leaveBalance->year ?? \Carbon\Carbon::parse($record->start_date)->format('Y') }}</div>
                     <table class="invoice-table table-stripe3">
                         <thead>
                             <tr>
@@ -514,6 +531,11 @@
                                     <div class="badge bg-success text-white p-2">
                                         <strong>{{ $leaveBalance->remaining_days }} hari</strong>
                                     </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-muted small">
+                                    Carry Over: <strong>{{ $carryOver }}</strong> hari | Terpakai Jan–Mar: <strong>{{ $usedJanMar }}</strong> hari | Efektif Carry Over: <strong>{{ $effectiveCarryOver }}</strong> hari
                                 </td>
                             </tr>
                         </tbody>
