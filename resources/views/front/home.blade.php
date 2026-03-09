@@ -186,6 +186,7 @@
                                     @foreach ($topRowLogos as $logo)
                                         <img src="{{ $logo->logo_url }}" alt="{{ $logo->alt_text ?: $logo->company_name }}"
                                             title="{{ $logo->company_name }}"
+                                            loading="lazy" decoding="async"
                                             class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
                                     @endforeach
                                     @if (isset($bottomRowLogos) && $bottomRowLogos->count() > 0)
@@ -193,34 +194,35 @@
                                             <img src="{{ $logo->logo_url }}"
                                                 alt="{{ $logo->alt_text ?: $logo->company_name }}"
                                                 title="{{ $logo->company_name }}"
+                                                loading="lazy" decoding="async"
                                                 class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
                                         @endforeach
                                     @endif
                                 @else
                                     <!-- Fallback logos if no data - All 12 logos -->
-                                    <img src="https://logo.clearbit.com/google.com" alt="Google"
+                                    <img src="https://logo.clearbit.com/google.com" alt="Google" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/microsoft.com" alt="Microsoft"
+                                    <img src="https://logo.clearbit.com/microsoft.com" alt="Microsoft" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/apple.com" alt="Apple"
+                                    <img src="https://logo.clearbit.com/apple.com" alt="Apple" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/amazon.com" alt="Amazon"
+                                    <img src="https://logo.clearbit.com/amazon.com" alt="Amazon" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/netflix.com" alt="Netflix"
+                                    <img src="https://logo.clearbit.com/netflix.com" alt="Netflix" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/spotify.com" alt="Spotify"
+                                    <img src="https://logo.clearbit.com/spotify.com" alt="Spotify" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/tesla.com" alt="Tesla"
+                                    <img src="https://logo.clearbit.com/tesla.com" alt="Tesla" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/meta.com" alt="Meta"
+                                    <img src="https://logo.clearbit.com/meta.com" alt="Meta" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/adobe.com" alt="Adobe"
+                                    <img src="https://logo.clearbit.com/adobe.com" alt="Adobe" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/slack.com" alt="Slack"
+                                    <img src="https://logo.clearbit.com/slack.com" alt="Slack" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/zoom.us" alt="Zoom"
+                                    <img src="https://logo.clearbit.com/zoom.us" alt="Zoom" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/shopify.com" alt="Shopify"
+                                    <img src="https://logo.clearbit.com/shopify.com" alt="Shopify" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
                                 @endif
                             </div>
@@ -231,6 +233,7 @@
                                         <img src="{{ $logo->logo_url }}"
                                             alt="{{ $logo->alt_text ?: $logo->company_name }}"
                                             title="{{ $logo->company_name }}"
+                                            loading="lazy" decoding="async"
                                             class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
                                     @endforeach
                                     @if (isset($bottomRowLogos) && $bottomRowLogos->count() > 0)
@@ -238,34 +241,35 @@
                                             <img src="{{ $logo->logo_url }}"
                                                 alt="{{ $logo->alt_text ?: $logo->company_name }}"
                                                 title="{{ $logo->company_name }}"
+                                                loading="lazy" decoding="async"
                                                 class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
                                         @endforeach
                                     @endif
                                 @else
                                     <!-- Fallback logos if no data - All 12 logos duplicate -->
-                                    <img src="https://logo.clearbit.com/google.com" alt="Google"
+                                    <img src="https://logo.clearbit.com/google.com" alt="Google" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/microsoft.com" alt="Microsoft"
+                                    <img src="https://logo.clearbit.com/microsoft.com" alt="Microsoft" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/apple.com" alt="Apple"
+                                    <img src="https://logo.clearbit.com/apple.com" alt="Apple" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/amazon.com" alt="Amazon"
+                                    <img src="https://logo.clearbit.com/amazon.com" alt="Amazon" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/netflix.com" alt="Netflix"
+                                    <img src="https://logo.clearbit.com/netflix.com" alt="Netflix" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/spotify.com" alt="Spotify"
+                                    <img src="https://logo.clearbit.com/spotify.com" alt="Spotify" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/tesla.com" alt="Tesla"
+                                    <img src="https://logo.clearbit.com/tesla.com" alt="Tesla" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/meta.com" alt="Meta"
+                                    <img src="https://logo.clearbit.com/meta.com" alt="Meta" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/adobe.com" alt="Adobe"
+                                    <img src="https://logo.clearbit.com/adobe.com" alt="Adobe" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/slack.com" alt="Slack"
+                                    <img src="https://logo.clearbit.com/slack.com" alt="Slack" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/zoom.us" alt="Zoom"
+                                    <img src="https://logo.clearbit.com/zoom.us" alt="Zoom" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    <img src="https://logo.clearbit.com/shopify.com" alt="Shopify"
+                                    <img src="https://logo.clearbit.com/shopify.com" alt="Shopify" loading="lazy" decoding="async"
                                         class="h-16 w-auto opacity-60 hover:opacity-100 transition-opacity flex-shrink-0" />
                                 @endif
                             </div>
@@ -624,7 +628,7 @@
                                     <img src="/images/excited-asian-colleagues-looking-laptop-screen-together-office.png"
                                         alt="Excited Asian Colleagues Looking at Laptop Screen Together in Office"
                                         class="w-full max-w-lg h-auto hover:scale-105 transition-transform duration-300"
-                                        loading="lazy">
+                                        loading="lazy" decoding="async">
                                 </div>
                             </div>
                         </div>
