@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReconciliationController extends Controller
 {
@@ -20,6 +21,54 @@ class ReconciliationController extends Controller
     public function __construct()
     {
         $this->reconciliationService = new ReconciliationService;
+    }
+
+    /**
+     * Download Reconciliation Report as PDF
+     */
+    public function downloadPdf(Request $request)
+    {
+        $request->validate([
+            'payment_method_id' => 'required|integer',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+        ]);
+
+        try {
+            $paymentMethod = PaymentMethod::findOrFail($request->payment_method_id);
+            \Illuminate\Support\Facades\Gate::authorize('view', $paymentMethod);
+
+            $results = $this->reconciliationService->reconcile(
+                $request->payment_method_id,
+                $request->start_date,
+                $request->end_date
+            );
+
+            // Get matched data with bank items and app transactions
+            $matched = $results['matched'];
+            $unmatchedApp = $results['unmatched_app'];
+            $unmatchedBank = $results['unmatched_bank'];
+            $statistics = $results['statistics'];
+
+            $pdf = Pdf::loadView('pdf.reconciliation-report', [
+                'paymentMethod' => $paymentMethod,
+                'startDate' => $request->start_date,
+                'endDate' => $request->end_date,
+                'matched' => $matched,
+                'unmatchedApp' => $unmatchedApp,
+                'unmatchedBank' => $unmatchedBank,
+                'statistics' => $statistics,
+                'timestamp' => now()->format('d F Y H:i:s'),
+                'user' => \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::user()->name : 'System',
+            ])->setPaper('a4', 'landscape');
+
+            $filename = 'Reconciliation_Report_' . str_replace([' ', '/'], '_', $paymentMethod->no_rekening) . '_' . $request->start_date . '.pdf';
+
+            return $pdf->download($filename);
+
+        } catch (Exception $e) {
+            return back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -113,59 +162,6 @@ class ReconciliationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal melakukan auto match: '.$e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Export reconciliation results to Excel
-     */
-    public function export(Request $request)
-    {
-        $request->validate([
-            'payment_method_id' => 'required|integer',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date',
-        ]);
-
-        try {
-            $paymentMethod = PaymentMethod::findOrFail($request->payment_method_id);
-            \Illuminate\Support\Facades\Gate::authorize('view', $paymentMethod);
-
-            $results = $this->reconciliationService->reconcile(
-                $request->payment_method_id,
-                $request->start_date,
-                $request->end_date
-            );
-
-            // Get payment method for filename
-            $paymentMethod = PaymentMethod::findOrFail($request->payment_method_id);
-            $filename = 'reconciliation_'.str_replace([' ', '-', '/'], '_', $paymentMethod->no_rekening).'_'.
-                       $request->start_date.'_to_'.$request->end_date.'.xlsx';
-
-            // Prepare export data
-            $exportData = [
-                'matched' => $results['matched'],
-                'unmatched_app' => $results['unmatched_app'],
-                'unmatched_bank' => $results['unmatched_bank'],
-                'statistics' => $results['statistics'],
-                'payment_method' => $paymentMethod,
-                'period' => [
-                    'start' => $request->start_date,
-                    'end' => $request->end_date,
-                ],
-            ];
-
-            // Use Maatwebsite Excel package for proper Excel export
-            return Excel::download(
-                new ReconciliationExport($exportData),
-                $filename
-            );
-
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal export data: '.$e->getMessage(),
             ], 500);
         }
     }

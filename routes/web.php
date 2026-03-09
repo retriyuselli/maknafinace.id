@@ -22,6 +22,7 @@ use App\Http\Controllers\ProductDisplayController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\ProspectAppController;
 use App\Http\Controllers\ProspectController;
+use App\Http\Controllers\ReconciliationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SimulasiDisplayController;
 use App\Http\Controllers\SopPrintController;
@@ -324,6 +325,11 @@ Route::get('/prospect-app', [ProspectAppController::class, 'create'])->name('pro
 Route::post('/prospect-app', [ProspectAppController::class, 'store'])->name('prospect-app.store');
 Route::get('/prospect-app/success', [ProspectAppController::class, 'success'])->name('prospect-app.success');
 Route::post('/prospect-app/check-email', [ProspectAppController::class, 'checkEmail'])->name('prospect-app.check-email');
+
+// Route untuk Download PDF Rekonsiliasi
+Route::get('/admin/reconciliation/download-pdf', [ReconciliationController::class, 'downloadPdf'])
+    ->name('reconciliation.download-pdf')
+    ->middleware(\Filament\Http\Middleware\Authenticate::class);
 
 Route::get('/debug-report', function () {
     $query = DataPembayaran::query()->with(['order', 'paymentMethod']);

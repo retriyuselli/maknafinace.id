@@ -3,12 +3,15 @@
         {{-- Header Actions --}}
         <div class="flex flex-wrap gap-2 sm:gap-3 justify-end">
             <a href="{{ url('/admin/bank-statements/' . $record->id) }}" class="bg-gray-500 hover:bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium">← Kembali</a>
-            <a href="{{ url('/admin/reconciliation/export?' . http_build_query(['payment_method_id' => $record->payment_method_id,'start_date' => $record->period_start->format('Y-m-d'),'end_date' => $record->period_end->format('Y-m-d'),])) }}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium">📊 Export Excel</a>
+            <a href="{{ url('/admin/reconciliation/download-pdf?' . http_build_query(['payment_method_id' => $record->payment_method_id,'start_date' => $record->period_start->format('Y-m-d'),'end_date' => $record->period_end->format('Y-m-d'),])) }}" target="_blank" class="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1">
+                <span>�</span>
+                <span>Download PDF</span>
+            </a>
             <button onclick="autoMatchHighConfidence()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium">⚡ Auto Match (85%+)</button>
         </div>
 
         {{-- Filter Section --}}
-        <div class="bg-white shadow rounded-lg border border-gray-200 p-4">
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
             <form method="GET" class="flex flex-wrap items-center gap-2">
                 <input type="date" name="filter_start" value="{{ request()->query('filter_start', $record->period_start->format('Y-m-d')) }}" class="border border-gray-300 rounded px-2 py-1 text-sm w-full sm:w-auto" />
                 <input type="date" name="filter_end" value="{{ request()->query('filter_end', $record->period_end->format('Y-m-d')) }}" class="border border-gray-300 rounded px-2 py-1 text-sm w-full sm:w-auto" />
@@ -41,32 +44,32 @@
             $filterType = in_array($filterType, ['debit','credit']) ? $filterType : 'all';
         @endphp
 
-        {{-- Stats Cards --}}
+        {{-- Statistik --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <div class="bg-white p-4 sm:p-6 rounded-lg shadow border border-gray-200">
+            <div class="bg-success-50 border border-success-200 rounded p-3 min-w-[180px]">
                 <div class="text-center">
                     <div class="text-2xl sm:text-3xl font-bold text-green-600">{{ $statistics['matched_count'] }}</div>
                     <div class="text-xs sm:text-sm text-gray-500 mt-1">Transaksi Cocok</div>
                     <div class="text-[10px] sm:text-xs text-gray-400 mt-2">{{ $statistics['matched_count'] > 0 ? round(($statistics['matched_count'] / max($statistics['total_app_transactions'], 1)) * 100, 1) : 0 }}% dari total app</div>
                 </div>
             </div>
-            <div class="bg-white p-4 sm:p-6 rounded-lg shadow border border-gray-200">
+            <div class="bg-info-50 border border-info-200 rounded p-3 min-w-[180px]">
                 <div class="text-center">
                     <div class="text-2xl sm:text-3xl font-bold text-orange-600">{{ $statistics['unmatched_app_count'] }}</div>
                     <div class="text-xs sm:text-sm text-gray-500 mt-1">Transaksi App Belum Cocok</div>
                     <div class="text-[10px] sm:text-xs text-gray-400 mt-2">Dari {{ $statistics['total_app_transactions'] }} total transaksi</div>
                 </div>
             </div>
-            <div class="bg-white p-4 sm:p-6 rounded-lg shadow border border-gray-200">
+            <div class="bg-warning-50 border border-warning-200 rounded p-3 min-w-[180px]">
                 <div class="text-center">
                     <div class="text-2xl sm:text-3xl font-bold text-red-600">{{ $statistics['unmatched_bank_count'] }}</div>
                     <div class="text-xs sm:text-sm text-gray-500 mt-1">Mutasi Bank Belum Cocok</div>
                     <div class="text-[10px] sm:text-xs text-gray-400 mt-2">Dari {{ $statistics['total_bank_items'] }} total mutasi</div>
                 </div>
             </div>
-            <div class="bg-white p-4 sm:p-6 rounded-lg shadow border border-gray-200">
+            <div class="bg-success-50 border border-success-200 rounded p-3 min-w-[180px]">
                 <div class="text-center">
-                    <div class="text-xl sm:text-3xl font-bold text-blue-600">App {{ $matchRateApp }}% • Bank {{ $matchRateBank }}%</div>
+                    <div class="text-xl sm:text-xl font-bold text-blue-600">App {{ $matchRateApp }}% • Bank {{ $matchRateBank }}%</div>
                     <div class="text-xs sm:text-sm text-gray-500 mt-1">Tingkat Kecocokan</div>
                     <div class="text-[10px] sm:text-xs text-gray-400 mt-2">Per App • Per Bank</div>
                 </div>

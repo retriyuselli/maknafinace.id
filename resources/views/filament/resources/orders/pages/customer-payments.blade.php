@@ -38,6 +38,7 @@
             </div>
         </div>
 
+        <!-- Statistik -->
         <div class="grid grid-cols-2 gap-4">
             <div class="bg-success-50 border border-success-200 rounded p-3 min-w-[180px]">
                 <div class="text-xs text-success-700">Jumlah Transaksi</div>
