@@ -56,7 +56,7 @@
                         </p>
                     </div>
                     <div class="flex items-center space-x-3">
-                        <a href="{{ route('profile.show') }}"
+                        <a href="{{ route('profile') }}"
                             class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm">
                             <i class="fas fa-arrow-left mr-2"></i>
                             Kembali ke Profil
@@ -271,6 +271,50 @@
                                     </p>
                                 @enderror
                             </div>
+
+                            <!-- Emergency Contact -->
+                            <div class="mt-6">
+                                <label for="emergency_contact" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Kontak Darurat
+                                </label>
+                                <div class="relative">
+                                    <input type="text" id="emergency_contact" name="emergency_contact"
+                                        value="{{ old('emergency_contact', $user->emergency_contact) }}"
+                                        class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all @error('emergency_contact') border-red-300 ring-red-200 @enderror"
+                                        placeholder="Nama - Hubungan - No. Telepon">
+                                    <i class="fas fa-address-book absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                </div>
+                                @error('emergency_contact')
+                                    <p class="mt-2 text-sm text-red-600 flex items-center">
+                                        <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
+                                    </p>
+                                @enderror
+                            </div>
+
+                            <!-- Signature Upload -->
+                            <div class="mt-6">
+                                <label for="signature" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Tanda Tangan Digital (Opsional)
+                                </label>
+                                <div class="flex items-center space-x-4">
+                                    <div class="relative flex-1">
+                                        <input type="file" id="signature" name="signature" accept="image/png"
+                                            class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <i class="fas fa-file-signature absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    </div>
+                                    @if ($user->signature_url)
+                                        <div class="w-32 h-16 border border-gray-200 rounded-lg overflow-hidden bg-white flex items-center justify-center">
+                                            <img src="{{ Storage::url($user->signature_url) }}" alt="Signature" class="max-h-full max-w-full">
+                                        </div>
+                                    @endif
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Format PNG transparan direkomendasikan. Maks 1MB.</p>
+                                @error('signature')
+                                    <p class="mt-2 text-sm text-red-600 flex items-center">
+                                        <i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
+                                    </p>
+                                @enderror
+                            </div>
                         </div>
 
                         <!-- Password Change Section -->
@@ -389,7 +433,7 @@
                         </div>
 
                         <div class="flex items-center space-x-4">
-                            <a href="{{ route('profile.show') }}"
+                            <a href="{{ route('profile') }}"
                                 class="inline-flex items-center px-6 py-3 bg-white border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
                                 <i class="fas fa-times mr-2"></i>
                                 Batal
@@ -414,14 +458,7 @@
                 </form>
             </div>
 
-            <!-- Sticky Save Bar -->
-            <div x-show="hasUnsaved" x-transition class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
-                <div class="bg-white border border-gray-200 shadow-xl rounded-full px-4 py-2 flex items-center gap-3">
-                    <span class="text-sm text-gray-700">Perubahan belum disimpan</span>
-                    <button type="button" @click="document.getElementById('profile-form').requestSubmit()"
-                        class="px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">Simpan</button>
-                </div>
-            </div>
+
 
             <!-- Help Section -->
             <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">

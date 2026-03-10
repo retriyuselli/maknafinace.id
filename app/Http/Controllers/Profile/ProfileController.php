@@ -95,7 +95,7 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
-        $request->validate([
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'phone_number' => ['nullable', 'string', 'max:20'],
@@ -103,8 +103,18 @@ class ProfileController extends Controller
             'date_of_birth' => ['nullable', 'date'],
             'gender' => ['nullable', 'string', 'in:male,female'],
             'hire_date' => ['nullable', 'date'],
+            'emergency_contact' => ['nullable', 'string', 'max:255'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-        ]);
+            'signature_url' => ['nullable', 'image', 'mimes:png', 'max:1024'],
+        ];
+
+        // Add password validation if password field is filled
+        if ($request->filled('password')) {
+            $rules['current_password'] = ['required', 'current_password'];
+            $rules['password'] = ['required', 'confirmed', Password::defaults()];
+        }
+
+        $request->validate($rules);
 
         // Handle avatar upload
         if ($request->hasFile('avatar')) {
@@ -118,22 +128,43 @@ class ProfileController extends Controller
             $user->avatar_url = $avatarPath;
         }
 
+        // Handle signature upload
+        if ($request->hasFile('signature')) {
+            // Delete old signature if exists
+            if ($user->signature_url && Storage::disk('public')->exists($user->signature_url)) {
+                Storage::disk('public')->delete($user->signature_url);
+            }
+
+            // Store new signature
+            $signaturePath = $request->file('signature')->store('signatures', 'public');
+            $user->signature_url = $signaturePath;
+        }
+
+        $updateData = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone_number' => $request->phone_number,
+            'address' => $request->address,
+            'date_of_birth' => $request->date_of_birth,
+            'gender' => $request->gender,
+            'hire_date' => $request->hire_date,
+            'emergency_contact' => $request->emergency_contact,
+            'avatar_url' => $user->avatar_url,
+            'signature_url' => $user->signature_url,
+            'updated_at' => now(),
+        ];
+
+        // Update password if filled
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->password);
+        }
+
         // Update user data using DB
         DB::table('users')
             ->where('id', $user->id)
-            ->update([
-                'name' => $request->name,
-                'email' => $request->email,
-                'phone_number' => $request->phone_number,
-                'address' => $request->address,
-                'date_of_birth' => $request->date_of_birth,
-                'gender' => $request->gender,
-                'hire_date' => $request->hire_date,
-                'avatar_url' => $user->avatar_url,
-                'updated_at' => now(),
-            ]);
+            ->update($updateData);
 
-        return redirect()->route('profile.show')->with('success', 'Profile updated successfully!');
+        return redirect()->back()->with('success', 'Profile updated successfully!');
     }
 
     /**
@@ -154,7 +185,7 @@ class ProfileController extends Controller
                 'updated_at' => now(),
             ]);
 
-        return redirect()->route('profile.show')->with('success', 'Password updated successfully!');
+        return redirect()->route('profile')->with('success', 'Password updated successfully!');
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Company;
+use App\Models\PaymentMethod;
 use Illuminate\Database\Seeder;
 
 class CompanySeeder extends Seeder
@@ -11,12 +12,16 @@ class CompanySeeder extends Seeder
     {
         $this->command->info('Seeding Company data...');
 
+        // Ambil Payment Method default (BCA)
+        $defaultPaymentMethod = PaymentMethod::where('bank_name', 'like', '%BCA%')->first();
+
         $companies = [
             [
                 // Informasi Perusahaan
                 'company_name' => 'PT Makna Kreatif Indonesia',
                 'business_license' => 'SIUP-2020-001',
                 'owner_name' => 'Rama Dhona Utama',
+                'jabatan_owner' => 'Direktur Utama',
                 'legal_entity_type' => 'PT',
                 'established_year' => 2015,
                 'employee_count' => 25,
@@ -48,6 +53,9 @@ class CompanySeeder extends Seeder
                 // Dokumen
                 'legal_documents' => [],
                 'legal_document_status' => 'complete',
+
+                // Keuangan
+                'payment_method_id' => $defaultPaymentMethod?->id,
             ],
         ];
 

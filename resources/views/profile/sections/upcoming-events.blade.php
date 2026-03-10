@@ -25,37 +25,55 @@
     // Calculate days until next leave (rounded to whole number)
     $nextLeave = $upcomingLeaves->first();
     $daysUntilNextLeave = $nextLeave ? (int) $currentDate->diffInDays($nextLeave->start_date, false) : null;
+
+    $statusTranslations = [
+        'approved' => 'Disetujui',
+        'pending' => 'Menunggu',
+        'rejected' => 'Ditolak',
+    ];
+
+    $leaveTypeTranslations = [
+        'Annual Leave' => 'Cuti Tahunan',
+        'Sick Leave' => 'Cuti Sakit',
+        'Emergency Leave' => 'Cuti Darurat',
+        'Unpaid Leave' => 'Cuti Tanpa Gaji',
+        'Maternity Leave' => 'Cuti Melahirkan',
+        'Paternity Leave' => 'Cuti Ayah',
+        'Marriage Leave' => 'Cuti Menikah',
+        'Bereavement Leave' => 'Cuti Duka',
+    ];
 @endphp
 
 <!-- Upcoming Events Section -->
-<div class="bg-white rounded-xl shadow-lg border border-gray-100" style="font-family: 'Poppins', sans-serif;">
+<div class="bg-white shadow-lg border border-gray-100" style="font-family: 'Poppins', sans-serif;">
     <!-- Header -->
     <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 rounded-t-xl">
-        <h3 class="text-xl font-bold text-black flex items-center">
+        <h3 class="text-sm font-bold text-black flex items-center">
             <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
             Acara Mendatang & Jadwal Cuti
         </h3>
-        <p class="text-black text-sm mt-1">Aktivitas mendatang dan rencana cuti Anda</p>
+        <p class="text-black text-xs mt-1">Aktivitas mendatang dan rencana cuti Anda</p>
     </div>
 
-    <div class="p-6 space-y-6">
+    <div class="p-3 space-y-4">
         <!-- Next Leave Countdown -->
         @if ($nextLeave)
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-3">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h4 class="font-semibold text-blue-800 mb-1">Cuti Terjadwal Berikutnya</h4>
-                        <p class="text-lg font-bold text-blue-900">{{ $nextLeave->leaveType->name ?? 'Cuti' }}</p>
-                        <p class="text-sm text-blue-700">
-                            {{ $nextLeave->start_date->format('d F Y') }} - {{ $nextLeave->end_date->format('d F Y') }}
+                        <h4 class="font-semibold text-sm text-blue-800 mb-1">Cuti Terjadwal Berikutnya</h4>
+                        <p class="text-sm font-bold text-blue-900">{{ $nextLeave->leaveType->name ?? 'Cuti' }}</p>
+                        <p class="text-[10px] text-blue-700">
+                            {{ $nextLeave->start_date->locale('id')->translatedFormat('d F Y') }} -
+                            {{ $nextLeave->end_date->locale('id')->translatedFormat('d F Y') }}
                         </p>
                     </div>
                     <div class="text-center">
                         <div class="text-3xl font-bold text-blue-600">{{ $daysUntilNextLeave }}</div>
-                        <div class="text-sm font-medium text-blue-700">
+                        <div class="text-xs font-medium text-blue-700">
                             {{ $daysUntilNextLeave }} hari tersisa
                         </div>
                         @php
@@ -65,10 +83,10 @@
                                 default => 'bg-gray-100 text-gray-800 border-gray-200',
                             };
                         @endphp
-                        <span
-                            class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium border {{ $statusClasses }}">
-                            {{ ucfirst($nextLeave->status) }}
-                        </span>
+                        {{-- <span
+                            class="inline-block mt-2 px-3 py-1 text-[10px] font-medium border {{ $statusClasses }}">
+                            {{ $statusTranslations[$nextLeave->status] ?? ucfirst($nextLeave->status) }}
+                        </span> --}}
                     </div>
                 </div>
             </div>
@@ -76,8 +94,8 @@
 
         <!-- Upcoming Leave Requests -->
         @if ($upcomingLeaves->isNotEmpty())
-            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h5 class="font-semibold text-gray-800 mb-3 flex items-center">
+            <div class="bg-gray-50 border border-gray-200  p-3">
+                <h5 class="font-semibold text-gray-800 mb-3 flex items-center text-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m2-6v6a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2m-2 6V9a2 2 0 012-2h2">
@@ -88,11 +106,11 @@
                 <div class="space-y-3">
                     @foreach ($upcomingLeaves as $leave)
                         <div
-                            class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100 hover:shadow-sm transition-all duration-200">
+                            class="flex items-center justify-between p-2 bg-white  border border-gray-100 hover:shadow-sm transition-all duration-200">
                             <div class="flex-1">
                                 <div class="flex items-center justify-between">
                                     <span
-                                        class="font-medium text-gray-800">{{ $leave->leaveType->name ?? 'N/A' }}</span>
+                                        class="font-medium text-gray-800 text-sm mt-3">{{ $leaveTypeTranslations[$leave->leaveType->name] ?? $leave->leaveType->name ?? 'N/A' }}</span>
                                     @php
                                         $statusClasses = match ($leave->status) {
                                             'approved' => 'bg-green-100 text-green-800 border-green-200',
@@ -103,20 +121,20 @@
                                         $daysFromNow = (int) $currentDate->diffInDays($leave->start_date, false);
                                     @endphp
                                     <span
-                                        class="px-2 py-1 rounded-full text-xs font-medium border {{ $statusClasses }}">
-                                        {{ ucfirst($leave->status) }}
+                                        class="px-2 py-1 text-[10px] text-right font-medium border {{ $statusClasses }}">
+                                        {{ $statusTranslations[$leave->status] ?? ucfirst($leave->status) }}
                                     </span>
                                 </div>
-                                <div class="flex items-center justify-between mt-2">
-                                    <span class="text-sm text-gray-600">
-                                        {{ $leave->start_date->format('d M') }} -
-                                        {{ $leave->end_date->format('d M Y') }}
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] text-gray-600">
+                                        {{ $leave->start_date->locale('id')->translatedFormat('d M') }} -
+                                        {{ $leave->end_date->locale('id')->translatedFormat('d M Y') }}
                                     </span>
                                     <div class="flex items-center space-x-3">
-                                        <span class="text-sm font-medium text-gray-700">
+                                        <span class="text-[10px] font-medium text-gray-700">
                                             {{ (int) $leave->total_days }} hari
                                         </span>
-                                        <span class="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                                        <span class="text-[10px] text-right text-blue-600 bg-blue-50 px-2 py-1">
                                             dalam {{ $daysFromNow }} hari
                                         </span>
                                     </div>
@@ -138,7 +156,7 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Tidak Ada Acara Mendatang</h3>
                 <p class="text-gray-600 mb-4">Anda tidak memiliki jadwal cuti atau acara yang akan datang.</p>
                 <a href="/leave/show"
-                    class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200">
+                    class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white  hover:bg-indigo-700 transition-colors duration-200">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -150,7 +168,7 @@
 
         <!-- Recent Leave History (Optional) -->
         @if ($recentLeaves->isNotEmpty())
-            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div class="bg-gray-50 border border-gray-200  p-4">
                 <h5 class="font-semibold text-gray-800 mb-3 flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -160,7 +178,7 @@
                 </h5>
                 <div class="space-y-2">
                     @foreach ($recentLeaves as $leave)
-                        <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100">
+                        <div class="flex items-center justify-between p-3 bg-white  border border-gray-100">
                             <div class="flex-1">
                                 <div class="flex items-center justify-between">
                                     <span
@@ -175,13 +193,13 @@
                                     @endphp
                                     <span
                                         class="px-2 py-1 rounded-full text-xs font-medium border {{ $statusClasses }}">
-                                        {{ ucfirst($leave->status) }}
+                                        {{ $statusTranslations[$leave->status] ?? ucfirst($leave->status) }}
                                     </span>
                                 </div>
                                 <div class="flex items-center justify-between mt-1">
                                     <span class="text-sm text-gray-600">
-                                        {{ $leave->start_date->format('d M') }} -
-                                        {{ $leave->end_date->format('d M Y') }}
+                                        {{ $leave->start_date->locale('id')->translatedFormat('d M') }} -
+                                        {{ $leave->end_date->locale('id')->translatedFormat('d M Y') }}
                                     </span>
                                     <span class="text-sm font-medium text-gray-700">
                                         {{ (int) $leave->total_days }} hari
@@ -211,7 +229,7 @@
             <!-- Secondary Actions -->
             <div class="grid grid-cols-2 gap-3">
                 <a href="/admin/leave-requests"
-                    class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-4 rounded-lg border border-blue-200 hover:border-blue-300 transition-all duration-200 flex items-center justify-center text-sm">
+                    class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-3 px-4  border border-blue-200 hover:border-blue-300 transition-all duration-200 flex items-center justify-center text-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m2-6v6a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2m-2 6V9a2 2 0 012-2h2">
@@ -220,7 +238,7 @@
                     Lihat Semua Permintaan
                 </a>
                 <a href="/admin/leave-requests?tableFilters[status][value]=pending"
-                    class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 font-medium py-3 px-4 rounded-lg border border-yellow-200 hover:border-yellow-300 transition-all duration-200 flex items-center justify-center text-sm">
+                    class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 font-medium py-3 px-4  border border-yellow-200 hover:border-yellow-300 transition-all duration-200 flex items-center justify-center text-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -233,7 +251,7 @@
         <!-- Tips Pengajuan Cuti -->
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
             <h3 class="text-lg font-semibold text-blue-800 mb-4 flex items-center">
-                <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                <div class="bg-blue-100 p-2  mr-3">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
