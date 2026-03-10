@@ -296,8 +296,13 @@ Route::middleware('guest')->group(function () {
 // PROFILE ROUTES
 Route::middleware(\Filament\Http\Middleware\Authenticate::class)->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+    Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::post('/profile/report', [ProfileController::class, 'generateReport'])->name('profile.report');
+    Route::get('/profile/events', [ProfileController::class, 'getEvents'])->name('profile.events');
+    Route::get('/profile/benefits', [ProfileController::class, 'getBenefits'])->name('profile.benefits');
     Route::get('/dashboard', function () {
         return redirect()->route('filament.admin.pages.dashboard');
     })->name('dashboard');

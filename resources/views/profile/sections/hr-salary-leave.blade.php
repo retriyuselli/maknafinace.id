@@ -68,6 +68,16 @@
     $prevRemaining = max(0, $annualLeaveAllowance - $prevUsedLeave);
     $carryOver = $currentMonth <= 2 ? $prevRemaining : 0;
     $effectiveAllowanceYear = $annualLeaveAllowance + $carryOver;
+    $leaveTypeTranslations = [
+        'Annual Leave' => 'Cuti Tahunan',
+        'Sick Leave' => 'Cuti Sakit',
+        'Emergency Leave' => 'Cuti Darurat',
+        'Unpaid Leave' => 'Cuti Tanpa Gaji',
+        'Maternity Leave' => 'Cuti Melahirkan',
+        'Paternity Leave' => 'Cuti Ayah',
+        'Marriage Leave' => 'Cuti Menikah',
+        'Bereavement Leave' => 'Cuti Duka',
+    ];
 @endphp
 
 <!-- HR Salary & Leave Information Section -->
@@ -381,7 +391,7 @@
                             <div class="space-y-2">
                                 @foreach($leaveByType as $type => $days)
                                     <div class="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
-                                        <span class="text-sm font-medium text-gray-700">{{ $type }}</span>
+                                        <span class="text-sm font-medium text-gray-700">{{ $leaveTypeTranslations[$type] ?? $type }}</span>
                                         <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
                                             {{ $days }} hari
                                         </span>
