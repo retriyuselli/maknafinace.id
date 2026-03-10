@@ -47,7 +47,7 @@ class ProspectAppController extends Controller
             'industry_id' => 'required|exists:industries,id',
             'name_of_website' => 'nullable|string|max:255',
             'user_size' => 'required|in:1-10,11-50,51-200,201-500,501-1000,1000+',
-            'service' => 'nullable|in:basic,standard,premium,enterprise',
+            'service' => 'nullable|string',
             'reason_for_interest' => 'required|string|max:1000',
             'notes' => 'nullable|string|max:2000',
         ], [

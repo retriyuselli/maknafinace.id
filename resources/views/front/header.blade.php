@@ -37,17 +37,17 @@
                 <!-- Logo -->
                 <div class="flex-shrink-0 flex items-center">
                     <a href="{{ route('home') }}" class="flex items-center space-x-2">
-                        <img class="h-6 md:h-8 w-auto" src="{{ route('brand.logo') }}" alt="Logo">
+                        <img class="h-4 md:h-6 w-auto" src="{{ route('brand.logo') }}" alt="Logo">
                     </a>
                 </div>
 
                 <!-- Desktop Navigation Menu -->
                 <div class="hidden md:block">
-                    <div class="ml-6 flex items-baseline">
+                    <div class="ml-2 flex items-center space-x-4">
                         <!-- Fitur Dropdown -->
                         <div class="relative group">
                             <a href="#"
-                                class="text-gray-700 ml-7 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 flex items-center">
+                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 flex items-center">
                                 Fitur
                                 <svg class="ml-1 h-4 w-4 transform group-hover:rotate-180 transition-transform duration-200"
                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,33 +70,39 @@
                                     Tetap</a>
                                 <a href="#"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Inventory</a>
+                                {{-- <!--
                                 <a href="{{ route('front.hris_feature') }}"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">HRIS</a>
+                                --> --}}
                                 <a href="{{ route('front.payroll_feature') }}"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Payroll</a>
                             </div>
                         </div>
                         <a href="{{ route('harga') }}"
-                            class="text-gray-700 ml-7 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300">
+                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300">
                             Harga
                         </a>
                         <a href="{{ route('blog') }}"
-                            class="text-gray-700 ml-7 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300">
+                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300">
                             Blog
+                        </a>
+                        <a href="/docs"
+                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300">
+                            Docs
                         </a>
                         @guest
                             <a href="{{ route('front.login') }}"
-                                class="text-gray-700 ml-7 hover:text-blue-600 px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                                class="text-gray-700 hover:text-blue-600 px-4 py-2 rounded-md text-sm font-medium transition duration-300">
                                 Login
                             </a>
                         @endguest
                         @auth
                             <a href="{{ route('profile') }}"
-                                class="text-gray-700 ml-7 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('profile') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('profile') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 Profile
                             </a>
                             <a href="{{ route('dashboard') }}"
-                                class="text-gray-700 ml-7 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 Dashboard
                             </a>
                             @php
@@ -275,6 +281,8 @@
                                 class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Harga</a>
                             <a href="{{ route('blog') }}"
                                 class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Blog</a>
+                            <a href="/docs"
+                                class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Docs</a>
                             @auth
                                 @php
                                     $navUser = Auth::user();

@@ -138,7 +138,7 @@ Route::get('/features/invoice', [FrontInvoiceController::class, 'index'])->name(
 Route::get('/features/biaya', [BiayaFeatureController::class, 'index'])->name('front.biaya_feature');
 Route::get('/features/laporan', [LaporanFeatureController::class, 'index'])->name('front.laporan_feature');
 Route::get('/features/aset', [AsetFeatureController::class, 'index'])->name('front.aset_feature');
-Route::get('/features/hris', [HrisFeatureController::class, 'index'])->name('front.hris_feature');
+// Route::get('/features/hris', [HrisFeatureController::class, 'index'])->name('front.hris_feature');
 Route::get('/features/payroll', [PayrollFeatureController::class, 'index'])->name('front.payroll_feature');
 
 // PRICING
@@ -169,7 +169,14 @@ Route::get('/product', function () {
 })->name('product');
 
 // REGISTRATION (PENDAFTARAN)
-Route::view('/pendaftaran', 'front.pendaftaran')->name('pendaftaran');
+Route::get('/pendaftaran', function () {
+    // Get all industries from database
+    $industries = \App\Models\Industry::all();
+    
+    return view('front.pendaftaran', [
+        'industries' => $industries
+    ]);
+})->name('pendaftaran');
 
 // CONTACT
 Route::view('/kontak', 'front.kontak')->name('kontak');
@@ -394,3 +401,7 @@ Route::get('/laporan/nota-dinas-details/bulan-ini', [ReportController::class, 's
 
 // BANK STATEMENT RECONCILIATION ROUTE
 // Dihapus karena sudah menggunakan standard Filament Page di ViewReconciliation
+
+// DOCUMENTATION (FRONTEND)
+Route::get('/docs', [\App\Http\Controllers\DocumentationController::class, 'index'])->name('docs.index');
+Route::get('/docs/{slug}', [\App\Http\Controllers\DocumentationController::class, 'index'])->name('docs.show');

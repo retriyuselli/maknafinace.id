@@ -9,9 +9,20 @@
             <div class="text-center mb-8">
                 <p class="text-sm text-gray-600 mb-2">Hubungi kami</p>
                 <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                    Diskusikan kebutuhan bisnis<br>
-                    Anda dengan kami
+                    @if(request('plan') == 'hastana')
+                        Bergabung dengan Komunitas Hastana
+                    @elseif(request('plan') == 'non-hastana')
+                        Mulai Perjalanan Bisnis Anda
+                    @else
+                        Diskusikan kebutuhan bisnis<br>
+                        Anda dengan kami
+                    @endif
                 </h1>
+                @if(request('plan'))
+                    <p class="text-lg text-blue-600 font-medium">
+                        Paket yang dipilih: {{ request('plan') == 'hastana' ? 'Anggota Hastana' : 'Non Hastana' }}
+                    </p>
+                @endif
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
@@ -125,11 +136,25 @@
                             @enderror
                         </div>
 
+                        <div>
+                            <label for="service" class="block text-sm font-medium text-gray-700 mb-2">
+                                Paket Layanan
+                            </label>
+                            <select id="service" name="service" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 @error('service') border-red-300 @enderror appearance-none bg-white">
+                                <option value="">Pilih paket layanan</option>
+                                <option value="hastana" {{ (old('service') ?? (request('plan') == 'hastana' ? 'hastana' : '')) == 'hastana' ? 'selected' : '' }}>Paket Anggota Hastana - Rp 8.500.000 / 2 Tahun</option>
+                                <option value="non_hastana" {{ (old('service') ?? (request('plan') == 'non-hastana' ? 'non_hastana' : '')) == 'non_hastana' ? 'selected' : '' }}>Paket Non Hastana - Rp 10.000.000 / 2 Tahun</option>
+                            </select>
+                            @error('service')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Hidden fields for compatibility -->
                         <input type="hidden" name="position" value="Decision Maker">
-                        <input type="hidden" name="service" value="standard">
                         <input type="hidden" name="notes"
-                            value="Form submitted via consultation page - interested in Standard Package">
+                            value="Form submitted via consultation page - interested in {{ request('plan') == 'hastana' ? 'Hastana Member Package' : 'Non Hastana Package' }}">
 
                         <div class="flex items-center">
                             <input id="terms" name="terms" type="checkbox" required
@@ -137,18 +162,6 @@
                             <label for="terms" class="ml-2 block text-sm text-gray-700">
                                 Saya pengambil keputusan dalam pembelian software
                             </label>
-                        </div>
-
-                        <!-- reCAPTCHA placeholder -->
-                        <div class="bg-gray-100 p-4 rounded-lg flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="w-6 h-6 border-2 border-gray-400 rounded mr-3"></div>
-                                <span class="text-sm text-gray-600">I'm not a robot</span>
-                            </div>
-                            <div class="text-xs text-gray-500">
-                                <div>reCAPTCHA</div>
-                                <div>Privacy - Terms</div>
-                            </div>
                         </div>
 
                         <!-- Submit Button -->
@@ -285,42 +298,6 @@
                                         </path>
                                     </svg>
                                 </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer Section with City Cards -->
-            <div class="mt-16">
-                <div class="max-w-4xl mx-auto">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2 text-center">
-                        Wofins hadir di berbagai kota di Indonesia
-                    </h3>
-                    <p class="text-gray-600 text-center mb-8">
-                        Untuk memudahkan layanan konsultasi kami dan lebih dekat dengan Anda.
-                    </p>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- Medan -->
-                        <div class="relative rounded-xl overflow-hidden h-32 bg-gradient-to-r from-blue-600 to-blue-800">
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <h4 class="text-white text-xl font-semibold">Medan</h4>
-                            </div>
-                        </div>
-
-                        <!-- Yogyakarta -->
-                        <div
-                            class="relative rounded-xl overflow-hidden h-32 bg-gradient-to-r from-orange-600 to-orange-800">
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <h4 class="text-white text-xl font-semibold">Yogyakarta</h4>
-                            </div>
-                        </div>
-
-                        <!-- Pekanbaru -->
-                        <div class="relative rounded-xl overflow-hidden h-32 bg-gradient-to-r from-green-600 to-green-800">
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <h4 class="text-white text-xl font-semibold">Pekanbaru</h4>
                             </div>
                         </div>
                     </div>

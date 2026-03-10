@@ -24,7 +24,8 @@
                 <p class="text-gray-600 text-lg">Dapatkan semua fitur yang Anda butuhkan untuk mengelola bisnis wedding
                     organizer</p>
 
-                <!-- Billing Toggle -->
+                <!-- Billing Toggle Removed - Now Fixed 2 Years -->
+                <!-- 
                 <div class="mt-12 mb-8">
                     <div class="flex items-center justify-center space-x-4">
                         <span class="text-gray-700 font-medium">Per Bulan</span>
@@ -41,6 +42,12 @@
                                 Lebih Banyak!)</span></span>
                     </div>
                 </div>
+                -->
+                <div class="mt-8 mb-8">
+                    <span class="inline-block bg-blue-100 text-blue-800 text-sm font-semibold px-4 py-2 rounded-full">
+                        Harga berlaku untuk masa aktif 2 tahun
+                    </span>
+                </div>
             </div>
 
             <!-- 2-Column Pricing Cards -->
@@ -49,18 +56,18 @@
                 <div
                     class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 hover:shadow-xl transition-all duration-300">
                     <div class="text-center mb-8">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Non Hastana</h3>
+                        <h3 class="text-2xl font-bold text-blue-600 mb-2">Non Hastana</h3>
                         <div class="mb-4">
-                            <span class="text-4xl font-bold text-blue-600" id="non-hastana-price">Rp 417.000</span>
-                            <span class="text-gray-500 text-lg" id="non-hastana-period">/bulan</span>
+                            <span class="text-4xl font-bold text-blue-600" id="non-hastana-price">Rp 10.000.000</span>
+                            <span class="text-gray-500 text-lg" id="non-hastana-period">/2 tahun</span>
                         </div>
-                        <p class="text-gray-500">Untuk wedding organizer pemula</p>
+                        <p class="text-gray-500">Untuk umum non-anggota Hastana</p>
                     </div>
 
-                    <button
-                        class="w-full py-3 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-8">
+                    <a href="{{ route('pendaftaran', ['plan' => 'non-hastana']) }}"
+                        class="block w-full text-center py-3 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-8">
                         Mulai Sekarang
-                    </button>
+                    </a>
 
                     <div class="space-y-4">
                         <div class="flex items-center">
@@ -69,7 +76,7 @@
                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                     clip-rule="evenodd"></path>
                             </svg>
-                            <span class="text-gray-700">Manajemen Event Dasar</span>
+                            <span class="text-gray-700">Database Vendor</span>
                         </div>
                         <div class="flex items-center">
                             <svg class="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -77,7 +84,15 @@
                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                     clip-rule="evenodd"></path>
                             </svg>
-                            <span class="text-gray-700">Database Vendor Standar</span>
+                            <span class="text-gray-700">Database Produk</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-gray-700">Priority Support 24/7</span>
                         </div>
                         <div class="flex items-center">
                             <svg class="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -101,7 +116,16 @@
                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                     clip-rule="evenodd"></path>
                             </svg>
-                            <span class="text-gray-700">Email Support</span>
+                            <span class="text-gray-700">WhatsApp Support</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor"
+                                viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-gray-700">Exclusive Training & Workshops</span>
                         </div>
                         <div class="flex items-center">
                             <svg class="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -109,7 +133,7 @@
                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                     clip-rule="evenodd"></path>
                             </svg>
-                            <span class="text-gray-700">Template Kontrak Standar</span>
+                            <span class="text-gray-700">Template Kontrak Kerja</span>
                         </div>
                         <div class="flex items-center">
                             <svg class="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -117,7 +141,7 @@
                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                     clip-rule="evenodd"></path>
                             </svg>
-                            <span class="text-gray-700">Laporan Event Sederhana</span>
+                            <span class="text-gray-700">Laporan Event</span>
                         </div>
                         <div class="flex items-center">
                             <svg class="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -133,7 +157,7 @@
                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                     clip-rule="evenodd"></path>
                             </svg>
-                            <span class="text-gray-700">Free Hosting</span>
+                            <span class="text-gray-700">Free Hosting (By Hostinger)</span>
                         </div>
                     </div>
                 </div>
@@ -152,16 +176,16 @@
                     <div class="text-center mb-8">
                         <h3 class="text-2xl font-bold text-purple-600 mb-2">Anggota Hastana</h3>
                         <div class="mb-4">
-                            <span class="text-4xl font-bold text-purple-600" id="hastana-price">Rp 354.000</span>
-                            <span class="text-gray-500 text-lg" id="hastana-period">/bulan</span>
+                            <span class="text-4xl font-bold text-purple-600" id="hastana-price">Rp 8.500.000</span>
+                            <span class="text-gray-500 text-lg" id="hastana-period">/2 tahun</span>
                         </div>
                         <p class="text-gray-500">Untuk member komunitas Hastana</p>
                     </div>
 
-                    <button
-                        class="w-full py-3 px-6 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors mb-8">
+                    <a href="{{ route('pendaftaran', ['plan' => 'hastana']) }}"
+                        class="block w-full text-center py-3 px-6 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors mb-8">
                         Bergabung Sekarang
-                    </button>
+                    </a>
 
                     <div class="text-center mb-6">
                         <p class="text-purple-600 font-semibold">Semua fitur Non Hastana +</p>
@@ -175,7 +199,16 @@
                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                     clip-rule="evenodd"></path>
                             </svg>
-                            <span class="text-gray-700">Database Vendor Premium</span>
+                            <span class="text-gray-700">Database Vendor</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor"
+                                viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-gray-700">Database Produk</span>
                         </div>
                         <div class="flex items-center">
                             <svg class="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="currentColor"
@@ -247,7 +280,7 @@
                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                     clip-rule="evenodd"></path>
                             </svg>
-                            <span class="text-gray-700">Free Hosting</span>
+                            <span class="text-gray-700">Free Hosting (By Hostinger)</span>
                         </div>
                     </div>
                 </div>
@@ -256,6 +289,8 @@
     </section>
 
     <script>
+        // Toggle script removed as pricing is now fixed for 2 years
+        /*
         document.addEventListener('DOMContentLoaded', function() {
             const toggle = document.getElementById('billing-toggle');
             const toggleContainer = toggle.nextElementSibling;
@@ -282,32 +317,29 @@
             function updatePrices(isYearly) {
                 const prices = {
                     nonHastana: {
-                        monthly: 'Rp 417.000',
-                        yearly: 'Rp 5.000.000',
-                        monthlyPeriod: '/bulan',
-                        yearlyPeriod: '/tahun'
+                        monthly: 'Rp 10.000.000',
+                        yearly: 'Rp 10.000.000',
+                        monthlyPeriod: '/2 tahun',
+                        yearlyPeriod: '/2 tahun'
                     },
                     hastana: {
-                        monthly: 'Rp 354.000',
-                        yearly: 'Rp 4.250.000',
-                        monthlyPeriod: '/bulan',
-                        yearlyPeriod: '/tahun'
+                        monthly: 'Rp 8.500.000',
+                        yearly: 'Rp 8.500.000',
+                        monthlyPeriod: '/2 tahun',
+                        yearlyPeriod: '/2 tahun'
                     }
                 };
 
                 // Update Non Hastana plan
-                document.getElementById('non-hastana-price').textContent = isYearly ? prices.nonHastana.yearly :
-                    prices.nonHastana.monthly;
-                document.getElementById('non-hastana-period').textContent = isYearly ? prices.nonHastana
-                    .yearlyPeriod : prices.nonHastana.monthlyPeriod;
+                document.getElementById('non-hastana-price').textContent = isYearly ? prices.nonHastana.yearly : prices.nonHastana.monthly;
+                document.getElementById('non-hastana-period').textContent = isYearly ? prices.nonHastana.yearlyPeriod : prices.nonHastana.monthlyPeriod;
 
                 // Update Hastana plan
-                document.getElementById('hastana-price').textContent = isYearly ? prices.hastana.yearly : prices
-                    .hastana.monthly;
-                document.getElementById('hastana-period').textContent = isYearly ? prices.hastana.yearlyPeriod :
-                    prices.hastana.monthlyPeriod;
+                document.getElementById('hastana-price').textContent = isYearly ? prices.hastana.yearly : prices.hastana.monthly;
+                document.getElementById('hastana-period').textContent = isYearly ? prices.hastana.yearlyPeriod : prices.hastana.monthlyPeriod;
             }
         });
+        */
     </script>
 
     @include('front.footer')

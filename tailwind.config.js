@@ -58,6 +58,13 @@ export default {
         "hover:to-yellow-200",
         "from-gray-50",
         "to-gray-100",
+        // City Cards Gradients
+        "from-blue-600",
+        "to-blue-800",
+        "from-orange-600",
+        "to-orange-800",
+        "from-green-600",
+        "to-green-800",
         // Text colors
         "text-white",
         "text-blue-700",
@@ -83,5 +90,7 @@ export default {
             },
         },
     },
-    plugins: [],
+    plugins: [
+        require('@tailwindcss/typography'),
+    ],
 };

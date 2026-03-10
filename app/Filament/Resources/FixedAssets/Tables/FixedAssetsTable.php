@@ -166,67 +166,67 @@ class FixedAssetsTable
                         ->requiresConfirmation()
                         ->visible(fn (FixedAsset $record) => ! $record->isFullyDepreciated()),
 
-                    Action::make('create_purchase_journal')
-                        ->label('Buat Jurnal Pembelian')
-                        ->icon('heroicon-o-document-plus')
-                        ->color('info')
-                        ->action(function (FixedAsset $record) {
-                            $journal = $record->createPurchaseJournalEntry();
+                    // Action::make('create_purchase_journal')
+                    //     ->label('Buat Jurnal Pembelian')
+                    //     ->icon('heroicon-o-document-plus')
+                    //     ->color('info')
+                    //     ->action(function (FixedAsset $record) {
+                    //         $journal = $record->createPurchaseJournalEntry();
 
-                            if ($journal) {
-                                Notification::make()
-                                    ->title('Jurnal Pembelian Dibuat')
-                                    ->body("Batch: {$journal->batch_number}")
-                                    ->success()
-                                    ->actions([
-                                        Action::make('view')
-                                            ->label('Lihat Jurnal')
-                                            ->url(fn (): string => route('filament.admin.resources.journal-batches.edit', $journal)),
-                                    ])
-                                    ->send();
-                            } else {
-                                Notification::make()
-                                    ->title('Jurnal Sudah Ada')
-                                    ->body('Jurnal pembelian untuk aset ini sudah dibuat sebelumnya')
-                                    ->warning()
-                                    ->send();
-                            }
-                        })
-                        ->requiresConfirmation()
-                        ->modalHeading('Buat Jurnal Pembelian Aset')
-                        ->modalDescription('Ini akan membuat jurnal entry untuk pembelian aset tetap'),
+                    //         if ($journal) {
+                    //             Notification::make()
+                    //                 ->title('Jurnal Pembelian Dibuat')
+                    //                 ->body("Batch: {$journal->batch_number}")
+                    //                 ->success()
+                    //                 ->actions([
+                    //                     Action::make('view')
+                    //                         ->label('Lihat Jurnal')
+                    //                         ->url(fn (): string => route('filament.admin.resources.journal-batches.edit', $journal)),
+                    //                 ])
+                    //                 ->send();
+                    //         } else {
+                    //             Notification::make()
+                    //                 ->title('Jurnal Sudah Ada')
+                    //                 ->body('Jurnal pembelian untuk aset ini sudah dibuat sebelumnya')
+                    //                 ->warning()
+                    //                 ->send();
+                    //         }
+                    //     })
+                    //     ->requiresConfirmation()
+                    //     ->modalHeading('Buat Jurnal Pembelian Aset')
+                    //     ->modalDescription('Ini akan membuat jurnal entry untuk pembelian aset tetap'),
 
-                    Action::make('create_depreciation_journal')
-                        ->label('Buat Jurnal Penyusutan')
-                        ->icon('heroicon-o-document-text')
-                        ->color('warning')
-                        ->action(function (FixedAsset $record) {
-                            $monthlyDepreciation = $record->calculateMonthlyDepreciation();
-                            $journal = $record->createDepreciationJournalEntry($monthlyDepreciation);
+                    // Action::make('create_depreciation_journal')
+                    //     ->label('Buat Jurnal Penyusutan')
+                    //     ->icon('heroicon-o-document-text')
+                    //     ->color('warning')
+                    //     ->action(function (FixedAsset $record) {
+                    //         $monthlyDepreciation = $record->calculateMonthlyDepreciation();
+                    //         $journal = $record->createDepreciationJournalEntry($monthlyDepreciation);
 
-                            if ($journal) {
-                                Notification::make()
-                                    ->title('Jurnal Penyusutan Dibuat')
-                                    ->body("Batch: {$journal->batch_number}, Jumlah: IDR ".number_format($monthlyDepreciation))
-                                    ->success()
-                                    ->actions([
-                                        Action::make('view')
-                                            ->label('Lihat Jurnal')
-                                            ->url(fn (): string => route('filament.admin.resources.journal-batches.edit', $journal)),
-                                    ])
-                                    ->send();
-                            } else {
-                                Notification::make()
-                                    ->title('Tidak Ada Penyusutan')
-                                    ->body('Aset ini sudah sepenuhnya tersusut atau tidak ada penyusutan')
-                                    ->warning()
-                                    ->send();
-                            }
-                        })
-                        ->requiresConfirmation()
-                        ->modalHeading('Buat Jurnal Penyusutan')
-                        ->modalDescription('Ini akan membuat jurnal entry untuk penyusutan bulanan aset')
-                        ->visible(fn (FixedAsset $record) => ! $record->isFullyDepreciated()),
+                    //         if ($journal) {
+                    //             Notification::make()
+                    //                 ->title('Jurnal Penyusutan Dibuat')
+                    //                 ->body("Batch: {$journal->batch_number}, Jumlah: IDR ".number_format($monthlyDepreciation))
+                    //                 ->success()
+                    //                 ->actions([
+                    //                     Action::make('view')
+                    //                         ->label('Lihat Jurnal')
+                    //                         ->url(fn (): string => route('filament.admin.resources.journal-batches.edit', $journal)),
+                    //                 ])
+                    //                 ->send();
+                    //         } else {
+                    //             Notification::make()
+                    //                 ->title('Tidak Ada Penyusutan')
+                    //                 ->body('Aset ini sudah sepenuhnya tersusut atau tidak ada penyusutan')
+                    //                 ->warning()
+                    //                 ->send();
+                    //         }
+                    //     })
+                    //     ->requiresConfirmation()
+                    //     ->modalHeading('Buat Jurnal Penyusutan')
+                    //     ->modalDescription('Ini akan membuat jurnal entry untuk penyusutan bulanan aset')
+                    //     ->visible(fn (FixedAsset $record) => ! $record->isFullyDepreciated()),
 
                     DeleteAction::make(),
                 ])

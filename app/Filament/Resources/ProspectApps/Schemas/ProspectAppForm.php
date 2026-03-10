@@ -9,6 +9,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
@@ -110,21 +111,20 @@ class ProspectAppForm
                         Select::make('service')
                             ->label('Paket Layanan')
                             ->options([
-                                'basic' => 'Paket Basic - Segera Hadir',
-                                'standard' => 'Paket Standar - Rp 8.500.000',
-                                'premium' => 'Paket Premium - Rp 15.000.000',
-                                'enterprise' => 'Paket Enterprise - Rp 30.000.000',
+                                'hastana' => 'Paket Anggota Hastana - Rp 8.500.000 / 2 Tahun',
+                                'non_hastana' => 'Paket Non Hastana - Rp 10.000.000 / 2 Tahun',
                             ])
                             ->reactive()
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (?string $state, Set $set) {
+                            ->afterStateUpdated(function (?string $state, \Filament\Schemas\Components\Utilities\Set $set) {
                                 $mapping = [
-                                    'standard' => 8500000,
-                                    'premium' => 15000000,
-                                    'enterprise' => 30000000,
-                                    'basic' => null,
+                                    'hastana' => 8500000,
+                                    'non_hastana' => 10000000,
                                 ];
                                 $set('harga', $mapping[$state] ?? null);
+                                // Reset sisa_bayar if service changes
+                                $set('sisa_bayar', $mapping[$state] ?? null);
+                                $set('bayar', null); // Reset payment amount
                             })
                             ->helperText('Pilih paket layanan untuk mengisi anggaran otomatis'),
                     ])
@@ -153,7 +153,30 @@ class ProspectAppForm
                             ->stripCharacters(',')
                             ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                             ->helperText('Jika ada pembayaran, isi nominalnya')
-                            ->dehydrated(),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, $get, $set) {
+                                // Get harga from service mapping first to ensure accuracy
+                                $service = $get('service');
+                                $mapping = [
+                                    'hastana' => 8500000,
+                                    'non_hastana' => 10000000,
+                                ];
+                                
+                                // Use mapped price if available, otherwise fallback to harga field
+                                $harga = $mapping[$service] ?? (int) preg_replace('/[^\d]/', '', (string) $get('harga'));
+                                $bayar = (int) preg_replace('/[^\d]/', '', (string) $state);
+                                
+                                $set('sisa_bayar', max(0, $harga - $bayar));
+                            }),
+
+                        TextInput::make('sisa_bayar')
+                            ->label('Sisa Pembayaran')
+                            ->prefix('Rp. ')
+                            ->mask(RawJs::make('$money($input)'))
+                            ->stripCharacters(',')
+                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                            ->readOnly()
+                            ->helperText('Otomatis: Anggaran - Jumlah Dibayar'),
 
                         RichEditor::make('notes')
                             ->label('Catatan Internal')

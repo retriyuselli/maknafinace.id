@@ -28,6 +28,7 @@ class ProspectApp extends Model
         'reason_for_interest',
         'status',
         'submitted_at',
+        'sisa_bayar',
     ];
 
     protected $casts = [
@@ -35,6 +36,7 @@ class ProspectApp extends Model
         'tgl_bayar' => 'date',
         'harga' => 'integer',
         'bayar' => 'integer',
+        'sisa_bayar' => 'integer',
         'status' => 'string',
     ];
 
