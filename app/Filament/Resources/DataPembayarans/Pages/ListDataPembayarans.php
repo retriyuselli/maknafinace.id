@@ -4,6 +4,7 @@ namespace App\Filament\Resources\DataPembayarans\Pages;
 
 use App\Filament\Resources\DataPembayarans\DataPembayaranResource;
 use App\Filament\Resources\DataPembayarans\Widgets\DataPembayaranStatsOverview;
+use App\Filament\Resources\DataPembayarans\Widgets\InvoiceStatsOverview;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
@@ -36,6 +37,7 @@ class ListDataPembayarans extends ListRecords
     {
         return [
             DataPembayaranStatsOverview::class,
+            InvoiceStatsOverview::class,
         ];
     }
 }

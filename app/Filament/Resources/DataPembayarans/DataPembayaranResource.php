@@ -7,6 +7,7 @@ use App\Filament\Resources\DataPembayarans\Pages\ListDataPembayarans;
 use App\Filament\Resources\DataPembayarans\Schemas\DataPembayaranForm;
 use App\Filament\Resources\DataPembayarans\Tables\DataPembayaransTable;
 use App\Filament\Resources\DataPembayarans\Widgets\DataPembayaranStatsOverview;
+use App\Filament\Resources\DataPembayarans\Widgets\InvoiceStatsOverview;
 use App\Models\DataPembayaran;
 use Carbon\Carbon;
 use Filament\Resources\Resource;
@@ -68,7 +69,7 @@ class DataPembayaranResource extends Resource
     {
         return [
             DataPembayaranStatsOverview::class,
-            // Anda juga bisa menambahkan LatestDataPembayaranTableWidget::class di sini jika diinginkan
+            InvoiceStatsOverview::class,
         ];
     }
 
