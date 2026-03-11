@@ -47,7 +47,7 @@
                         <!-- Fitur Dropdown -->
                         <div class="relative group">
                             <a href="#"
-                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 flex items-center">
+                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 flex items-center {{ request()->routeIs('front.*') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 Fitur
                                 <svg class="ml-1 h-4 w-4 transform group-hover:rotate-180 transition-transform duration-200"
                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,24 +70,20 @@
                                     Tetap</a>
                                 <a href="#"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Inventory</a>
-                                {{-- <!--
-                                <a href="{{ route('front.hris_feature') }}"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">HRIS</a>
-                                --> --}}
                                 <a href="{{ route('front.payroll_feature') }}"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Payroll</a>
                             </div>
                         </div>
                         <a href="{{ route('harga') }}"
-                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300">
+                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('harga') ? 'text-blue-600 bg-blue-50' : '' }}">
                             Harga
                         </a>
                         <a href="{{ route('blog') }}"
-                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300">
+                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('blog*') ? 'text-blue-600 bg-blue-50' : '' }}">
                             Blog
                         </a>
                         <a href="/docs"
-                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300">
+                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->is('docs*') ? 'text-blue-600 bg-blue-50' : '' }}">
                             Docs
                         </a>
                         @guest
@@ -250,7 +246,7 @@
                             <!-- Fitur Dropdown for Mobile -->
                             <div>
                                 <button @click="mobileFiturOpen = !mobileFiturOpen"
-                                    class="flex items-center justify-between w-full px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                    class="flex items-center justify-between w-full px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('front.*') ? 'bg-blue-50 text-blue-600' : '' }}">
                                     <span>Fitur</span>
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

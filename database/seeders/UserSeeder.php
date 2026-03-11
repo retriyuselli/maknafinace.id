@@ -250,8 +250,8 @@ class UserSeeder extends Seeder
         $employeeRole = $roles->get('employee');
 
         if ($staffStatus && $employeeRole) {
-            $this->command->info('🏭 Creating 10 sample staff users using factory...');
-            User::factory(10)->create([
+            $this->command->info('🏭 Creating 5 sample staff users using factory...');
+            User::factory(5)->create([
                 'status_id' => $staffStatus->id,
             ])->each(function ($user) use ($employeeRole) {
                 $user->syncRoles([$employeeRole]);
