@@ -78,6 +78,9 @@ class VendorForm
                                             ->helperText('Tandai vendor ini sebagai data master')
                                             ->reactive()
                                             ->default(false),
+                                        Toggle::make('is_published')
+                                            ->required()
+                                            ->default(false),
                                         RichEditor::make('description')
                                             ->columnSpanFull()
                                             ->label('Description')

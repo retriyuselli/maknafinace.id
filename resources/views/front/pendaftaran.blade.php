@@ -170,10 +170,74 @@
                             Jadwalkan meeting
                         </button>
 
-                        <div class="text-sm text-gray-600">
+                        <div class="text-sm text-gray-600 relative z-0">
                             Dengan klik tombol jadwalkan meeting, saya menyetujui
-                            <a href="#" class="text-blue-600 hover:underline">syarat & ketentuan</a>
-                            serta <a href="#" class="text-blue-600 hover:underline">pernyataan privasi</a> Wofins.
+                            <button type="button" onclick="document.getElementById('termsModal').classList.remove('hidden')" class="text-blue-600 hover:underline relative z-10 font-medium">syarat & ketentuan</button>
+                            serta <button type="button" onclick="document.getElementById('privacyModal').classList.remove('hidden')" class="text-blue-600 hover:underline relative z-10 font-medium">pernyataan privasi</button> Wofins.
+                        </div>
+
+                        <!-- Terms Modal -->
+                        <div id="termsModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="document.getElementById('termsModal').classList.add('hidden')"></div>
+                                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                        <div class="sm:flex sm:items-start">
+                                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Syarat & Ketentuan</h3>
+                                                <div class="mt-2 h-64 overflow-y-auto text-sm text-gray-500">
+                                                    <p class="mb-2">Selamat datang di Wofins. Dengan menggunakan layanan kami, Anda menyetujui syarat dan ketentuan berikut:</p>
+                                                    <ul class="list-disc pl-5 space-y-1">
+                                                        <li>Layanan disediakan "sebagaimana adanya".</li>
+                                                        <li>Kami berhak mengubah fitur layanan sewaktu-waktu.</li>
+                                                        <li>Pengguna bertanggung jawab atas keamanan akun masing-masing.</li>
+                                                        <li>Dilarang menggunakan layanan untuk kegiatan ilegal.</li>
+                                                        <li>Pembayaran yang sudah dilakukan tidak dapat dikembalikan (non-refundable), kecuali ditentukan lain.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                        <button type="button" onclick="document.getElementById('termsModal').classList.add('hidden')" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                                            Tutup
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Privacy Modal -->
+                        <div id="privacyModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="document.getElementById('privacyModal').classList.add('hidden')"></div>
+                                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                        <div class="sm:flex sm:items-start">
+                                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Pernyataan Privasi</h3>
+                                                <div class="mt-2 h-64 overflow-y-auto text-sm text-gray-500">
+                                                    <p class="mb-2">Kami menghargai privasi Anda. Berikut adalah ringkasan bagaimana kami mengelola data Anda:</p>
+                                                    <ul class="list-disc pl-5 space-y-1">
+                                                        <li>Kami mengumpulkan data hanya untuk keperluan layanan.</li>
+                                                        <li>Data Anda tidak akan dijual ke pihak ketiga.</li>
+                                                        <li>Kami menggunakan enkripsi untuk melindungi data sensitif.</li>
+                                                        <li>Anda berhak meminta penghapusan data Anda kapan saja.</li>
+                                                        <li>Cookie digunakan untuk meningkatkan pengalaman pengguna.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                        <button type="button" onclick="document.getElementById('privacyModal').classList.add('hidden')" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                                            Tutup
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Error Display -->

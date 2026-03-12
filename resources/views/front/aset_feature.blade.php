@@ -52,7 +52,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
                     <!-- Using a placeholder or generic dashboard image since we don't have the exact user image asset -->
-                    <img src="{{ asset('images/aset-dashboard-preview.png') }}" alt="Dashboard Aset"
+                    <img src="{{ asset('images/aset_tetap/aset.png') }}" alt="Dashboard Aset"
                         class="rounded-lg shadow-xl mx-auto"
                         onerror="this.src='https://placehold.co/1200x600/e2e8f0/1e293b?text=Dashboard+Aset+Tetap'">
                 </div>
@@ -74,7 +74,7 @@
                         </p>
                     </div>
                     <div class="mt-10 lg:mt-0 relative">
-                        <img class="rounded-lg shadow-lg" src="{{ asset('images/aset-report-preview.png') }}"
+                        <img class="rounded-lg shadow-lg" src="{{ asset('images/aset_tetap/aset1.png') }}"
                             alt="Laporan Aset"
                             onerror="this.src='https://placehold.co/600x400/e2e8f0/1e293b?text=Laporan+Aset+Realtime'">
                     </div>
@@ -139,9 +139,9 @@
                         lagi repot dengan rumus-rumus depresiasi yang ribet itu.
                     </p>
                 </div>
-                <div class="bg-white rounded-xl shadow-2xl overflow-hidden p-4">
+                <div class="bg-white rounded-xl shadow-2xl overflow-hidden flex justify-center w-full max-w-4xl mx-auto p-2">
                     <!-- Form Placeholder matching image -->
-                    <img src="{{ asset('images/aset-depreciation-calc.png') }}" alt="Kalkulasi Depresiasi" class="w-full"
+                    <img src="{{ asset('images/aset_tetap/aset2.png') }}" alt="Kalkulasi Depresiasi" class="w-full h-auto"
                         onerror="this.src='https://placehold.co/1200x500/e2e8f0/1e293b?text=Perhitungan+Depresiasi+Otomatis'">
                 </div>
             </div>

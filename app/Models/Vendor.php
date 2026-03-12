@@ -22,6 +22,7 @@ class Vendor extends Model
         'address',
         'status',
         'is_master',
+        'is_published',
         'stock',
         'description',
         'harga_publish',

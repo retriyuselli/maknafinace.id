@@ -201,7 +201,7 @@
                             <h3 class="font-semibold text-primary-900 mb-2">Butuh bantuan sekarang?</h3>
                             <p class="text-primary-800 text-sm">
                                 Hubungi kami di <span class="font-semibold">WhatsApp: +62 813-7318-3794</span> atau
-                                <span class="font-semibold">Email: info@maknaspace.com</span>
+                                <span class="font-semibold">Email: maknawedding@gmail.com</span>
                             </p>
                         </div>
                     </div>

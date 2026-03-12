@@ -89,6 +89,12 @@ class VendorsTable
                     ->tooltip(fn (bool $state): string => $state ? 'Master data' : 'Regular')
                     ->alignCenter(),
 
+                IconColumn::make('is_published')
+                    ->label('Published')
+                    ->boolean()
+                    ->sortable()
+                    ->alignCenter(),
+
                 TextColumn::make('harga_publish')
                     ->label('Published Price')
                     ->numeric()

@@ -254,22 +254,18 @@
                                     </svg>
                                 </button>
                                 <div x-show="mobileFiturOpen" class="pl-4 bg-gray-50">
-                                    <a href="#"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">Invoice</a>
-                                    <a href="#"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">Vendor</a>
-                                    <a href="#"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">Biaya</a>
-                                    <a href="#"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">Laporan</a>
-                                    <a href="#"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">Aset Tetap</a>
+                                    <a href="{{ route('front.invoice') }}"
+                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.invoice') ? 'text-blue-600 bg-blue-50' : '' }}">Invoice</a>
+                                    <a href="{{ route('front.biaya_feature') }}"
+                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.biaya_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Biaya</a>
+                                    <a href="{{ route('front.laporan_feature') }}"
+                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.laporan_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Laporan</a>
+                                    <a href="{{ route('front.aset_feature') }}"
+                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.aset_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Aset Tetap</a>
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">Inventory</a>
-                                    <a href="#"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">HRIS</a>
-                                    <a href="#"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">Payroll</a>
+                                    <a href="{{ route('front.payroll_feature') }}"
+                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.payroll_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Payroll</a>
                                 </div>
                             </div>
 
