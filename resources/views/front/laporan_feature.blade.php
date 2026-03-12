@@ -19,7 +19,7 @@
                         cara lebih mudah menggunakan software akuntansi Wofins.
                     </p>
                     <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <a href="{{ route('front.register') }}"
+                        <a href="{{ route('pendaftaran') }}"
                             class="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-center">
                             Coba Gratis Sekarang
                         </a>
@@ -122,8 +122,9 @@
                     </div>
                     <div class="lg:w-1/2">
                         <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-2">
-                            <img src="https://placehold.co/600x400/e2e8f0/475569?text=Dashboard+Preview"
-                                alt="Dashboard Preview" class="rounded-xl w-full h-auto">
+                            <img src="{{ asset('images/laporan/laporan1.png') }}"
+                                alt="Dashboard Preview" class="rounded-xl w-full h-auto"
+                                onerror="this.src='https://placehold.co/600x400/e2e8f0/475569?text=Dashboard+Preview'">
                         </div>
                     </div>
                 </div>
@@ -197,7 +198,7 @@
                     <div class="lg:w-1/2">
                         <div
                             class="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 transform rotate-2 hover:rotate-0 transition duration-500">
-                            <img src="https://placehold.co/600x400/e2e8f0/475569?text=Tablet+Data+View"
+                            <img src="{{ asset('images/laporan/laporan2.png') }}"
                                 alt="Data Analysis" class="rounded-xl w-full h-auto">
                         </div>
                     </div>

@@ -81,11 +81,12 @@
                                         </a>
                                     @endif
                                 @endif
-                                {{-- @if (Route::has('front.register'))
-                                    <a href="{{ route('front.register') }}"
-                                        class="hidden w-full inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Create
-                                        an account</a>
-                                @endif --}}
+                                <p class="mt-2 text-center text-sm text-gray-600">
+                                    Belum punya akun?
+                                    <a href="{{ route('pendaftaran') }}" class="font-medium text-blue-600 hover:text-blue-500">
+                                        Daftar sekarang
+                                    </a>
+                                </p>
                             </div>
                         </form>
                     </div>

@@ -17,8 +17,9 @@
                         Satu platform untuk semua kebutuhan manajemen vendor Anda. Simpan data, pantau kinerja, dan kelola pembayaran vendor dengan mudah.
                     </p>
                     <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <a href="{{ route('front.register') }}" class="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-center">
-                            Mulai Kelola Vendor
+                        <a href="{{ route('pendaftaran') }}"
+                            class="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-center">
+                            Coba Gratis Sekarang
                         </a>
                         <a href="#features" class="w-full sm:w-auto px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg border border-blue-200 hover:bg-blue-50 transition duration-300 flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,7 +213,7 @@
                     Bergabunglah sekarang dan rasakan kemudahan manajemen vendor dan pengadaan barang dalam satu aplikasi.
                 </p>
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <a href="{{ route('front.register') }}" class="px-8 py-4 bg-white text-blue-600 font-bold rounded-lg shadow-lg hover:bg-gray-100 transition duration-300">
+                    <a href="{{ route('pendaftaran') }}" class="px-8 py-4 bg-white text-blue-600 font-bold rounded-lg shadow-lg hover:bg-gray-100 transition duration-300">
                         Daftar Sekarang Gratis
                     </a>
                     <a href="{{ route('front.kontak') }}" class="px-8 py-4 bg-blue-700 text-white font-bold rounded-lg border border-blue-500 hover:bg-blue-800 transition duration-300">

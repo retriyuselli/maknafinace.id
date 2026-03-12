@@ -21,7 +21,7 @@
                             </p>
                             <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                                 <div class="rounded-md shadow">
-                                    <a href="{{ route('front.register') }}"
+                                    <a href="{{ route('pendaftaran') }}"
                                         class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg">
                                         Coba Gratis Sekarang
                                     </a>
@@ -134,13 +134,13 @@
                 </p>
                 <div class="mt-8 flex justify-center">
                     <div class="inline-flex rounded-md shadow">
-                        <a href="{{ route('front.register') }}"
+                        <a href="{{ route('pendaftaran') }}"
                             class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50">
                             Coba Gratis Sekarang
                         </a>
                     </div>
                     <div class="ml-3 inline-flex">
-                        <a href="https://wa.me/6281234567890"
+                        <a href="https://wa.me/6281373183794"
                             class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-800 hover:bg-blue-900">
                             Jadwalkan Demo
                         </a>

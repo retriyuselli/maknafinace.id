@@ -68,8 +68,7 @@
                                 <a href="{{ route('front.aset_feature') }}"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Aset
                                     Tetap</a>
-                                <a href="#"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Inventory</a>
+
                                 <a href="{{ route('front.payroll_feature') }}"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Payroll</a>
                             </div>
@@ -262,8 +261,7 @@
                                         class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.laporan_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Laporan</a>
                                     <a href="{{ route('front.aset_feature') }}"
                                         class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.aset_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Aset Tetap</a>
-                                    <a href="#"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">Inventory</a>
+
                                     <a href="{{ route('front.payroll_feature') }}"
                                         class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.payroll_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Payroll</a>
                                 </div>
@@ -297,16 +295,6 @@
                                 <a href="{{ route('dashboard') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600' : '' }}">Dashboard</a>
                             @endauth
-                            {{-- <a href="{{ route('vendor') }}"
-                                class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('vendor') ? 'bg-blue-50 text-blue-600' : '' }}">Vendor</a>
-                            @if ($hasProjectAccess)
-                                <a href="{{ route('project') }}"
-                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('project') ? 'bg-blue-50 text-blue-600' : '' }}">Project</a>
-                            @endif
-                            <a href="{{ route('anggota') }}"
-                                class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('anggota') ? 'bg-blue-50 text-blue-600' : '' }}">Anggota</a>
-                            <a href="{{ route('kontak') }}"
-                                class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('kontak') ? 'bg-pink-50 text-pink-600' : '' }}">Kontak</a> --}}
 
                             @guest
                                 <hr class="my-2">

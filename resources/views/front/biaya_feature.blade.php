@@ -18,7 +18,7 @@
                         Catat biaya, pantau pos pengeluaran, dan dapatkan laporan pengeluaran dalam hitungan detik.
                     </p>
                     <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <a href="{{ route('front.register') }}"
+                        <a href="{{ route('pendaftaran') }}"
                             class="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-center">
                             Coba Gratis Sekarang
                         </a>

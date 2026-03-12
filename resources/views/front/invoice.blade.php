@@ -18,11 +18,11 @@
                         untuk bisnis Anda.
                     </p>
                     <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <a href="{{ route('front.register') }}"
+                        <a href="{{ route('pendaftaran') }}"
                             class="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-center">
                             Coba Gratis Sekarang
                         </a>
-                        <a href="#features"
+                        <a href="https://wa.me/6281373183794"
                             class="w-full sm:w-auto px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg border border-blue-200 hover:bg-blue-50 transition duration-300 flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -277,7 +277,7 @@
                     Bergabunglah dengan ribuan pebisnis yang telah beralih ke sistem invoice modern kami.
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <a href="{{ route('front.register') }}"
+                    <a href="{{ route('pendaftaran') }}"
                         class="w-full sm:w-auto px-8 py-4 bg-white text-blue-600 font-bold rounded-lg hover:bg-gray-100 transition duration-300 shadow-lg">
                         Mulai Sekarang Gratis
                     </a>
