@@ -178,11 +178,11 @@
                 </h5>
                 <div class="space-y-2">
                     @foreach ($recentLeaves as $leave)
-                        <div class="flex items-center justify-between p-3 bg-white  border border-gray-100">
+                        <div class="flex items-center justify-between p-2 bg-white  border border-gray-100">
                             <div class="flex-1">
                                 <div class="flex items-center justify-between">
                                     <span
-                                        class="font-medium text-gray-800">{{ $leave->leaveType->name ?? 'N/A' }}</span>
+                                        class="text-[14px] text-gray-800">{{ $leave->leaveType->name ?? 'N/A' }}</span>
                                     @php
                                         $statusClasses = match ($leave->status) {
                                             'approved' => 'bg-green-100 text-green-800 border-green-200',
@@ -192,16 +192,16 @@
                                         };
                                     @endphp
                                     <span
-                                        class="px-2 py-1 rounded-full text-xs font-medium border {{ $statusClasses }}">
+                                        class="px-2 py-1 mt-1 text-[10px] text-right font-medium border {{ $statusClasses }}">
                                         {{ $statusTranslations[$leave->status] ?? ucfirst($leave->status) }}
                                     </span>
                                 </div>
-                                <div class="flex items-center justify-between mt-1">
-                                    <span class="text-sm text-gray-600">
+                                <div class="flex items-center justify-between mt-0">
+                                    <span class="text-[10px] text-gray-600">
                                         {{ $leave->start_date->locale('id')->translatedFormat('d M') }} -
                                         {{ $leave->end_date->locale('id')->translatedFormat('d M Y') }}
                                     </span>
-                                    <span class="text-sm font-medium text-gray-700">
+                                    <span class="text-[10px] text-gray-700">
                                         {{ (int) $leave->total_days }} hari
                                     </span>
                                 </div>
