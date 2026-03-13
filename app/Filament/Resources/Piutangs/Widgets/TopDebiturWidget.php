@@ -19,23 +19,26 @@ class TopDebiturWidget extends BaseWidget
 
     public function table(Table $table): Table
     {
+        $subQuery = Piutang::query()
+            ->select([
+                DB::raw('ROW_NUMBER() OVER (ORDER BY SUM(sisa_piutang) DESC) as id'),
+                'nama_debitur',
+                'kontak_debitur',
+                DB::raw('COUNT(*) as total_piutang'),
+                DB::raw('SUM(total_piutang) as total_nilai'),
+                DB::raw('SUM(sisa_piutang) as total_sisa'),
+                DB::raw('SUM(sudah_dibayar) as total_dibayar'),
+                DB::raw('MAX(tanggal_jatuh_tempo) as jatuh_tempo_terdekat'),
+            ])
+            ->where('sisa_piutang', '>', 0)
+            ->groupBy('nama_debitur', 'kontak_debitur');
+
         return $table
             ->query(
                 Piutang::query()
-                    ->select([
-                        DB::raw('ROW_NUMBER() OVER (ORDER BY SUM(sisa_piutang) DESC) as id'),
-                        'nama_debitur',
-                        'kontak_debitur',
-                        DB::raw('COUNT(*) as total_piutang'),
-                        DB::raw('SUM(total_piutang) as total_nilai'),
-                        DB::raw('SUM(sisa_piutang) as total_sisa'),
-                        DB::raw('SUM(sudah_dibayar) as total_dibayar'),
-                        DB::raw('MAX(tanggal_jatuh_tempo) as jatuh_tempo_terdekat'),
-                    ])
-                    ->where('sisa_piutang', '>', 0)
-                    ->groupBy('nama_debitur', 'kontak_debitur')
-                    ->orderBy('total_sisa', 'desc')
-                    ->limit(10)
+                    ->fromSub($subQuery, 'piutangs')
+                    ->select('*')
+                    ->orderByDesc('total_sisa')
             )
             ->columns([
                 TextColumn::make('nama_debitur')

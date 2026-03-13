@@ -109,36 +109,30 @@ class RegenerateJournalEntries extends Command
         $regenerated = 0;
 
         foreach ($expenses as $expense) {
-            // Check if expense has existing journal (check both 'expense' and 'expense_reversal' types)
-            $existingJournal = JournalBatch::where('reference_id', $expense->id)
-                ->whereIn('reference_type', ['expense', 'expense_reversal'])
+            $existingJournal = JournalBatch::where('reference_type', 'expense')
+                ->where('reference_id', $expense->id)
+                ->whereIn('status', ['draft', 'posted'])
                 ->first();
 
             if ($existingJournal) {
-                $originalDate = $existingJournal->transaction_date;
+                $originalDate = $existingJournal->transaction_date?->toDateString();
                 $newDate = $this->calculateCorrectExpenseDate($expense);
 
                 if ($originalDate != $newDate || $this->option('force')) {
                     if ($dryRun) {
                         $this->line("   [DRY RUN] Would regenerate Expense {$expense->id} journal: {$originalDate} → {$newDate}");
                     } else {
-                        // Delete existing journal entries
-                        JournalEntry::where('journal_batch_id', $existingJournal->id)->delete();
-                        $existingJournal->delete();
+                        $existingJournal->update(['transaction_date' => $newDate]);
+                        JournalEntry::where('journal_batch_id', $existingJournal->id)
+                            ->update(['transaction_date' => $newDate]);
 
-                        // Regenerate with correct date
-                        $journal = $this->journalService->generateExpenseJournal($expense);
-                        if ($journal) {
-                            $this->line("   ✅ Regenerated Expense {$expense->id} journal: {$originalDate} → {$newDate}");
-                        } else {
-                            $this->error("   ❌ Failed to regenerate journal for Expense {$expense->id}");
-                        }
+                        $this->line("   ✅ Regenerated Expense {$expense->id} journal: {$originalDate} → {$newDate}");
 
                         Log::info('Regenerated expense journal', [
                             'expense_id' => $expense->id,
                             'original_date' => $originalDate,
                             'new_date' => $newDate,
-                            'success' => $journal !== null,
+                            'success' => true,
                         ]);
                     }
                     $regenerated++;
@@ -184,20 +178,24 @@ class RegenerateJournalEntries extends Command
         $regenerated = 0;
 
         foreach ($payments as $payment) {
-            $existingJournal = $payment->journalBatches()->first();
+            $existingJournal = $payment->journalBatches()
+                ->where('reference_type', 'payment')
+                ->whereIn('status', ['draft', 'posted'])
+                ->first();
 
             if ($existingJournal) {
-                if ($this->option('force')) {
-                    if ($dryRun) {
-                        $this->line("   [DRY RUN] Would regenerate Payment {$payment->id} journal");
-                    } else {
-                        // Delete existing journal entries
-                        JournalEntry::where('journal_batch_id', $existingJournal->id)->delete();
-                        $existingJournal->delete();
+                $originalDate = $existingJournal->transaction_date?->toDateString();
+                $newDate = ($payment->tgl_bayar ?? now())->format('Y-m-d');
 
-                        // Regenerate
-                        $this->journalService->generatePaymentJournal($payment);
-                        $this->line("   ✅ Regenerated Payment {$payment->id} journal");
+                if ($originalDate != $newDate || $this->option('force')) {
+                    if ($dryRun) {
+                        $this->line("   [DRY RUN] Would regenerate Payment {$payment->id} journal: {$originalDate} → {$newDate}");
+                    } else {
+                        $existingJournal->update(['transaction_date' => $newDate]);
+                        JournalEntry::where('journal_batch_id', $existingJournal->id)
+                            ->update(['transaction_date' => $newDate]);
+
+                        $this->line("   ✅ Regenerated Payment {$payment->id} journal: {$originalDate} → {$newDate}");
                     }
                     $regenerated++;
                 }
@@ -248,21 +246,23 @@ class RegenerateJournalEntries extends Command
             }
 
             $existingJournal = $order->journalBatches()
-                ->where('reference_type', 'revenue')
+                ->where('reference_type', 'order_revenue')
+                ->whereIn('status', ['draft', 'posted'])
                 ->first();
 
             if ($existingJournal) {
-                if ($this->option('force')) {
-                    if ($dryRun) {
-                        $this->line("   [DRY RUN] Would regenerate Order {$order->id} revenue journal");
-                    } else {
-                        // Delete existing journal entries
-                        JournalEntry::where('journal_batch_id', $existingJournal->id)->delete();
-                        $existingJournal->delete();
+                $originalDate = $existingJournal->transaction_date?->toDateString();
+                $newDate = ($order->closing_date ?? now())->format('Y-m-d');
 
-                        // Regenerate
-                        $this->journalService->generateRevenueRecognitionJournal($order);
-                        $this->line("   ✅ Regenerated Order {$order->id} revenue journal");
+                if ($originalDate != $newDate || $this->option('force')) {
+                    if ($dryRun) {
+                        $this->line("   [DRY RUN] Would regenerate Order {$order->id} revenue journal: {$originalDate} → {$newDate}");
+                    } else {
+                        $existingJournal->update(['transaction_date' => $newDate]);
+                        JournalEntry::where('journal_batch_id', $existingJournal->id)
+                            ->update(['transaction_date' => $newDate]);
+
+                        $this->line("   ✅ Regenerated Order {$order->id} revenue journal: {$originalDate} → {$newDate}");
                     }
                     $regenerated++;
                 }
@@ -289,9 +289,10 @@ class RegenerateJournalEntries extends Command
         $orderClosingDate = $expense->order?->closing_date;
         $today = now();
 
-        // Use the earliest date among: expense date, order closing date, today
-        $dates = array_filter([$expenseDate, $orderClosingDate, $today]);
+        $dates = collect([$expenseDate, $orderClosingDate, $today])
+            ->filter()
+            ->map(fn ($d) => $d->copy()->startOfDay());
 
-        return min($dates)->format('Y-m-d');
+        return $dates->min()?->toDateString() ?? now()->toDateString();
     }
 }

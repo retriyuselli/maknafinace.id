@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\Prospects\Tables;
 
 use App\Enums\OrderStatus;
+use App\Filament\Resources\Prospects\ProspectResource;
 use App\Models\Prospect;
 use Carbon\Carbon;
 use Exception;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -27,8 +29,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class ProspectsTable
 {
@@ -518,6 +518,13 @@ class ProspectsTable
             ->emptyStateHeading('Tidak ada prospek ditemukan')
             ->emptyStateDescription('Buat prospek pertama Anda untuk memulai.')
             ->emptyStateIcon('heroicon-o-users')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Prospek Baru')
+                    ->url(fn (): string => ProspectResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ])
             ->poll('30s');
     }
 }

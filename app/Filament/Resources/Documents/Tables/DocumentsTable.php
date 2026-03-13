@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Documents\Tables;
 
+use App\Filament\Resources\Documents\DocumentResource;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -83,19 +85,34 @@ class DocumentsTable
                     ]),
                 TrashedFilter::make(),
             ])
-            ->actions([
+            ->recordActions([
                 ActionGroup::make([
                     ViewAction::make(),
                     EditAction::make()
-                        ->visible(fn () => Auth::user()?->hasRole('super_admin')),
+                        ->visible(function (): bool {
+                            $user = Auth::user();
+                            if (! $user instanceof \App\Models\User) {
+                                return false;
+                            }
+
+                            return $user->hasRole('super_admin');
+                        }),
                 ]),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),
+            ])
+            ->emptyStateDescription('Silakan buat dokumen baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Dokumen Baru')
+                    ->url(fn (): string => DocumentResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
             ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Piutangs\Tables;
 
 use App\Enums\JenisPiutang;
 use App\Enums\StatusPiutang;
+use App\Filament\Resources\Piutangs\PiutangResource;
 use App\Models\Piutang;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -123,6 +124,14 @@ class PiutangsTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('tanggal_jatuh_tempo', 'asc');
+            ->defaultSort('tanggal_jatuh_tempo', 'asc')
+            ->emptyStateDescription('Silakan buat piutang baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Piutang Baru')
+                    ->url(fn (): string => PiutangResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 }

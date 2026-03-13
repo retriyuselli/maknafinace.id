@@ -9,6 +9,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CreateBankStatement extends CreateRecord
@@ -76,7 +77,8 @@ class CreateBankStatement extends CreateRecord
 
                 // Use BankStatement as bank reconciliation for the import
                 $import = new BankReconciliationImport($record);
-                Excel::import($import, storage_path('app/public/'.$reconciliationFile));
+                $disk = Storage::disk('private')->exists($reconciliationFile) ? 'private' : 'public';
+                Excel::import($import, Storage::disk($disk)->path($reconciliationFile));
 
                 // Check for errors from the import
                 $errors = $import->getErrors();

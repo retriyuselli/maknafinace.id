@@ -182,7 +182,7 @@ class BankStatementForm
 
                                         FileUpload::make('file_path')
                                             ->label('Upload File Rekening Koran')
-                                            ->disk('public')
+                                            ->disk('private')
                                             ->directory('bank-statements')
                                             ->acceptedFileTypes(function (callable $get) {
                                                 $sourceType = $get('source_type');
@@ -211,7 +211,7 @@ class BankStatementForm
                                             ->required(fn (callable $get) => $get('source_type') !== 'manual_input')
                                             ->visible(fn (callable $get) => $get('source_type') !== 'manual_input')
                                             ->deletable(true)
-                                            ->downloadable()
+                                            ->downloadable(false)
                                             ->previewable(false)
                                             ->loadingIndicatorPosition('left')
                                             ->removeUploadedFileButtonPosition('right')
@@ -223,9 +223,15 @@ class BankStatementForm
                                             ->content(function (callable $get, $livewire) {
                                                 $record = $livewire->record ?? null;
                                                 if ($record && $record->file_path) {
-                                                    $filePath = storage_path('app/public/'.$record->file_path);
-                                                    if (file_exists($filePath)) {
-                                                        $fileSize = filesize($filePath);
+                                                    $disk = null;
+                                                    if (Storage::disk('private')->exists($record->file_path)) {
+                                                        $disk = 'private';
+                                                    } elseif (Storage::disk('public')->exists($record->file_path)) {
+                                                        $disk = 'public';
+                                                    }
+
+                                                    if ($disk) {
+                                                        $fileSize = Storage::disk($disk)->size($record->file_path);
                                                         $formattedSize = $fileSize > 1024 * 1024
                                                             ? round($fileSize / (1024 * 1024), 2).' MB'
                                                             : round($fileSize / 1024, 2).' KB';
@@ -234,7 +240,7 @@ class BankStatementForm
                                                             '<div class="space-y-2">'.
                                                             '<div><strong>Ukuran:</strong> '.$formattedSize.'</div>'.
                                                             '<div><strong>Diupload:</strong> '.$record->created_at->format('d M Y H:i').'</div>'.
-                                                            '<div><a href="'.Storage::url($record->file_path).'" target="_blank" class="text-primary-600 hover:text-primary-700 underline font-medium">📄 Buka File</a></div>'.
+                                                            '<div><a href="'.route('bank-statements.download', $record).'" target="_blank" class="text-primary-600 hover:text-primary-700 underline font-medium">📄 Buka File</a></div>'.
                                                             '</div>'
                                                         );
                                                     }
@@ -356,7 +362,7 @@ class BankStatementForm
                                         FileUpload::make('reconciliation_file')
                                             ->label('File Excel Rekonsiliasi')
                                             ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'])
-                                            ->disk('public')
+                                            ->disk('private')
                                             ->directory('bank-reconciliations')
                                             ->preserveFilenames()
                                             ->maxSize(10240)

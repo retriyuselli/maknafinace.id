@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Companies\Tables;
 
+use App\Filament\Resources\Companies\CompanyResource;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -110,10 +112,18 @@ class CompaniesTable
                     EditAction::make(),
                 ]),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
+            ])
+            ->emptyStateDescription('Silakan buat perusahaan baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Perusahaan Baru')
+                    ->url(fn (): string => CompanyResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
             ]);
     }
 }

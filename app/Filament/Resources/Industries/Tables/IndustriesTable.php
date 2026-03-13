@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Industries\Tables;
 
+use App\Filament\Resources\Industries\IndustryResource;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -42,6 +44,14 @@ class IndustriesTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
+            ])
+            ->emptyStateDescription('Silakan buat industri baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Industri Baru')
+                    ->url(fn (): string => IndustryResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
             ]);
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\LeaveTypes\Tables;
 
+use App\Filament\Resources\LeaveTypes\LeaveTypeResource;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -132,6 +134,14 @@ class LeaveTypesTable
                         ->successNotificationTitle('Jenis cuti terpilih berhasil dihapus permanen'),
                 ]),
             ])
-            ->defaultSort('name', 'asc');
+            ->defaultSort('name', 'asc')
+            ->emptyStateDescription('Silakan buat jenis cuti baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Jenis Cuti Baru')
+                    ->url(fn (): string => LeaveTypeResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 }

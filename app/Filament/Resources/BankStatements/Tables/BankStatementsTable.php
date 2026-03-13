@@ -133,7 +133,7 @@ class BankStatementsTable
                             return new HtmlString('<span class="text-gray-400">Tidak ada</span>');
                         }
                         $fileName = $state;
-                        $url = Storage::url($record->reconciliation_file);
+                        $url = route('bank-statements.reconciliation.download', $record);
 
                         return new HtmlString(
                             '<div class="flex items-center space-x-2">
@@ -250,7 +250,7 @@ class BankStatementsTable
                         ->label('Unduh File')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->color('success')
-                        ->url(fn (BankStatement $record): string => $record->file_path ? Storage::url($record->file_path) : '#')
+                        ->url(fn (BankStatement $record): string => $record->file_path ? route('bank-statements.download', $record) : '#')
                         ->openUrlInNewTab()
                         ->visible(fn (BankStatement $record): bool => ! empty($record->file_path))
                         ->tooltip('Unduh file rekening koran'),

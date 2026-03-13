@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Products\Tables;
 
 use App\Exports\ProductExport;
+use App\Filament\Resources\Products\ProductResource;
 use App\Models\Product;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -425,6 +426,14 @@ class ProductsTable
             ->defaultSort('created_at', 'desc')
             ->striped()
             ->defaultPaginationPageOption(10)
-            ->paginationPageOptions([10, 25, 50]);
+            ->paginationPageOptions([10, 25, 50])
+            ->emptyStateDescription('Silakan buat produk baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Produk Baru')
+                    ->url(fn (): string => ProductResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 }

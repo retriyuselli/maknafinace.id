@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\CompanyLogos\Tables;
 
+use App\Filament\Resources\CompanyLogos\CompanyLogoResource;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -94,6 +96,14 @@ class CompanyLogosTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('display_order');
+            ->defaultSort('display_order')
+            ->emptyStateDescription('Silakan buat logo perusahaan baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Logo Perusahaan Baru')
+                    ->url(fn (): string => CompanyLogoResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 }

@@ -9,6 +9,7 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class EditBankStatement extends EditRecord
@@ -74,7 +75,8 @@ class EditBankStatement extends EditRecord
 
                 // Use BankStatement as bank reconciliation for the import
                 $import = new BankReconciliationImport($record);
-                Excel::import($import, storage_path('app/public/'.$reconciliationFile));
+                $disk = Storage::disk('private')->exists($reconciliationFile) ? 'private' : 'public';
+                Excel::import($import, Storage::disk($disk)->path($reconciliationFile));
 
                 // Check for errors from the import
                 $errors = $import->getErrors();

@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\ChartOfAccounts\Tables;
 
+use App\Filament\Resources\ChartOfAccounts\ChartOfAccountResource;
 use App\Models\ChartOfAccount;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -227,6 +229,14 @@ class ChartOfAccountsTable
                         ->modalDescription('Are you sure you want to permanently delete these accounts? This action cannot be undone.')
                         ->modalSubmitActionLabel('Yes, delete permanently'),
                 ]),
+            ])
+            ->emptyStateDescription('Silakan buat akun baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Akun Baru')
+                    ->url(fn (): string => ChartOfAccountResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
             ]);
     }
 }

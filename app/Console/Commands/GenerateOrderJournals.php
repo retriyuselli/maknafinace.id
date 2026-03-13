@@ -68,9 +68,9 @@ class GenerateOrderJournals extends Command
 
         // Get Orders with status 'done' that don't have revenue journals
         $orders = Order::where('status', 'done')
-            ->where('grand_total', '>', 0)
             ->whereDoesntHave('journalBatches', function ($query) {
-                $query->where('reference_type', 'order_revenue');
+                $query->where('reference_type', 'order_revenue')
+                    ->whereIn('status', ['draft', 'posted']);
             })
             ->get();
 
@@ -114,7 +114,8 @@ class GenerateOrderJournals extends Command
         $payments = DataPembayaran::where('nominal', '>', 0)
             ->whereHas('order') // Ensure order exists
             ->whereDoesntHave('journalBatches', function ($query) {
-                $query->where('reference_type', 'payment');
+                $query->where('reference_type', 'payment')
+                    ->whereIn('status', ['draft', 'posted']);
             })
             ->with('order')
             ->get();
@@ -160,7 +161,8 @@ class GenerateOrderJournals extends Command
             ->whereNotNull('order_id') // Only order-related expenses
             ->whereHas('order') // Ensure order exists
             ->whereDoesntHave('journalBatches', function ($query) {
-                $query->where('reference_type', 'expense');
+                $query->where('reference_type', 'expense')
+                    ->whereIn('status', ['draft', 'posted']);
             })
             ->with('order')
             ->get();

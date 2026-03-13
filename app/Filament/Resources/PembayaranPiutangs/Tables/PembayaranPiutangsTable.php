@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PembayaranPiutangs\Tables;
 
+use App\Filament\Resources\PembayaranPiutangs\PembayaranPiutangResource;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -115,6 +116,14 @@ class PembayaranPiutangsTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->emptyStateDescription('Silakan buat pembayaran piutang baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Pembayaran Piutang Baru')
+                    ->url(fn (): string => PembayaranPiutangResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 }

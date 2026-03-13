@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Blogs\Tables;
 
+use App\Filament\Resources\Blogs\BlogResource;
 use Filament\Actions\BulkAction;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -129,6 +131,14 @@ class BlogsTable
                             }
                         }),
                 ]),
+            ])
+            ->emptyStateDescription('Silakan buat artikel blog baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Artikel Blog Baru')
+                    ->url(fn (): string => BlogResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
             ]);
     }
 }

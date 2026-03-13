@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\NotaDinas\Tables;
 
 use App\Filament\Resources\NotaDinas\Pages\ViewNd;
+use App\Filament\Resources\NotaDinas\NotaDinasResource;
 use App\Models\NotaDinas;
 use App\Models\User;
 use Exception;
@@ -538,6 +539,14 @@ class NotaDinasTable
                         }),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->emptyStateDescription('Silakan buat Nota Dinas baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Nota Dinas Baru')
+                    ->url(fn (): string => NotaDinasResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 }

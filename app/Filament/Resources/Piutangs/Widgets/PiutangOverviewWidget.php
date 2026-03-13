@@ -35,7 +35,7 @@ class PiutangOverviewWidget extends BaseWidget
             ->sum('total_pembayaran');
 
         return [
-            Stat::make('Total Piutang', 'Rp '.Number::format($totalPiutang, 0))
+            Stat::make('Total Piutang', ''.Number::format($totalPiutang, 0))
                 ->description('Seluruh piutang yang tercatat')
                 ->descriptionIcon('heroicon-m-currency-dollar')
                 ->color('info')
@@ -49,7 +49,7 @@ class PiutangOverviewWidget extends BaseWidget
                     Piutang::whereDate('created_at', '>=', now()->subDays(1))->sum('total_piutang'),
                 ]),
 
-            Stat::make('Sisa Piutang', 'Rp '.Number::format($totalSisaPiutang, 0))
+            Stat::make('Sisa Piutang', ''.Number::format($totalSisaPiutang, 0))
                 ->description('Yang belum dibayar')
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color('warning')
@@ -61,7 +61,7 @@ class PiutangOverviewWidget extends BaseWidget
                     $totalSisaPiutang,
                 ]),
 
-            Stat::make('Sudah Dibayar', 'Rp '.Number::format($totalSudahDibayar, 0))
+            Stat::make('Sudah Dibayar', ''.Number::format($totalSudahDibayar, 0))
                 ->description('Total pembayaran diterima')
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success')
@@ -83,12 +83,12 @@ class PiutangOverviewWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-exclamation-circle')
                 ->color('danger'),
 
-            Stat::make('Piutang Bulan Ini', 'Rp '.Number::format($piutangBulanIni, 0))
+            Stat::make('Piutang Bulan Ini', ''.Number::format($piutangBulanIni, 0))
                 ->description('Piutang baru di '.now()->format('M Y'))
                 ->descriptionIcon('heroicon-m-plus-circle')
                 ->color('info'),
 
-            Stat::make('Pembayaran Bulan Ini', 'Rp '.Number::format($pembayaranBulanIni, 0))
+            Stat::make('Pembayaran Bulan Ini', ''.Number::format($pembayaranBulanIni, 0))
                 ->description('Pembayaran di '.now()->format('M Y'))
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success'),

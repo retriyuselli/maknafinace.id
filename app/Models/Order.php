@@ -255,4 +255,10 @@ class Order extends Model
             $order->calculateAndSetGrandTotal();
         });
     }
+
+    public function journalBatches(): HasMany
+    {
+        return $this->hasMany(JournalBatch::class, 'reference_id')
+            ->whereIn('reference_type', ['order_revenue', 'order_adjustment', 'order_revenue_reversal', 'order_adjustment_reversal']);
+    }
 }

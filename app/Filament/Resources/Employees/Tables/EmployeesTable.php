@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Employees\Tables;
 
 use App\Models\Employee;
 use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -158,6 +159,14 @@ class EmployeesTable
             ->defaultSort('date_of_join', 'desc')
             ->striped()
             ->defaultPaginationPageOption(10)
-            ->paginationPageOptions([10, 25, 50]);
+            ->paginationPageOptions([10, 25, 50])
+            ->emptyStateDescription('Silakan buat data pribadi baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Data Pribadi Baru')
+                    ->url(fn () => route('filament.admin.resources.data-pribadis.create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 }

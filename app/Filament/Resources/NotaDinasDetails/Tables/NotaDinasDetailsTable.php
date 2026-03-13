@@ -4,6 +4,7 @@ namespace App\Filament\Resources\NotaDinasDetails\Tables;
 
 use App\Models\Expense;
 use App\Models\ExpenseOps;
+use App\Filament\Resources\NotaDinasDetails\NotaDinasDetailResource;
 use App\Models\NotaDinasDetail;
 use App\Models\PengeluaranLain;
 use App\Models\User;
@@ -638,6 +639,14 @@ class NotaDinasDetailsTable
             ->poll('30s')
             ->deferLoading()
             ->striped()
-            ->extremePaginationLinks();
+            ->extremePaginationLinks()
+            ->emptyStateDescription('Silakan buat detail nota dinas baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Detail Nota Dinas Baru')
+                    ->url(fn (): string => NotaDinasDetailResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 }

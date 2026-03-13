@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\DocumentationCategories\Tables;
 
+use App\Filament\Resources\DocumentationCategories\DocumentationCategoryResource;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -38,14 +40,22 @@ class DocumentationCategoriesTable
             ->filters([
                 //
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
+            ])
+            ->emptyStateDescription('Silakan buat kategori dokumentasi baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Kategori Dokumentasi Baru')
+                    ->url(fn (): string => DocumentationCategoryResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
             ]);
     }
 }

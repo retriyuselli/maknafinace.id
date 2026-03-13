@@ -12,12 +12,60 @@ use App\Models\Order;
 use App\Models\PendapatanLain;
 use App\Models\PengeluaranLain;
 use Exception;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderJournalService
 {
+    private function findAccountByCodes(array|string $codes): ?ChartOfAccount
+    {
+        $codes = is_array($codes) ? $codes : [$codes];
+
+        foreach ($codes as $code) {
+            $account = ChartOfAccount::where('account_code', $code)->first();
+            if ($account) {
+                return $account;
+            }
+        }
+
+        return null;
+    }
+
+    private function coa(string $key): ?ChartOfAccount
+    {
+        $codes = config('accounting.coa_codes.'.$key, []);
+
+        return $this->findAccountByCodes($codes);
+    }
+
+    private function uniqueBatchNumber(string $preferred): string
+    {
+        if (! JournalBatch::where('batch_number', $preferred)->exists()) {
+            return $preferred;
+        }
+
+        $suffix = now()->format('His');
+        $base = str_replace('-', '', $preferred);
+
+        return substr($base, 0, 13).'-'.$suffix;
+    }
+
+    private function createOrGetJournalBatch(array $where, array $create): JournalBatch
+    {
+        try {
+            return JournalBatch::create(array_merge($where, $create));
+        } catch (QueryException $e) {
+            $existing = JournalBatch::where($where)->first();
+            if ($existing) {
+                return $existing;
+            }
+
+            throw $e;
+        }
+    }
+
     /**
      * Generate journal entries for Order revenue recognition
      * Called when Order status changes to 'closed' or specific triggers
@@ -28,6 +76,7 @@ class OrderJournalService
             // Only generate if not already generated for this order
             $existingBatch = JournalBatch::where('reference_type', 'order_revenue')
                 ->where('reference_id', $order->id)
+                ->whereIn('status', ['draft', 'posted'])
                 ->first();
 
             if ($existingBatch) {
@@ -37,11 +86,15 @@ class OrderJournalService
             }
 
             // Get required accounts
-            $accountsReceivable = ChartOfAccount::where('account_code', '1300')->first(); // Piutang Usaha
-            $weddingRevenue = ChartOfAccount::where('account_code', '4100')->first(); // Pendapatan Jasa Wedding
+            $accountsReceivable = $this->coa('accounts_receivable');
+            $weddingRevenue = $this->coa('wedding_revenue');
 
             if (! $accountsReceivable || ! $weddingRevenue) {
-                Log::error('Required accounts not found for Order revenue recognition');
+                Log::error('Required accounts not found for Order revenue recognition', [
+                    'order_id' => $order->id,
+                    'accounts_receivable_found' => (bool) $accountsReceivable,
+                    'wedding_revenue_found' => (bool) $weddingRevenue,
+                ]);
 
                 return null;
             }
@@ -57,15 +110,16 @@ class OrderJournalService
 
             return DB::transaction(function () use ($order, $accountsReceivable, $weddingRevenue, $revenueAmount) {
                 // Create journal batch
-                $batch = JournalBatch::create([
-                    'batch_number' => 'WED-'.$order->id,
+                $batch = $this->createOrGetJournalBatch([
+                    'reference_type' => 'order_revenue',
+                    'reference_id' => $order->id,
+                    'status' => 'posted',
+                ], [
+                    'batch_number' => $this->uniqueBatchNumber('WED-'.$order->id),
                     'transaction_date' => $order->closing_date ?? now(),
                     'description' => "Revenue Recognition - Wedding Project: {$order->name}",
                     'total_debit' => $revenueAmount,
                     'total_credit' => $revenueAmount,
-                    'status' => 'posted',
-                    'reference_type' => 'order_revenue',
-                    'reference_id' => $order->id,
                     'created_by' => Auth::id() ?? 1,
                 ]);
 
@@ -123,21 +177,13 @@ class OrderJournalService
             // Prevent duplicate journal generation (exclude reversed journals)
             $existingBatch = JournalBatch::where('reference_type', 'payment')
                 ->where('reference_id', $payment->id)
+                ->whereIn('status', ['draft', 'posted'])
                 ->first();
 
             if ($existingBatch) {
-                // Check if this batch has been reversed
-                $hasReversal = JournalBatch::where('reference_type', 'payment_reversal')
-                    ->where('reference_id', $payment->id)
-                    ->exists();
+                Log::info("Payment journal already exists for Payment {$payment->id}");
 
-                if (! $hasReversal) {
-                    Log::info("Payment journal already exists for Payment {$payment->id}");
-
-                    return $existingBatch;
-                }
-                // If reversed, we can create a new journal entry
-                Log::info("Previous payment journal was reversed, creating new one for Payment {$payment->id}");
+                return $existingBatch;
             }
 
             $order = $payment->order;
@@ -149,9 +195,18 @@ class OrderJournalService
 
             // Get accounts - automatically select based on payment method
             $cashAccount = $this->getCashAccountByPaymentMethod($payment->payment_method_id);
+            if (! $cashAccount) {
+                Log::error('Cash/bank account not found for payment method', [
+                    'payment_id' => $payment->id,
+                    'payment_method_id' => $payment->payment_method_id,
+                ]);
+
+                return null;
+            }
+
             Log::info("Auto-selected Chart of Account {$cashAccount->account_code} based on payment method for Payment {$payment->id}");
 
-            $accountsReceivable = ChartOfAccount::where('account_code', '1300')->first(); // Piutang Usaha
+            $accountsReceivable = $this->coa('accounts_receivable');
 
             if (! $cashAccount || ! $accountsReceivable) {
                 Log::error('Required accounts not found for payment journal');
@@ -168,25 +223,16 @@ class OrderJournalService
             }
 
             return DB::transaction(function () use ($payment, $order, $cashAccount, $accountsReceivable, $paymentAmount) {
-                // Create journal batch with unique number (handle updates)
-                $baseNumber = 'PAY-'.$payment->id;
-                $batchNumber = $baseNumber;
-
-                // If batch already exists, append short suffix
-                if (JournalBatch::where('batch_number', $baseNumber)->exists()) {
-                    $suffix = now()->format('His'); // Only time HHMMSS (6 chars)
-                    $batchNumber = 'PAY'.$payment->id.'-'.$suffix; // Remove dash to save space
-                }
-
-                $batch = JournalBatch::create([
-                    'batch_number' => $batchNumber,
+                $batch = $this->createOrGetJournalBatch([
+                    'reference_type' => 'payment',
+                    'reference_id' => $payment->id,
+                    'status' => 'posted',
+                ], [
+                    'batch_number' => $this->uniqueBatchNumber('PAY-'.$payment->id),
                     'transaction_date' => $payment->tgl_bayar ?? now(),
                     'description' => "Payment Received - Wedding Project: {$order->name}",
                     'total_debit' => $paymentAmount,
                     'total_credit' => $paymentAmount,
-                    'status' => 'posted',
-                    'reference_type' => 'payment',
-                    'reference_id' => $payment->id,
                     'created_by' => Auth::id() ?? 1,
                 ]);
 
@@ -248,12 +294,14 @@ class OrderJournalService
             $existingBatch = JournalBatch::withTrashed()
                 ->where('reference_type', 'expense')
                 ->where('reference_id', $expense->id)
+                ->whereIn('status', ['draft', 'posted'])
                 ->first();
 
             if ($existingBatch) {
                 if ($existingBatch->trashed()) {
                     // Restore soft deleted journal
                     $existingBatch->restore();
+                    $existingBatch->journalEntries()->withTrashed()->restore();
                     Log::info("Restored soft deleted expense journal for Expense {$expense->id}");
                 } else {
                     Log::info("Expense journal already exists for Expense {$expense->id}");
@@ -270,11 +318,13 @@ class OrderJournalService
             }
 
             // Get required accounts
-            $expenseAccount = ChartOfAccount::where('account_code', '5100')->first(); // Biaya Proyek Wedding
+            $expenseAccount = $this->coa('project_expense');
             $cashAccount = $this->getCashAccountByPaymentMethod($expense->payment_method_id);
 
             if (! $expenseAccount) {
-                Log::error('Expense account (5100) not found for expense journal');
+                Log::error('Expense account not found for expense journal', [
+                    'expense_id' => $expense->id,
+                ]);
 
                 return null;
             }
@@ -309,15 +359,16 @@ class OrderJournalService
                 }
 
                 // Create journal batch
-                $batch = JournalBatch::create([
-                    'batch_number' => 'EXP-'.$expense->id,
+                $batch = $this->createOrGetJournalBatch([
+                    'reference_type' => 'expense',
+                    'reference_id' => $expense->id,
+                    'status' => 'posted',
+                ], [
+                    'batch_number' => $this->uniqueBatchNumber('EXP-'.$expense->id),
                     'transaction_date' => $transactionDate,
                     'description' => "Project Expense - Wedding Project: {$order->name}",
                     'total_debit' => $expenseAmount,
                     'total_credit' => $expenseAmount,
-                    'status' => 'posted',
-                    'reference_type' => 'expense',
-                    'reference_id' => $expense->id,
                     'created_by' => Auth::id() ?? 1,
                 ]);
 
@@ -398,8 +449,8 @@ class OrderJournalService
             }
 
             // Get required accounts
-            $accountsReceivable = ChartOfAccount::where('account_code', '1300')->first(); // Piutang Usaha
-            $weddingRevenue = ChartOfAccount::where('account_code', '4100')->first(); // Pendapatan Jasa Wedding
+            $accountsReceivable = $this->coa('accounts_receivable');
+            $weddingRevenue = $this->coa('wedding_revenue');
 
             if (! $accountsReceivable || ! $weddingRevenue) {
                 Log::error('Required accounts not found for order adjustment');
@@ -498,23 +549,16 @@ class OrderJournalService
      */
     private function getCashAccountByPaymentMethod(?int $paymentMethodId): ?ChartOfAccount
     {
-        // Default to cash if no payment method specified
-        if (! $paymentMethodId) {
-            return ChartOfAccount::where('account_code', '1100')->first(); // Kas
-        }
-
-        // Map payment methods to accounts (customize based on your payment methods)
-        $paymentMethodMapping = [
-            1 => '1100', // Cash -> Kas
-            2 => '1200', // Bank Transfer -> Bank
-            3 => '1200', // Credit Card -> Bank
-            4 => '1200', // Debit Card -> Bank
-            // Add more mappings as needed
+        $methodToKey = [
+            1 => 'cash',
+            2 => 'bank',
+            3 => 'bank',
+            4 => 'bank',
         ];
 
-        $accountCode = $paymentMethodMapping[$paymentMethodId] ?? '1100';
+        $key = $methodToKey[$paymentMethodId] ?? 'cash';
 
-        return ChartOfAccount::where('account_code', $accountCode)->first();
+        return $this->coa($key);
     }
 
     /**
@@ -525,6 +569,7 @@ class OrderJournalService
         try {
             $originalBatch = JournalBatch::where('reference_type', $referenceType)
                 ->where('reference_id', $referenceId)
+                ->where('status', 'posted')
                 ->first();
 
             if (! $originalBatch) {
@@ -564,6 +609,10 @@ class OrderJournalService
                     ]);
                 }
 
+                $originalBatch->update([
+                    'status' => JournalBatch::STATUS_REVERSED,
+                ]);
+
                 Log::info("Journal reversed for {$originalBatch->reference_type} ID {$originalBatch->reference_id}");
 
                 return true;
@@ -586,6 +635,7 @@ class OrderJournalService
             // Prevent duplicate journal generation
             $existingBatch = JournalBatch::where('reference_type', 'other_income')
                 ->where('reference_id', $otherIncome->id)
+                ->whereIn('status', ['draft', 'posted'])
                 ->first();
 
             if ($existingBatch) {
@@ -596,7 +646,7 @@ class OrderJournalService
 
             // Get accounts based on payment method
             $cashAccount = $this->getCashAccountByPaymentMethod($otherIncome->payment_method_id);
-            $otherIncomeAccount = $otherIncome->incomeAccount ?? ChartOfAccount::where('account_code', '8000')->first(); // Pendapatan Lain
+            $otherIncomeAccount = $otherIncome->incomeAccount ?? $this->coa('other_income');
 
             if (! $cashAccount || ! $otherIncomeAccount) {
                 Log::error('Required accounts not found for other income journal');
@@ -614,15 +664,16 @@ class OrderJournalService
 
             return DB::transaction(function () use ($otherIncome, $cashAccount, $otherIncomeAccount, $incomeAmount) {
                 // Create journal batch
-                $batch = JournalBatch::create([
-                    'batch_number' => 'OTH-'.$otherIncome->id,
+                $batch = $this->createOrGetJournalBatch([
+                    'reference_type' => 'other_income',
+                    'reference_id' => $otherIncome->id,
+                    'status' => 'posted',
+                ], [
+                    'batch_number' => $this->uniqueBatchNumber('OTH-'.$otherIncome->id),
                     'transaction_date' => $otherIncome->tgl_bayar ?? now(),
                     'description' => "Pendapatan Lain - {$otherIncome->name}",
                     'total_debit' => $incomeAmount,
                     'total_credit' => $incomeAmount,
-                    'status' => 'posted',
-                    'reference_type' => 'other_income',
-                    'reference_id' => $otherIncome->id,
                     'created_by' => Auth::id() ?? 1,
                 ]);
 
@@ -680,6 +731,7 @@ class OrderJournalService
             // Prevent duplicate journal generation
             $existingBatch = JournalBatch::where('reference_type', 'expense_ops')
                 ->where('reference_id', $expenseOps->id)
+                ->whereIn('status', ['draft', 'posted'])
                 ->first();
 
             if ($existingBatch) {
@@ -690,7 +742,7 @@ class OrderJournalService
 
             // Get accounts based on payment method and expense type
             $cashAccount = $this->getCashAccountByPaymentMethod($expenseOps->payment_method_id);
-            $expenseAccount = $expenseOps->expenseAccount ?? ChartOfAccount::where('account_code', '6000')->first(); // Beban Operasional
+            $expenseAccount = $expenseOps->expenseAccount ?? $this->coa('operational_expense');
 
             if (! $cashAccount || ! $expenseAccount) {
                 Log::error('Required accounts not found for operational expense journal');
@@ -708,15 +760,16 @@ class OrderJournalService
 
             return DB::transaction(function () use ($expenseOps, $cashAccount, $expenseAccount, $expenseAmount) {
                 // Create journal batch
-                $batch = JournalBatch::create([
-                    'batch_number' => 'EXP-OPS-'.$expenseOps->id,
+                $batch = $this->createOrGetJournalBatch([
+                    'reference_type' => 'expense_ops',
+                    'reference_id' => $expenseOps->id,
+                    'status' => 'posted',
+                ], [
+                    'batch_number' => $this->uniqueBatchNumber('EXP-OPS-'.$expenseOps->id),
                     'transaction_date' => $expenseOps->date_expense ?? now(),
                     'description' => "Beban Operasional - {$expenseOps->name}",
                     'total_debit' => $expenseAmount,
                     'total_credit' => $expenseAmount,
-                    'status' => 'posted',
-                    'reference_type' => 'expense_ops',
-                    'reference_id' => $expenseOps->id,
                     'created_by' => Auth::id() ?? 1,
                 ]);
 
@@ -774,6 +827,7 @@ class OrderJournalService
             // Prevent duplicate journal generation
             $existingBatch = JournalBatch::where('reference_type', 'other_expense')
                 ->where('reference_id', $otherExpense->id)
+                ->whereIn('status', ['draft', 'posted'])
                 ->first();
 
             if ($existingBatch) {
@@ -784,7 +838,7 @@ class OrderJournalService
 
             // Get accounts based on payment method and expense type
             $cashAccount = $this->getCashAccountByPaymentMethod($otherExpense->payment_method_id);
-            $expenseAccount = $otherExpense->expenseAccount ?? ChartOfAccount::where('account_code', '9000')->first(); // Beban Lain
+            $expenseAccount = $otherExpense->expenseAccount ?? $this->coa('other_expense');
 
             if (! $cashAccount || ! $expenseAccount) {
                 Log::error('Required accounts not found for other expense journal');
@@ -802,15 +856,16 @@ class OrderJournalService
 
             return DB::transaction(function () use ($otherExpense, $cashAccount, $expenseAccount, $expenseAmount) {
                 // Create journal batch
-                $batch = JournalBatch::create([
-                    'batch_number' => 'EXP-OTH-'.$otherExpense->id,
+                $batch = $this->createOrGetJournalBatch([
+                    'reference_type' => 'other_expense',
+                    'reference_id' => $otherExpense->id,
+                    'status' => 'posted',
+                ], [
+                    'batch_number' => $this->uniqueBatchNumber('EXP-OTH-'.$otherExpense->id),
                     'transaction_date' => $otherExpense->date_expense ?? now(),
                     'description' => "Beban Lain - {$otherExpense->name}",
                     'total_debit' => $expenseAmount,
                     'total_credit' => $expenseAmount,
-                    'status' => 'posted',
-                    'reference_type' => 'other_expense',
-                    'reference_id' => $otherExpense->id,
                     'created_by' => Auth::id() ?? 1,
                 ]);
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ProspectApps\Tables;
 
+use App\Filament\Resources\ProspectApps\ProspectAppResource;
 use App\Models\ProspectApp;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -181,6 +182,14 @@ class ProspectAppsTable
             ])
             ->defaultSort('submitted_at', 'desc')
             ->striped()
-            ->paginated([10, 25, 50, 100]);
+            ->paginated([10, 25, 50, 100])
+            ->emptyStateDescription('Silakan buat aplikasi prospek baru untuk memulai.')
+            ->emptyStateActions([
+                Action::make('create')
+                    ->label('Buat Aplikasi Prospek Baru')
+                    ->url(fn (): string => ProspectAppResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 }

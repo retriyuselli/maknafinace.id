@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountManagerReportController;
+use App\Http\Controllers\BankStatementFileController;
 use App\Http\Controllers\BankReconciliationPageController;
 use App\Http\Controllers\BankReconciliationTemplateController;
 use App\Http\Controllers\BlogController;
@@ -197,6 +198,11 @@ Route::middleware([\Filament\Http\Middleware\Authenticate::class])->group(functi
         ->name('invoice.print');
     Route::post('/invoice/{order}/update-payment', [InvoiceOrderController::class, 'updatePayment'])
         ->name('invoice.update-payment');
+
+    Route::get('/bank-statements/{bankStatement}/download', [BankStatementFileController::class, 'download'])
+        ->name('bank-statements.download');
+    Route::get('/bank-statements/{bankStatement}/reconciliation/download', [BankStatementFileController::class, 'downloadReconciliation'])
+        ->name('bank-statements.reconciliation.download');
 });
 
 // WIDGET ROUTE
