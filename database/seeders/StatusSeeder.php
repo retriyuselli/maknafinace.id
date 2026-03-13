@@ -15,6 +15,7 @@ class StatusSeeder extends Seeder
         $statuses = [
             ['status_name' => 'Finance'],
             ['status_name' => 'Account Manager'],
+            ['status_name' => 'Event Manager'],
             ['status_name' => 'Admin'],
             ['status_name' => 'HRD'],
             ['status_name' => 'Staff'],
