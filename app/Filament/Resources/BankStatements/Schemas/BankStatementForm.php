@@ -365,6 +365,7 @@ class BankStatementForm
                                             ->disk('private')
                                             ->directory('bank-reconciliations')
                                             ->preserveFilenames()
+                                            ->downloadable()
                                             ->maxSize(10240)
                                             ->helperText('Upload file Excel dengan format: Tanggal, Keterangan, Debit, Credit')
                                             ->live()
