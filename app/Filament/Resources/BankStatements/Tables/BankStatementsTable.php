@@ -27,17 +27,16 @@ class BankStatementsTable
             ->defaultSort('period_start', 'desc')
             ->columns([
                 TextColumn::make('index')
-                    ->label('#')
+                    ->label('No.')
                     ->rowIndex(),
                 TextColumn::make('paymentMethod.no_rekening')
                     ->label('No. Rekening')
                     ->searchable()
                     ->sortable()
-                    ->formatStateUsing(function ($record) {
+                    ->formatStateUsing(function ($state, BankStatement $record): string {
                         if ($record->paymentMethod) {
                             return $record->paymentMethod->bank_name.' - '.$record->paymentMethod->no_rekening;
                         }
-
                         return '-';
                     }),
                 TextColumn::make('paymentMethod.name')
@@ -57,12 +56,14 @@ class BankStatementsTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('opening_balance')
                     ->label('Saldo Awal')
-                    ->money('IDR')
+                    ->prefix('Rp. ')
+                    ->numeric()
                     ->sortable()
                     ->alignEnd(),
                 TextColumn::make('closing_balance')
                     ->label('Saldo Akhir')
-                    ->money('IDR')
+                    ->prefix('Rp. ')
+                    ->numeric()
                     ->sortable()
                     ->alignEnd(),
                 TextColumn::make('no_of_debit')
@@ -74,7 +75,8 @@ class BankStatementsTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('tot_debit')
                     ->label('Total Debit')
-                    ->money('IDR')
+                    ->prefix('Rp. ')
+                    ->numeric()
                     ->sortable()
                     ->alignEnd()
                     ->color('danger'),
@@ -87,7 +89,8 @@ class BankStatementsTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('tot_credit')
                     ->label('Total Kredit')
-                    ->money('IDR')
+                    ->prefix('Rp. ')
+                    ->numeric()
                     ->sortable()
                     ->alignEnd()
                     ->color('success'),

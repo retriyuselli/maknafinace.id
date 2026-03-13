@@ -44,7 +44,7 @@ class BankStatementResource extends Resource
     {
         return parent::getEloquentQuery()
             ->with([
-                'paymentMethod:id,name,no_rekening',
+                'paymentMethod:id,name,bank_name,no_rekening',
                 'lastEditedBy:id,name',
             ])
             ->withCount('transactions');
