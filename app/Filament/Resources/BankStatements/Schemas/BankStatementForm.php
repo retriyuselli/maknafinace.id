@@ -365,7 +365,7 @@ class BankStatementForm
                                             ->disk('private')
                                             ->directory('bank-reconciliations')
                                             ->preserveFilenames()
-                                            ->downloadable()
+                                            ->downloadable(false)
                                             ->maxSize(10240)
                                             ->helperText('Upload file Excel dengan format: Tanggal, Keterangan, Debit, Credit')
                                             ->live()
@@ -375,6 +375,40 @@ class BankStatementForm
                                                     $set('reconciliation_original_filename', basename($state));
                                                 }
                                             }),
+                                        Placeholder::make('reconciliation_file_info')
+                                            ->label('Informasi File Rekonsiliasi')
+                                            ->content(function ($livewire) {
+                                                $record = $livewire->record ?? null;
+                                                if (! $record || ! $record->reconciliation_file) {
+                                                    return 'Belum ada file rekonsiliasi yang diupload';
+                                                }
+
+                                                $disk = null;
+                                                if (Storage::disk('private')->exists($record->reconciliation_file)) {
+                                                    $disk = 'private';
+                                                } elseif (Storage::disk('public')->exists($record->reconciliation_file)) {
+                                                    $disk = 'public';
+                                                }
+
+                                                if (! $disk) {
+                                                    return 'File rekonsiliasi tidak ditemukan di storage';
+                                                }
+
+                                                $fileSize = Storage::disk($disk)->size($record->reconciliation_file);
+                                                $formattedSize = $fileSize > 1024 * 1024
+                                                    ? round($fileSize / (1024 * 1024), 2).' MB'
+                                                    : round($fileSize / 1024, 2).' KB';
+
+                                                return new HtmlString(
+                                                    '<div class="space-y-2">'.
+                                                    '<div><strong>Ukuran:</strong> '.$formattedSize.'</div>'.
+                                                    '<div><strong>Diupload:</strong> '.$record->updated_at->format('d M Y H:i').'</div>'.
+                                                    '<div><a href="'.route('bank-statements.reconciliation.download', $record).'" target="_blank" class="text-primary-600 hover:text-primary-700 underline font-medium">📄 Buka File Rekonsiliasi</a></div>'.
+                                                    '</div>'
+                                                );
+                                            })
+                                            ->visible(fn ($record) => $record && filled($record->reconciliation_file))
+                                            ->extraAttributes(['class' => 'text-sm bg-gray-50 p-3 rounded-lg']),
                                     ])->columns(1)
                                     ->collapsible()
                                     ->collapsed(),
