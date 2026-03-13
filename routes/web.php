@@ -17,6 +17,7 @@ use App\Http\Controllers\Front\LaporanFeatureController;
 use App\Http\Controllers\Front\PayrollFeatureController;
 use App\Http\Controllers\FrontendDataPribadiController;
 use App\Http\Controllers\InvoiceOrderController;
+use App\Http\Controllers\JournalPdfController;
 use App\Http\Controllers\LaporanKeuanganController;
 use App\Http\Controllers\NotaDinasPdfController;
 use App\Http\Controllers\ProductDisplayController;
@@ -203,6 +204,11 @@ Route::middleware([\Filament\Http\Middleware\Authenticate::class])->group(functi
         ->name('bank-statements.download');
     Route::get('/bank-statements/{bankStatement}/reconciliation/download', [BankStatementFileController::class, 'downloadReconciliation'])
         ->name('bank-statements.reconciliation.download');
+
+    Route::get('/journal/pdf/preview', [JournalPdfController::class, 'preview'])
+        ->name('journal.pdf.preview');
+    Route::get('/journal/pdf/download', [JournalPdfController::class, 'download'])
+        ->name('journal.pdf.download');
 });
 
 // WIDGET ROUTE

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\JournalBatches\Tables;
 use App\Models\JournalBatch;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -24,6 +25,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 
 class JournalBatchesTable
 {
@@ -91,7 +93,8 @@ class JournalBatchesTable
 
                 TextColumn::make('approvedBy.name')
                     ->label('Disetujui Oleh')
-                    ->toggleable(),
+                    ->toggleable()
+                    ->formatStateUsing(fn ($state, JournalBatch $record) => $state ?? $record->createdBy?->name ?? 'System'),
 
                 TextColumn::make('created_at')
                     ->label('Dibuat')
@@ -150,8 +153,29 @@ class JournalBatchesTable
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->action(function (JournalBatch $record) {
-                            if ($record->isBalanced()) {
-                                $record->update(['status' => 'posted']);
+                            Gate::authorize('update', $record);
+
+                            $record->calculateTotals();
+
+                            if (filled($record->reference_type) && filled($record->reference_id)) {
+                                $alreadyPosted = JournalBatch::where('reference_type', $record->reference_type)
+                                    ->where('reference_id', $record->reference_id)
+                                    ->where('status', JournalBatch::STATUS_POSTED)
+                                    ->whereKeyNot($record->id)
+                                    ->exists();
+
+                                if ($alreadyPosted) {
+                                    Notification::make()
+                                        ->title('Gagal Post')
+                                        ->body('Sudah ada jurnal posted untuk transaksi yang sama.')
+                                        ->danger()
+                                        ->send();
+
+                                    return;
+                                }
+                            }
+
+                            if ($record->post()) {
 
                                 Notification::make()
                                     ->title('Jurnal Berhasil Di-Post')
@@ -181,6 +205,56 @@ class JournalBatchesTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('post_selected')
+                        ->label('Post Terpilih')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->action(function (\Illuminate\Support\Collection $records) {
+                            $updated = 0;
+                            $skipped = 0;
+
+                            foreach ($records as $record) {
+                                if (! $record instanceof JournalBatch) {
+                                    $skipped++;
+                                    continue;
+                                }
+
+                                if ($record->status !== JournalBatch::STATUS_DRAFT) {
+                                    $skipped++;
+                                    continue;
+                                }
+
+                                Gate::authorize('update', $record);
+
+                                $record->calculateTotals();
+
+                                if (filled($record->reference_type) && filled($record->reference_id)) {
+                                    $alreadyPosted = JournalBatch::where('reference_type', $record->reference_type)
+                                        ->where('reference_id', $record->reference_id)
+                                        ->where('status', JournalBatch::STATUS_POSTED)
+                                        ->whereKeyNot($record->id)
+                                        ->exists();
+
+                                    if ($alreadyPosted) {
+                                        $skipped++;
+                                        continue;
+                                    }
+                                }
+
+                                if ($record->post()) {
+                                    $updated++;
+                                } else {
+                                    $skipped++;
+                                }
+                            }
+
+                            Notification::make()
+                                ->title('Posting selesai')
+                                ->body("Posted: {$updated}, Dilewati: {$skipped}")
+                                ->success()
+                                ->send();
+                        }),
                     DeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                     ForceDeleteBulkAction::make(),

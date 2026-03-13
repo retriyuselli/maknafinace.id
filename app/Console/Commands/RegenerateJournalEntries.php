@@ -144,7 +144,7 @@ class RegenerateJournalEntries extends Command
                 } else {
                     $journal = $this->journalService->generateExpenseJournal($expense);
                     if ($journal) {
-                        $this->line("   ✅ Created missing journal for Expense {$expense->id}");
+                        $this->line("   ✅ Created missing draft journal for Expense {$expense->id}");
                     } else {
                         $this->error("   ❌ Failed to create journal for Expense {$expense->id}");
                     }
@@ -205,7 +205,7 @@ class RegenerateJournalEntries extends Command
                     $this->line("   [DRY RUN] Would create missing journal for Payment {$payment->id}");
                 } else {
                     $this->journalService->generatePaymentJournal($payment);
-                    $this->line("   ✅ Created missing journal for Payment {$payment->id}");
+                    $this->line("   ✅ Created missing draft journal for Payment {$payment->id}");
                 }
                 $regenerated++;
             }
@@ -272,7 +272,7 @@ class RegenerateJournalEntries extends Command
                     $this->line("   [DRY RUN] Would create missing revenue journal for Order {$order->id}");
                 } else {
                     $this->journalService->generateRevenueRecognitionJournal($order);
-                    $this->line("   ✅ Created missing revenue journal for Order {$order->id}");
+                    $this->line("   ✅ Created missing draft revenue journal for Order {$order->id}");
                 }
                 $regenerated++;
             }

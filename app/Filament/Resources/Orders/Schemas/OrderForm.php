@@ -16,6 +16,7 @@ use Exception;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -54,7 +55,14 @@ class OrderForm
                             ->maxLength(32)
                             ->unique(Order::class, 'number', ignoreRecord: true),
                         Select::make('prospect_id')
-                            ->options(function (Get $get) {
+                            ->options(function (Get $get, ?Order $record) {
+                                if ($record && $record->exists) {
+                                    $currentId = $record->prospect_id ?? $get('prospect_id');
+                                    $currentName = $record->prospect?->name_event ?? Prospect::find($currentId)?->name_event;
+
+                                    return $currentId ? [$currentId => ($currentName ?? (string) $currentId)] : [];
+                                }
+
                                 $currentId = $get('prospect_id');
                                 $query = Prospect::query()->whereDoesntHave('orders', function ($q) {
                                     $q->whereNotNull('status');
@@ -65,7 +73,6 @@ class OrderForm
 
                                 return $query->pluck('name_event', 'id')->toArray();
                             })
-                            ->preload()
                             ->searchable()
                             ->required()
                             ->unique(Order::class, 'prospect_id', ignoreRecord: true)
@@ -468,291 +475,21 @@ class OrderForm
                         Section::make('Pengeluaran')
                             ->description('Catat pengeluaran ke vendor. Setiap vendor hanya boleh dipilih satu kali per order.')
                             ->schema([
-                                Repeater::make('expenses')
-                                    ->relationship('expenses')
-                                    ->itemLabel(function (array $state): ?string {
-                                        if (! isset($state['vendor_id']) || ! $state['vendor_id']) {
-                                            return '🆕 Expense Baru';
+                                Placeholder::make('expenses_summary')
+                                    ->label('Ringkasan')
+                                    ->content(function (?Order $record): string {
+                                        if (! $record) {
+                                            return '-';
                                         }
 
-                                        try {
-                                            $vendor = Vendor::find($state['vendor_id']);
-                                            $vendorName = $vendor?->name ?? 'Vendor #'.$state['vendor_id'];
+                                        $count = $record->expenses()->count();
+                                        $sum = (int) $record->expenses()->sum('amount');
 
-                                            $amount = Rupiah::parse($state['amount'] ?? 0);
-                                            $formattedAmount = 'Rp '.number_format((int) $amount, 0, '.', ',');
-
-                                            $paymentStage = 'DP';
-                                            if (isset($state['nota_dinas_detail_id'])) {
-                                                try {
-                                                    $notaDinasDetail = NotaDinasDetail::find($state['nota_dinas_detail_id']);
-                                                    $paymentStage = $notaDinasDetail?->payment_stage ?? 'DP';
-                                                } catch (Exception $e) {
-                                                }
-                                            }
-
-                                            return "🏪 {$vendorName} ({$paymentStage}) - {$formattedAmount}";
-                                        } catch (Exception $e) {
-                                            Log::warning('Error in expense itemLabel: '.$e->getMessage());
-
-                                            return '⚠️ Expense Item';
-                                        }
-                                    })
-                                    ->schema([
-                                        Grid::make(3)
-                                            ->schema([
-                                                Select::make('nota_dinas_id')
-                                                    ->label('Nota Dinas')
-                                                    ->options(function (callable $get) {
-                                                        $orderId = $get('../../id');
-
-                                                        if (! $orderId) {
-                                                            return [];
-                                                        }
-
-                                                        return NotaDinas::whereHas('details', function ($query) use ($orderId) {
-                                                            $query->where('order_id', $orderId);
-                                                        })->pluck('no_nd', 'id')->toArray();
-                                                    })
-                                                    ->reactive()
-                                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                                        if (! $state) {
-                                                            $set('vendor_id', null);
-                                                            $set('note', null);
-                                                            $set('amount', null);
-                                                            $set('account_holder', null);
-                                                            $set('bank_name', null);
-                                                            $set('bank_account', null);
-                                                            $set('no_nd', null);
-                                                        } else {
-                                                            $notaDinas = NotaDinas::find($state);
-                                                            if ($notaDinas) {
-                                                                $set('no_nd', $notaDinas->no_nd);
-                                                            }
-                                                        }
-                                                    }),
-                                                Hidden::make('no_nd')
-                                                    ->dehydrated()
-                                                    ->label('No. Nota Dinas'),
-                                                Select::make('nota_dinas_detail_id')
-                                                    ->label('Detail Nota Dinas')
-                                                    ->options(function (callable $get) {
-                                                        $notaDinasId = $get('nota_dinas_id');
-                                                        if (! $notaDinasId) {
-                                                            return [];
-                                                        }
-
-                                                        try {
-                                                            $currentExpenseItems = $get('../../expenses') ?? $get('../expenses') ?? $get('expenses') ?? [];
-                                                            $currentDetailId = $get('nota_dinas_detail_id');
-                                                            $currentExpenseId = $get('id');
-                                                            $orderId = $get('../../id') ?? $get('../id') ?? $get('id');
-
-                                                            $usedDetailIds = [];
-
-                                                            foreach ($currentExpenseItems as $item) {
-                                                                if (isset($item['nota_dinas_detail_id']) &&
-                                                                    $item['nota_dinas_detail_id'] !== $currentDetailId &&
-                                                                    (! isset($item['id']) || $item['id'] !== $currentExpenseId)) {
-                                                                    $usedDetailIds[] = $item['nota_dinas_detail_id'];
-                                                                }
-                                                            }
-
-                                                            if ($orderId) {
-                                                                $dbUsedIds = Expense::where('order_id', $orderId)
-                                                                    ->whereNotNull('nota_dinas_detail_id')
-                                                                    ->when($currentExpenseId, function ($query) use ($currentExpenseId) {
-                                                                        return $query->where('id', '!=', $currentExpenseId);
-                                                                    })
-                                                                    ->pluck('nota_dinas_detail_id')
-                                                                    ->toArray();
-
-                                                                $usedDetailIds = array_unique(array_merge($usedDetailIds, $dbUsedIds));
-                                                            }
-
-                                                            $availableDetails = NotaDinasDetail::with('vendor')
-                                                                ->where('nota_dinas_id', $notaDinasId)
-                                                                ->where('jenis_pengeluaran', 'wedding')
-                                                                ->whereNotIn('id', $usedDetailIds)
-                                                                ->whereHas('vendor')
-                                                                ->get();
-
-                                                            if ($currentDetailId && ! $availableDetails->contains('id', $currentDetailId)) {
-                                                                $currentDetail = NotaDinasDetail::with('vendor')
-                                                                    ->where('jenis_pengeluaran', 'wedding')
-                                                                    ->find($currentDetailId);
-                                                                if ($currentDetail && $currentDetail->vendor) {
-                                                                    $availableDetails->prepend($currentDetail);
-                                                                }
-                                                            }
-
-                                                            return $availableDetails->mapWithKeys(function ($detail) use ($usedDetailIds) {
-                                                                $vendorName = $detail->vendor->name ?? 'N/A';
-                                                                $keperluan = $detail->keperluan ?? 'N/A';
-                                                                $paymentStage = $detail->payment_stage ? " | {$detail->payment_stage}" : '';
-                                                                $jumlah = number_format($detail->jumlah_transfer, 0, ',', '.');
-
-                                                                $usedIndicator = in_array($detail->id, $usedDetailIds) ? ' (Tersedia kembali)' : '';
-
-                                                                $label = "{$vendorName} | {$keperluan}{$paymentStage} | Rp {$jumlah}{$usedIndicator}";
-
-                                                                return [$detail->id => $label];
-                                                            })->toArray();
-                                                        } catch (Exception $e) {
-                                                            Log::error('Error in nota_dinas_detail_id options: '.$e->getMessage(), [
-                                                                'nota_dinas_id' => $notaDinasId,
-                                                                'trace' => $e->getTraceAsString(),
-                                                            ]);
-
-                                                            return [];
-                                                        }
-                                                    })
-                                                    ->searchable()
-                                                    ->reactive()
-                                                    ->live()
-                                                    ->helperText(function (callable $get) {
-                                                        try {
-                                                            $notaDinasId = $get('nota_dinas_id');
-                                                            if (! $notaDinasId) {
-                                                                return 'Pilih Nota Dinas terlebih dahulu';
-                                                            }
-
-                                                            $currentExpenseItems = $get('../../expenses') ?? $get('../expenses') ?? $get('expenses') ?? [];
-                                                            $orderId = $get('../../id') ?? $get('../id') ?? $get('id');
-
-                                                            $formUsedIds = array_filter(array_column($currentExpenseItems, 'nota_dinas_detail_id'));
-                                                            $dbUsedIds = $orderId ? Expense::where('order_id', $orderId)
-                                                                ->whereNotNull('nota_dinas_detail_id')
-                                                                ->pluck('nota_dinas_detail_id')
-                                                                ->toArray() : [];
-
-                                                            $allUsedIds = array_unique(array_merge($formUsedIds, $dbUsedIds));
-                                                            $actualUsedCount = count($allUsedIds);
-
-                                                            $totalCount = NotaDinasDetail::where('nota_dinas_id', $notaDinasId)
-                                                                ->where('jenis_pengeluaran', 'wedding')
-                                                                ->count();
-
-                                                            return "Pilih detail nota dinas yang akan dibayar (Sudah dipilih: {$actualUsedCount}/{$totalCount})";
-                                                        } catch (Exception $e) {
-                                                            Log::warning('Error in helperText: '.$e->getMessage());
-
-                                                            return 'Pilih detail nota dinas yang akan dibayar';
-                                                        }
-                                                    })
-                                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                                        try {
-                                                            if (! $state) {
-                                                                $set('vendor_id', null);
-                                                                $set('account_holder', null);
-                                                                $set('bank_name', null);
-                                                                $set('bank_account', null);
-                                                                $set('amount', null);
-                                                                $set('note', null);
-
-                                                                return;
-                                                            }
-
-                                                            $notaDinasDetail = NotaDinasDetail::with('vendor')->find($state);
-                                                            if ($notaDinasDetail) {
-                                                                $set('vendor_id', $notaDinasDetail->vendor_id);
-                                                                $set('account_holder', $notaDinasDetail->account_holder ?? $notaDinasDetail->vendor->account_holder);
-                                                                $set('bank_name', $notaDinasDetail->bank_name ?? $notaDinasDetail->vendor->bank_name);
-                                                                $set('bank_account', $notaDinasDetail->bank_account ?? $notaDinasDetail->vendor->bank_account);
-                                                                $set('amount', $notaDinasDetail->jumlah_transfer ?? 0);
-                                                                $set('note', $notaDinasDetail->keperluan ?? null);
-                                                            }
-                                                        } catch (Exception $e) {
-                                                            Log::error('Error in afterStateUpdated: '.$e->getMessage());
-                                                        }
-                                                    })
-                                                    ->required()
-                                                    ->columnSpan(2),
-                                                Hidden::make('vendor_id'),
-                                            ]),
-                                        Grid::make(3)
-                                            ->schema([
-                                                TextInput::make('bank_name')
-                                                    ->label('Bank')
-                                                    ->required()
-                                                    ->live()
-                                                    ->columnSpan(1),
-                                                TextInput::make('account_holder')
-                                                    ->label('Nama Rekening')
-                                                    ->required()
-                                                    ->live()
-                                                    ->columnSpan(1),
-                                                TextInput::make('bank_account')
-                                                    ->label('Nomor Rekening')
-                                                    ->required()
-                                                    ->live()
-                                                    ->columnSpan(1),
-                                            ]),
-                                        Grid::make(3)
-                                            ->schema([
-                                                TextInput::make('amount')
-                                                    ->label('Jumlah Transfer')
-                                                    ->prefix('Rp. ')
-                                                    ->mask(RawJs::make('$money($input)'))
-                                                    ->stripCharacters(',')
-                                                    ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
-                                                    ->required(),
-                                                Select::make('payment_method_id')
-                                                    ->label('Metode Pembayaran')
-                                                    ->required()
-                                                    ->options(PaymentMethod::all()->pluck('name', 'id')),
-                                                DatePicker::make('date_expense')
-                                                    ->label('Tanggal Pengeluaran')
-                                                    ->default(now())
-                                                    ->required()
-                                                    ->reactive()
-                                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                                        try {
-                                                            $vendorId = $get('vendor_id');
-                                                            if (! $vendorId) {
-                                                                return;
-                                                            }
-
-                                                            $vendor = Vendor::find($vendorId);
-                                                            if (! $vendor) {
-                                                                return;
-                                                            }
-
-                                                            $at = $state ? \Carbon\Carbon::parse($state) : now();
-                                                            $active = $vendor->activePrice($at);
-
-                                                            $amRaw = $get('amount');
-                                                            $currentAmount = is_numeric($amRaw) ? (int) $amRaw : (int) preg_replace('/[^\d]/', '', (string) $amRaw);
-                                                            if (($currentAmount ?? 0) <= 0 && $active) {
-                                                                $set('amount', $active->harga_vendor);
-                                                            }
-                                                        } catch (\Throwable $e) {
-                                                        }
-                                                    }),
-                                            ]),
-                                        Grid::make(1)
-                                            ->schema([
-                                                Textarea::make('note')
-                                                    ->label('Catatan / Keperluan')
-                                                    ->required()
-                                                    ->rows(3)
-                                                    ->columnSpan(1),
-                                                FileUpload::make('image')
-                                                    ->label('Bukti Transfer')
-                                                    ->directory('expense-proofs')
-                                                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
-                                                    ->maxSize(5120)
-                                                    ->required()
-                                                    ->downloadable()
-                                                    ->openable()
-                                                    ->columnSpan(1),
-                                            ]),
-                                    ])
-                                    ->addActionLabel('Tambah Expense')
-                                    ->label('Pengeluaran Wedding')
-                                    ->collapsed()
-                                    ->reorderable(true)
-                                    ->reorderableWithButtons(),
+                                        return "Total pengeluaran: {$count} item | Total nominal: Rp ".number_format($sum, 0, '.', ',');
+                                    }),
+                                Placeholder::make('expenses_manage')
+                                    ->label('Kelola Pengeluaran')
+                                    ->content('Gunakan tab Pengeluaran di bawah form untuk tambah/edit pengeluaran.'),
                             ])->columnSpanFull(),
                     ]),
                 Step::make('Riwayat Modifikasi')

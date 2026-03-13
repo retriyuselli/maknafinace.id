@@ -91,7 +91,7 @@ class GenerateOrderJournals extends Command
             try {
                 $batch = $this->orderJournalService->generateRevenueRecognitionJournal($order);
                 if ($batch) {
-                    $this->line("   ✅ Created revenue journal for Order {$order->id}: {$order->name} ({$batch->batch_number})");
+                    $this->line("   ✅ Created draft revenue journal for Order {$order->id}: {$order->name} ({$batch->batch_number})");
                     $successCount++;
                 } else {
                     $this->line("   ❌ Failed to create revenue journal for Order {$order->id}: {$order->name}");
@@ -103,7 +103,7 @@ class GenerateOrderJournals extends Command
             }
         }
 
-        $this->line("   Revenue journals: {$successCount} created, {$errorCount} errors");
+        $this->line("   Revenue journals (draft): {$successCount} created, {$errorCount} errors");
     }
 
     private function generatePaymentJournals($isDryRun = false)
@@ -137,7 +137,7 @@ class GenerateOrderJournals extends Command
             try {
                 $batch = $this->orderJournalService->generatePaymentJournal($payment);
                 if ($batch) {
-                    $this->line("   ✅ Created payment journal for Payment {$payment->id}: {$payment->order->name} ({$batch->batch_number})");
+                    $this->line("   ✅ Created draft payment journal for Payment {$payment->id}: {$payment->order->name} ({$batch->batch_number})");
                     $successCount++;
                 } else {
                     $this->line("   ❌ Failed to create payment journal for Payment {$payment->id}");
@@ -149,7 +149,7 @@ class GenerateOrderJournals extends Command
             }
         }
 
-        $this->line("   Payment journals: {$successCount} created, {$errorCount} errors");
+        $this->line("   Payment journals (draft): {$successCount} created, {$errorCount} errors");
     }
 
     private function generateExpenseJournals($isDryRun = false)
@@ -184,7 +184,7 @@ class GenerateOrderJournals extends Command
             try {
                 $batch = $this->orderJournalService->generateExpenseJournal($expense);
                 if ($batch) {
-                    $this->line("   ✅ Created expense journal for Expense {$expense->id}: {$expense->order->name} - {$expense->note} ({$batch->batch_number})");
+                    $this->line("   ✅ Created draft expense journal for Expense {$expense->id}: {$expense->order->name} - {$expense->note} ({$batch->batch_number})");
                     $successCount++;
                 } else {
                     $this->line("   ❌ Failed to create expense journal for Expense {$expense->id}");
@@ -196,6 +196,6 @@ class GenerateOrderJournals extends Command
             }
         }
 
-        $this->line("   Expense journals: {$successCount} created, {$errorCount} errors");
+        $this->line("   Expense journals (draft): {$successCount} created, {$errorCount} errors");
     }
 }

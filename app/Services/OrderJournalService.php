@@ -52,14 +52,19 @@ class OrderJournalService
         return substr($base, 0, 13).'-'.$suffix;
     }
 
-    private function createOrGetJournalBatch(array $where, array $create): JournalBatch
+    private function createOrGetJournalBatch(array $where, array $create): array
     {
+        $existing = JournalBatch::where($where)->lockForUpdate()->first();
+        if ($existing) {
+            return [$existing, false];
+        }
+
         try {
-            return JournalBatch::create(array_merge($where, $create));
+            return [JournalBatch::create(array_merge($where, $create)), true];
         } catch (QueryException $e) {
             $existing = JournalBatch::where($where)->first();
             if ($existing) {
-                return $existing;
+                return [$existing, false];
             }
 
             throw $e;
@@ -110,10 +115,10 @@ class OrderJournalService
 
             return DB::transaction(function () use ($order, $accountsReceivable, $weddingRevenue, $revenueAmount) {
                 // Create journal batch
-                $batch = $this->createOrGetJournalBatch([
+                [$batch, $created] = $this->createOrGetJournalBatch([
                     'reference_type' => 'order_revenue',
                     'reference_id' => $order->id,
-                    'status' => 'posted',
+                    'status' => 'draft',
                 ], [
                     'batch_number' => $this->uniqueBatchNumber('WED-'.$order->id),
                     'transaction_date' => $order->closing_date ?? now(),
@@ -122,6 +127,10 @@ class OrderJournalService
                     'total_credit' => $revenueAmount,
                     'created_by' => Auth::id() ?? 1,
                 ]);
+
+                if (! $created && $batch->journalEntries()->exists()) {
+                    return $batch;
+                }
 
                 // Create journal entries
                 $entries = [
@@ -154,6 +163,8 @@ class OrderJournalService
                 foreach ($entries as $entryData) {
                     JournalEntry::create($entryData);
                 }
+
+                $batch->calculateTotals();
 
                 Log::info("Revenue recognition journal created for Order {$order->id}, Amount: {$revenueAmount}");
 
@@ -223,10 +234,10 @@ class OrderJournalService
             }
 
             return DB::transaction(function () use ($payment, $order, $cashAccount, $accountsReceivable, $paymentAmount) {
-                $batch = $this->createOrGetJournalBatch([
+                [$batch, $created] = $this->createOrGetJournalBatch([
                     'reference_type' => 'payment',
                     'reference_id' => $payment->id,
-                    'status' => 'posted',
+                    'status' => 'draft',
                 ], [
                     'batch_number' => $this->uniqueBatchNumber('PAY-'.$payment->id),
                     'transaction_date' => $payment->tgl_bayar ?? now(),
@@ -235,6 +246,10 @@ class OrderJournalService
                     'total_credit' => $paymentAmount,
                     'created_by' => Auth::id() ?? 1,
                 ]);
+
+                if (! $created && $batch->journalEntries()->exists()) {
+                    return $batch;
+                }
 
                 // Create journal entries
                 $entries = [
@@ -267,6 +282,8 @@ class OrderJournalService
                 foreach ($entries as $entryData) {
                     JournalEntry::create($entryData);
                 }
+
+                $batch->calculateTotals();
 
                 Log::info("Payment journal created for Payment {$payment->id}, Amount: {$paymentAmount}");
 
@@ -359,10 +376,10 @@ class OrderJournalService
                 }
 
                 // Create journal batch
-                $batch = $this->createOrGetJournalBatch([
+                [$batch, $created] = $this->createOrGetJournalBatch([
                     'reference_type' => 'expense',
                     'reference_id' => $expense->id,
-                    'status' => 'posted',
+                    'status' => 'draft',
                 ], [
                     'batch_number' => $this->uniqueBatchNumber('EXP-'.$expense->id),
                     'transaction_date' => $transactionDate,
@@ -371,6 +388,10 @@ class OrderJournalService
                     'total_credit' => $expenseAmount,
                     'created_by' => Auth::id() ?? 1,
                 ]);
+
+                if (! $created && $batch->journalEntries()->exists()) {
+                    return $batch;
+                }
 
                 // Create journal entries
                 $entries = [
@@ -403,6 +424,8 @@ class OrderJournalService
                 foreach ($entries as $entryData) {
                     JournalEntry::create($entryData);
                 }
+
+                $batch->calculateTotals();
 
                 Log::info("Expense journal created for Expense {$expense->id}, Amount: {$expenseAmount}");
 
@@ -460,17 +483,22 @@ class OrderJournalService
 
             return DB::transaction(function () use ($order, $accountsReceivable, $weddingRevenue, $adjustmentAmount, $adjustmentDescription) {
                 // Create journal batch
-                $batch = JournalBatch::create([
-                    'batch_number' => 'ADJ-'.$order->id,
+                [$batch, $created] = $this->createOrGetJournalBatch([
+                    'reference_type' => 'order_adjustment',
+                    'reference_id' => $order->id,
+                    'status' => 'draft',
+                ], [
+                    'batch_number' => $this->uniqueBatchNumber('ADJ-'.$order->id),
                     'transaction_date' => now(),
                     'description' => trim($adjustmentDescription, ', '),
                     'total_debit' => abs($adjustmentAmount),
                     'total_credit' => abs($adjustmentAmount),
-                    'status' => 'posted',
-                    'reference_type' => 'order_adjustment',
-                    'reference_id' => $order->id,
                     'created_by' => Auth::id() ?? 1,
                 ]);
+
+                if (! $created && $batch->journalEntries()->exists()) {
+                    return $batch;
+                }
 
                 // Create journal entries based on adjustment direction
                 if ($adjustmentAmount > 0) {
@@ -532,6 +560,8 @@ class OrderJournalService
                     JournalEntry::create($entryData);
                 }
 
+                $batch->calculateTotals();
+
                 Log::info("Order adjustment journal created for Order {$order->id}, Amount: {$adjustmentAmount}");
 
                 return $batch;
@@ -592,6 +622,8 @@ class OrderJournalService
                     'reference_type' => $originalBatch->reference_type.'_reversal',
                     'reference_id' => $originalBatch->reference_id,
                     'created_by' => Auth::id() ?? 1,
+                    'approved_by' => Auth::id() ?? 1,
+                    'approved_at' => now(),
                 ]);
 
                 // Create reversed journal entries
@@ -664,10 +696,10 @@ class OrderJournalService
 
             return DB::transaction(function () use ($otherIncome, $cashAccount, $otherIncomeAccount, $incomeAmount) {
                 // Create journal batch
-                $batch = $this->createOrGetJournalBatch([
+                [$batch, $created] = $this->createOrGetJournalBatch([
                     'reference_type' => 'other_income',
                     'reference_id' => $otherIncome->id,
-                    'status' => 'posted',
+                    'status' => 'draft',
                 ], [
                     'batch_number' => $this->uniqueBatchNumber('OTH-'.$otherIncome->id),
                     'transaction_date' => $otherIncome->tgl_bayar ?? now(),
@@ -676,6 +708,10 @@ class OrderJournalService
                     'total_credit' => $incomeAmount,
                     'created_by' => Auth::id() ?? 1,
                 ]);
+
+                if (! $created && $batch->journalEntries()->exists()) {
+                    return $batch;
+                }
 
                 // Create journal entries
                 $entries = [
@@ -708,6 +744,8 @@ class OrderJournalService
                 foreach ($entries as $entryData) {
                     JournalEntry::create($entryData);
                 }
+
+                $batch->calculateTotals();
 
                 Log::info("Other income journal created for PendapatanLain {$otherIncome->id}, Amount: {$incomeAmount}");
 
@@ -760,10 +798,10 @@ class OrderJournalService
 
             return DB::transaction(function () use ($expenseOps, $cashAccount, $expenseAccount, $expenseAmount) {
                 // Create journal batch
-                $batch = $this->createOrGetJournalBatch([
+                [$batch, $created] = $this->createOrGetJournalBatch([
                     'reference_type' => 'expense_ops',
                     'reference_id' => $expenseOps->id,
-                    'status' => 'posted',
+                    'status' => 'draft',
                 ], [
                     'batch_number' => $this->uniqueBatchNumber('EXP-OPS-'.$expenseOps->id),
                     'transaction_date' => $expenseOps->date_expense ?? now(),
@@ -772,6 +810,10 @@ class OrderJournalService
                     'total_credit' => $expenseAmount,
                     'created_by' => Auth::id() ?? 1,
                 ]);
+
+                if (! $created && $batch->journalEntries()->exists()) {
+                    return $batch;
+                }
 
                 // Create journal entries
                 $entries = [
@@ -804,6 +846,8 @@ class OrderJournalService
                 foreach ($entries as $entryData) {
                     JournalEntry::create($entryData);
                 }
+
+                $batch->calculateTotals();
 
                 Log::info("Operational expense journal created for ExpenseOps {$expenseOps->id}, Amount: {$expenseAmount}");
 
@@ -856,10 +900,10 @@ class OrderJournalService
 
             return DB::transaction(function () use ($otherExpense, $cashAccount, $expenseAccount, $expenseAmount) {
                 // Create journal batch
-                $batch = $this->createOrGetJournalBatch([
+                [$batch, $created] = $this->createOrGetJournalBatch([
                     'reference_type' => 'other_expense',
                     'reference_id' => $otherExpense->id,
-                    'status' => 'posted',
+                    'status' => 'draft',
                 ], [
                     'batch_number' => $this->uniqueBatchNumber('EXP-OTH-'.$otherExpense->id),
                     'transaction_date' => $otherExpense->date_expense ?? now(),
@@ -868,6 +912,10 @@ class OrderJournalService
                     'total_credit' => $expenseAmount,
                     'created_by' => Auth::id() ?? 1,
                 ]);
+
+                if (! $created && $batch->journalEntries()->exists()) {
+                    return $batch;
+                }
 
                 // Create journal entries
                 $entries = [
@@ -900,6 +948,8 @@ class OrderJournalService
                 foreach ($entries as $entryData) {
                     JournalEntry::create($entryData);
                 }
+
+                $batch->calculateTotals();
 
                 Log::info("Other expense journal created for PengeluaranLain {$otherExpense->id}, Amount: {$expenseAmount}");
 
