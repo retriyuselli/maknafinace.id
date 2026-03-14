@@ -70,7 +70,7 @@ class VendorResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['category'])
+            ->with(['category', 'parent'])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

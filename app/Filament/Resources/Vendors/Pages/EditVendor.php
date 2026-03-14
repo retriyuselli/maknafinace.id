@@ -49,6 +49,17 @@ class EditVendor extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('panduan')
+                ->label('Panduan')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Panduan Vendor')
+                ->modalDescription('Ringkasan cara membuat vendor induk dan vendor item (product).')
+                ->modalWidth('4xl')
+                ->modalContent(view('filament.modals.vendor-guide'))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Tutup'),
+
             DeleteAction::make()
                 ->icon('heroicon-m-trash')
                 ->color('danger')

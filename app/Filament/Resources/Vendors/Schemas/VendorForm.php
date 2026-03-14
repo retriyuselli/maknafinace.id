@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Vendors\Schemas;
 
 use App\Models\Category;
-use App\Support\Rupiah;
+use App\Models\Vendor;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -54,7 +54,37 @@ class VendorForm
                                         Select::make('status')
                                             ->options(['vendor' => 'Vendor', 'product' => 'Product'])
                                             ->default('product')
-                                            ->required(),
+                                            ->required()
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set): void {
+                                                $value = is_object($state) && property_exists($state, 'value') ? $state->value : $state;
+                                                if ($value !== 'product') {
+                                                    $set('parent_id', null);
+                                                }
+                                            }),
+                                        Select::make('parent_id')
+                                            ->label('Vendor Induk')
+                                            ->placeholder('— (Vendor Induk)')
+                                            ->helperText('Kosongkan jika ini vendor induk.')
+                                            ->options(function (?Vendor $record) {
+                                                return Vendor::query()
+                                                    ->whereNull('parent_id')
+                                                    ->whereIn('status', ['vendor', 'master'])
+                                                    ->when(
+                                                        $record?->exists,
+                                                        fn ($query) => $query->whereKeyNot($record->getKey())
+                                                    )
+                                                    ->orderBy('name')
+                                                    ->pluck('name', 'id');
+                                            })
+                                            ->searchable()
+                                            ->preload()
+                                            ->visible(function (Get $get): bool {
+                                                $status = $get('status');
+                                                $value = is_object($status) && property_exists($status, 'value') ? $status->value : $status;
+
+                                                return $value === 'product';
+                                            }),
                                         Select::make('category_id')
                                             ->relationship('category', 'name')
                                             ->searchable()

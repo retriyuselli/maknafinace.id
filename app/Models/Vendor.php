@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\StatusVendor;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +35,7 @@ class Vendor extends Model
         'kontrak_kerjasama',
         'bank_account',
         'category_id',
+        'parent_id',
     ];
 
     protected $casts = [
@@ -69,6 +71,16 @@ class Vendor extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     public function expenses(): HasMany
@@ -144,6 +156,13 @@ class Vendor extends Model
      */
     public function delete()
     {
+        if ($this->children()->exists()) {
+            throw new Exception(
+                'Cannot delete vendor because it has child vendor(s). '.
+                'Please reassign or delete the child vendor(s) first.'
+            );
+        }
+
         // Check if vendor is used in products
         $usageDetails = $this->usage_details;
         $productVendorCount = $usageDetails['productCount'];
@@ -178,6 +197,13 @@ class Vendor extends Model
     public function forceDelete()
     {
         try {
+            if ($this->children()->exists()) {
+                throw new Exception(
+                    'Cannot force delete vendor because it has child vendor(s). '.
+                    'Please reassign or delete the child vendor(s) first.'
+                );
+            }
+
             // Start database transaction
             DB::beginTransaction();
 

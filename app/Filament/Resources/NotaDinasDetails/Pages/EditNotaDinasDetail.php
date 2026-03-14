@@ -20,6 +20,17 @@ class EditNotaDinasDetail extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('panduan')
+                ->label('Panduan')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Panduan Pengisian Nota Dinas Detail')
+                ->modalDescription('Ringkasan langkah dan aturan pengisian agar data sesuai penawaran dan realisasi.')
+                ->modalWidth('4xl')
+                ->modalContent(view('filament.modals.nota-dinas-guide'))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Tutup'),
+
             DeleteAction::make()
                 ->requiresConfirmation()
                 ->modalHeading('Hapus Detail Nota Dinas')

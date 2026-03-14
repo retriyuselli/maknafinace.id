@@ -39,12 +39,14 @@ class VendorsTable
     {
         return $table
             ->query(
-                Vendor::query()->withCount([
-                    'productVendors',
-                    'expenses',
-                    'notaDinasDetails',
-                    'productPenambahans',
-                ])
+                Vendor::query()
+                    ->with(['category', 'parent'])
+                    ->withCount([
+                        'productVendors',
+                        'expenses',
+                        'notaDinasDetails',
+                        'productPenambahans',
+                    ])
             )
             ->poll('5s')
             ->defaultPaginationPageOption(25)
@@ -57,6 +59,11 @@ class VendorsTable
                     ->formatStateUsing(fn ($state): string => $state ? Str::title($state) : '-')
                     ->copyMessage('Vendor copied')
                     ->description(fn (Vendor $record): string => Str::title($record->category?->name ?? '-')),
+
+                TextColumn::make('parent.name')
+                    ->label('Vendor Induk')
+                    ->formatStateUsing(fn ($state): string => $state ? Str::title($state) : '-')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('pic_name')
                     ->label('PIC')
@@ -193,6 +200,17 @@ class VendorsTable
                         'product' => 'Product',
                     ])
                     ->multiple(),
+
+                SelectFilter::make('parent_id')
+                    ->label('Vendor Induk')
+                    ->options(fn () => Vendor::query()
+                        ->whereNull('parent_id')
+                        ->whereIn('status', ['vendor', 'master'])
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('Semua Vendor'),
 
                 SelectFilter::make('is_master')
                     ->label('Master')

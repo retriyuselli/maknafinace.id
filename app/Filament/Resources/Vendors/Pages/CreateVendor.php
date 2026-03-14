@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Vendors\Pages;
 
 use App\Filament\Resources\Vendors\VendorResource;
 use App\Models\Vendor;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\QueryException;
@@ -13,6 +14,22 @@ use Illuminate\Validation\ValidationException;
 class CreateVendor extends CreateRecord
 {
     protected static string $resource = VendorResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('panduan')
+                ->label('Panduan')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->modalHeading('Panduan Vendor')
+                ->modalDescription('Ringkasan cara membuat vendor induk dan vendor item (product).')
+                ->modalWidth('4xl')
+                ->modalContent(view('filament.modals.vendor-guide'))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Tutup'),
+        ];
+    }
 
     protected function handleRecordCreation(array $data): Vendor
     {
