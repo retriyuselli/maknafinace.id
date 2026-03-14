@@ -16,7 +16,6 @@ use Exception;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -24,6 +23,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -475,9 +475,9 @@ class OrderForm
                         Section::make('Pengeluaran')
                             ->description('Catat pengeluaran ke vendor. Setiap vendor hanya boleh dipilih satu kali per order.')
                             ->schema([
-                                Placeholder::make('expenses_summary')
+                                TextEntry::make('expenses_summary')
                                     ->label('Ringkasan')
-                                    ->content(function (?Order $record): string {
+                                    ->state(function (?Order $record): string {
                                         if (! $record) {
                                             return '-';
                                         }
@@ -487,9 +487,9 @@ class OrderForm
 
                                         return "Total pengeluaran: {$count} item | Total nominal: Rp ".number_format($sum, 0, '.', ',');
                                     }),
-                                Placeholder::make('expenses_manage')
+                                TextEntry::make('expenses_manage')
                                     ->label('Kelola Pengeluaran')
-                                    ->content('Gunakan tab Pengeluaran di bawah form untuk tambah/edit pengeluaran.'),
+                                    ->state('Gunakan tab Pengeluaran di bawah form untuk tambah/edit pengeluaran.'),
                             ])->columnSpanFull(),
                     ]),
                 Step::make('Riwayat Modifikasi')

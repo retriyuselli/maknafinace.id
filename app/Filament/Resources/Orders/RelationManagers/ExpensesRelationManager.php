@@ -13,6 +13,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -230,6 +231,14 @@ class ExpensesRelationManager extends RelationManager
                             ]),
                     ]),
 
+                Section::make('Keterangan')
+                    ->schema([
+                        Textarea::make('note')
+                            ->label('Catatan / Keperluan')
+                            ->required()
+                            ->rows(3),
+                    ]),
+
                 Section::make('Invoice / Bukti')
                     ->schema([
                         FileUpload::make('image')
@@ -286,6 +295,11 @@ class ExpensesRelationManager extends RelationManager
                         $pm = PaymentMethod::find($data['payment_method_id']);
                         if ($pm) {
                             $data['payment_stage'] = $pm->is_cash ? 'cash' : 'transfer';
+                        }
+
+                        if (blank($data['note'] ?? null) && filled($data['nota_dinas_detail_id'] ?? null)) {
+                            $detail = NotaDinasDetail::find($data['nota_dinas_detail_id']);
+                            $data['note'] = $detail?->keperluan ?? 'Expense';
                         }
 
                         return $data;
