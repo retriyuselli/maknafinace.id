@@ -6,9 +6,14 @@ use App\Models\Expense;
 use App\Models\NotaDinas;
 use App\Models\NotaDinasDetail;
 use App\Models\PaymentMethod;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -26,6 +31,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class ExpensesRelationManager extends RelationManager
 {
@@ -50,22 +56,30 @@ class ExpensesRelationManager extends RelationManager
                                             return [];
                                         }
 
-                                        return NotaDinas::whereHas('details', function ($query) use ($orderId) {
-                                            $query->where('order_id', $orderId);
-                                        })->pluck('no_nd', 'id')->toArray();
+                                        return NotaDinas::whereHas('details', function (Builder $query) use ($orderId) {
+                                            $query
+                                                ->where('order_id', $orderId)
+                                                ->where('jenis_pengeluaran', 'wedding')
+                                                ->whereHas('vendor');
+                                        })
+                                            ->orderByDesc('id')
+                                            ->pluck('no_nd', 'id')
+                                            ->toArray();
                                     })
+                                    ->searchable()
+                                    ->preload()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $set) {
-                                        if (! $state) {
-                                            $set('nota_dinas_detail_id', null);
-                                            $set('vendor_id', null);
-                                            $set('note', null);
-                                            $set('amount', null);
-                                            $set('account_holder', null);
-                                            $set('bank_name', null);
-                                            $set('bank_account', null);
-                                            $set('no_nd', null);
+                                        $set('nota_dinas_detail_id', null);
+                                        $set('vendor_id', null);
+                                        $set('note', null);
+                                        $set('amount', null);
+                                        $set('account_holder', null);
+                                        $set('bank_name', null);
+                                        $set('bank_account', null);
+                                        $set('no_nd', null);
 
+                                        if (! $state) {
                                             return;
                                         }
 
@@ -74,6 +88,7 @@ class ExpensesRelationManager extends RelationManager
                                             $set('no_nd', $notaDinas->no_nd);
                                         }
                                     })
+                                    ->required()
                                     ->columnSpan(3),
                                 Select::make('payment_method_id')
                                     ->label('Metode Pembayaran')
@@ -92,7 +107,8 @@ class ExpensesRelationManager extends RelationManager
                                 Select::make('nota_dinas_detail_id')
                                     ->label('Detail Nota Dinas')
                                     ->searchable()
-                                    ->getSearchResultsUsing(function (string $search, callable $get, ?Expense $record) use ($orderId): array {
+                                    ->preload()
+                                    ->getSearchResultsUsing(function (string $search, callable $get, ?Expense $record = null) use ($orderId): array {
                                         $notaDinasId = $get('nota_dinas_id');
                                         if (! $notaDinasId || ! $orderId) {
                                             return [];
@@ -110,6 +126,7 @@ class ExpensesRelationManager extends RelationManager
                                         $query = NotaDinasDetail::query()
                                             ->with('vendor')
                                             ->where('nota_dinas_id', $notaDinasId)
+                                            ->where('order_id', $orderId)
                                             ->where('jenis_pengeluaran', 'wedding')
                                             ->whereHas('vendor')
                                             ->when(count($usedIds) > 0, fn (Builder $q) => $q->whereNotIn('id', $usedIds))
@@ -120,12 +137,18 @@ class ExpensesRelationManager extends RelationManager
                                                         ->orWhereHas('vendor', fn (Builder $q) => $q->where('name', 'like', "%{$search}%"));
                                                 });
                                             })
+                                            ->orderByDesc('id')
                                             ->limit(50);
 
                                         $results = $query->get();
 
                                         if ($currentDetailId && ! $results->contains('id', $currentDetailId)) {
-                                            $current = NotaDinasDetail::with('vendor')->find($currentDetailId);
+                                            $current = NotaDinasDetail::with('vendor')
+                                                ->where('order_id', $orderId)
+                                                ->where('nota_dinas_id', $notaDinasId)
+                                                ->where('jenis_pengeluaran', 'wedding')
+                                                ->whereHas('vendor')
+                                                ->find($currentDetailId);
                                             if ($current && $current->vendor) {
                                                 $results->prepend($current);
                                             }
@@ -140,12 +163,21 @@ class ExpensesRelationManager extends RelationManager
                                             return [$detail->id => "{$vendorName} | {$keperluan}{$paymentStage} | Rp {$jumlah}"];
                                         })->toArray();
                                     })
-                                    ->getOptionLabelUsing(function ($value): ?string {
+                                    ->getOptionLabelUsing(function ($value) use ($orderId): ?string {
                                         if (! $value) {
                                             return null;
                                         }
 
-                                        $detail = NotaDinasDetail::with('vendor')->find($value);
+                                        if (! $orderId) {
+                                            return null;
+                                        }
+
+                                        $detail = NotaDinasDetail::query()
+                                            ->with('vendor')
+                                            ->where('order_id', $orderId)
+                                            ->where('jenis_pengeluaran', 'wedding')
+                                            ->whereHas('vendor')
+                                            ->find($value);
                                         if (! $detail || ! $detail->vendor) {
                                             return null;
                                         }
@@ -256,15 +288,21 @@ class ExpensesRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        $orderId = (int) ($this->getOwnerRecord()?->id ?? 0);
+
         return $table
             ->recordTitleAttribute('note')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['vendor', 'paymentMethod']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['vendor', 'paymentMethod', 'notaDinas']))
             ->defaultSort('date_expense', 'desc')
             ->columns([
                 TextColumn::make('date_expense')
                     ->label('Tanggal')
                     ->date('d M Y')
                     ->sortable(),
+                TextColumn::make('notaDinas.no_nd')
+                    ->label('Nota Dinas')
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('vendor.name')
                     ->label('Vendor')
                     ->searchable(),
@@ -274,7 +312,8 @@ class ExpensesRelationManager extends RelationManager
                     ->limit(40),
                 TextColumn::make('amount')
                     ->label('Nominal')
-                    ->money('IDR', locale: 'id')
+                    ->prefix('Rp. ')
+                    ->numeric()
                     ->sortable(),
                 TextColumn::make('paymentMethod.name')
                     ->label('Metode')
@@ -287,19 +326,54 @@ class ExpensesRelationManager extends RelationManager
                 CreateAction::make()
                     ->label('Tambah Pengeluaran')
                     ->modalWidth('7xl')
-                    ->mutateDataUsing(function (array $data) {
-                        if (! isset($data['payment_method_id']) || ! $data['payment_method_id']) {
-                            return $data;
+                    ->mutateDataUsing(function (array $data) use ($orderId): array {
+                        Gate::authorize('create', Expense::class);
+
+                        $detailId = $data['nota_dinas_detail_id'] ?? null;
+                        if (filled($detailId)) {
+                            $detail = NotaDinasDetail::query()
+                                ->with('vendor')
+                                ->where('order_id', $orderId)
+                                ->where('jenis_pengeluaran', 'wedding')
+                                ->whereHas('vendor')
+                                ->find($detailId);
+
+                            if (! $detail) {
+                                throw ValidationException::withMessages([
+                                    'nota_dinas_detail_id' => 'Detail Nota Dinas tidak valid untuk order ini.',
+                                ]);
+                            }
+
+                            $exists = Expense::where('order_id', $orderId)
+                                ->where('nota_dinas_detail_id', $detail->id)
+                                ->exists();
+
+                            if ($exists) {
+                                throw ValidationException::withMessages([
+                                    'nota_dinas_detail_id' => 'Detail Nota Dinas ini sudah digunakan. Pilih detail lain.',
+                                ]);
+                            }
+
+                            $data['nota_dinas_id'] = $detail->nota_dinas_id;
+                            $data['vendor_id'] = $detail->vendor_id;
+
+                            if (blank($data['note'] ?? null)) {
+                                $data['note'] = $detail->keperluan ?? 'Expense';
+                            }
                         }
 
-                        $pm = PaymentMethod::find($data['payment_method_id']);
+                        if (filled($data['nota_dinas_id'] ?? null)) {
+                            $notaDinas = NotaDinas::find($data['nota_dinas_id']);
+                            if ($notaDinas) {
+                                $data['no_nd'] = $notaDinas->no_nd;
+                            }
+                        }
+
+                        $pm = filled($data['payment_method_id'] ?? null)
+                            ? PaymentMethod::find($data['payment_method_id'])
+                            : null;
                         if ($pm) {
                             $data['payment_stage'] = $pm->is_cash ? 'cash' : 'transfer';
-                        }
-
-                        if (blank($data['note'] ?? null) && filled($data['nota_dinas_detail_id'] ?? null)) {
-                            $detail = NotaDinasDetail::find($data['nota_dinas_detail_id']);
-                            $data['note'] = $detail?->keperluan ?? 'Expense';
                         }
 
                         return $data;
@@ -311,20 +385,98 @@ class ExpensesRelationManager extends RelationManager
                             ->send();
                     }),
             ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->label('Hapus Terpilih')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger'),
+                    RestoreBulkAction::make()
+                        ->label('Pulihkan Terpilih')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('success'),
+                    ForceDeleteBulkAction::make()
+                        ->label('Hapus Permanen')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger'),
+                ]),
+            ])
             ->recordActions([
-                EditAction::make()
-                    ->modalWidth('7xl')
-                    ->visible(function (Expense $record): bool {
-                        Gate::authorize('update', $record);
+                ActionGroup::make([
+                    EditAction::make()
+                        ->modalWidth('7xl')
+                        ->mutateDataUsing(function (array $data, ?Expense $record = null) use ($orderId): array {
+                            if ($record) {
+                                Gate::authorize('update', $record);
+                            }
 
-                        return true;
-                    }),
-                DeleteAction::make()
-                    ->visible(function (Expense $record): bool {
-                        Gate::authorize('delete', $record);
+                            $detailId = $data['nota_dinas_detail_id'] ?? null;
+                            if (filled($detailId)) {
+                                $detail = NotaDinasDetail::query()
+                                    ->with('vendor')
+                                    ->where('order_id', $orderId)
+                                    ->where('jenis_pengeluaran', 'wedding')
+                                    ->whereHas('vendor')
+                                    ->find($detailId);
 
-                        return true;
-                    }),
+                                if (! $detail) {
+                                    throw ValidationException::withMessages([
+                                        'nota_dinas_detail_id' => 'Detail Nota Dinas tidak valid untuk order ini.',
+                                    ]);
+                                }
+
+                                $exists = Expense::where('order_id', $orderId)
+                                    ->where('nota_dinas_detail_id', $detail->id)
+                                    ->when($record?->id, fn (Builder $q) => $q->whereKeyNot($record->id))
+                                    ->exists();
+
+                                if ($exists) {
+                                    throw ValidationException::withMessages([
+                                        'nota_dinas_detail_id' => 'Detail Nota Dinas ini sudah digunakan. Pilih detail lain.',
+                                    ]);
+                                }
+
+                                $data['nota_dinas_id'] = $detail->nota_dinas_id;
+                                $data['vendor_id'] = $detail->vendor_id;
+
+                                if (blank($data['note'] ?? null)) {
+                                    $data['note'] = $detail->keperluan ?? 'Expense';
+                                }
+                            }
+
+                            if (filled($data['nota_dinas_id'] ?? null)) {
+                                $notaDinas = NotaDinas::find($data['nota_dinas_id']);
+                                if ($notaDinas) {
+                                    $data['no_nd'] = $notaDinas->no_nd;
+                                }
+                            }
+
+                            $pm = filled($data['payment_method_id'] ?? null)
+                                ? PaymentMethod::find($data['payment_method_id'])
+                                : null;
+                            if ($pm) {
+                                $data['payment_stage'] = $pm->is_cash ? 'cash' : 'transfer';
+                            }
+
+                            return $data;
+                        })
+                        ->visible(function (Expense $record): bool {
+                            Gate::authorize('update', $record);
+
+                            return true;
+                        }),
+                    DeleteAction::make()
+                        ->visible(function (Expense $record): bool {
+                            Gate::authorize('delete', $record);
+
+                            return true;
+                        }),
+                ])
+                    ->label('Aksi')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray')
+                    ->button(),
             ]);
     }
 }
