@@ -1,9 +1,8 @@
 <?php
 
 use App\Http\Controllers\AccountManagerReportController;
-use App\Http\Controllers\BankStatementFileController;
-use App\Http\Controllers\BankReconciliationPageController;
 use App\Http\Controllers\BankReconciliationTemplateController;
+use App\Http\Controllers\BankStatementFileController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\DocumentController;
@@ -174,9 +173,9 @@ Route::get('/product', function () {
 Route::get('/pendaftaran', function () {
     // Get all industries from database
     $industries = \App\Models\Industry::all();
-    
+
     return view('front.pendaftaran', [
-        'industries' => $industries
+        'industries' => $industries,
     ]);
 })->name('pendaftaran');
 
@@ -320,7 +319,7 @@ Route::middleware(\Filament\Http\Middleware\Authenticate::class)->group(function
     })->name('dashboard');
 
     // Logout
-    Route::post('/logout', function () {
+    Route::match(['GET', 'POST'], '/logout', function () {
         Auth::logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();
