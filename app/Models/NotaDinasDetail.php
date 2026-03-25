@@ -46,7 +46,7 @@ class NotaDinasDetail extends Model
                 return;
             }
 
-            if (blank($record->order_product_id) || blank($record->product_vendor_id)) {
+            if (blank($record->order_product_id) || (blank($record->product_vendor_id) && blank($record->vendor_id))) {
                 return;
             }
 
@@ -67,18 +67,25 @@ class NotaDinasDetail extends Model
                 ]);
             }
 
-            $productVendor = ProductVendor::query()
-                ->whereKey($record->product_vendor_id)
-                ->where('product_id', $orderProduct->product_id)
-                ->first();
+            // If we have product_vendor_id, it's from basic facility. Otherwise, if vendor_id is filled but product_vendor_id is blank, it's from Penambahan (Additional).
+            if (filled($record->product_vendor_id)) {
+                $productVendor = ProductVendor::query()
+                    ->whereKey($record->product_vendor_id)
+                    ->where('product_id', $orderProduct->product_id)
+                    ->first();
 
-            if (! $productVendor) {
+                if (! $productVendor) {
+                    throw ValidationException::withMessages([
+                        'product_vendor_id' => 'Vendor produk tidak valid untuk produk yang dipilih.',
+                    ]);
+                }
+
+                $record->vendor_id = $productVendor->vendor_id;
+            } else if (blank($record->vendor_id)) {
                 throw ValidationException::withMessages([
-                    'product_vendor_id' => 'Vendor produk tidak valid untuk produk yang dipilih.',
+                    'product_vendor_id' => 'Vendor produk atau penambahan tidak valid untuk produk yang dipilih.',
                 ]);
             }
-
-            $record->vendor_id = $productVendor->vendor_id;
 
             if (blank($record->payment_stage)) {
                 $record->payment_stage = 'DP';
@@ -88,8 +95,14 @@ class NotaDinasDetail extends Model
 
             $queryBase = static::query()
                 ->where('jenis_pengeluaran', 'wedding')
-                ->where('order_id', $record->order_id)
-                ->where('product_vendor_id', $record->product_vendor_id);
+                ->where('order_id', $record->order_id);
+
+            // Group by either product_vendor_id or just vendor_id to avoid payment duplication
+            if (filled($record->product_vendor_id)) {
+                $queryBase->where('product_vendor_id', $record->product_vendor_id);
+            } else {
+                $queryBase->whereNull('product_vendor_id')->where('vendor_id', $record->vendor_id);
+            }
 
             $finalExists = (clone $queryBase)
                 ->where('payment_stage', 'Final Payment')

@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PengeluaranJenis;
 use App\Models\NotaDinasDetail;
 use App\Models\OrderProduct;
+use App\Models\ProductPenambahan;
 use App\Models\ProductVendor;
 use App\Models\Vendor;
 use Filament\Actions\Action;
@@ -37,7 +38,7 @@ class NotaDinasDetailForm
                             ->schema([
                                 Select::make('nota_dinas_id')
                                     ->label('Nota Dinas')
-                                    ->relationship('notaDinas', 'no_nd')
+                                    ->relationship('notaDinas', 'no_nd', fn ($query) => $query->latest())
                                     ->searchable()
                                     ->preload()
                                     ->required(),
@@ -283,7 +284,8 @@ class NotaDinasDetailForm
                                             ->all();
                                     }
 
-                                    return ProductVendor::query()
+                                    // Get from Product Vendors (Fasilitas Dasar)
+                                    $productVendors = ProductVendor::query()
                                         ->with('vendor')
                                         ->where('product_id', $orderProduct->product_id)
                                         ->when(
@@ -301,24 +303,58 @@ class NotaDinasDetailForm
                                         ->get()
                                         ->mapWithKeys(function (ProductVendor $pv): array {
                                             $vendorName = $pv->vendor?->name ?? 'Vendor';
-
-                                            return [$pv->id => $vendorName];
+                                            return ['PV_' . $pv->id => $vendorName . ' (Fasilitas Dasar)'];
                                         })
                                         ->toArray();
+
+                                    // Get from Product Penambahan (Additional)
+                                    $productPenambahans = ProductPenambahan::query()
+                                        ->with('vendor')
+                                        ->where('product_id', $orderProduct->product_id)
+                                        ->when(
+                                            SchemaFacade::hasColumn('product_penambahans', 'deleted_at'),
+                                            fn ($q) => $q->whereNull('product_penambahans.deleted_at'),
+                                        )
+                                        ->when($search !== '', function ($q) use ($search) {
+                                            $q->where(function ($q) use ($search) {
+                                                $q->where('description', 'like', "%{$search}%")
+                                                    ->orWhereHas('vendor', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+                                            });
+                                        })
+                                        ->limit(50)
+                                        ->get()
+                                        ->mapWithKeys(function (ProductPenambahan $pp): array {
+                                            $vendorName = $pp->vendor?->name ?? 'Vendor';
+                                            return ['PP_' . $pp->id => $vendorName . ' (Penambahan)'];
+                                        })
+                                        ->toArray();
+
+                                    return array_merge($productVendors, $productPenambahans);
                                 })
                                 ->getOptionLabelUsing(function ($value): ?string {
                                     if (! $value) {
                                         return null;
                                     }
 
-                                    $pv = ProductVendor::with('vendor')->find($value);
+                                    if (str_starts_with($value, 'PP_')) {
+                                        $id = str_replace('PP_', '', $value);
+                                        $pp = ProductPenambahan::with('vendor')->find($id);
+                                        if (! $pp) return null;
+                                        return ($pp->vendor?->name ?? 'Vendor') . ' (Penambahan)';
+                                    }
+
+                                    $id = str_replace('PV_', '', $value);
+                                    // Fallback for existing data that might not have PV_ prefix yet
+                                    if (is_numeric($value)) {
+                                        $id = $value;
+                                    }
+
+                                    $pv = ProductVendor::with('vendor')->find($id);
                                     if (! $pv) {
                                         return null;
                                     }
 
-                                    $vendorName = $pv->vendor?->name ?? 'Vendor';
-
-                                    return $vendorName;
+                                    return ($pv->vendor?->name ?? 'Vendor') . ' (Fasilitas Dasar)';
                                 })
                                 ->reactive()
                                 ->live()
@@ -333,7 +369,24 @@ class NotaDinasDetailForm
                                         return;
                                     }
 
-                                    $pv = ProductVendor::with('vendor', 'product')->find($state);
+                                    if (str_starts_with($state, 'PP_')) {
+                                        $id = str_replace('PP_', '', $state);
+                                        $pp = ProductPenambahan::with('vendor', 'product')->find($id);
+                                        if (! $pp || ! $pp->vendor) return;
+
+                                        $set('vendor_id', $pp->vendor_id);
+                                        $set('bank_name', $pp->vendor->bank_name);
+                                        $set('bank_account', $pp->vendor->bank_account);
+                                        $set('account_holder', $pp->vendor->account_holder);
+                                        return;
+                                    }
+
+                                    $id = str_replace('PV_', '', $state);
+                                    if (is_numeric($state)) {
+                                        $id = $state;
+                                    }
+
+                                    $pv = ProductVendor::with('vendor', 'product')->find($id);
                                     if (! $pv || ! $pv->vendor) {
                                         return;
                                     }
@@ -342,6 +395,39 @@ class NotaDinasDetailForm
                                     $set('bank_name', $pv->vendor->bank_name);
                                     $set('bank_account', $pv->vendor->bank_account);
                                     $set('account_holder', $pv->vendor->account_holder);
+                                })
+                                ->dehydrateStateUsing(function ($state) {
+                                    if (!$state) return null;
+                                    // If it's a Penambahan, we can't save it to product_vendor_id
+                                    // so we save null to bypass the constraint.
+                                    if (str_starts_with($state, 'PP_')) {
+                                        return null;
+                                    }
+                                    
+                                    // If it's PV_ return just the ID
+                                    return str_replace('PV_', '', $state);
+                                })
+                                ->afterStateHydrated(function (\Filament\Forms\Components\Select $component, $state, ?NotaDinasDetail $record) {
+                                    if (!$record) return;
+
+                                    // Restore state for Fasilitas Dasar
+                                    if (filled($record->product_vendor_id)) {
+                                        $component->state('PV_' . $record->product_vendor_id);
+                                        return;
+                                    }
+
+                                    // Restore state for Penambahan (workaround via vendor_id)
+                                    if (blank($record->product_vendor_id) && filled($record->vendor_id) && filled($record->order_product_id)) {
+                                        $orderProduct = OrderProduct::find($record->order_product_id);
+                                        if ($orderProduct) {
+                                            $pp = ProductPenambahan::where('product_id', $orderProduct->product_id)
+                                                ->where('vendor_id', $record->vendor_id)
+                                                ->first();
+                                            if ($pp) {
+                                                $component->state('PP_' . $pp->id);
+                                            }
+                                        }
+                                    }
                                 })
                                 ->required(fn (callable $get): bool => $supportsProductLinking && $get('jenis_pengeluaran') === PengeluaranJenis::WEDDING->value)
                                 ->columnSpan('full')
