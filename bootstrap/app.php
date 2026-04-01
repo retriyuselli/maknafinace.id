@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'filament.auth' => \Filament\Http\Middleware\Authenticate::class,
             'check.expiration' => \App\Http\Middleware\CheckUserExpiration::class,
             'project.access' => \App\Http\Middleware\CheckProjectAccess::class,
+            'no-store' => \App\Http\Middleware\NoStoreResponse::class,
         ]);
 
         // Ensure proper web middleware group for Niaga Hoster

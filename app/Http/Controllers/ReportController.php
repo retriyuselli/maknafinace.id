@@ -400,9 +400,14 @@ class ReportController extends Controller
 
     public function customerPayments(Request $request, string $status)
     {
-        $query = DataPembayaran::whereHas('order', function ($query) use ($status) {
-            $query->where('status', $status);
-        })->with(['order.prospect', 'paymentMethod']) // Eager load relasi yang dibutuhkan
+        $statusEnum = OrderStatus::tryFrom($status);
+        if (! $statusEnum) {
+            abort(404);
+        }
+
+        $query = DataPembayaran::query()
+            ->whereRelation('order', 'status', $statusEnum)
+            ->with(['order.prospect', 'paymentMethod']) // Eager load relasi yang dibutuhkan
             ->orderBy('tgl_bayar', 'desc');
 
         // Ambil input filter
@@ -441,12 +446,12 @@ class ReportController extends Controller
         $payments = $query->get();
 
         $totalPaymentsValue = $payments->sum('nominal');
-        $pageTitle = 'Customer Payments: '.Str::ucfirst(str_replace('_', ' ', $status)); // Membuat judul lebih rapi
+        $pageTitle = 'Customer Payments: '.Str::ucfirst(str_replace('_', ' ', $statusEnum->value)); // Membuat judul lebih rapi
         $paymentMethods = PaymentMethod::orderBy('name')->get(); // Ambil metode pembayaran untuk filter
 
         return view('reports.customer_payments_overview', [
             'payments' => $payments,
-            'status' => $status,
+            'status' => $statusEnum->value,
             'totalPaymentsValue' => $totalPaymentsValue,
             'pageTitle' => $pageTitle,
             'paymentMethods' => $paymentMethods, // Kirim ke view
