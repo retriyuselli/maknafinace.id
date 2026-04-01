@@ -13,29 +13,24 @@ use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
-    /**
-     * Show the user's profile.
-     */
-    public function show()
+    private function profileViewData(): array
     {
         $user = Auth::user();
 
-        // Performance data for HR dashboard
         $performanceData = [
             'projects_completed' => 23,
             'client_satisfaction' => 97,
             'revenue_generated' => 125000,
         ];
 
-        // HR Salary & Leave Data dengan annual summary
         $hrData = [
-            'monthly_salary' => 8500000, // IDR
-            'annual_salary' => 102000000, // IDR
-            'total_annual_leave' => 24, // days
-            'used_leave' => 6, // days
-            'remaining_leave' => 18, // days
-            'sick_leave_taken' => 2, // days
-            'emergency_leave_taken' => 1, // days
+            'monthly_salary' => 8500000,
+            'annual_salary' => 102000000,
+            'total_annual_leave' => 24,
+            'used_leave' => 6,
+            'remaining_leave' => 18,
+            'sick_leave_taken' => 2,
+            'emergency_leave_taken' => 1,
             'last_salary_review' => '2024-01-01',
             'next_salary_review' => '2025-01-01',
             'annual_summary' => [
@@ -43,7 +38,7 @@ class ProfileController extends Controller
                 'total_days_worked' => 240,
                 'total_leave_taken' => 6,
                 'overtime_hours' => 48,
-                'bonus_earned' => 2500000, // IDR 2.5 million
+                'bonus_earned' => 2500000,
                 'training_hours' => 32,
                 'projects_completed' => 12,
                 'performance_rating' => 4.2,
@@ -75,7 +70,30 @@ class ProfileController extends Controller
             'training_budget' => '$2,500',
         ];
 
-        return view('profile.show', compact('user', 'performanceData', 'upcomingEvents', 'benefits', 'hrData'));
+        return compact('user', 'performanceData', 'upcomingEvents', 'benefits', 'hrData');
+    }
+
+    /**
+     * Show the user's profile.
+     */
+    public function show()
+    {
+        return $this->overview();
+    }
+
+    public function overview()
+    {
+        return view('profile.show', $this->profileViewData());
+    }
+
+    public function compensation()
+    {
+        return view('profile.compensation', $this->profileViewData());
+    }
+
+    public function schedule()
+    {
+        return view('profile.schedule', $this->profileViewData());
     }
 
     /**

@@ -20,6 +20,7 @@ use App\Http\Controllers\LaporanKeuanganController;
 use App\Http\Controllers\NotaDinasPdfController;
 use App\Http\Controllers\ProductDisplayController;
 use App\Http\Controllers\Profile\ProfileController;
+use App\Http\Controllers\Profile\AdminToolsController;
 use App\Http\Controllers\ProspectAppController;
 use App\Http\Controllers\ProspectController;
 use App\Http\Controllers\ReconciliationController;
@@ -296,14 +297,31 @@ Route::middleware(['guest', 'no-store'])->group(function () {
 
 // PROFILE ROUTES
 Route::middleware(['filament.auth', 'no-store'])->group(function () {
-    Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
-    Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile', [ProfileController::class, 'overview'])->name('profile');
+    Route::get('/profile/show', [ProfileController::class, 'overview'])->name('profile.show');
+    Route::get('/profile/overview', [ProfileController::class, 'overview'])->name('profile.overview');
+    Route::get('/profile/compensation', [ProfileController::class, 'compensation'])->name('profile.compensation');
+    Route::get('/profile/schedule', [ProfileController::class, 'schedule'])->name('profile.schedule');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::post('/profile/report', [ProfileController::class, 'generateReport'])->name('profile.report');
     Route::get('/profile/events', [ProfileController::class, 'getEvents'])->name('profile.events');
     Route::get('/profile/benefits', [ProfileController::class, 'getBenefits'])->name('profile.benefits');
+
+    Route::prefix('profile/admin-tools')->middleware('super-admin')->group(function () {
+        Route::get('/', [AdminToolsController::class, 'index'])->name('profile.admin-tools');
+        Route::get('/users', [AdminToolsController::class, 'users'])->name('profile.admin-tools.users');
+        Route::get('/roles', [AdminToolsController::class, 'roles'])->name('profile.admin-tools.roles');
+        Route::get('/company', [AdminToolsController::class, 'company'])->name('profile.admin-tools.company');
+        Route::get('/branding', [AdminToolsController::class, 'branding'])->name('profile.admin-tools.branding');
+        Route::get('/sops', [AdminToolsController::class, 'sops'])->name('profile.admin-tools.sops');
+        Route::get('/documentations', [AdminToolsController::class, 'documentations'])->name('profile.admin-tools.documentations');
+        Route::get('/document-categories', [AdminToolsController::class, 'documentCategories'])->name('profile.admin-tools.document-categories');
+        Route::get('/projects', [AdminToolsController::class, 'projects'])->name('profile.admin-tools.projects');
+        Route::get('/projects/{order}', [AdminToolsController::class, 'project'])->name('profile.admin-tools.projects.show');
+        Route::get('/help-center', [AdminToolsController::class, 'helpCenter'])->name('profile.admin-tools.help-center');
+    });
     Route::get('/dashboard', function () {
         return redirect()->route('filament.admin.pages.dashboard');
     })->name('dashboard');
