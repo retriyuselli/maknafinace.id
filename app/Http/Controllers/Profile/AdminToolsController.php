@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\CompanyLogo;
 use App\Models\DocumentCategory;
 use App\Models\Documentation;
+use App\Models\Expense;
 use App\Models\Order;
 use App\Models\Sop;
 use App\Models\User;
@@ -125,6 +126,23 @@ class AdminToolsController extends Controller
     public function projects(Request $request)
     {
         $q = trim((string) $request->get('q', ''));
+        $period = (string) $request->get('period', 'all');
+        $month = trim((string) $request->get('month', ''));
+        $monthYear = null;
+        $monthMonth = null;
+
+        if ($month !== '' && preg_match('/^\d{4}-\d{2}$/', $month) === 1) {
+            [$monthYear, $monthMonth] = array_map('intval', explode('-', $month, 2));
+            if ($monthYear > 0 && $monthMonth >= 1 && $monthMonth <= 12) {
+                $period = 'custom';
+            } else {
+                $monthYear = null;
+                $monthMonth = null;
+                $month = '';
+            }
+        } else {
+            $month = '';
+        }
 
         $projectsQuery = Order::query()
             ->with([
@@ -144,15 +162,72 @@ class AdminToolsController extends Controller
             });
         }
 
+        if ($period === 'year') {
+            $projectsQuery->whereHas('prospect', function ($q) {
+                $q->whereYear('date_resepsi', now()->year)
+                  ->orWhereYear('date_akad', now()->year)
+                  ->orWhereYear('date_lamaran', now()->year);
+            });
+        } elseif ($period === 'month') {
+            $projectsQuery->whereHas('prospect', function ($q) {
+                $q->where(function ($m) {
+                    $m->whereYear('date_resepsi', now()->year)
+                      ->whereMonth('date_resepsi', now()->month);
+                })->orWhere(function ($m) {
+                    $m->whereYear('date_akad', now()->year)
+                      ->whereMonth('date_akad', now()->month);
+                })->orWhere(function ($m) {
+                    $m->whereYear('date_lamaran', now()->year)
+                      ->whereMonth('date_lamaran', now()->month);
+                });
+            });
+        } elseif ($period === 'custom' && $monthYear !== null && $monthMonth !== null) {
+            $projectsQuery->whereHas('prospect', function ($q) use ($monthYear, $monthMonth) {
+                $q->where(function ($m) use ($monthYear, $monthMonth) {
+                    $m->whereYear('date_resepsi', $monthYear)
+                      ->whereMonth('date_resepsi', $monthMonth);
+                })->orWhere(function ($m) use ($monthYear, $monthMonth) {
+                    $m->whereYear('date_akad', $monthYear)
+                      ->whereMonth('date_akad', $monthMonth);
+                })->orWhere(function ($m) use ($monthYear, $monthMonth) {
+                    $m->whereYear('date_lamaran', $monthYear)
+                      ->whereMonth('date_lamaran', $monthMonth);
+                });
+            });
+        } else {
+            $period = 'all';
+        }
+
+        $projectsCount = (int) (clone $projectsQuery)->count();
+        $grandTotalSum = (int) (clone $projectsQuery)->sum('grand_total');
+        $orderIdsQuery = (clone $projectsQuery)->reorder()->select('id');
+        $expensesSum = (int) Expense::query()->whereIn('order_id', $orderIdsQuery)->sum('amount');
+        $profitSum = $grandTotalSum - $expensesSum;
+        $profitAvg = $projectsCount > 0 ? (int) round($profitSum / $projectsCount) : 0;
+
         return view('profile.admin-tools.projects', [
             'q' => $q,
             'projects' => $projectsQuery->paginate(20)->withQueryString(),
+            'projectsCount' => $projectsCount,
+            'grandTotalSum' => $grandTotalSum,
+            'expensesSum' => $expensesSum,
+            'profitSum' => $profitSum,
+            'profitAvg' => $profitAvg,
+            'period' => $period,
+            'month' => $month,
         ]);
     }
 
     public function project(Order $order)
     {
-        $order->loadMissing(['prospect', 'user', 'employee', 'items.product', 'dataPengeluaran:id,order_id,amount']);
+        $order->loadMissing([
+            'prospect',
+            'user',
+            'employee',
+            'items.product',
+            'dataPengeluaran.vendor',
+            'dataPengeluaran.paymentMethod',
+        ]);
 
         return view('profile.admin-tools.project-show', [
             'order' => $order,

@@ -34,10 +34,6 @@
 
         <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
             <div>
-                <div class="text-xs text-gray-500">Client</div>
-                <div class="font-semibold text-gray-900">{{ $order->prospect?->name ?? '-' }}</div>
-            </div>
-            <div>
                 <div class="text-xs text-gray-500">PIC</div>
                 <div class="font-semibold text-gray-900">{{ $order->employee?->name ?? '-' }}</div>
                 <div class="text-xs text-gray-500 mt-1">{{ $order->user?->name ?? '' }}</div>
@@ -49,10 +45,6 @@
             <div>
                 <div class="text-xs text-gray-500">Created</div>
                 <div class="font-semibold text-gray-900">{{ optional($order->created_at)->format('d M Y H:i') }}</div>
-            </div>
-            <div>
-                <div class="text-xs text-gray-500">Total Pengeluaran</div>
-                <div class="font-semibold text-gray-900">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</div>
             </div>
             <div>
                 <div class="text-xs text-gray-500">Keuntungan (Laba Kotor)</div>
@@ -118,6 +110,60 @@
                 <div class="text-lg font-bold text-gray-900">Rp {{ number_format($grandTotal, 0, ',', '.') }}</div>
             </div>
         </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden p-6">
+        <h3 class="text-lg font-semibold text-gray-900">Item Pengeluaran</h3>
+
+        @php
+            $expenses = $order->dataPengeluaran ?? collect();
+            $expensesTotal = (int) $expenses->sum('amount');
+        @endphp
+
+        @if($expenses->isEmpty())
+            <div class="mt-3 text-sm text-gray-600">Belum ada data pengeluaran.</div>
+        @else
+            <div class="mt-4 overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-xs uppercase tracking-wide text-gray-500 border-b">
+                            <th class="py-3 pr-4">Tanggal</th>
+                            <th class="py-3 pr-4">Vendor</th>
+                            <th class="py-3 pr-4">Tahap</th>
+                            <th class="py-3 pr-4">Catatan</th>
+                            <th class="py-3 pr-4 text-right">Nominal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        @foreach($expenses as $expense)
+                            <tr class="text-xs text-gray-800">
+                                <td class="py-3 pr-4 text-xs text-gray-700">
+                                    {{ $expense->date_expense ? $expense->date_expense->format('d M Y') : '-' }}
+                                </td>
+                                <td class="py-3 pr-4 text-xs text-gray-700">
+                                    {{ $expense->vendor?->name ?? '-' }}
+                                </td>
+                                <td class="py-3 pr-4 text-xs text-gray-700">
+                                    {{ \App\Models\Expense::getPaymentStageLabel($expense->payment_stage) ?? '-' }}
+                                </td>
+                                <td class="py-3 pr-4 text-xs text-gray-700">
+                                    {{ $expense->note ?? '-' }}
+                                </td>
+                                <td class="py-3 pr-4 text-xs text-right">
+                                    Rp {{ number_format((int) $expense->amount, 0, ',', '.') }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr class="border-t">
+                            <td class="py-3 pr-4 font-semibold text-gray-900" colspan="4">Total Pengeluaran</td>
+                            <td class="py-3 pr-4 text-right font-semibold text-gray-900">Rp {{ number_format($expensesTotal, 0, ',', '.') }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        @endif
     </div>
 </div>
 @endsection
