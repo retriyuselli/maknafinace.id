@@ -87,7 +87,6 @@
                     <th class="py-3 pr-4">PIC</th>
                     <th class="py-3 pr-4">Keuntungan</th>
                     <th class="py-3 pr-4">Status</th>
-                    <th class="py-3 pr-4">Created</th>
                     <th class="py-3 pr-4"></th>
                 </tr>
             </thead>
@@ -98,6 +97,9 @@
                             <a href="{{ route('profile.admin-tools.projects.show', $order) }}" class="text-blue-700 hover:underline">
                                 {{ $order->name }}
                             </a>
+                            <div class="text-[11px] text-gray-500">
+                                {{ $order->prospect?->venue ?? '-' }}
+                            </div>
                         </td>
                         <td class="py-3 pr-4 text-xs text-gray-700">
                             <div>{{ $order->employee?->name ?? '-' }}</div>
@@ -119,7 +121,6 @@
                                 {{ $status !== '' ? $status : '-' }}
                             </span>
                         </td>
-                        <td class="py-3 pr-4 text-xs text-gray-600">{{ optional($order->created_at)->diffForHumans() }}</td>
                         <td class="py-3 pr-4 text-right">
                             <a href="{{ route('profile.admin-tools.projects.show', $order) }}"
                                 class="inline-flex items-center px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition">

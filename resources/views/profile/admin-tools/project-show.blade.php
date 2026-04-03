@@ -39,6 +39,12 @@
                 <div class="text-xs text-gray-500 mt-1">{{ $order->user?->name ?? '' }}</div>
             </div>
             <div>
+                <div class="text-xs text-gray-500">Tanggal Akad</div>
+                <div class="font-semibold text-gray-900">{{ $order->prospect?->date_akad ? $order->prospect->date_akad->format('d M Y') : '-' }}</div>
+                <div class="text-xs text-gray-500 mt-2">Tanggal Resepsi</div>
+                <div class="font-semibold text-gray-900">{{ $order->prospect?->date_resepsi ? $order->prospect->date_resepsi->format('d M Y') : '-' }}</div>
+            </div>
+            <div>
                 <div class="text-xs text-gray-500">Tanggal Closing</div>
                 <div class="font-semibold text-gray-900">{{ $order->closing_date ? $order->closing_date->format('d M Y') : '-' }}</div>
             </div>
