@@ -231,6 +231,8 @@ class AdminToolsController extends Controller
             'items.product',
             'dataPengeluaran.vendor',
             'dataPengeluaran.paymentMethod',
+            'dataPengeluaran.notaDinasDetail.vendor',
+            'dataPengeluaran.notaDinasDetail.notaDinas',
         ]);
 
         return view('profile.admin-tools.project-show', [

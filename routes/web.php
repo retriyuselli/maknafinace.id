@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountManagerReportController;
 use App\Http\Controllers\BankReconciliationTemplateController;
 use App\Http\Controllers\BankStatementFileController;
+use App\Http\Controllers\NotaDinasInvoiceFileController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\DocumentController;
@@ -325,6 +326,7 @@ Route::middleware(['filament.auth', 'no-store'])->group(function () {
         Route::get('/bank-statements/failed', [AdminToolsController::class, 'bankStatementsFailed'])->name('profile.admin-tools.bank-statements.failed');
         Route::get('/bank-statements/reconciliation', [AdminToolsController::class, 'bankStatementsReconciliation'])->name('profile.admin-tools.bank-statements.reconciliation');
         Route::get('/bank-statements/{bankStatement}', [AdminToolsController::class, 'bankStatementShow'])->name('profile.admin-tools.bank-statements.show');
+        Route::get('/nota-dinas-details/{notaDinasDetail}/invoice/view', [NotaDinasInvoiceFileController::class, 'view'])->name('profile.admin-tools.nota-dinas-details.invoice.view');
         Route::get('/help-center', [AdminToolsController::class, 'helpCenter'])->name('profile.admin-tools.help-center');
     });
     Route::get('/dashboard', function () {

@@ -124,6 +124,7 @@
         @php
             $expenses = $order->dataPengeluaran ?? collect();
             $expensesTotal = (int) $expenses->sum('amount');
+            $invoices = $invoices ?? collect();
         @endphp
 
         @if($expenses->isEmpty())
@@ -137,6 +138,7 @@
                             <th class="py-3 pr-4">Vendor</th>
                             <th class="py-3 pr-4">Tahap</th>
                             <th class="py-3 pr-4">Catatan</th>
+                            <th class="py-3 pr-4">Invoice</th>
                             <th class="py-3 pr-4 text-right">Nominal</th>
                         </tr>
                     </thead>
@@ -155,6 +157,26 @@
                                 <td class="py-3 pr-4 text-xs text-gray-700">
                                     {{ $expense->note ?? '-' }}
                                 </td>
+                                <td class="py-3 pr-4 text-xs text-gray-700">
+                                    @php
+                                        $ndd = $expense->notaDinasDetail;
+                                    @endphp
+                                    <div>
+                                        @if($ndd && $ndd->invoice_file)
+                                            <a href="{{ route('profile.admin-tools.nota-dinas-details.invoice.view', $ndd) }}"
+                                                class="text-blue-700 hover:underline"
+                                                target="_blank"
+                                                rel="noopener">
+                                                {{ $ndd->invoice_number ?? 'Lihat' }}
+                                            </a>
+                                        @else
+                                            {{ $ndd?->invoice_number ?? '-' }}
+                                        @endif
+                                    </div>
+                                    <div class="text-[11px] text-gray-500">
+                                        {{ $ndd?->status_invoice ?? '-' }}
+                                    </div>
+                                </td>
                                 <td class="py-3 pr-4 text-xs text-right">
                                     Rp {{ number_format((int) $expense->amount, 0, ',', '.') }}
                                 </td>
@@ -163,7 +185,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="border-t">
-                            <td class="py-3 pr-4 font-semibold text-gray-900" colspan="4">Total Pengeluaran</td>
+                            <td class="py-3 pr-4 font-semibold text-gray-900" colspan="5">Total Pengeluaran</td>
                             <td class="py-3 pr-4 text-right font-semibold text-gray-900">Rp {{ number_format($expensesTotal, 0, ',', '.') }}</td>
                         </tr>
                     </tfoot>
