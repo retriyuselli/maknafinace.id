@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Profile;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\CompanyLogo;
+use App\Models\BankReconciliationItem;
+use App\Models\BankStatement;
+use App\Models\BankTransaction;
 use App\Models\DocumentCategory;
 use App\Models\Documentation;
 use App\Models\Expense;
@@ -27,6 +30,7 @@ class AdminToolsController extends Controller
             'documentationsCount' => Documentation::query()->count(),
             'documentCategoriesCount' => DocumentCategory::query()->count(),
             'projectsCount' => Order::query()->count(),
+            'bankStatementsCount' => BankStatement::query()->count(),
         ]);
     }
 
@@ -231,6 +235,123 @@ class AdminToolsController extends Controller
 
         return view('profile.admin-tools.project-show', [
             'order' => $order,
+        ]);
+    }
+
+    public function bankStatements()
+    {
+        $baseQuery = BankStatement::query();
+
+        $totalCount = (int) (clone $baseQuery)->count();
+        $pendingCount = (int) (clone $baseQuery)->where('status', 'pending')->count();
+        $processingCount = (int) (clone $baseQuery)->where('status', 'processing')->count();
+        $parsedCount = (int) (clone $baseQuery)->where('status', 'parsed')->count();
+        $failedCount = (int) (clone $baseQuery)->where('status', 'failed')->count();
+
+        $reconUploadedCount = (int) (clone $baseQuery)->where('reconciliation_status', 'uploaded')->count();
+        $reconProcessingCount = (int) (clone $baseQuery)->where('reconciliation_status', 'processing')->count();
+        $reconCompletedCount = (int) (clone $baseQuery)->where('reconciliation_status', 'completed')->count();
+        $reconFailedCount = (int) (clone $baseQuery)->where('reconciliation_status', 'failed')->count();
+
+        $latestStatements = BankStatement::query()
+            ->with('paymentMethod')
+            ->withCount(['transactions', 'reconciliationItems'])
+            ->orderByDesc('period_end')
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get();
+
+        $monthlySummary = BankStatement::query()
+            ->selectRaw("DATE_FORMAT(period_end, '%Y-%m') as ym")
+            ->selectRaw('COUNT(*) as statements_count')
+            ->selectRaw('SUM(COALESCE(tot_debit, 0)) as tot_debit_sum')
+            ->selectRaw('SUM(COALESCE(tot_credit, 0)) as tot_credit_sum')
+            ->selectRaw("SUM(status = 'failed') as failed_count")
+            ->selectRaw("SUM(reconciliation_status = 'failed') as recon_failed_count")
+            ->whereNotNull('period_end')
+            ->groupBy('ym')
+            ->orderByDesc('ym')
+            ->limit(12)
+            ->get();
+
+        return view('profile.admin-tools.bank-statements.index', [
+            'totalCount' => $totalCount,
+            'pendingCount' => $pendingCount,
+            'processingCount' => $processingCount,
+            'parsedCount' => $parsedCount,
+            'failedCount' => $failedCount,
+            'reconUploadedCount' => $reconUploadedCount,
+            'reconProcessingCount' => $reconProcessingCount,
+            'reconCompletedCount' => $reconCompletedCount,
+            'reconFailedCount' => $reconFailedCount,
+            'latestStatements' => $latestStatements,
+            'monthlySummary' => $monthlySummary,
+        ]);
+    }
+
+    public function bankStatementsGuide()
+    {
+        return view('profile.admin-tools.bank-statements.guide');
+    }
+
+    public function bankStatementsFailed()
+    {
+        $statements = BankStatement::query()
+            ->with('paymentMethod')
+            ->withCount(['transactions', 'reconciliationItems'])
+            ->where(function ($q) {
+                $q->where('status', 'failed')
+                    ->orWhere('reconciliation_status', 'failed');
+            })
+            ->orderByDesc('period_end')
+            ->orderByDesc('id')
+            ->paginate(20);
+
+        return view('profile.admin-tools.bank-statements.failed', [
+            'statements' => $statements,
+        ]);
+    }
+
+    public function bankStatementsReconciliation()
+    {
+        $statements = BankStatement::query()
+            ->with('paymentMethod')
+            ->withCount(['transactions', 'reconciliationItems'])
+            ->where(function ($q) {
+                $q->whereIn('reconciliation_status', ['processing', 'completed', 'failed'])
+                    ->orWhereHas('reconciliationItems');
+            })
+            ->orderByDesc('period_end')
+            ->orderByDesc('id')
+            ->paginate(20);
+
+        return view('profile.admin-tools.bank-statements.reconciliation', [
+            'statements' => $statements,
+        ]);
+    }
+
+    public function bankStatementShow(BankStatement $bankStatement)
+    {
+        $bankStatement->loadMissing(['paymentMethod']);
+
+        $transactions = BankTransaction::query()
+            ->where('bank_statement_id', $bankStatement->id)
+            ->orderByDesc('transaction_date')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get();
+
+        $reconciliationItems = BankReconciliationItem::query()
+            ->where('bank_reconciliation_id', $bankStatement->id)
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get();
+
+        return view('profile.admin-tools.bank-statements.show', [
+            'bankStatement' => $bankStatement,
+            'transactions' => $transactions,
+            'reconciliationItems' => $reconciliationItems,
         ]);
     }
 

@@ -36,6 +36,11 @@
             <div class="mt-1 text-xs text-gray-600">{{ number_format($projectsCount) }} proyek</div>
         </a>
 
+        <a href="{{ route('profile.admin-tools.bank-statements') }}" class="block border border-gray-200 rounded-xl p-5 hover:bg-gray-50 transition">
+            <div class="text-sm font-semibold text-gray-900">Bank Statement</div>
+            <div class="mt-1 text-xs text-gray-600">{{ number_format($bankStatementsCount) }} statement</div>
+        </a>
+
         <a href="{{ route('profile.admin-tools.documentations') }}" class="block border border-gray-200 rounded-xl p-5 hover:bg-gray-50 transition">
             <div class="text-sm font-semibold text-gray-900">Dokumentasi</div>
             <div class="mt-1 text-xs text-gray-600">{{ number_format($documentationsCount) }} artikel</div>
@@ -53,4 +58,3 @@
     </div>
 </div>
 @endsection
-

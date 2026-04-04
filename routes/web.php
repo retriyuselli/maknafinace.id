@@ -320,6 +320,11 @@ Route::middleware(['filament.auth', 'no-store'])->group(function () {
         Route::get('/document-categories', [AdminToolsController::class, 'documentCategories'])->name('profile.admin-tools.document-categories');
         Route::get('/projects', [AdminToolsController::class, 'projects'])->name('profile.admin-tools.projects');
         Route::get('/projects/{order}', [AdminToolsController::class, 'project'])->name('profile.admin-tools.projects.show');
+        Route::get('/bank-statements', [AdminToolsController::class, 'bankStatements'])->name('profile.admin-tools.bank-statements');
+        Route::get('/bank-statements/guide', [AdminToolsController::class, 'bankStatementsGuide'])->name('profile.admin-tools.bank-statements.guide');
+        Route::get('/bank-statements/failed', [AdminToolsController::class, 'bankStatementsFailed'])->name('profile.admin-tools.bank-statements.failed');
+        Route::get('/bank-statements/reconciliation', [AdminToolsController::class, 'bankStatementsReconciliation'])->name('profile.admin-tools.bank-statements.reconciliation');
+        Route::get('/bank-statements/{bankStatement}', [AdminToolsController::class, 'bankStatementShow'])->name('profile.admin-tools.bank-statements.show');
         Route::get('/help-center', [AdminToolsController::class, 'helpCenter'])->name('profile.admin-tools.help-center');
     });
     Route::get('/dashboard', function () {
