@@ -321,6 +321,8 @@ Route::middleware(['filament.auth', 'no-store'])->group(function () {
         Route::get('/document-categories', [AdminToolsController::class, 'documentCategories'])->name('profile.admin-tools.document-categories');
         Route::get('/projects', [AdminToolsController::class, 'projects'])->name('profile.admin-tools.projects');
         Route::get('/projects/{order}', [AdminToolsController::class, 'project'])->name('profile.admin-tools.projects.show');
+        Route::get('/nota-dinas', [AdminToolsController::class, 'notaDinas'])->name('profile.admin-tools.nota-dinas');
+        Route::get('/nota-dinas/{notaDinas}', [AdminToolsController::class, 'notaDinasShow'])->name('profile.admin-tools.nota-dinas.show');
         Route::get('/bank-statements', [AdminToolsController::class, 'bankStatements'])->name('profile.admin-tools.bank-statements');
         Route::get('/bank-statements/guide', [AdminToolsController::class, 'bankStatementsGuide'])->name('profile.admin-tools.bank-statements.guide');
         Route::get('/bank-statements/failed', [AdminToolsController::class, 'bankStatementsFailed'])->name('profile.admin-tools.bank-statements.failed');

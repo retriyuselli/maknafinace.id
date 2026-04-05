@@ -11,6 +11,8 @@ use App\Models\BankTransaction;
 use App\Models\DocumentCategory;
 use App\Models\Documentation;
 use App\Models\Expense;
+use App\Models\NotaDinas;
+use App\Models\NotaDinasDetail;
 use App\Models\Order;
 use App\Models\Sop;
 use App\Models\User;
@@ -30,6 +32,8 @@ class AdminToolsController extends Controller
             'documentationsCount' => Documentation::query()->count(),
             'documentCategoriesCount' => DocumentCategory::query()->count(),
             'projectsCount' => Order::query()->count(),
+            'notaDinasCount' => NotaDinas::query()->count(),
+            'notaDinasDetailsCount' => NotaDinasDetail::query()->count(),
             'bankStatementsCount' => BankStatement::query()->count(),
         ]);
     }
@@ -237,6 +241,124 @@ class AdminToolsController extends Controller
 
         return view('profile.admin-tools.project-show', [
             'order' => $order,
+        ]);
+    }
+
+    public function notaDinas(Request $request)
+    {
+        $q = trim((string) $request->get('q', ''));
+        $status = trim((string) $request->get('status', ''));
+        $month = trim((string) $request->get('month', ''));
+        $monthYear = null;
+        $monthMonth = null;
+
+        if ($month !== '' && preg_match('/^\d{4}-\d{2}$/', $month) === 1) {
+            [$monthYear, $monthMonth] = array_map('intval', explode('-', $month, 2));
+            if ($monthYear <= 0 || $monthMonth < 1 || $monthMonth > 12) {
+                $monthYear = null;
+                $monthMonth = null;
+                $month = '';
+            }
+        } else {
+            $month = '';
+        }
+
+        $notaDinasQuery = NotaDinas::query()
+            ->with(['pengirim:id,name', 'penerima:id,name', 'approver:id,name'])
+            ->withCount('details')
+            ->withCount(['details as details_paid_count' => fn ($q) => $q->where('status_invoice', 'sudah_dibayar')])
+            ->withSum('details as details_sum', 'jumlah_transfer')
+            ->orderByDesc('tanggal')
+            ->orderByDesc('id');
+
+        if ($q !== '') {
+            $notaDinasQuery->where(function ($sub) use ($q) {
+                $sub->where('no_nd', 'like', "%{$q}%")
+                    ->orWhere('hal', 'like', "%{$q}%")
+                    ->orWhere('catatan', 'like', "%{$q}%");
+            });
+        }
+
+        if ($status !== '') {
+            $notaDinasQuery->where('status', $status);
+        }
+
+        if ($monthYear !== null && $monthMonth !== null) {
+            $notaDinasQuery->whereYear('tanggal', $monthYear)->whereMonth('tanggal', $monthMonth);
+        }
+
+        $notaDinasCount = (int) (clone $notaDinasQuery)->count();
+        $notaDinasIdsQuery = (clone $notaDinasQuery)->reorder()->select('id');
+        $detailsCount = (int) NotaDinasDetail::query()->whereIn('nota_dinas_id', $notaDinasIdsQuery)->count();
+        $detailsPaidCount = (int) NotaDinasDetail::query()
+            ->whereIn('nota_dinas_id', $notaDinasIdsQuery)
+            ->where('status_invoice', 'sudah_dibayar')
+            ->count();
+        $detailsSum = (float) NotaDinasDetail::query()->whereIn('nota_dinas_id', $notaDinasIdsQuery)->sum('jumlah_transfer');
+
+        $statusSummary = NotaDinas::query()
+            ->selectRaw('status, COUNT(*) as c')
+            ->groupBy('status')
+            ->pluck('c', 'status')
+            ->toArray();
+
+        return view('profile.admin-tools.nota-dinas.index', [
+            'q' => $q,
+            'status' => $status,
+            'month' => $month,
+            'notaDinas' => $notaDinasQuery->paginate(20)->withQueryString(),
+            'notaDinasCount' => $notaDinasCount,
+            'detailsCount' => $detailsCount,
+            'detailsPaidCount' => $detailsPaidCount,
+            'detailsSum' => $detailsSum,
+            'statusSummary' => $statusSummary,
+        ]);
+    }
+
+    public function notaDinasShow(NotaDinas $notaDinas, Request $request)
+    {
+        $q = trim((string) $request->get('q', ''));
+        $statusInvoice = trim((string) $request->get('status_invoice', ''));
+
+        $notaDinas->loadMissing(['pengirim:id,name', 'penerima:id,name', 'approver:id,name']);
+
+        $detailsQuery = $notaDinas->details()
+            ->with(['vendor:id,name', 'order:id,name'])
+            ->orderByDesc('id');
+
+        if ($q !== '') {
+            $detailsQuery->where(function ($sub) use ($q) {
+                $sub->where('keperluan', 'like', "%{$q}%")
+                    ->orWhere('event', 'like', "%{$q}%")
+                    ->orWhere('invoice_number', 'like', "%{$q}%")
+                    ->orWhereHas('vendor', fn ($v) => $v->where('name', 'like', "%{$q}%"));
+            });
+        }
+
+        if ($statusInvoice !== '') {
+            $detailsQuery->where('status_invoice', $statusInvoice);
+        }
+
+        $detailsCount = (int) (clone $detailsQuery)->count();
+        $detailsPaidCount = (int) (clone $detailsQuery)->where('status_invoice', 'sudah_dibayar')->count();
+        $detailsSum = (float) (clone $detailsQuery)->sum('jumlah_transfer');
+
+        $paymentStageSummary = (clone $detailsQuery)
+            ->reorder()
+            ->selectRaw('payment_stage, COUNT(*) as c')
+            ->groupBy('payment_stage')
+            ->pluck('c', 'payment_stage')
+            ->toArray();
+
+        return view('profile.admin-tools.nota-dinas.show', [
+            'notaDinas' => $notaDinas,
+            'q' => $q,
+            'statusInvoice' => $statusInvoice,
+            'details' => $detailsQuery->paginate(30)->withQueryString(),
+            'detailsCount' => $detailsCount,
+            'detailsPaidCount' => $detailsPaidCount,
+            'detailsSum' => $detailsSum,
+            'paymentStageSummary' => $paymentStageSummary,
         ]);
     }
 

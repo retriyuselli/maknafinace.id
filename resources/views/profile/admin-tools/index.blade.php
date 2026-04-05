@@ -36,6 +36,11 @@
             <div class="mt-1 text-xs text-gray-600">{{ number_format($projectsCount) }} proyek</div>
         </a>
 
+        <a href="{{ route('profile.admin-tools.nota-dinas') }}" class="block border border-gray-200 rounded-xl p-5 hover:bg-gray-50 transition">
+            <div class="text-sm font-semibold text-gray-900">Nota Dinas</div>
+            <div class="mt-1 text-xs text-gray-600">{{ number_format($notaDinasCount) }} nota | {{ number_format($notaDinasDetailsCount) }} detail</div>
+        </a>
+
         <a href="{{ route('profile.admin-tools.bank-statements') }}" class="block border border-gray-200 rounded-xl p-5 hover:bg-gray-50 transition">
             <div class="text-sm font-semibold text-gray-900">Bank Statement</div>
             <div class="mt-1 text-xs text-gray-600">{{ number_format($bankStatementsCount) }} statement</div>
