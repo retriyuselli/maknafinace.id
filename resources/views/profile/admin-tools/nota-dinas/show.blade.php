@@ -135,9 +135,8 @@
     </div>
 </div>
 
-<div id="invoice-preview-modal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0"></div>
-    <div class="relative w-full h-full p-4 flex items-start justify-center">
+<div id="invoice-preview-modal" class="z-50" style="display:none; position:fixed; inset:0;">
+    <div class="w-full h-full p-4 flex items-start justify-center">
         <div class="w-full max-w-5xl bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
             <div class="p-4 flex items-center justify-between gap-3 border-b border-gray-100">
                 <div class="text-sm font-semibold text-gray-900">Preview Invoice</div>
@@ -153,9 +152,8 @@
     </div>
 </div>
 
-<div id="invoice-not-found-modal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0"></div>
-    <div class="relative w-full h-full p-4 flex items-start justify-center">
+<div id="invoice-not-found-modal" class="z-50" style="display:none; position:fixed; inset:0;">
+    <div class="w-full h-full p-4 flex items-start justify-center">
         <div class="w-full max-w-md bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
             <div class="p-5">
                 <div class="text-sm font-semibold text-gray-900">Invoice Tidak Ditemukan</div>
@@ -182,20 +180,20 @@
 
         function openNotFoundModal(message) {
             if (messageEl) messageEl.textContent = message || 'File invoice tidak ditemukan atau tidak dapat diakses.';
-            if (notFoundModal) notFoundModal.classList.remove('hidden');
+            if (notFoundModal) notFoundModal.style.display = 'block';
         }
 
         function closeNotFoundModal() {
-            if (notFoundModal) notFoundModal.classList.add('hidden');
+            if (notFoundModal) notFoundModal.style.display = 'none';
         }
 
         function openPreview(url) {
             previewFrame.src = url;
-            if (previewModal) previewModal.classList.remove('hidden');
+            if (previewModal) previewModal.style.display = 'block';
         }
 
         function closePreview() {
-            if (previewModal) previewModal.classList.add('hidden');
+            if (previewModal) previewModal.style.display = 'none';
             previewFrame.src = '';
         }
 
@@ -209,7 +207,7 @@
 
         if (previewModal) {
             previewModal.addEventListener('click', function (e) {
-                if (e.target === previewModal || e.target === previewModal.firstElementChild) {
+                if (e.target === previewModal) {
                     closePreview();
                 }
             });
@@ -217,7 +215,7 @@
 
         if (notFoundModal) {
             notFoundModal.addEventListener('click', function (e) {
-                if (e.target === notFoundModal || e.target === notFoundModal.firstElementChild) {
+                if (e.target === notFoundModal) {
                     closeNotFoundModal();
                 }
             });
