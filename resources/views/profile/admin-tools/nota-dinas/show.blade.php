@@ -78,6 +78,7 @@
                     <th class="py-3 pr-4">Stage</th>
                     <th class="py-3 pr-4">Jumlah</th>
                     <th class="py-3 pr-4">Status Invoice</th>
+                    {{-- <th class="py-3 pr-4">Invoice</th> --}}
                     <th class="py-3 pr-4"></th>
                 </tr>
             </thead>
@@ -101,12 +102,12 @@
                         <td class="py-3 pr-4">
                             <span class="px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">{{ $d->status_invoice ?? '-' }}</span>
                         </td>
-                        <td class="py-3 pr-4 text-xs text-gray-700">
+                        {{-- <td class="py-3 pr-4 text-xs text-gray-700">
                             <div>{{ $d->invoice_number ?? '-' }}</div>
                             @if($d->invoice_file)
                                 <div class="text-[11px] text-gray-500 truncate max-w-[220px]">{{ $d->invoice_file }}</div>
                             @endif
-                        </td>
+                        </td> --}}
                         <td class="py-3 pr-4">
                             @if($d->invoice_file)
                                 <button type="button"
