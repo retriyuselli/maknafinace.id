@@ -135,7 +135,7 @@
     </div>
 </div>
 
-<div id="invoice-preview-modal" class="fixed inset-0 z-50 hidden">
+{{-- <div id="invoice-preview-modal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/40"></div>
     <div class="relative mx-auto mt-12 w-full max-w-5xl px-4">
         <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
@@ -151,7 +151,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> --}}
 
 <div id="invoice-not-found-modal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/40"></div>
