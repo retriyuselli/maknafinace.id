@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\NotaDinas;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Gate;
 
 class NotaDinasPdfController extends Controller
 {
     public function downloadPdf(NotaDinas $notaDinas)
     {
+        Gate::authorize('view', $notaDinas);
+
         // Load NotaDinas dengan semua relasi yang diperlukan
         $notaDinas->load([
             'pengirim',
@@ -50,6 +53,8 @@ class NotaDinasPdfController extends Controller
 
     public function previewPdf(NotaDinas $notaDinas)
     {
+        Gate::authorize('view', $notaDinas);
+
         // Load NotaDinas dengan semua relasi yang diperlukan
         $notaDinas->load([
             'pengirim',
@@ -88,6 +93,8 @@ class NotaDinasPdfController extends Controller
 
     public function previewWeb(NotaDinas $notaDinas)
     {
+        Gate::authorize('view', $notaDinas);
+
         // Load NotaDinas dengan semua relasi yang diperlukan
         $notaDinas->load([
             'pengirim',

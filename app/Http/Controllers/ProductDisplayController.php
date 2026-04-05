@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\ProductExport;
 use App\Models\Product;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
@@ -13,6 +14,8 @@ class ProductDisplayController extends Controller
 {
     public function show(Product $product)
     {
+        Gate::authorize('view', $product);
+
         // Eager load relasi yang dibutuhkan
         $product->load(['category', 'items.vendor']);
 
@@ -25,6 +28,8 @@ class ProductDisplayController extends Controller
 
     public function details(Product $product, string $action)
     {
+        Gate::authorize('view', $product);
+
         // Eager load necessary relationships if needed
         $product->load(['category', 'items.vendor', 'pengurangans', 'penambahanHarga.vendor']);
 
@@ -33,16 +38,8 @@ class ProductDisplayController extends Controller
             // You might have slightly different views or logic for print vs preview
             return view('products.details-preview', compact('product', 'action'));
         } elseif ($action === 'download') {
-            // Load the PDF view
-            $pdf = Pdf::loadView('products.details-preview', compact('product', 'action')); // <-- Use the new PDF view here
-            // Generate and download a PDF
-            // Example using barryvdh/laravel-dompdf:
-            $pdf = Pdf::loadView('products.details-preview', compact('product'));
-
+            $pdf = Pdf::loadView('products.details-preview', compact('product', 'action'));
             return $pdf->download($product->slug.'-details.pdf');
-
-            // Placeholder if PDF library is not set up yet
-            return response("PDF download for '{$product->name}' not implemented yet.", 501);
         }
 
         // Handle invalid action
@@ -51,6 +48,8 @@ class ProductDisplayController extends Controller
 
     public function downloadPdf(Product $product)
     {
+        Gate::authorize('view', $product);
+
         // Load relasi yang mungkin dibutuhkan di view PDF (opsional tapi bagus untuk performa)
         $product->load(['category', 'items.vendor', 'pengurangans', 'penambahanHarga.vendor']);
 
@@ -78,6 +77,8 @@ class ProductDisplayController extends Controller
 
     public function exportDetailToExcel(Product $product)
     {
+        Gate::authorize('view', $product);
+
         return Excel::download(
             new ProductExport([$product->id]), // Menggunakan ProductExport yang sudah ada
             'product_detail_'.Str::slug($product->name).'_'.now()->format('YmdHis').'.xlsx'

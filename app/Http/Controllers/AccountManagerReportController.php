@@ -20,13 +20,15 @@ class AccountManagerReportController extends Controller
      */
     public function downloadHtmlReport(Request $request)
     {
-        $userId = $request->input('userId');
-        $year = (int) $request->input('year');
-        $month = (int) $request->input('month');
+        $validated = $request->validate([
+            'userId' => ['required', 'integer', 'exists:users,id'],
+            'year' => ['required', 'integer', 'min:2000', 'max:2100'],
+            'month' => ['required', 'integer', 'min:1', 'max:12'],
+        ]);
 
-        if (! $userId || ! $year || ! $month) {
-            abort(400, 'Missing required parameters');
-        }
+        $userId = (int) $validated['userId'];
+        $year = (int) $validated['year'];
+        $month = (int) $validated['month'];
 
         try {
             // Get Account Manager user data
@@ -118,13 +120,15 @@ class AccountManagerReportController extends Controller
      */
     public function downloadPdfReport(Request $request)
     {
-        $userId = $request->input('userId');
-        $year = (int) $request->input('year');
-        $month = (int) $request->input('month');
+        $validated = $request->validate([
+            'userId' => ['required', 'integer', 'exists:users,id'],
+            'year' => ['required', 'integer', 'min:2000', 'max:2100'],
+            'month' => ['required', 'integer', 'min:1', 'max:12'],
+        ]);
 
-        if (! $userId || ! $year || ! $month) {
-            abort(400, 'Missing required parameters');
-        }
+        $userId = (int) $validated['userId'];
+        $year = (int) $validated['year'];
+        $month = (int) $validated['month'];
 
         try {
             // Get Account Manager user data
@@ -229,13 +233,15 @@ class AccountManagerReportController extends Controller
      */
     public function streamPdfReport(Request $request)
     {
-        $userId = $request->input('userId');
-        $year = (int) $request->input('year');
-        $month = (int) $request->input('month');
+        $validated = $request->validate([
+            'userId' => ['required', 'integer', 'exists:users,id'],
+            'year' => ['required', 'integer', 'min:2000', 'max:2100'],
+            'month' => ['required', 'integer', 'min:1', 'max:12'],
+        ]);
 
-        if (! $userId || ! $year || ! $month) {
-            abort(400, 'Missing required parameters');
-        }
+        $userId = (int) $validated['userId'];
+        $year = (int) $validated['year'];
+        $month = (int) $validated['month'];
 
         try {
             // Get Account Manager user data

@@ -267,7 +267,8 @@ Route::get('/laporan/net-cash-flow/pdf/stream', [ReportController::class, 'strea
 // RUTE DATA PRIBADI
 // Route untuk menampilkan form tambah data pribadi
 Route::get('/data-pribadi/tambah', [FrontendDataPribadiController::class, 'create'])
-    ->name('data-pribadi.create');
+    ->name('data-pribadi.create')
+    ->middleware(['filament.auth', 'no-store']);
 
 // Route untuk menampilkan daftar data pribadi
 Route::get('/data-pribadi', [FrontendDataPribadiController::class, 'index'])
@@ -287,9 +288,9 @@ Route::get('/data-pribadi/success', [FrontendDataPribadiController::class, 'succ
 // AUTHENTICATION
 Route::middleware(['guest', 'no-store'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('front.login');
-    Route::post('/login', [AuthController::class, 'login'])->name('front.login.submit');
+    Route::post('/login', [AuthController::class, 'login'])->name('front.login.submit')->middleware('throttle:10,1');
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('front.register');
-    Route::post('/register', [AuthController::class, 'register'])->name('front.register.submit');
+    Route::post('/register', [AuthController::class, 'register'])->name('front.register.submit')->middleware('throttle:10,1');
 
     // Google Login
     Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
@@ -350,7 +351,8 @@ Route::get('/prospect', [ProspectController::class, 'create'])
     ->name('prospect.form');
 
 Route::post('/prospect', [ProspectController::class, 'store'])
-    ->name('prospect.store');
+    ->name('prospect.store')
+    ->middleware('throttle:20,1');
 
 Route::get('/prospect/success', [ProspectController::class, 'success'])
     ->name('prospect.success');
@@ -358,13 +360,13 @@ Route::get('/prospect/success', [ProspectController::class, 'success'])
 // Route untuk Prospect App Proposal PDF
 Route::get('/prospect-app/{prospectApp}/proposal', [ProspectAppController::class, 'generateProposalPdf'])
     ->name('prospect-app.proposal.pdf')
-    ->middleware(\Filament\Http\Middleware\Authenticate::class);
+    ->middleware(['filament.auth', 'no-store']);
 
 // Route untuk Prospect App (Frontend)
 Route::get('/prospect-app', [ProspectAppController::class, 'create'])->name('prospect-app.form');
-Route::post('/prospect-app', [ProspectAppController::class, 'store'])->name('prospect-app.store');
+Route::post('/prospect-app', [ProspectAppController::class, 'store'])->name('prospect-app.store')->middleware('throttle:20,1');
 Route::get('/prospect-app/success', [ProspectAppController::class, 'success'])->name('prospect-app.success');
-Route::post('/prospect-app/check-email', [ProspectAppController::class, 'checkEmail'])->name('prospect-app.check-email');
+Route::post('/prospect-app/check-email', [ProspectAppController::class, 'checkEmail'])->name('prospect-app.check-email')->middleware('throttle:10,1');
 
 // Route untuk Download PDF Rekonsiliasi
 Route::get('/admin/reconciliation/download-pdf', [ReconciliationController::class, 'downloadPdf'])

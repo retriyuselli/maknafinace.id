@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\NotaDinasDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -12,6 +13,8 @@ class NotaDinasInvoiceFileController extends Controller
 {
     public function view(NotaDinasDetail $notaDinasDetail, Request $request)
     {
+        Gate::authorize('view', $notaDinasDetail);
+
         $path = $notaDinasDetail->invoice_file;
         if (! $path) {
             return response('Invoice tidak ditemukan.', 404);

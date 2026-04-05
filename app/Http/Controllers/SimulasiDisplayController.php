@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\SimulasiProduk;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon; // Import View
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View; // atau use PDF; jika Anda menambahkan alias
 
 class SimulasiDisplayController extends Controller
@@ -15,6 +16,8 @@ class SimulasiDisplayController extends Controller
      */
     public function show(SimulasiProduk $record): View
     {
+        Gate::authorize('view', $record);
+
         $items = collect();
         if ($record->product) {
             // Eager load vendors for items to prevent N+1 queries in the view
@@ -37,6 +40,8 @@ class SimulasiDisplayController extends Controller
 
     public function downloadPdf(SimulasiProduk $record) // Menggunakan Route Model Binding
     {
+        Gate::authorize('view', $record);
+
         // Ambil item-item dari produk dasar jika ada
         $items = collect();
         if ($record->product) {
@@ -79,6 +84,8 @@ class SimulasiDisplayController extends Controller
 
     public function draftKontrak(SimulasiProduk $record)
     {
+        Gate::authorize('view', $record);
+
         $items = collect();
         if ($record->product) {
             $items = $record->product->items()->with(['vendor.category'])->get();

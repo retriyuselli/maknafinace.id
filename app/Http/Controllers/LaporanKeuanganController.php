@@ -8,14 +8,22 @@ use App\Models\PendapatanLain;
 use App\Models\PengeluaranLain;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
 class LaporanKeuanganController extends Controller
 {
     public function downloadPdf(Request $request)
     {
-        $startDate = $request->query('startDate', now()->startOfMonth()->toDateString());
-        $endDate = $request->query('endDate', now()->endOfMonth()->toDateString());
+        Gate::authorize('viewAny', Order::class);
+
+        $validated = $request->validate([
+            'startDate' => ['nullable', 'date'],
+            'endDate' => ['nullable', 'date', 'after_or_equal:startDate'],
+        ]);
+
+        $startDate = $validated['startDate'] ?? now()->startOfMonth()->toDateString();
+        $endDate = $validated['endDate'] ?? now()->endOfMonth()->toDateString();
 
         // Query orders using All Event dates (Lamaran, Akad, Reception)
         $query = Order::with(['prospect', 'dataPembayaran', 'expenses'])

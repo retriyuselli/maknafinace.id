@@ -8,6 +8,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 
 class InvoiceOrderController extends Controller
 {
@@ -18,7 +19,7 @@ class InvoiceOrderController extends Controller
      */
     public function show(Order $order)
     {
-        \Illuminate\Support\Facades\Gate::authorize('view', $order);
+        Gate::authorize('view', $order);
         
         // Get payment methods for the view
         $paymentMethods = PaymentMethod::where('is_cash', false)->get();
@@ -73,7 +74,7 @@ class InvoiceOrderController extends Controller
      */
     public function download(Order $order)
     {
-        \Illuminate\Support\Facades\Gate::authorize('view', $order);
+        Gate::authorize('view', $order);
         
         // Get order details with eager loading for improved performance
         $order = Order::with([
@@ -121,7 +122,7 @@ class InvoiceOrderController extends Controller
      */
     public function downloadSimulation(Order $order)
     {
-        \Illuminate\Support\Facades\Gate::authorize('view', $order);
+        Gate::authorize('view', $order);
         
         // Get order details with eager loading
         $order = Order::with([
@@ -156,6 +157,8 @@ class InvoiceOrderController extends Controller
      */
     public function print(Order $order)
     {
+        Gate::authorize('view', $order);
+
         $order = Order::with([
             'items.product.vendorItems.vendor',
             'prospect',
@@ -174,6 +177,8 @@ class InvoiceOrderController extends Controller
      */
     public function updatePayment(Request $request, Order $order)
     {
+        Gate::authorize('update', $order);
+
         // Validate CSRF token
         if (! $request->hasValidSignature() && ! $request->filled('_token')) {
             return redirect()->route('invoice.show', $order)

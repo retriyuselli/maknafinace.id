@@ -7,6 +7,7 @@ use App\Models\ProspectApp;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -159,6 +160,7 @@ class ProspectAppController extends Controller
     public function generatePdf($id)
     {
         $prospect = ProspectApp::findOrFail($id);
+        Gate::authorize('view', $prospect);
 
         $pdf = Pdf::loadView('prospect-app.proposal-pdf', compact('prospect'));
 
@@ -170,6 +172,8 @@ class ProspectAppController extends Controller
      */
     public function generateProposalPdf(ProspectApp $prospectApp)
     {
+        Gate::authorize('view', $prospectApp);
+
         try {
             // Load prospect app with industry relationship
             $prospectApp->load('industry');

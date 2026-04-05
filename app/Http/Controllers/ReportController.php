@@ -12,13 +12,17 @@ use App\Models\NotaDinasDetail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str; // Import PDF Facade
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ReportController extends Controller
 {
     public function generateDataPembayaranHtmlReport(Request $request): View
     {
+        Gate::authorize('viewAny', DataPembayaran::class);
+
         $selectedMonth = $request->input('month');
         $selectedYear = $request->input('year');
         $selectedStatus = $request->input('status'); // Ambil dari request
@@ -86,6 +90,8 @@ class ReportController extends Controller
 
     public function generateDataPembayaranPdfReport(Request $request)
     {
+        Gate::authorize('viewAny', DataPembayaran::class);
+
         ini_set('memory_limit', '512M');
         ini_set('max_execution_time', '300');
 
@@ -138,6 +144,8 @@ class ReportController extends Controller
 
     public function generateExpenseOpsHtmlReport(Request $request): View
     {
+        Gate::authorize('viewAny', ExpenseOps::class);
+
         $query = ExpenseOps::query(); // Using fully qualified name to avoid ambiguity
 
         $selectedMonth = $request->input('month');
@@ -201,6 +209,8 @@ class ReportController extends Controller
 
     public function generateExpenseOpsPdfReport(Request $request)
     {
+        Gate::authorize('viewAny', ExpenseOps::class);
+
         $query = ExpenseOps::query();
 
         $selectedMonth = $request->input('month');
@@ -253,6 +263,8 @@ class ReportController extends Controller
     // Rute untuk laporan pengeluaran (expense wedding)
     public function generateExpenseHtmlReport(Request $request): View
     {
+        Gate::authorize('viewAny', Expense::class);
+
         $query = Expense::query(); // Menggunakan model Expense
 
         $selectedMonth = $request->input('month');
@@ -325,6 +337,8 @@ class ReportController extends Controller
 
     public function generateExpensePdfReport(Request $request)
     {
+        Gate::authorize('viewAny', Expense::class);
+
         $query = Expense::query(); // Menggunakan model Expense
 
         $selectedMonth = $request->input('month');
@@ -400,6 +414,8 @@ class ReportController extends Controller
 
     public function customerPayments(Request $request, string $status)
     {
+        Gate::authorize('viewAny', DataPembayaran::class);
+
         $statusEnum = OrderStatus::tryFrom($status);
         if (! $statusEnum) {
             abort(404);
@@ -461,6 +477,12 @@ class ReportController extends Controller
 
     public function streamNetCashFlowPdf(Request $request)
     {
+        Gate::authorize('viewAny', Order::class);
+
+        $request->validate([
+            'status' => ['nullable', Rule::in(array_map(fn (OrderStatus $case) => $case->value, OrderStatus::cases()))],
+        ]);
+
         $status = $request->input('status', 'processing');
         $statusEnum = OrderStatus::tryFrom($status) ?? OrderStatus::Processing;
 
@@ -500,8 +522,15 @@ class ReportController extends Controller
 
     public function showNotaDinasDetailsCurrentMonth(Request $request): View
     {
-        $year = (int) ($request->input('year') ?? now()->year);
-        $month = (int) ($request->input('month') ?? now()->month);
+        Gate::authorize('viewAny', NotaDinasDetail::class);
+
+        $validated = $request->validate([
+            'year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
+            'month' => ['nullable', 'integer', 'min:1', 'max:12'],
+        ]);
+
+        $year = (int) ($validated['year'] ?? now()->year);
+        $month = (int) ($validated['month'] ?? now()->month);
         $details = NotaDinasDetail::with([
             'notaDinas:id,no_nd,status',
             'vendor:id,name',
