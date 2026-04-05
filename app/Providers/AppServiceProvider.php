@@ -116,6 +116,17 @@ class AppServiceProvider extends ServiceProvider
 
             return asset('images/logomki.png');
         }));
+
+        View::share('companyFaviconUrl', Cache::remember('company_favicon_url', 3600, function () {
+            if (Schema::hasTable('companies')) {
+                $path = Company::value('favicon_url');
+                if ($path && Storage::disk('public')->exists($path)) {
+                    return asset('storage/'.ltrim($path, '/'));
+                }
+            }
+
+            return asset('images/favicon_makna.png');
+        }));
         
         FilamentClearCache::addCommand('optimize:clear');
     }
