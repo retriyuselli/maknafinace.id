@@ -135,23 +135,18 @@
     </div>
 </div>
 
-{{-- <div id="invoice-preview-modal" class="fixed inset-0 z-50 hidden">
+<div id="invoice-preview-modal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/40"></div>
     <div class="relative mx-auto mt-12 w-full max-w-5xl px-4">
         <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
             <div class="p-4 flex items-center justify-between gap-3 border-b border-gray-100">
-                <div class="text-sm font-semibold text-gray-900">Preview Invoice</div>
-                <button type="button" id="invoice-preview-close"
-                    class="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition">
-                    Tutup
-                </button>
             </div>
             <div class="p-0">
                 <iframe id="invoice-preview-frame" src="" class="w-full h-[75vh] bg-white"></iframe>
             </div>
         </div>
     </div>
-</div> --}}
+</div>
 
 <div id="invoice-not-found-modal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/40"></div>
