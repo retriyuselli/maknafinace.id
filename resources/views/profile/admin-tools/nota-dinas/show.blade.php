@@ -112,6 +112,7 @@
                             @if($d->invoice_file)
                                 <button type="button"
                                     data-invoice-url="{{ route('profile.admin-tools.nota-dinas-details.invoice.view', $d) }}"
+                                    data-invoice-ext="{{ strtolower(pathinfo((string) $d->invoice_file, PATHINFO_EXTENSION)) }}"
                                     class="js-invoice-view inline-flex items-center px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800 transition">
                                     View
                                 </button>
@@ -131,6 +132,24 @@
 
     <div>
         {{ $details->links() }}
+    </div>
+</div>
+
+<div id="invoice-preview-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/40"></div>
+    <div class="relative mx-auto mt-12 w-full max-w-5xl px-4">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="p-4 flex items-center justify-between gap-3 border-b border-gray-100">
+                <div class="text-sm font-semibold text-gray-900">Preview Invoice</div>
+                <button type="button" id="invoice-preview-close"
+                    class="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition">
+                    Tutup
+                </button>
+            </div>
+            <div class="p-0">
+                <iframe id="invoice-preview-frame" src="" class="w-full h-[75vh] bg-white"></iframe>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -154,27 +173,53 @@
 
 <script>
     (function () {
-        const modal = document.getElementById('invoice-not-found-modal');
+        const previewModal = document.getElementById('invoice-preview-modal');
+        const previewFrame = document.getElementById('invoice-preview-frame');
+        const previewCloseBtn = document.getElementById('invoice-preview-close');
+        const notFoundModal = document.getElementById('invoice-not-found-modal');
         const messageEl = document.getElementById('invoice-not-found-message');
         const closeBtn = document.getElementById('invoice-not-found-close');
 
-        function openModal(message) {
+        function openNotFoundModal(message) {
             if (messageEl) messageEl.textContent = message || 'File invoice tidak ditemukan atau tidak dapat diakses.';
-            modal.classList.remove('hidden');
+            notFoundModal.classList.remove('hidden');
         }
 
-        function closeModal() {
-            modal.classList.add('hidden');
+        function closeNotFoundModal() {
+            notFoundModal.classList.add('hidden');
+        }
+
+        function openPreviewModal(url) {
+            if (!previewFrame) return;
+            previewFrame.src = url;
+            previewModal.classList.remove('hidden');
+        }
+
+        function closePreviewModal() {
+            previewModal.classList.add('hidden');
+            if (previewFrame) previewFrame.src = '';
         }
 
         if (closeBtn) {
-            closeBtn.addEventListener('click', closeModal);
+            closeBtn.addEventListener('click', closeNotFoundModal);
         }
 
-        if (modal) {
-            modal.addEventListener('click', function (e) {
-                if (e.target === modal || (e.target && e.target.classList && e.target.classList.contains('bg-black/40'))) {
-                    closeModal();
+        if (notFoundModal) {
+            notFoundModal.addEventListener('click', function (e) {
+                if (e.target === notFoundModal || (e.target && e.target.classList && e.target.classList.contains('bg-black/40'))) {
+                    closeNotFoundModal();
+                }
+            });
+        }
+
+        if (previewCloseBtn) {
+            previewCloseBtn.addEventListener('click', closePreviewModal);
+        }
+
+        if (previewModal) {
+            previewModal.addEventListener('click', function (e) {
+                if (e.target === previewModal || (e.target && e.target.classList && e.target.classList.contains('bg-black/40'))) {
+                    closePreviewModal();
                 }
             });
         }
@@ -182,20 +227,27 @@
         document.querySelectorAll('.js-invoice-view').forEach(function (btn) {
             btn.addEventListener('click', async function () {
                 const url = btn.getAttribute('data-invoice-url');
+                const ext = (btn.getAttribute('data-invoice-ext') || '').toLowerCase();
                 if (!url) {
-                    openModal('File invoice tidak ditemukan atau tidak dapat diakses.');
+                    openNotFoundModal('File invoice tidak ditemukan atau tidak dapat diakses.');
+                    return;
+                }
+
+                const allowed = ['pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp'];
+                if (ext !== '' && !allowed.includes(ext)) {
+                    openNotFoundModal('Preview invoice belum didukung untuk tipe file ini.');
                     return;
                 }
 
                 try {
                     const res = await fetch(url, { method: 'HEAD', redirect: 'manual', credentials: 'same-origin' });
                     if (res && res.ok) {
-                        window.open(url, '_blank', 'noopener');
+                        openPreviewModal(url);
                         return;
                     }
                 } catch (e) {}
 
-                openModal('File invoice tidak ditemukan atau tidak dapat diakses.');
+                openNotFoundModal('File invoice tidak ditemukan atau tidak dapat diakses.');
             });
         });
     })();

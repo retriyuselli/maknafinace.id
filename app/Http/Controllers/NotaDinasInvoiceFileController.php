@@ -78,11 +78,21 @@ class NotaDinasInvoiceFileController extends Controller
             return response('Invoice tidak ditemukan.', 404);
         }
 
+        $ext = strtolower((string) $extension);
+        $contentType = match ($ext) {
+            'pdf' => 'application/pdf',
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            default => 'application/octet-stream',
+        };
+
         return response()->stream(function () use ($stream): void {
             fpassthru($stream);
             fclose($stream);
         }, 200, [
-            'Content-Type' => 'application/octet-stream',
+            'Content-Type' => $contentType,
             'Content-Disposition' => 'inline; filename="'.$fileName.'"',
         ]);
     }
