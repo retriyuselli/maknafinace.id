@@ -85,9 +85,9 @@
             <tbody class="divide-y">
                 @forelse($details as $d)
                     <tr class="text-gray-800">
-                        <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->keperluan }}</td>
-                        <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->vendor?->name ?? '-' }}</td>
-                        <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->order?->name ?? ($d->event ?? '-') }}</td>
+                        <td class="py-3 pr-4 text-xs text-gray-700">{{ ucfirst((string) $d->keperluan) }}</td>
+                        <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->vendor?->name ? ucfirst((string) $d->vendor->name) : '-' }}</td>
+                        <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->order?->name ? ucfirst((string) $d->order->name) : ucfirst((string) ($d->event ?? '-')) }}</td>
                         <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->jenis_pengeluaran ?? '-' }}</td>
                         <td class="py-3 pr-4 text-xs text-gray-700">
                             @php
