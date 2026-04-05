@@ -78,7 +78,6 @@
                     <th class="py-3 pr-4">Stage</th>
                     <th class="py-3 pr-4">Jumlah</th>
                     <th class="py-3 pr-4">Status Invoice</th>
-                    <th class="py-3 pr-4">Invoice</th>
                     <th class="py-3 pr-4"></th>
                 </tr>
             </thead>
