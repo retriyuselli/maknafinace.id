@@ -123,37 +123,11 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="py-6 text-center text-sm text-gray-500">Tidak ada data.</td>
+                        <td colspan="8" class="py-6 text-center text-sm text-gray-500">Tidak ada data.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
-
-    <div id="invoice-preview-panel" class="hidden border border-gray-200 rounded-xl overflow-hidden">
-        <div class="px-4 py-3 bg-gray-50 flex items-center justify-between gap-3">
-            <div class="text-sm font-semibold text-gray-900">Preview Invoice</div>
-            <button type="button" id="invoice-preview-close"
-                class="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition">
-                Tutup
-            </button>
-        </div>
-        <div class="bg-white">
-            <iframe id="invoice-preview-frame" src="" class="w-full h-[70vh] bg-white"></iframe>
-        </div>
-    </div>
-
-    <div id="invoice-not-found-alert" class="hidden border border-red-200 bg-red-50 rounded-xl p-4">
-        <div class="flex items-start justify-between gap-3">
-            <div>
-                <div class="text-sm font-semibold text-red-800">Invoice Tidak Ditemukan</div>
-                <div id="invoice-not-found-message" class="mt-1 text-sm text-red-700">File invoice tidak ditemukan atau tidak dapat diakses.</div>
-            </div>
-            <button type="button" id="invoice-not-found-close"
-                class="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition">
-                Tutup
-            </button>
-        </div>
     </div>
 
     <div>
@@ -161,45 +135,67 @@
     </div>
 </div>
 
+<div id="invoice-preview-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0"></div>
+    <div class="relative w-full h-full p-4 flex items-start justify-center">
+        <div class="w-full max-w-5xl bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="p-4 flex items-center justify-between gap-3 border-b border-gray-100">
+                <div class="text-sm font-semibold text-gray-900">Preview Invoice</div>
+                <button type="button" id="invoice-preview-close"
+                    class="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition">
+                    Tutup
+                </button>
+            </div>
+            <div class="bg-white">
+                <iframe id="invoice-preview-frame" src="" class="w-full h-[75vh] bg-white"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="invoice-not-found-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0"></div>
+    <div class="relative w-full h-full p-4 flex items-start justify-center">
+        <div class="w-full max-w-md bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="p-5">
+                <div class="text-sm font-semibold text-gray-900">Invoice Tidak Ditemukan</div>
+                <div id="invoice-not-found-message" class="mt-2 text-sm text-gray-700">File invoice tidak ditemukan atau tidak dapat diakses.</div>
+            </div>
+            <div class="px-5 py-4 bg-gray-50 flex items-center justify-end gap-2">
+                <button type="button" id="invoice-not-found-close"
+                    class="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     (function () {
-        const previewPanel = document.getElementById('invoice-preview-panel');
+        const previewModal = document.getElementById('invoice-preview-modal');
         const previewFrame = document.getElementById('invoice-preview-frame');
         const previewCloseBtn = document.getElementById('invoice-preview-close');
-        const notFoundAlert = document.getElementById('invoice-not-found-alert');
+        const notFoundModal = document.getElementById('invoice-not-found-modal');
         const messageEl = document.getElementById('invoice-not-found-message');
         const closeBtn = document.getElementById('invoice-not-found-close');
 
         function openNotFoundModal(message) {
             if (messageEl) messageEl.textContent = message || 'File invoice tidak ditemukan atau tidak dapat diakses.';
-            if (notFoundAlert) {
-                notFoundAlert.classList.remove('hidden');
-                notFoundAlert.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            if (notFoundModal) notFoundModal.classList.remove('hidden');
         }
 
         function closeNotFoundModal() {
-            if (notFoundAlert) {
-                notFoundAlert.classList.add('hidden');
-            }
+            if (notFoundModal) notFoundModal.classList.add('hidden');
         }
 
         function openPreview(url) {
-            if (!previewPanel || !previewFrame) {
-                return;
-            }
-
             previewFrame.src = url;
-            previewPanel.classList.remove('hidden');
-            previewPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (previewModal) previewModal.classList.remove('hidden');
         }
 
         function closePreview() {
-            if (!previewPanel || !previewFrame) {
-                return;
-            }
-
-            previewPanel.classList.add('hidden');
+            if (previewModal) previewModal.classList.add('hidden');
             previewFrame.src = '';
         }
 
@@ -210,6 +206,29 @@
         if (closeBtn) {
             closeBtn.addEventListener('click', closeNotFoundModal);
         }
+
+        if (previewModal) {
+            previewModal.addEventListener('click', function (e) {
+                if (e.target === previewModal || e.target === previewModal.firstElementChild) {
+                    closePreview();
+                }
+            });
+        }
+
+        if (notFoundModal) {
+            notFoundModal.addEventListener('click', function (e) {
+                if (e.target === notFoundModal || e.target === notFoundModal.firstElementChild) {
+                    closeNotFoundModal();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closePreview();
+                closeNotFoundModal();
+            }
+        });
 
         document.querySelectorAll('.js-invoice-view').forEach(function (btn) {
             btn.addEventListener('click', async function () {
