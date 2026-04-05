@@ -130,54 +130,85 @@
         </table>
     </div>
 
+    <div id="invoice-preview-panel" class="hidden border border-gray-200 rounded-xl overflow-hidden">
+        <div class="px-4 py-3 bg-gray-50 flex items-center justify-between gap-3">
+            <div class="text-sm font-semibold text-gray-900">Preview Invoice</div>
+            <button type="button" id="invoice-preview-close"
+                class="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition">
+                Tutup
+            </button>
+        </div>
+        <div class="bg-white">
+            <iframe id="invoice-preview-frame" src="" class="w-full h-[70vh] bg-white"></iframe>
+        </div>
+    </div>
+
+    <div id="invoice-not-found-alert" class="hidden border border-red-200 bg-red-50 rounded-xl p-4">
+        <div class="flex items-start justify-between gap-3">
+            <div>
+                <div class="text-sm font-semibold text-red-800">Invoice Tidak Ditemukan</div>
+                <div id="invoice-not-found-message" class="mt-1 text-sm text-red-700">File invoice tidak ditemukan atau tidak dapat diakses.</div>
+            </div>
+            <button type="button" id="invoice-not-found-close"
+                class="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+
     <div>
         {{ $details->links() }}
     </div>
 </div>
 
-<div id="invoice-not-found-modal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/40"></div>
-    <div class="relative mx-auto mt-24 w-full max-w-md px-4">
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-            <div class="p-5">
-                <div class="text-sm font-semibold text-gray-900">Invoice Tidak Ditemukan</div>
-                <div id="invoice-not-found-message" class="mt-2 text-sm text-gray-700">File invoice tidak ditemukan atau tidak dapat diakses.</div>
-            </div>
-            <div class="px-5 py-4 bg-gray-50 flex items-center justify-end gap-2">
-                <button type="button" id="invoice-not-found-close"
-                    class="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition">
-                    Tutup
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
     (function () {
-        const notFoundModal = document.getElementById('invoice-not-found-modal');
+        const previewPanel = document.getElementById('invoice-preview-panel');
+        const previewFrame = document.getElementById('invoice-preview-frame');
+        const previewCloseBtn = document.getElementById('invoice-preview-close');
+        const notFoundAlert = document.getElementById('invoice-not-found-alert');
         const messageEl = document.getElementById('invoice-not-found-message');
         const closeBtn = document.getElementById('invoice-not-found-close');
 
         function openNotFoundModal(message) {
             if (messageEl) messageEl.textContent = message || 'File invoice tidak ditemukan atau tidak dapat diakses.';
-            notFoundModal.classList.remove('hidden');
+            if (notFoundAlert) {
+                notFoundAlert.classList.remove('hidden');
+                notFoundAlert.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
 
         function closeNotFoundModal() {
-            notFoundModal.classList.add('hidden');
+            if (notFoundAlert) {
+                notFoundAlert.classList.add('hidden');
+            }
+        }
+
+        function openPreview(url) {
+            if (!previewPanel || !previewFrame) {
+                return;
+            }
+
+            previewFrame.src = url;
+            previewPanel.classList.remove('hidden');
+            previewPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function closePreview() {
+            if (!previewPanel || !previewFrame) {
+                return;
+            }
+
+            previewPanel.classList.add('hidden');
+            previewFrame.src = '';
+        }
+
+        if (previewCloseBtn) {
+            previewCloseBtn.addEventListener('click', closePreview);
         }
 
         if (closeBtn) {
             closeBtn.addEventListener('click', closeNotFoundModal);
-        }
-
-        if (notFoundModal) {
-            notFoundModal.addEventListener('click', function (e) {
-                if (e.target === notFoundModal || (e.target && e.target.classList && e.target.classList.contains('bg-black/40'))) {
-                    closeNotFoundModal();
-                }
-            });
         }
 
         document.querySelectorAll('.js-invoice-view').forEach(function (btn) {
@@ -198,7 +229,7 @@
                 try {
                     const res = await fetch(url, { method: 'HEAD', redirect: 'manual', credentials: 'same-origin' });
                     if (res && res.ok) {
-                        window.open(url, '_blank', 'noopener');
+                        openPreview(url);
                         return;
                     }
                 } catch (e) {}
