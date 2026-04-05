@@ -135,19 +135,6 @@
     </div>
 </div>
 
-<div id="invoice-preview-modal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/40"></div>
-    <div class="relative mx-auto mt-12 w-full max-w-5xl px-4">
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-            <div class="p-4 flex items-center justify-between gap-3 border-b border-gray-100">
-            </div>
-            <div class="p-0">
-                <iframe id="invoice-preview-frame" src="" class="w-full h-[75vh] bg-white"></iframe>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div id="invoice-not-found-modal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/40"></div>
     <div class="relative mx-auto mt-24 w-full max-w-md px-4">
@@ -168,9 +155,6 @@
 
 <script>
     (function () {
-        const previewModal = document.getElementById('invoice-preview-modal');
-        const previewFrame = document.getElementById('invoice-preview-frame');
-        const previewCloseBtn = document.getElementById('invoice-preview-close');
         const notFoundModal = document.getElementById('invoice-not-found-modal');
         const messageEl = document.getElementById('invoice-not-found-message');
         const closeBtn = document.getElementById('invoice-not-found-close');
@@ -184,17 +168,6 @@
             notFoundModal.classList.add('hidden');
         }
 
-        function openPreviewModal(url) {
-            if (!previewFrame) return;
-            previewFrame.src = url;
-            previewModal.classList.remove('hidden');
-        }
-
-        function closePreviewModal() {
-            previewModal.classList.add('hidden');
-            if (previewFrame) previewFrame.src = '';
-        }
-
         if (closeBtn) {
             closeBtn.addEventListener('click', closeNotFoundModal);
         }
@@ -203,18 +176,6 @@
             notFoundModal.addEventListener('click', function (e) {
                 if (e.target === notFoundModal || (e.target && e.target.classList && e.target.classList.contains('bg-black/40'))) {
                     closeNotFoundModal();
-                }
-            });
-        }
-
-        if (previewCloseBtn) {
-            previewCloseBtn.addEventListener('click', closePreviewModal);
-        }
-
-        if (previewModal) {
-            previewModal.addEventListener('click', function (e) {
-                if (e.target === previewModal || (e.target && e.target.classList && e.target.classList.contains('bg-black/40'))) {
-                    closePreviewModal();
                 }
             });
         }
@@ -237,7 +198,7 @@
                 try {
                     const res = await fetch(url, { method: 'HEAD', redirect: 'manual', credentials: 'same-origin' });
                     if (res && res.ok) {
-                        openPreviewModal(url);
+                        window.open(url, '_blank', 'noopener');
                         return;
                     }
                 } catch (e) {}
