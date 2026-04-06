@@ -244,6 +244,27 @@ class AdminToolsController extends Controller
         ]);
     }
 
+    public function projectProduct(Order $order)
+    {
+        $order->loadMissing([
+            'items.product.category',
+            'items.product.items.vendor',
+            'items.product.pengurangans',
+            'items.product.penambahanHarga.vendor',
+        ]);
+
+        $products = ($order->items ?? collect())
+            ->pluck('product')
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        return view('profile.admin-tools.project-product', [
+            'order' => $order,
+            'products' => $products,
+        ]);
+    }
+
     public function notaDinas(Request $request)
     {
         $q = trim((string) $request->get('q', ''));

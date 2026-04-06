@@ -170,7 +170,6 @@ class ProductForm
                                 ])
                                 ->collapsible(),
                         ]),
-
                     Tab::make('Basic Facilities')
                         ->icon('heroicon-o-cube')
                         ->schema([
@@ -235,6 +234,10 @@ class ProductForm
                                         $component->state($total);
                                     }
                                 }),
+                            RichEditor::make('free_pengurangan')
+                                ->label('Free')
+                                ->placeholder('Detail free / keterangan tambahan pengurangan')
+                                ->columnSpanFull(),
                             self::getDiscountRepeater(),
                         ]),
                     Tab::make('Penambahan Harga')

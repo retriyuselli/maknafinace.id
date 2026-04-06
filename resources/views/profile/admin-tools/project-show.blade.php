@@ -58,15 +58,26 @@
                     Rp {{ number_format($profit, 0, ',', '.') }}
                 </div>
             </div>
+            <div>
+                <div class="text-xs text-gray-500">Total Pengeluaran</div>
+                <div class="font-semibold text-gray-900">
+                    Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden p-6">
         <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold text-gray-900">Item Proyek</h3>
-            <a href="{{ route('profile.admin-tools.projects') }}" class="text-sm font-semibold text-blue-700 hover:underline">
-                Kembali ke daftar
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('profile.admin-tools.projects.product', $order) }}" class="text-sm font-semibold text-emerald-700 hover:underline">
+                    Lihat Produk
+                </a>
+                <a href="{{ route('profile.admin-tools.projects') }}" class="text-sm font-semibold text-blue-700 hover:underline">
+                    Kembali ke daftar
+                </a>
+            </div>
         </div>
 
         <div class="mt-4 overflow-x-auto">
@@ -149,7 +160,7 @@
                                     {{ $expense->date_expense ? $expense->date_expense->format('d M Y') : '-' }}
                                 </td>
                                 <td class="py-3 pr-4 text-xs text-gray-700">
-                                    {{ $expense->vendor?->name ?? '-' }}
+                                    {{ \Illuminate\Support\Str::title($expense->vendor?->name ?? '-') }}
                                 </td>
                                 <td class="py-3 pr-4 text-xs text-gray-700">
                                     {{ \App\Models\Expense::getPaymentStageLabel($expense->payment_stage) ?? '-' }}
@@ -177,7 +188,7 @@
                                         {{ $ndd?->status_invoice ?? '-' }}
                                     </div>
                                 </td>
-                                <td class="py-3 pr-4 text-xs text-right">
+                                <td class="py-3 pr-4 text-xs text-right whitespace-nowrap">
                                     Rp {{ number_format((int) $expense->amount, 0, ',', '.') }}
                                 </td>
                             </tr>
@@ -186,7 +197,7 @@
                     <tfoot>
                         <tr class="border-t">
                             <td class="py-3 pr-4 font-semibold text-gray-900" colspan="5">Total Pengeluaran</td>
-                            <td class="py-3 pr-4 text-right font-semibold text-gray-900">Rp {{ number_format($expensesTotal, 0, ',', '.') }}</td>
+                            <td class="py-3 pr-4 text-right font-semibold text-gray-900 whitespace-nowrap">Rp {{ number_format($expensesTotal, 0, ',', '.') }}</td>
                         </tr>
                     </tfoot>
                 </table>

@@ -887,6 +887,55 @@
         </div>
     @endif
 
+    <!-- Free -->
+    @if (!empty($record->product?->free_pengurangan))
+        <div class="section-title">FREE</div>
+        <div class="facility-list">
+            {!! $record->product->free_pengurangan !!}
+        </div>
+    @endif
+
+    <!-- Detail Pelayanan -->
+    <div class="section-title">DETAIL PELAYANAN</div>
+    <div class="facility-list">
+        <ol>
+            <li>1 Event Manager dan 15 kru (Akad + Resepsi)</li>
+            <li>Wedding Planner (Pelayanan pengantin dimulai dari persiapan sampai dengan selesai acara (0% - 100%))</li>
+            <li>Wedding Checklist</li>
+            <li>Konsultasi acara akad dan resepsi</li>
+            <li>Konsultasi budget calon pengantin</li>
+            <li>Meeting dengan team wo dan vendor</li>
+            <li>Gratis pembuatan foto slide untuk acara resepsi</li>
+            <li>Memonitor semua pelaksanaan Akad dan Resepsi sesuai dengan rundown acara yang telah disepakati sebelumnya</li>
+        </ol>
+    </div>
+
+    <div class="section-title">SEBELUM HARI H</div>
+    <div class="facility-list">
+        <ol>
+            <li>Free Konsultasi.</li>
+            <li>Pertemuan secara berkala untuk pembahasan konsep acara dan waktu pelaksanaan.</li>
+            <li>Membuat dan memantau “wedding checklist”.</li>
+            <li>Follow up dan koordinasi dengan vendor terkait.</li>
+            <li>Mengatur dan berkoordinasi dengan mempelai dan vendor untuk waktu Technical meeting.</li>
+            <li>Konfirmasi ke orang tua, bestman, bridesmaid, pihak keluarga yang menjadi panitia.</li>
+            <li>Pertemuan dengan pihak keluarga (jika diperlukan).</li>
+        </ol>
+    </div>
+
+    <div class="section-title">HARI “H” — WEDDING DAY</div>
+    <div class="facility-list">
+        <ol>
+            <li>Tim organizer terdiri dari 6 orang (akad) dan 15 orang (resepsi).</li>
+            <li>Standby 2 jam sebelum prosesi awal masing -masing mempelai (rumah / apartemen / hotel)</li>
+            <li>Koordinasi & briefing dengan pihak keluarga mengenai prosesi pelepasan dan pertemuan pengantin.</li>
+            <li>Menyediakan time Keeper agar acara berlangsung sesuai rundown. (Prosesi pertemuan ke-2 pengantin, persiapan resepsi & acara resepsi).</li>
+            <li>Membantu acara akad nikah dan berkoordinasi dengan pihak yang bersangkutan.</li>
+            <li>Pengawasan kinerja para vendor selama acara berlangsung untuk hasil yang maksimal.</li>
+            <li>Gladire sik sebelum acara berlangsung.</li>
+        </ol>
+    </div>
+
     <!-- Terms & Confirmation -->
     <div class="section-title">KETENTUAN TAMBAHAN</div>
     <div class="section-title">KONFIRMASI</div>

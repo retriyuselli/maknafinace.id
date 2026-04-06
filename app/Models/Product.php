@@ -27,6 +27,7 @@ class Product extends Model
         'image',
         'is_approved',
         'pengurangan',
+        'free_pengurangan',
         'penambahan',
         'penambahan_publish',
         'penambahan_vendor',
