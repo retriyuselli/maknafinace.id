@@ -9,8 +9,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class EditProduct extends EditRecord
 {
@@ -85,7 +85,7 @@ class EditProduct extends EditRecord
                             'product_slug' => $record->slug,
                             'items_updated' => $itemsUpdated,
                             'additions_updated' => $additionsUpdated,
-                            'user_id' => auth()->id(),
+                            'user_id' => Auth::id(),
                             'timestamp' => now()->toIso8601String(),
                         ]);
                     });
@@ -99,10 +99,8 @@ class EditProduct extends EditRecord
         ];
     }
 
-    protected function mutateFormDataBeforeCreate(array $data): array
+    protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['slug'] = Str::slug($data['name']);
-
-        return $data;
+        return ProductResource::mutateFormDataBeforeSave($data);
     }
 }

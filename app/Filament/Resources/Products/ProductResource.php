@@ -104,7 +104,7 @@ class ProductResource extends Resource
      * This method recalculates product_price, pengurangan, penambahan, and price on the server-side
      * based on the submitted repeater data to ensure data integrity.
      */
-    protected static function mutateFormDataBeforeSave(array $data): array
+    public static function mutateFormDataBeforeSave(array $data): array
     {
         // Helper function to clean currency string values and convert to float
         $cleanCurrencyValue = function ($value): int {
