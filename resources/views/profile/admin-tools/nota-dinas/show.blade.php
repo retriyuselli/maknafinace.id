@@ -75,7 +75,6 @@
                     <th class="py-3 pr-4">Vendor</th>
                     <th class="py-3 pr-4">Event</th>
                     <th class="py-3 pr-4">Jenis</th>
-                    <th class="py-3 pr-4">Stage</th>
                     <th class="py-3 pr-4">Jumlah</th>
                     <th class="py-3 pr-4">Status Invoice</th>
                     {{-- <th class="py-3 pr-4">Invoice</th> --}}
@@ -92,23 +91,25 @@
                             @endphp
                             <div>{{ $d->vendor?->name ? \Illuminate\Support\Str::title((string) $d->vendor->name) : '-' }}</div>
                             @if($d->vendor?->name && filled($accountHolder))
-                                <div class="text-[11px] text-gray-500">{{ \Illuminate\Support\Str::title((string) $accountHolder) }}</div>
+                                <div class="px-2 py-1 text-[11px] bg-gray-100 text-black">{{ \Illuminate\Support\Str::title((string) $accountHolder) }}</div>
                             @endif
                         </td>
                         <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->order?->name ? ucfirst((string) $d->order->name) : ucfirst((string) ($d->event ?? '-')) }}</td>
                         <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->jenis_pengeluaran ?? '-' }}</td>
-                        <td class="py-3 pr-4 text-xs text-gray-700">
+                        <td class="py-3 pr-4 text-xs text-gray-700">{{ number_format((float) $d->jumlah_transfer, 0, ',', '.') }}</td>
+                        <td class="py-3 pr-4">
+                            <span class="px-2 py-1 bg-gray-100 text-gray-700 text-[11px]">{{ $d->status_invoice ?? '-' }}</span>
                             @php
                                 $stage = (string) ($d->payment_stage ?? '');
                                 $isLegacyStage = $stage === 'down_payment';
                             @endphp
-                            <span class="px-2 py-1 rounded-full {{ $isLegacyStage }} text-xs">
-                                {{ $stage !== '' ? $stage : '-' }}
-                            </span>
-                        </td>
-                        <td class="py-3 pr-4 text-xs text-gray-700">{{ number_format((float) $d->jumlah_transfer, 0, ',', '.') }}</td>
-                        <td class="py-3 pr-4">
-                            <span class="px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">{{ $d->status_invoice ?? '-' }}</span>
+                            @if($stage !== '')
+                                <div class="mt-1">
+                                    <span class="px-2 py-1 {{ $isLegacyStage }} text-[11px]">
+                                        {{ $stage }}
+                                    </span>
+                                </div>
+                            @endif
                         </td>
                         {{-- <td class="py-3 pr-4 text-xs text-gray-700">
                             <div>{{ $d->invoice_number ?? '-' }}</div>
