@@ -19,7 +19,7 @@ class DocumentsPendingApprovalWidget extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $heading = 'Dokumen yang telah disetujui';
+    protected static ?string $heading = 'Dokumen Menunggu Persetujuan';
 
     protected static ?int $sort = 2;
 
@@ -77,11 +77,17 @@ class DocumentsPendingApprovalWidget extends BaseWidget
             ->recordActions([
                 Action::make('review')
                     ->label('Review')
-                    ->visible(fn () => Auth::user()?->hasRole('super_admin'))
+                    ->authorize('update')
+                    ->visible(function (): bool {
+                        /** @var \App\Models\User|null $user */
+                        $user = Auth::user();
+                        return $user?->hasRole('super_admin') ?? false;
+                    })
                     ->url(fn (Document $record): string => route('filament.admin.resources.documents.edit', ['record' => $record->id]))
                     ->icon('heroicon-m-eye'),
                 Action::make('print')
                     ->label('Preview PDF')
+                    ->authorize('view')
                     ->icon('heroicon-m-printer')
                     ->url(fn (Document $record) => route('document.stream', $record))
                     ->openUrlInNewTab(),

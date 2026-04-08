@@ -19,7 +19,20 @@ class DocumentPolicy
 
     public function view(AuthUser $authUser, Document $document): bool
     {
-        return $authUser->can('View:Document');
+        if ($authUser->can('ViewAny:Document')) {
+            return true;
+        }
+
+        if ((int) $document->created_by === (int) $authUser->id) {
+            return true;
+        }
+
+        return $document->recipientsList()
+            ->where('users.id', (int) $authUser->id)
+            ->exists()
+            || $document->approvals()
+                ->where('user_id', (int) $authUser->id)
+                ->exists();
     }
 
     public function create(AuthUser $authUser): bool

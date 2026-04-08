@@ -129,13 +129,16 @@ class Product extends Model
         return 'slug';
     }
 
-    public static function generateUniqueSlug(string $name): string
+    public static function generateUniqueSlug(string $name, ?int $ignoreId = null): string
     {
         $slug = Str::slug($name);
         $originalSlug = $slug;
         $counter = 1;
 
-        while (self::withTrashed()->where('slug', $slug)->exists()) {
+        while (self::withTrashed()
+            ->where('slug', $slug)
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->exists()) {
             $slug = $originalSlug.'-'.$counter;
             $counter++;
         }

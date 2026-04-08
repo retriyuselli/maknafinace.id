@@ -101,6 +101,14 @@ class EditProduct extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        return ProductResource::mutateFormDataBeforeSave($data);
+        // $this->record is available in EditRecord context
+        return ProductResource::mutateFormDataBeforeSave($data, $this->record->id);
+    }
+
+    protected function afterSave(): void
+    {
+        // Force a redirect to the new slug URL after saving to avoid "headers" error
+        // and handle slug changes gracefully in Livewire 3
+        $this->redirect($this->getResource()::getUrl('edit', ['record' => $this->record]));
     }
 }

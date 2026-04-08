@@ -12,8 +12,11 @@ class CreateProduct extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['slug'] = Product::generateUniqueSlug($data['name']);
-
         return ProductResource::mutateFormDataBeforeSave($data);
+    }
+
+    protected function afterCreate(): void
+    {
+        $this->redirect($this->getResource()::getUrl('edit', ['record' => $this->record]));
     }
 }
