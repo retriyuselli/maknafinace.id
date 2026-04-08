@@ -87,9 +87,12 @@
                     <tr class="text-gray-800">
                         <td class="py-3 pr-4 text-xs text-gray-700">{{ ucfirst((string) $d->keperluan) }}</td>
                         <td class="py-3 pr-4 text-xs text-gray-700">
+                            @php
+                                $accountHolder = $d->account_holder ?: ($d->nama_rekening ?: ($d->vendor?->account_holder ?: null));
+                            @endphp
                             <div>{{ $d->vendor?->name ? \Illuminate\Support\Str::title((string) $d->vendor->name) : '-' }}</div>
-                            @if($d->vendor?->name && $d->vendor?->account_holder)
-                                <div class="text-[11px] text-gray-500">{{ \Illuminate\Support\Str::title((string) $d->vendor->account_holder) }}</div>
+                            @if($d->vendor?->name && filled($accountHolder))
+                                <div class="text-[11px] text-gray-500">{{ \Illuminate\Support\Str::title((string) $accountHolder) }}</div>
                             @endif
                         </td>
                         <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->order?->name ? ucfirst((string) $d->order->name) : ucfirst((string) ($d->event ?? '-')) }}</td>
