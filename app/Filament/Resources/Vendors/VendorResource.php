@@ -14,6 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Cache;
 
 class VendorResource extends Resource
 {
@@ -27,9 +28,20 @@ class VendorResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Penjualan';
 
+    private static function getCachedNavigationBadgeCount(): int
+    {
+        $modelClass = static::getModel();
+
+        return Cache::remember(
+            'nav:vendors:count',
+            60,
+            fn (): int => (int) $modelClass::count()
+        );
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return (string) static::getCachedNavigationBadgeCount();
     }
 
     public static function form(Schema $schema): Schema

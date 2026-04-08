@@ -14,6 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Cache;
 
 class ExpenseOpsResource extends Resource
 {
@@ -109,10 +110,20 @@ class ExpenseOpsResource extends Resource
             ]);
     }
 
+    private static function getCachedNavigationBadgeCount(): int
+    {
+        $modelClass = static::getModel();
+
+        return Cache::remember(
+            'nav:expense_ops:count',
+            60,
+            fn (): int => (int) $modelClass::count()
+        );
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        // Menampilkan jumlah total record sebagai badge
-        return static::getModel()::count();
+        return (string) static::getCachedNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeColor(): string|array|null

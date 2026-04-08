@@ -21,6 +21,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Cache;
 
 class PiutangResource extends Resource
 {
@@ -37,6 +38,17 @@ class PiutangResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Keuangan';
 
     protected static ?int $navigationSort = 3;
+
+    private static function getCachedNavigationBadgeCount(): int
+    {
+        $modelClass = static::getModel();
+
+        return Cache::remember(
+            'nav:piutangs:aktif_count',
+            60,
+            fn (): int => (int) $modelClass::where('status', 'aktif')->count()
+        );
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -164,7 +176,7 @@ class PiutangResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', 'aktif')->count();
+        return (string) static::getCachedNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeColor(): string|array|null

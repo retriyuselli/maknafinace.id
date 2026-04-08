@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Cache;
 
 class PembayaranPiutangResource extends Resource
 {
@@ -184,9 +185,20 @@ class PembayaranPiutangResource extends Resource
         ];
     }
 
+    private static function getCachedNavigationBadgeCount(): int
+    {
+        $modelClass = static::getModel();
+
+        return Cache::remember(
+            'nav:pembayaran_piutangs:pending_count',
+            60,
+            fn (): int => (int) $modelClass::where('status', 'pending')->count()
+        );
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', 'pending')->count();
+        return (string) static::getCachedNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeColor(): string|array|null

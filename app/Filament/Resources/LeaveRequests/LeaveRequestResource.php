@@ -14,6 +14,7 @@ use App\Models\LeaveRequest;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Cache;
 
 class LeaveRequestResource extends Resource
 {
@@ -64,9 +65,20 @@ class LeaveRequestResource extends Resource
         ];
     }
 
+    private static function getCachedNavigationBadgeCount(): int
+    {
+        $modelClass = static::getModel();
+
+        return Cache::remember(
+            'nav:leave_requests:pending_count',
+            60,
+            fn (): int => (int) $modelClass::where('status', 'pending')->count()
+        );
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', 'pending')->count();
+        return (string) static::getCachedNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeColor(): ?string

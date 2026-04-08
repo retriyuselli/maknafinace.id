@@ -14,6 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Cache;
 
 class PendapatanLainResource extends Resource
 {
@@ -72,15 +73,28 @@ class PendapatanLainResource extends Resource
             ]);
     }
 
+    private static function getCachedNavigationBadgeStats(): array
+    {
+        $modelClass = static::getModel();
+
+        return Cache::remember(
+            'nav:pendapatan_lains:stats',
+            60,
+            fn (): array => [
+                'count' => (int) $modelClass::whereNull('deleted_at')->count(),
+                'total' => (float) $modelClass::whereNull('deleted_at')->sum('nominal'),
+            ],
+        );
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        // Menampilkan jumlah pendapatan aktif (tidak termasuk yang di-trash)
-        return static::getModel()::whereNull('deleted_at')->count();
+        return (string) (static::getCachedNavigationBadgeStats()['count'] ?? 0);
     }
 
     public static function getNavigationBadgeColor(): string|array|null
     {
-        $count = static::getModel()::whereNull('deleted_at')->count();
+        $count = (int) (static::getCachedNavigationBadgeStats()['count'] ?? 0);
 
         if ($count > 50) {
             return 'success';
@@ -93,7 +107,7 @@ class PendapatanLainResource extends Resource
 
     public static function getNavigationBadgeTooltip(): ?string
     {
-        $totalRevenue = static::getModel()::whereNull('deleted_at')->sum('nominal');
+        $totalRevenue = (float) (static::getCachedNavigationBadgeStats()['total'] ?? 0);
         $formattedRevenue = 'IDR '.number_format($totalRevenue, 0, ',', '.');
 
         return "Pendapatan lain perusahaan.\nTotal: {$formattedRevenue}";

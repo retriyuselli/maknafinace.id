@@ -12,6 +12,7 @@ use App\Models\PengeluaranLain;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Cache;
 
 class PengeluaranLainResource extends Resource
 {
@@ -91,13 +92,12 @@ class PengeluaranLainResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        // Menampilkan jumlah total pengeluaran di tahun 2025 sebagai badge
-        return static::getModel()::whereYear('date_expense', 2025)->count();
+        return (string) static::getCachedNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeColor(): string|array|null
     {
-        $count = static::getModel()::whereYear('date_expense', 2025)->count();
+        $count = static::getCachedNavigationBadgeCount();
 
         return match (true) {
             $count > 100 => 'danger',
@@ -105,6 +105,18 @@ class PengeluaranLainResource extends Resource
             $count > 0 => 'success',
             default => 'gray'
         };
+    }
+
+    private static function getCachedNavigationBadgeCount(): int
+    {
+        $modelClass = static::getModel();
+        $year = 2025;
+
+        return Cache::remember(
+            "nav:pengeluaran_lains:count:{$year}",
+            60,
+            fn (): int => (int) $modelClass::whereYear('date_expense', $year)->count()
+        );
     }
 
     public static function getNavigationBadgeTooltip(): ?string

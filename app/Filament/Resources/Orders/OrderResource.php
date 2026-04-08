@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class OrderResource extends Resource
@@ -44,6 +45,18 @@ class OrderResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-s-shopping-cart';
 
     protected static ?int $navigationSort = 1;
+
+    private static function getCachedNavigationBadgeCount(): int
+    {
+        /** @var class-string<\Illuminate\Database\Eloquent\Model> $modelClass */
+        $modelClass = static::$model;
+
+        return Cache::remember(
+            'nav:orders:processing_count',
+            60,
+            fn (): int => (int) $modelClass::where('status', \App\Enums\OrderStatus::Processing->value)->count()
+        );
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -64,10 +77,7 @@ class OrderResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        /** @var class-string<Model> $modelClass */
-        $modelClass = static::$model;
-
-        return (string) $modelClass::where('status', \App\Enums\OrderStatus::Processing->value)->count();
+        return (string) static::getCachedNavigationBadgeCount();
     }
 
     public static function getGloballySearchableAttributes(): array

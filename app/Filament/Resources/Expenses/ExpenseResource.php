@@ -11,6 +11,7 @@ use App\Models\Expense;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Cache;
 
 class ExpenseResource extends Resource
 {
@@ -59,10 +60,20 @@ class ExpenseResource extends Resource
         return 'Finance';
     }
 
+    private static function getCachedNavigationBadgeCount(): int
+    {
+        $modelClass = static::getModel();
+
+        return Cache::remember(
+            'nav:expenses:count',
+            60,
+            fn (): int => (int) $modelClass::count()
+        );
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        // Menampilkan jumlah total record sebagai badge
-        return static::getModel()::count();
+        return (string) static::getCachedNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeColor(): string|array|null

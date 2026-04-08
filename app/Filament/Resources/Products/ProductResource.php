@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 class ProductResource extends Resource
 {
@@ -32,9 +33,20 @@ class ProductResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
+    private static function getCachedNavigationBadgeCount(): int
+    {
+        $modelClass = static::getModel();
+
+        return Cache::remember(
+            'nav:products:count',
+            60,
+            fn (): int => (int) $modelClass::count()
+        );
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return (string) static::getCachedNavigationBadgeCount();
     }
 
     public static function form(Schema $schema): Schema

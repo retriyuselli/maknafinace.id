@@ -15,6 +15,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Cache;
 
 class EmployeeResource extends Resource
 {
@@ -47,15 +48,26 @@ class EmployeeResource extends Resource
         ];
     }
 
+    private static function getCachedNavigationBadgeCount(): int
+    {
+        $modelClass = static::getModel();
+
+        return Cache::remember(
+            'nav:employees:active_count',
+            60,
+            fn (): int => (int) $modelClass::query()
+                ->where('date_of_join', '<=', now())
+                ->where(function (Builder $query) {
+                    $query->whereNull('date_of_out')
+                        ->orWhere('date_of_out', '>=', now());
+                })
+                ->count()
+        );
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::query()
-            ->where('date_of_join', '<=', now())
-            ->where(function (Builder $query) {
-                $query->whereNull('date_of_out')
-                    ->orWhere('date_of_out', '>=', now());
-            })
-            ->count();
+        return (string) static::getCachedNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeColor(): ?string

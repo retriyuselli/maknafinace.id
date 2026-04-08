@@ -13,6 +13,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Cache;
 
 class ProspectResource extends Resource
 {
@@ -61,12 +62,20 @@ class ProspectResource extends Resource
             ]);
     }
 
-    public static function getNavigationBadge(): ?string
+    private static function getCachedNavigationBadgeCount(): int
     {
         $modelClass = static::$model;
 
-        return (string) $modelClass::whereDoesntHave('orders')
-            ->count();
+        return Cache::remember(
+            'nav:prospects:without_orders',
+            60,
+            fn (): int => $modelClass::whereDoesntHave('orders')->count()
+        );
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getCachedNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeTooltip(): ?string
