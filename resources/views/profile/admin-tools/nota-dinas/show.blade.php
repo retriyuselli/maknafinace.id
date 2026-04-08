@@ -116,8 +116,6 @@
                                     class="js-invoice-view inline-flex items-center px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800 transition">
                                     View
                                 </button>
-                            @else
-                                <span class="text-xs text-gray-500">-</span>
                             @endif
                         </td>
                     </tr>
