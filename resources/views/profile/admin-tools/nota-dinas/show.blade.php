@@ -86,7 +86,12 @@
                 @forelse($details as $d)
                     <tr class="text-gray-800">
                         <td class="py-3 pr-4 text-xs text-gray-700">{{ ucfirst((string) $d->keperluan) }}</td>
-                        <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->vendor?->name ? ucfirst((string) $d->vendor->name) : '-' }}</td>
+                        <td class="py-3 pr-4 text-xs text-gray-700">
+                            <div>{{ $d->vendor?->name ? \Illuminate\Support\Str::title((string) $d->vendor->name) : '-' }}</div>
+                            @if($d->vendor?->name && $d->vendor?->account_holder)
+                                <div class="text-[11px] text-gray-500">{{ \Illuminate\Support\Str::title((string) $d->vendor->account_holder) }}</div>
+                            @endif
+                        </td>
                         <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->order?->name ? ucfirst((string) $d->order->name) : ucfirst((string) ($d->event ?? '-')) }}</td>
                         <td class="py-3 pr-4 text-xs text-gray-700">{{ $d->jenis_pengeluaran ?? '-' }}</td>
                         <td class="py-3 pr-4 text-xs text-gray-700">
