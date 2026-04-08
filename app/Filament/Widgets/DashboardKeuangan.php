@@ -9,6 +9,7 @@ use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardKeuangan extends BaseWidget
 {
@@ -35,22 +36,34 @@ class DashboardKeuangan extends BaseWidget
         $currentStart = $startFilter ? \Carbon\Carbon::parse($startFilter) : now()->startOfMonth();
         $currentEnd = $endFilter ? \Carbon\Carbon::parse($endFilter) : now()->endOfMonth();
 
-        $totalPaymentCurrentMonth = DataPembayaran::whereBetween('created_at', [$currentStart, $currentEnd])->sum('nominal');
-        $totalExpenseCurrentMonth = Expense::whereBetween('created_at', [$currentStart, $currentEnd])->sum('amount');
-        $totalExpenseOpsCurrentMonth = ExpenseOps::whereBetween('created_at', [$currentStart, $currentEnd])->sum('amount');
-
-        $totalExpenseAllCurrentMonth = $totalExpenseCurrentMonth + $totalExpenseOpsCurrentMonth;
-        $netDifferenceCurrentMonth = $totalPaymentCurrentMonth - $totalExpenseAllCurrentMonth;
-
         $startOfPreviousMonth = $currentStart->copy()->subMonthNoOverflow();
         $endOfPreviousMonth = $currentEnd->copy()->subMonthNoOverflow();
 
-        $totalPaymentPreviousMonth = DataPembayaran::whereBetween('created_at', [$startOfPreviousMonth, $endOfPreviousMonth])->sum('nominal');
-        $totalExpensePreviousMonth = Expense::whereBetween('created_at', [$startOfPreviousMonth, $endOfPreviousMonth])->sum('amount');
-        $totalExpenseOpsPreviousMonth = ExpenseOps::whereBetween('created_at', [$startOfPreviousMonth, $endOfPreviousMonth])->sum('amount');
+        $cacheKey = 'dashboard:finance:'
+            .md5(implode('|', [
+                $currentStart->toIso8601String(),
+                $currentEnd->toIso8601String(),
+                $startOfPreviousMonth->toIso8601String(),
+                $endOfPreviousMonth->toIso8601String(),
+            ]));
 
-        $totalExpenseAllPreviousMonth = $totalExpensePreviousMonth + $totalExpenseOpsPreviousMonth;
-        $netDifferencePreviousMonth = $totalPaymentPreviousMonth - $totalExpenseAllPreviousMonth;
+        [
+            'totalPaymentCurrentMonth' => $totalPaymentCurrentMonth,
+            'totalExpenseCurrentMonth' => $totalExpenseCurrentMonth,
+            'totalExpenseOpsCurrentMonth' => $totalExpenseOpsCurrentMonth,
+            'totalPaymentPreviousMonth' => $totalPaymentPreviousMonth,
+            'totalExpensePreviousMonth' => $totalExpensePreviousMonth,
+            'totalExpenseOpsPreviousMonth' => $totalExpenseOpsPreviousMonth,
+        ] = Cache::remember($cacheKey, 60, function () use ($currentStart, $currentEnd, $startOfPreviousMonth, $endOfPreviousMonth): array {
+            return [
+                'totalPaymentCurrentMonth' => (float) DataPembayaran::whereBetween('created_at', [$currentStart, $currentEnd])->sum('nominal'),
+                'totalExpenseCurrentMonth' => (float) Expense::whereBetween('created_at', [$currentStart, $currentEnd])->sum('amount'),
+                'totalExpenseOpsCurrentMonth' => (float) ExpenseOps::whereBetween('created_at', [$currentStart, $currentEnd])->sum('amount'),
+                'totalPaymentPreviousMonth' => (float) DataPembayaran::whereBetween('created_at', [$startOfPreviousMonth, $endOfPreviousMonth])->sum('nominal'),
+                'totalExpensePreviousMonth' => (float) Expense::whereBetween('created_at', [$startOfPreviousMonth, $endOfPreviousMonth])->sum('amount'),
+                'totalExpenseOpsPreviousMonth' => (float) ExpenseOps::whereBetween('created_at', [$startOfPreviousMonth, $endOfPreviousMonth])->sum('amount'),
+            ];
+        });
 
         // Fungsi helper untuk deskripsi perubahan
         $getChangeDescription = function ($current, $previous, $label) {

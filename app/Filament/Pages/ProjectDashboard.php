@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Filament\Widgets\ComingSoonAkadWidget;
 use App\Filament\Widgets\ComingSoonResepsiWidget;
 use App\Filament\Widgets\DashboardKeuangan;
+use App\Filament\Widgets\DocumentInboxWidget;
 use App\Filament\Widgets\StatsOverviewWidget;
 use BackedEnum;
 use Filament\Forms\Components\DatePicker;
@@ -20,9 +21,9 @@ class ProjectDashboard extends Page
 {
     use BaseDashboard\Concerns\HasFiltersForm;
 
-    protected static ?string $title = 'Project Dashboard';
+    protected static ?string $title = 'Welcome';
 
-    protected ?string $heading = 'Project Dashboard';
+    protected ?string $heading = 'Welcome';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBriefcase;
 
@@ -51,6 +52,7 @@ class ProjectDashboard extends Page
     {
         return [
             AccountWidget::class,
+            DocumentInboxWidget::class,
             DashboardKeuangan::class,
             StatsOverviewWidget::class,
             ComingSoonAkadWidget::class,

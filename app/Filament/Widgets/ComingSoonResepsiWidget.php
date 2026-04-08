@@ -7,7 +7,6 @@ use App\Models\Order;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
-use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -26,6 +25,11 @@ class ComingSoonResepsiWidget extends BaseWidget
         return $table
             ->query(
                 OrderResource::getEloquentQuery()
+                    ->without(['employee', 'items.product'])
+                    ->with([
+                        'prospect:id,name_event,date_resepsi',
+                        'user:id,name',
+                    ])
                     ->whereHas('prospect', function (Builder $query) {
                         $query->whereNotNull('date_resepsi')
                             ->where('date_resepsi', '>=', now());

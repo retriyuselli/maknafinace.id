@@ -10,8 +10,9 @@ use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
-class DocumentsPendingApprovalWidget extends BaseWidget
+class DocumentInboxWidget extends BaseWidget
 {
     use HasWidgetShield {
         canView as canViewShield;
@@ -19,35 +20,41 @@ class DocumentsPendingApprovalWidget extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $heading = 'Dokumen Menunggu Persetujuan';
+    protected static ?string $heading = 'Inbox Dokumen';
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 3;
 
     public static function canView(): bool
     {
-        // Cek permission dari Shield terlebih dahulu
         if (! static::canViewShield()) {
             return false;
         }
 
-        // Cek apakah ada data yang perlu ditampilkan
-        return Document::query()
-            ->whereHas('approvals', function (Builder $q) {
-                $q->where('user_id', Auth::id())
-                    ->where('status', 'pending');
-            })
-            ->exists();
+        $userId = Auth::id();
+        if (! $userId) {
+            return false;
+        }
+
+        return Cache::remember(
+            'dashboard:document_inbox:exists:'.$userId,
+            60,
+            fn () => Document::query()
+                ->where('status', '!=', 'draft')
+                ->whereHas('recipientsList', fn (Builder $q) => $q->where('users.id', $userId))
+                ->exists()
+        );
     }
 
     public function table(Table $table): Table
     {
+        $userId = Auth::id();
+
         return $table
+            ->defaultPaginationPageOption(10)
             ->query(
                 Document::query()
-                    ->whereHas('approvals', function (Builder $q) {
-                        $q->where('user_id', Auth::id())
-                            ->where('status', 'pending');
-                    })
+                    ->where('status', '!=', 'draft')
+                    ->whereHas('recipientsList', fn (Builder $q) => $q->where('users.id', $userId))
                     ->with(['category', 'creator'])
                     ->latest()
             )
@@ -65,16 +72,6 @@ class DocumentsPendingApprovalWidget extends BaseWidget
                     ->dateTime(),
             ])
             ->recordActions([
-                Action::make('review')
-                    ->label('Review')
-                    ->authorize('update')
-                    ->visible(function (): bool {
-                        /** @var \App\Models\User|null $user */
-                        $user = Auth::user();
-                        return $user?->hasRole('super_admin') ?? false;
-                    })
-                    ->url(fn (Document $record): string => route('filament.admin.resources.documents.edit', ['record' => $record->id]))
-                    ->icon('heroicon-m-eye'),
                 Action::make('print')
                     ->label('Preview PDF')
                     ->authorize('view')

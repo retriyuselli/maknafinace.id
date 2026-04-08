@@ -25,6 +25,11 @@ class ComingSoonAkadWidget extends BaseWidget
         return $table
             ->query(
                 OrderResource::getEloquentQuery()
+                    ->without(['employee', 'items.product'])
+                    ->with([
+                        'prospect:id,name_event,date_akad',
+                        'user:id,name',
+                    ])
                     ->whereHas('prospect', function (Builder $query) {
                         $query->whereNotNull('date_akad')
                             ->where('date_akad', '>=', now());

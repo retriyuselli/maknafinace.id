@@ -12,6 +12,7 @@ use Filament\Support\Enums\IconPosition;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class StatsOverviewWidget extends BaseWidget
@@ -30,40 +31,64 @@ class StatsOverviewWidget extends BaseWidget
         $start = $this->pageFilters['startDate'] ?? $defaultStart;
         $end = $this->pageFilters['endDate'] ?? $defaultEnd;
 
-        // Calculate current period metrics
-        $totalRevenue = $this->calculateTotalRevenue($start, $end);
-        $totalReceived = $this->calculateTotalReceived($start, $end);
-        $totalOutstanding = $totalRevenue - $totalReceived;
-        $totalExpenses = $this->calculateTotalExpenses($start, $end);
-        $totalProfit = $totalRevenue - $totalExpenses;
-
-        // Calculate previous period metrics for comparison
         $previousStart = $start ? Carbon::parse($start)->subMonth() : Carbon::now()->subMonth()->startOfMonth();
         $previousEnd = $end ? Carbon::parse($end)->subMonth() : Carbon::now()->subMonth()->endOfMonth();
 
-        $previousRevenue = $this->calculateTotalRevenue($previousStart, $previousEnd);
-        $previousReceived = $this->calculateTotalReceived($previousStart, $previousEnd);
-        $previousExpenses = $this->calculateTotalExpenses($previousStart, $previousEnd);
-        $previousProfit = $previousRevenue - $previousExpenses;
+        $cacheKey = 'dashboard:stats_overview:'
+            .md5(implode('|', [
+                (string) $start,
+                (string) $end,
+                (string) $previousStart,
+                (string) $previousEnd,
+            ]));
 
-        // Calculate percentage changes
-        $revenueChange = $this->calculatePercentageChange($previousRevenue, $totalRevenue);
-        $receivedChange = $this->calculatePercentageChange($previousReceived, $totalReceived);
-        $expensesChange = $this->calculatePercentageChange($previousExpenses, $totalExpenses);
-        $profitChange = $this->calculatePercentageChange($previousProfit, $totalProfit);
+        [
+            'totalRevenue' => $totalRevenue,
+            'totalReceived' => $totalReceived,
+            'totalOutstanding' => $totalOutstanding,
+            'totalExpenses' => $totalExpenses,
+            'totalProfit' => $totalProfit,
+            'revenueChange' => $revenueChange,
+            'receivedChange' => $receivedChange,
+            'expensesChange' => $expensesChange,
+            'profitChange' => $profitChange,
+            'currentOrders' => $currentOrders,
+            'orderChange' => $orderChange,
+        ] = Cache::remember($cacheKey, 60, function () use ($start, $end, $previousStart, $previousEnd): array {
+            $totalRevenue = $this->calculateTotalRevenue($start, $end);
+            $totalReceived = $this->calculateTotalReceived($start, $end);
+            $totalOutstanding = $totalRevenue - $totalReceived;
+            $totalExpenses = $this->calculateTotalExpenses($start, $end);
+            $totalProfit = $totalRevenue - $totalExpenses;
 
-        // Calculate prospect and employee changes
-        $currentProspects = $this->calculateNewProspects($start, $end);
-        $previousProspects = $this->calculateNewProspects($previousStart, $previousEnd);
-        $prospectChange = $this->calculatePercentageChange($previousProspects, $currentProspects);
+            $previousRevenue = $this->calculateTotalRevenue($previousStart, $previousEnd);
+            $previousReceived = $this->calculateTotalReceived($previousStart, $previousEnd);
+            $previousExpenses = $this->calculateTotalExpenses($previousStart, $previousEnd);
+            $previousProfit = $previousRevenue - $previousExpenses;
 
-        $currentEmployees = $this->calculateNewEmployees($start, $end);
-        $previousEmployees = $this->calculateNewEmployees($previousStart, $previousEnd);
-        $employeeChange = $this->calculatePercentageChange($previousEmployees, $currentEmployees);
+            $revenueChange = $this->calculatePercentageChange($previousRevenue, $totalRevenue);
+            $receivedChange = $this->calculatePercentageChange($previousReceived, $totalReceived);
+            $expensesChange = $this->calculatePercentageChange($previousExpenses, $totalExpenses);
+            $profitChange = $this->calculatePercentageChange($previousProfit, $totalProfit);
 
-        $currentOrders = $this->calculateNewOrders($start, $end);
-        $previousOrders = $this->calculateNewOrders($previousStart, $previousEnd);
-        $orderChange = $this->calculatePercentageChange($previousOrders, $currentOrders);
+            $currentOrders = $this->calculateNewOrders($start, $end);
+            $previousOrders = $this->calculateNewOrders($previousStart, $previousEnd);
+            $orderChange = $this->calculatePercentageChange($previousOrders, $currentOrders);
+
+            return [
+                'totalRevenue' => $totalRevenue,
+                'totalReceived' => $totalReceived,
+                'totalOutstanding' => $totalOutstanding,
+                'totalExpenses' => $totalExpenses,
+                'totalProfit' => $totalProfit,
+                'revenueChange' => $revenueChange,
+                'receivedChange' => $receivedChange,
+                'expensesChange' => $expensesChange,
+                'profitChange' => $profitChange,
+                'currentOrders' => $currentOrders,
+                'orderChange' => $orderChange,
+            ];
+        });
 
         return [
             Stat::make('Total Expenses Ops (Rp)', ''.number_format($totalExpenses))
