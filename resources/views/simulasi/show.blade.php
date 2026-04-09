@@ -43,6 +43,7 @@
         /* Remove gray background */
         body {
             background-color: #ffffff !important;
+            overflow-x: hidden !important;
         }
 
         .invoice-container-wrap {
@@ -51,16 +52,18 @@
             justify-content: center !important;
             align-items: flex-start !important;
             min-height: 100vh !important;
-            padding: 0px 0 !important;
+            padding: 0 !important;
+            overflow-x: hidden !important;
         }
 
         .invoice-container {
             background-color: #ffffff !important;
             box-shadow: none !important;
             border: 0.5px solid #ddd !important;
-            margin: 50 !important;
+            box-sizing: border-box !important;
+            margin: 15px auto !important;
             padding: 20px !important;
-            width: 980px !important;
+            width: 100% !important;
             max-width: 980px !important;
             min-height: 100vh !important;
         }
