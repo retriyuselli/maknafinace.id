@@ -78,7 +78,7 @@ class SimulasiProdukResource extends Resource
         return parent::getEloquentQuery()
             ->with([
                 'prospect:id,name_event',
-                'product:id,name,price',
+                'product:id,name,price,product_price',
                 'user:id,name',
             ]);
     }

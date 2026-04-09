@@ -54,7 +54,7 @@ class SimulasiProdukForm
                                             if ($state) {
                                                 $product = Product::find($state);
                                                 if ($product) {
-                                                    $new_total_price = $product->price ?? 0;
+                                                    $new_total_price = (int) ($product->price ?: ($product->product_price ?? 0));
                                                     $new_penambahan = $product->penambahan_publish ?? 0;
                                                     $new_pengurangan = $product->pengurangan ?? 0;
                                                 }
@@ -74,7 +74,7 @@ class SimulasiProdukForm
                                             if ($state) {
                                                 $product = Product::find($state);
                                                 if ($product) {
-                                                    $new_total_price = $product->price ?? 0;
+                                                    $new_total_price = (int) ($product->price ?: ($product->product_price ?? 0));
                                                     $new_penambahan = $product->penambahan_publish ?? 0;
                                                     $new_pengurangan = $product->pengurangan ?? 0;
                                                 }

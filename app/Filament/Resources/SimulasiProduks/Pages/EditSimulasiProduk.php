@@ -28,7 +28,7 @@ class EditSimulasiProduk extends EditRecord
                         return;
                     }
 
-                    $totalPrice = (int) ($record->product->price ?? 0);
+                    $totalPrice = (int) ($record->product->price ?: ($record->product->product_price ?? 0));
                     $promo = (int) ($record->promo ?? 0);
                     $penambahan = (int) ($record->penambahan ?? 0);
                     $pengurangan = (int) ($record->pengurangan ?? 0);
@@ -66,7 +66,7 @@ class EditSimulasiProduk extends EditRecord
         $record = $this->getRecord();
 
         if ($record && $record->product) {
-            $totalPrice = (int) ($record->product->price ?? 0);
+            $totalPrice = (int) ($record->product->price ?: ($record->product->product_price ?? 0));
             $promo = (int) ($record->promo ?? 0);
             $penambahan = (int) ($record->penambahan ?? 0);
             $pengurangan = (int) ($record->pengurangan ?? 0);
