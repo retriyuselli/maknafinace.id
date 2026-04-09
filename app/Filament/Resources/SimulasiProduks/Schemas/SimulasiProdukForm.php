@@ -121,6 +121,7 @@ class SimulasiProdukForm
                                             SimulasiProdukResource::recalculateGrandTotal($get, $set);
                                         })
                                         ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ','))
+                                        ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                         ->helperText('Nilai ini otomatis diambil dari Product Price (harga paket dasar sebelum potongan/pengurangan dan penambahan publish) dan akan ikut berubah jika harga produk diperbarui lalu simulasi di-refresh.'),
                                     TextInput::make('penambahan')
                                         ->label('Penambahan Biaya')
@@ -129,6 +130,7 @@ class SimulasiProdukForm
                                         ->readOnly()
                                         ->dehydrated()
                                         ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ','))
+                                        ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                         ->helperText('Nilai ini otomatis diambil dari Produk (Penambahan Publish) dan tidak dapat diubah dari simulasi.'),
                                     TextInput::make('pengurangan')
                                         ->label('Pengurangan Lain')
@@ -137,6 +139,7 @@ class SimulasiProdukForm
                                         ->readOnly()
                                         ->dehydrated()
                                         ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ','))
+                                        ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                         ->helperText('Nilai ini otomatis diambil dari Produk (Total Pengurangan) dan tidak dapat diubah dari simulasi.'),
                                     TextInput::make('grand_total')
                                         ->label('Grand Total')
@@ -145,6 +148,7 @@ class SimulasiProdukForm
                                         ->dehydrated()
                                         ->default(0)
                                         ->formatStateUsing(fn ($state) => number_format((float) $state, 0, '.', ','))
+                                        ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                         ->helperText('Grand Total dihitung dari Base Total Price + Penambahan - Pengurangan dan akan mengikuti perubahan jika harga produk disinkronkan.'),
                                 ])
                                 ->columnSpanFull(),
