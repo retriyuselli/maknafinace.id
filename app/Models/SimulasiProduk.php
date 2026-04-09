@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class SimulasiProduk extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'prospect_id',
         'product_id',
@@ -81,5 +85,22 @@ class SimulasiProduk extends Model
     public function prospect()
     {
         return $this->belongsTo(Prospect::class);
+    }
+
+    public static function generateUniqueSlug(string $base, ?int $ignoreId = null): string
+    {
+        $slug = Str::slug($base);
+        $originalSlug = $slug;
+        $counter = 1;
+
+        while (self::withTrashed()
+            ->where('slug', $slug)
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->exists()) {
+            $slug = $originalSlug.'-'.$counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 }

@@ -6,10 +6,20 @@ use App\Models\SimulasiProduk;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 
@@ -19,42 +29,45 @@ class SimulasiProduksTable
     {
         return $table
             ->defaultSort('updated_at', 'desc')
-            ->poll('5s')
             ->columns([
                 TextColumn::make('prospect.name_event')
                     ->label('Prospect Name')
-                    ->searchable()->sortable()
-                    ->weight('bold')
-                    ->formatStateUsing(fn (string $state): string => Str::title($state))
+                    ->searchable()
+                    ->sortable()
+                    ->weight(FontWeight::Bold)
+                    ->formatStateUsing(fn (?string $state): string => filled($state) ? Str::title($state) : '-')
                     ->description(fn (SimulasiProduk $record): string => $record->product
-                        ? Str::title(Str::lower($record->product->name ?? ''))
+                        ? Str::title(Str::lower((string) ($record->product->name ?? '')))
                         : Str::title(Str::lower(Str::limit($record->notes ?? '', 30)))),
+                TextColumn::make('slug')
+                    ->label('Slug')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->copyable()
+                    ->searchable(),
                 TextColumn::make('total_price')
                     ->label('Base Price')
-                    ->numeric()
-                    ->prefix('Rp. ')
+                    ->formatStateUsing(fn ($state) => 'Rp. '.number_format((float) $state, 0, '.', ','))
                     ->sortable()
                     ->alignEnd(),
                 TextColumn::make('penambahan')
                     ->label('Addition')
-                    ->prefix('Rp. ')
                     ->sortable()
-                    ->numeric()
+                    ->formatStateUsing(fn ($state) => 'Rp. '.number_format((float) $state, 0, '.', ','))
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignEnd(),
                 TextColumn::make('pengurangan')
                     ->label('Reduction')
-                    ->prefix('Rp. ')
                     ->sortable()
-                    ->numeric()
+                    ->formatStateUsing(fn ($state) => 'Rp. '.number_format((float) $state, 0, '.', ','))
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignEnd(),
                 TextColumn::make('grand_total')
-                    ->prefix('Rp. ')
+                    ->label('Grand Total')
                     ->sortable()
-                    ->numeric() 
+                    ->formatStateUsing(fn ($state) => 'Rp. '.number_format((float) $state, 0, '.', ','))
                     ->alignEnd()
-                    ->weight('bold'),
+                    ->weight(FontWeight::Bold)
+                    ->summarize(Sum::make()->label('Total')),
                 TextColumn::make('user.name')
                     ->label('Created By')
                     ->searchable()
@@ -69,33 +82,49 @@ class SimulasiProduksTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('user_id')
+                    ->label('Created By')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('product_id')
+                    ->label('Product')
+                    ->relationship('product', 'name')
+                    ->searchable()
+                    ->preload(),
+
+                TrashedFilter::make(),
             ])
-            ->recordActions([ActionGroup::make([
-                EditAction::make(),
-                Action::make('view_simulasi')
-                    ->label('View Simulasi')
-                    ->icon('heroicon-o-document-text')
-                    ->color('success')
-                    ->url(fn (SimulasiProduk $record) => route('simulasi.show', $record))
-                    ->openUrlInNewTab(),
-                DeleteAction::make()]),
+            ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                    Action::make('view_simulasi')
+                        ->label('View Simulasi')
+                        ->icon('heroicon-o-document-text')
+                        ->color('success')
+                        ->url(fn (SimulasiProduk $record) => route('simulasi.show', $record))
+                        ->openUrlInNewTab(),
+                    DeleteAction::make(),
+                    RestoreAction::make(),
+                    ForceDeleteAction::make(),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make()]),
+                    DeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                ]),
             ])
             ->emptyStateHeading('No Simulations Found')
             ->emptyStateDescription('Create your first simulation to get started.')
             ->emptyStateIcon('heroicon-o-calculator')
             ->emptyStateActions([
-                Action::make('create')
-                    ->label('Create Simulation')
-                    ->icon('heroicon-m-plus')
-                    ->url(route('filament.admin.resources.simulasi-produks.create'))
-                    ->button(),
+                CreateAction::make(),
             ])
-            ->defaultPaginationPageOption(10)
+            ->defaultPaginationPageOption(25)
             ->paginationPageOptions([10, 25, 50])
             ->poll('60s');
     }

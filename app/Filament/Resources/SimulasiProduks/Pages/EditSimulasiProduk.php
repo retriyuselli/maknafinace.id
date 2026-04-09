@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SimulasiProduks\Pages;
 
 use App\Filament\Resources\SimulasiProduks\SimulasiProdukResource;
+use App\Models\Prospect;
 use App\Models\SimulasiProduk;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -73,6 +74,24 @@ class EditSimulasiProduk extends EditRecord
 
             $data['total_price'] = $totalPrice;
             $data['grand_total'] = $grandTotal;
+        }
+
+        return $data;
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        unset($data['name']);
+
+        $record = $this->getRecord();
+
+        $base = (string) ($data['slug'] ?? '');
+        if ($base === '' && isset($data['prospect_id'])) {
+            $base = (string) Prospect::query()->whereKey($data['prospect_id'])->value('name_event');
+        }
+
+        if ($base !== '') {
+            $data['slug'] = SimulasiProduk::generateUniqueSlug($base, $record->id);
         }
 
         return $data;

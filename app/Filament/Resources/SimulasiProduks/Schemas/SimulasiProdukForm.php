@@ -54,7 +54,7 @@ class SimulasiProdukForm
                                             if ($state) {
                                                 $product = Product::find($state);
                                                 if ($product) {
-                                                    $new_total_price = $product->product_price ?? 0;
+                                                    $new_total_price = $product->price ?? 0;
                                                     $new_penambahan = $product->penambahan_publish ?? 0;
                                                     $new_pengurangan = $product->pengurangan ?? 0;
                                                 }
@@ -74,7 +74,7 @@ class SimulasiProdukForm
                                             if ($state) {
                                                 $product = Product::find($state);
                                                 if ($product) {
-                                                    $new_total_price = $product->product_price ?? 0;
+                                                    $new_total_price = $product->price ?? 0;
                                                     $new_penambahan = $product->penambahan_publish ?? 0;
                                                     $new_pengurangan = $product->pengurangan ?? 0;
                                                 }
@@ -201,7 +201,7 @@ class SimulasiProdukForm
                                         ->label('Title TTD')
                                         ->maxLength(255),
                                     Hidden::make('name')
-                                        ->dehydrated(),
+                                        ->dehydrated(false),
 
                                     TextInput::make('slug')
                                         ->required()
@@ -230,7 +230,6 @@ class SimulasiProdukForm
                                 ->stripCharacters(',')
                                 ->default(0)
                                 ->live(onBlur: true)
-                                ->default(0)
                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                     $dp = SimulasiProdukResource::parseCurrency($state);
                                     $items = $get('payment_simulation') ?? [];
@@ -335,15 +334,13 @@ class SimulasiProdukForm
                     Tab::make('Meta Info')
                         ->icon('heroicon-o-information-circle')
                         ->schema([
-                            Select::make('user_id')
-                                ->relationship('user', 'name')
+                            TextInput::make('created_by_display')
                                 ->label('Created By')
-                                ->required()
-                                ->searchable()
                                 ->disabled()
-                                ->preload()
-                                ->default(fn () => Auth::id())
-                                ->dehydrated(false),
+                                ->dehydrated(false)
+                                ->afterStateHydrated(function ($component, $state, ?SimulasiProduk $record): void {
+                                    $component->state($record?->user?->name ?? '-');
+                                }),
                             TextInput::make('created_at_display')
                                 ->label('Dibuat')
                                 ->disabled()
