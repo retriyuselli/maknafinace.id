@@ -88,7 +88,12 @@ class SimulasiDisplayController extends Controller
 
         $items = collect();
         if ($record->product) {
-            $items = $record->product->items()->with(['vendor.category'])->get();
+            $record->product->load([
+                'items.vendor.category',
+                'penambahanHarga.vendor',
+                'pengurangans',
+            ]);
+            $items = $record->product->items;
         }
 
         $months = [

@@ -691,10 +691,31 @@
 
     @php
         $product = $record->product;
-        $baseTotalPrice = $product?->product_price ?? ($record->total_price ?? 0);
-        $productPenambahan = $product?->penambahan_publish ?? ($record->penambahan ?? 0);
-        $productPengurangan = $product?->pengurangan ?? ($record->pengurangan ?? 0);
-        $promo = $record->promo ?? 0;
+        $baseTotalPrice = (float) ($record->total_price ?? 0);
+        $productPenambahan = (float) ($record->penambahan ?? 0);
+        $productPengurangan = (float) ($record->pengurangan ?? 0);
+        $promo = (float) ($record->promo ?? 0);
+
+        if ($product && $baseTotalPrice <= 0) {
+            $baseTotalPrice = (float) ($product->product_price ?? 0);
+            if ($baseTotalPrice <= 0 && isset($items)) {
+                $baseTotalPrice = (float) $items->sum('price_public');
+            }
+        }
+
+        if ($product && $productPenambahan <= 0) {
+            $productPenambahan = (float) ($product->penambahan_publish ?? 0);
+            if ($productPenambahan <= 0 && $product?->penambahanHarga) {
+                $productPenambahan = (float) $product->penambahanHarga->sum('harga_publish');
+            }
+        }
+
+        if ($product && $productPengurangan <= 0) {
+            $productPengurangan = (float) ($product->pengurangan ?? 0);
+            if ($productPengurangan <= 0 && $product?->pengurangans) {
+                $productPengurangan = (float) $product->pengurangans->sum('amount');
+            }
+        }
         $computedGrandTotal = \App\Services\OrderFinance::computeGrandTotalFromValues(
             (float) $baseTotalPrice,
             (float) $productPenambahan,
@@ -824,7 +845,7 @@
                             <div style="margin-right: 10px;">
                                 <div style="font-weight: normal; overflow: hidden;">
                                     {{ strtoupper($item->vendor->name ?? 'Penambahan Tanpa Nama') }}
-                                    @if ($item->harga_publish))
+                                    @if (!is_null($item->harga_publish) && (float) $item->harga_publish > 0)
                                         <span class="price-right">
                                             Rp {{ number_format((int) $item->harga_publish, 0, ',', '.') }},-
                                         </span>
