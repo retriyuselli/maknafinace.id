@@ -27,6 +27,40 @@ use Illuminate\Support\Str;
 
 class SimulasiProdukForm
 {
+    private static function syncPricingFromProduct($productId, Get $get, Set $set): void
+    {
+        $totalPrice = 0;
+        $penambahan = 0;
+        $pengurangan = 0;
+
+        if ($productId) {
+            $product = Product::query()->whereKey($productId)->first();
+            if ($product) {
+                $totalPrice = (int) ($product->product_price ?? 0);
+                $penambahan = (int) ($product->penambahan_publish ?? 0);
+                $pengurangan = (int) ($product->pengurangan ?? 0);
+
+                if ($totalPrice === 0) {
+                    $totalPrice = (int) $product->items()->sum('price_public');
+                }
+
+                if ($penambahan === 0) {
+                    $penambahan = (int) $product->penambahanHarga()->sum('harga_publish');
+                }
+
+                if ($pengurangan === 0) {
+                    $pengurangan = (int) $product->pengurangans()->sum('amount');
+                }
+            }
+        }
+
+        $set('total_price', $totalPrice);
+        $set('penambahan', $penambahan);
+        $set('pengurangan', $pengurangan);
+
+        SimulasiProdukResource::recalculateGrandTotal($get, $set);
+    }
+
     public static function configure(): array
     {
         return [
@@ -47,44 +81,10 @@ class SimulasiProdukForm
                                         ->reactive()
                                         ->live()
                                         ->afterStateHydrated(function (Set $set, Get $get, $state) {
-                                            $new_total_price = 0;
-                                            $new_penambahan = 0;
-                                            $new_pengurangan = 0;
-
-                                            if ($state) {
-                                                $product = Product::find($state);
-                                                if ($product) {
-                                                    $new_total_price = (int) ($product->price ?: ($product->product_price ?? 0));
-                                                    $new_penambahan = $product->penambahan_publish ?? 0;
-                                                    $new_pengurangan = $product->pengurangan ?? 0;
-                                                }
-                                            }
-
-                                            $set('total_price', $new_total_price);
-                                            $set('penambahan', $new_penambahan);
-                                            $set('pengurangan', $new_pengurangan);
-
-                                            SimulasiProdukResource::recalculateGrandTotal($get, $set);
+                                            self::syncPricingFromProduct($state, $get, $set);
                                         })
                                         ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                                            $new_total_price = 0;
-                                            $new_penambahan = 0;
-                                            $new_pengurangan = 0;
-
-                                            if ($state) {
-                                                $product = Product::find($state);
-                                                if ($product) {
-                                                    $new_total_price = (int) ($product->price ?: ($product->product_price ?? 0));
-                                                    $new_penambahan = $product->penambahan_publish ?? 0;
-                                                    $new_pengurangan = $product->pengurangan ?? 0;
-                                                }
-                                            }
-
-                                            $set('total_price', $new_total_price);
-                                            $set('penambahan', $new_penambahan);
-                                            $set('pengurangan', $new_pengurangan);
-
-                                            SimulasiProdukResource::recalculateGrandTotal($get, $set);
+                                            self::syncPricingFromProduct($state, $get, $set);
                                         })
                                         ->columnSpanFull()
                                         ->suffixAction(
@@ -113,13 +113,10 @@ class SimulasiProdukForm
                                     TextInput::make('total_price')
                                         ->label('Base Total Price')
                                         ->prefix('Rp')
-                                        ->mask(RawJs::make('$money($input)'))
-                                        ->stripCharacters(',')
                                         ->readOnly()
                                         ->dehydrated()
                                         ->default(0)
                                         ->reactive()
-                                        ->live(onBlur: true)
                                         ->afterStateUpdated(function (Get $get, Set $set) {
                                             SimulasiProdukResource::recalculateGrandTotal($get, $set);
                                         })
@@ -128,8 +125,6 @@ class SimulasiProdukForm
                                     TextInput::make('penambahan')
                                         ->label('Penambahan Biaya')
                                         ->prefix('Rp')
-                                        ->mask(RawJs::make('$money($input)'))
-                                        ->stripCharacters(',')
                                         ->default(0)
                                         ->readOnly()
                                         ->dehydrated()
@@ -138,8 +133,6 @@ class SimulasiProdukForm
                                     TextInput::make('pengurangan')
                                         ->label('Pengurangan Lain')
                                         ->prefix('Rp')
-                                        ->mask(RawJs::make('$money($input)'))
-                                        ->stripCharacters(',')
                                         ->default(0)
                                         ->readOnly()
                                         ->dehydrated()
@@ -148,8 +141,6 @@ class SimulasiProdukForm
                                     TextInput::make('grand_total')
                                         ->label('Grand Total')
                                         ->prefix('Rp')
-                                        ->mask(RawJs::make('$money($input)'))
-                                        ->stripCharacters(',')
                                         ->readOnly()
                                         ->dehydrated()
                                         ->default(0)
