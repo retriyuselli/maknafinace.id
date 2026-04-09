@@ -337,6 +337,23 @@ Invoice Area
                                                         style="border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
 
                                                         <div style="text-align: left; border: none !important;">
+                                                            @php
+                                                                $company = $company ?? \App\Models\Company::first();
+
+                                                                if (
+                                                                    $company &&
+                                                                    $company->logo_url &&
+                                                                    \Illuminate\Support\Facades\Storage::disk('public')->exists($company->logo_url)
+                                                                ) {
+                                                                    $logoPath = \Illuminate\Support\Facades\Storage::disk('public')->path($company->logo_url);
+                                                                } else {
+                                                                    $logoPath = public_path('images/logomki.png');
+                                                                }
+
+                                                                $logoSrc = file_exists($logoPath)
+                                                                    ? 'data:' . mime_content_type($logoPath) . ';base64,' . base64_encode(file_get_contents($logoPath))
+                                                                    : '';
+                                                            @endphp
                                                             <b>Office Information :</b>
                                                             <address>
                                                                 {{ $company->company_name ?? ($companyName ?? config('app.name')) }}<br>
@@ -348,30 +365,6 @@ Invoice Area
 
                                                         <div class="header-logo"
                                                             style="max-height: 100px; text-align: left;">
-                                                            @php
-                                                                $company = \App\Models\Company::first();
-                                                                if (
-                                                                    $company &&
-                                                                    $company->logo_url &&
-                                                                    \Illuminate\Support\Facades\Storage::disk(
-                                                                        'public',
-                                                                    )->exists($company->logo_url)
-                                                                ) {
-                                                                    $logoPath = \Illuminate\Support\Facades\Storage::disk(
-                                                                        'public',
-                                                                    )->path($company->logo_url);
-                                                                } else {
-                                                                    $logoPath = public_path('images/logomki.png');
-                                                                }
-
-                                                                // Embed image for PDF reliability
-                                                                $logoSrc = file_exists($logoPath)
-                                                                    ? 'data:' .
-                                                                        mime_content_type($logoPath) .
-                                                                        ';base64,' .
-                                                                        base64_encode(file_get_contents($logoPath))
-                                                                    : '';
-                                                            @endphp
                                                             @if ($logoSrc)
                                                                 <a href="{{ route('filament.admin.auth.login') }}"
                                                                     class="cta-button">

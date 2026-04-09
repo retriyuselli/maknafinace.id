@@ -1,38 +1,16 @@
 @php
-    // Get current user
-    $user = auth()->user();
-    $currentDate = now();
-
-    // Get upcoming leave requests (approved and pending)
-    $upcomingLeaves = $user
-        ->leaveRequests()
-        ->with('leaveType')
-        ->whereIn('status', ['approved', 'pending'])
-        ->where('start_date', '>=', $currentDate)
-        ->orderBy('start_date', 'asc')
-        ->take(5)
-        ->get();
-
-    // Get recent leave requests for context
-    $recentLeaves = $user
-        ->leaveRequests()
-        ->with('leaveType')
-        ->where('start_date', '<', $currentDate)
-        ->orderBy('start_date', 'desc')
-        ->take(3)
-        ->get();
-
-    // Calculate days until next leave (rounded to whole number)
-    $nextLeave = $upcomingLeaves->first();
-    $daysUntilNextLeave = $nextLeave ? (int) $currentDate->diffInDays($nextLeave->start_date, false) : null;
-
-    $statusTranslations = [
+    $user = $user ?? auth()->user();
+    $currentDate = $currentDate ?? now();
+    $upcomingLeaves = $upcomingLeaves ?? collect();
+    $recentLeaves = $recentLeaves ?? collect();
+    $nextLeave = $nextLeave ?? null;
+    $daysUntilNextLeave = $daysUntilNextLeave ?? null;
+    $statusTranslations = $statusTranslations ?? [
         'approved' => 'Disetujui',
         'pending' => 'Menunggu',
         'rejected' => 'Ditolak',
     ];
-
-    $leaveTypeTranslations = [
+    $leaveTypeTranslations = $leaveTypeTranslations ?? [
         'Annual Leave' => 'Cuti Tahunan',
         'Sick Leave' => 'Cuti Sakit',
         'Emergency Leave' => 'Cuti Darurat',
@@ -47,7 +25,7 @@
 <!-- Upcoming Events Section -->
 <div class="bg-white shadow-lg border border-gray-100" style="font-family: 'Poppins', sans-serif;">
     <!-- Header -->
-    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 rounded-t-xl">
+    <div class="bg-linear-to-r from-indigo-600 to-purple-600 px-6 py-4 rounded-t-xl">
         <h3 class="text-sm font-bold text-black flex items-center">
             <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -61,7 +39,7 @@
     <div class="p-3 space-y-4">
         <!-- Next Leave Countdown -->
         @if ($nextLeave)
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-3">
+            <div class="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 p-3">
                 <div class="flex items-center justify-between">
                     <div>
                         <h4 class="font-semibold text-sm text-blue-800 mb-1">Cuti Terjadwal Berikutnya</h4>
@@ -216,7 +194,7 @@
         <div class="space-y-3">
             <!-- Primary Action -->
             <a href="/leave/show"
-                class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border-0 outline-none"
+                class="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group border-0 outline-none"
                 style="background: linear-gradient(135deg, #9333ea 0%, #4f46e5 100%) !important;">
                 <svg class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform duration-200" fill="none"
                     stroke="currentColor" viewBox="0 0 24 24">
@@ -261,42 +239,42 @@
             </h3>
             <ul class="space-y-3 text-sm text-blue-700">
                 <li class="flex items-start">
-                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor"
+                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     Ajukan permohonan minimal 3 hari sebelumnya
                 </li>
                 <li class="flex items-start">
-                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor"
+                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     Sertakan alasan yang jelas dan detail
                 </li>
                 <li class="flex items-start">
-                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor"
+                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     Periksa saldo cuti sebelum mengajukan
                 </li>
                 <li class="flex items-start">
-                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor"
+                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     Upload dokumen pendukung jika diperlukan
                 </li>
                 <li class="flex items-start">
-                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor"
+                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     Tentukan karyawan pengganti untuk kelancaran kerja
                 </li>
                 <li class="flex items-start">
-                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor"
+                    <svg class="w-4 h-4 text-blue-500 mr-2 mt-0.5 shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>

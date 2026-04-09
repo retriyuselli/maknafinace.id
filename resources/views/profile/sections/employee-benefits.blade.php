@@ -88,7 +88,7 @@
         <!-- Quick Salary Info -->
         @if(isset($hrData))
         <div class="mt-6 pt-4 border-t border-gray-200">
-            <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 transition-all duration-200 hover:scale-105">
+            <div class="bg-linear-to-r from-green-50 to-green-100 rounded-lg p-4 transition-all duration-200 hover:scale-105">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center">
                         <div class="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center mr-3">

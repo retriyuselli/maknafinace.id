@@ -1,41 +1,8 @@
-<!DOCTYPE html>
-<html lang="id">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wedding Organizer</title>
-
-    <!-- Google Fonts - Poppins -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-        rel="stylesheet">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'sans': ['Poppins', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont',
-                            'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'
-                        ],
-                    }
-                }
-            }
-        }
-    </script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-</head>
-
-<body class="font-sans">
-    <header class="bg-white shadow-lg sticky top-0 z-50">
+<header class="bg-white shadow-lg sticky top-0 z-50">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
-                <div class="flex-shrink-0 flex items-center">
+                <div class="shrink-0 flex items-center">
                     <a href="{{ route('home') }}" class="flex items-center space-x-2">
                         <img class="h-4 md:h-6 w-auto" src="{{ route('brand.logo') }}" alt="Logo">
                     </a>
@@ -94,11 +61,11 @@
                         @auth
                             <a href="{{ route('profile') }}"
                                 class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('profile') ? 'text-blue-600 bg-blue-50' : '' }}">
-                                Profile
+                                Dashboard
                             </a>
                             <a href="{{ route('dashboard') }}"
                                 class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
-                                Dashboard
+                                Admin
                             </a>
                             @php
                                 $navUser = Auth::user();
@@ -119,17 +86,17 @@
                 <!-- Right Side -->
                 <div class="ml-6 flex items-center space-x-4">
                     @auth
-                        <!-- Profile Dropdown -->
+                        <!-- Dashboard Dropdown -->
                         <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
                             <button @click="open = !open"
                                 class="flex items-center space-x-2 text-gray-700 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full">
                                 <div class="relative">
                                     <img class="h-8 w-8 rounded-full object-cover border-2 border-gray-300 shadow-sm hover:border-blue-400 transition-all duration-200"
-                                        src="{{ Storage::url(Auth::user()->avatar_url) ?? 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) . '&color=ffffff&background=1e40af&size=128' }}"
-                                        alt="Profile {{ Auth::user()->name }}"
+                                        src="{{ Auth::user()->avatar_url ? Storage::url(Auth::user()->avatar_url) : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) . '&color=ffffff&background=1e40af&size=128' }}"
+                                        alt="Dashboard {{ Auth::user()->name }}"
                                         onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&color=ffffff&background=1e40af&size=128'">
                                     <div
-                                        class="absolute -bottom-0 -right-0 h-3 w-3 bg-green-400 border-2 border-white rounded-full">
+                                        class="absolute bottom-0 right-0 h-3 w-3 bg-green-400 border-2 border-white rounded-full">
                                     </div>
                                 </div>
                                 <span class="hidden md:block text-sm font-medium">{{ Auth::user()->name }}</span>
@@ -156,7 +123,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
                                     </svg>
-                                    Dashboard
+                                    Admin Panel
                                 </a>
                                 @php
                                     $navUser = Auth::user();
@@ -187,7 +154,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                     </svg>
-                                    Profile
+                                    Dashboard
                                 </a>
                                 <hr class="my-1">
                                 <form method="POST" action="{{ route('logout') }}">
@@ -291,9 +258,9 @@
                                         class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('product') ? 'bg-blue-50 text-blue-600' : '' }}">Product</a>
                                 @endif
                                 <a href="{{ route('profile') }}"
-                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('profile') ? 'bg-blue-50 text-blue-600' : '' }}">Profile</a>
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('profile') ? 'bg-blue-50 text-blue-600' : '' }}">Dashboard</a>
                                 <a href="{{ route('dashboard') }}"
-                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600' : '' }}">Dashboard</a>
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600' : '' }}">Admin Panel</a>
                             @endauth
 
                             @guest
@@ -309,6 +276,3 @@
             </div>
         </nav>
     </header>
-</body>
-
-</html>

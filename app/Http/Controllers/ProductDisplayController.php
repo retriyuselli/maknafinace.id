@@ -3,15 +3,42 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ProductExport;
+use App\Models\Company;
 use App\Models\Product;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProductDisplayController extends Controller
 {
+    private function companyPreviewData(): array
+    {
+        $company = null;
+        if (Schema::hasTable('companies')) {
+            $company = Company::query()->first();
+        }
+
+        if ($company && $company->logo_url && Storage::disk('public')->exists($company->logo_url)) {
+            $logoPath = Storage::disk('public')->path($company->logo_url);
+        } else {
+            $logoPath = public_path('images/logomki.png');
+        }
+
+        $logoSrc = '';
+        if (is_string($logoPath) && file_exists($logoPath)) {
+            try {
+                $logoSrc = 'data:'.mime_content_type($logoPath).';base64,'.base64_encode(file_get_contents($logoPath));
+            } catch (\Throwable $e) {
+                $logoSrc = '';
+            }
+        }
+
+        return compact('company', 'logoSrc');
+    }
+
     public function show(Product $product)
     {
         Gate::authorize('view', $product);
@@ -33,12 +60,14 @@ class ProductDisplayController extends Controller
         // Eager load necessary relationships if needed
         $product->load(['category', 'items.vendor', 'pengurangans', 'penambahanHarga.vendor']);
 
+        $viewData = array_merge(compact('product', 'action'), $this->companyPreviewData());
+
         if ($action === 'preview' || $action === 'print') {
             // Return a view for previewing/printing
             // You might have slightly different views or logic for print vs preview
-            return view('products.details-preview', compact('product', 'action'));
+            return view('products.details-preview', $viewData);
         } elseif ($action === 'download') {
-            $pdf = Pdf::loadView('products.details-preview', compact('product', 'action'));
+            $pdf = Pdf::loadView('products.details-preview', $viewData);
             return $pdf->download($product->slug.'-details.pdf');
         }
 

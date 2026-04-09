@@ -149,7 +149,7 @@ function showNotification(type, title, message) {
     notification.innerHTML = `
         <div class="${bgColor} ${borderColor} border rounded-lg p-4 shadow-lg transform transition-all duration-300 translate-x-full">
             <div class="flex items-start">
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                     <svg class="h-5 w-5 ${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         ${type === 'success' ? 
                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' :
@@ -161,7 +161,7 @@ function showNotification(type, title, message) {
                     <p class="text-sm font-medium ${textColor}" style="font-weight: 600;">${title}</p>
                     <p class="mt-1 text-sm ${textColor.replace('800', '700')}" style="font-weight: 400; white-space: pre-line;">${message}</p>
                 </div>
-                <div class="ml-4 flex-shrink-0 flex">
+                <div class="ml-4 shrink-0 flex">
                     <button onclick="this.closest('.notification-popup').remove()" class="rounded-md inline-flex ${textColor} hover:${textColor.replace('800', '900')} focus:outline-none">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>

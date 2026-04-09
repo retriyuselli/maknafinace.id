@@ -257,40 +257,16 @@
         class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden p-6 md:p-10 print-no-shadow print-no-border">
         {{-- Header Section --}}
         <div class="text-center mb-6 pb-4 border-b border-gray-200">
-            @php
-                $company = null;
-                if (\Illuminate\Support\Facades\Schema::hasTable('companies')) {
-                    $company = \App\Models\Company::query()->first();
-                }
-
-                $logoPath =
-                    $company && $company->logo_url
-                        ? \Illuminate\Support\Facades\Storage::disk('public')->path($company->logo_url)
-                        : public_path('images/logomki.png');
-
-                $logoSrc = '';
-                if (file_exists($logoPath)) {
-                    try {
-                        $logoSrc =
-                            'data:' .
-                            mime_content_type($logoPath) .
-                            ';base64,' .
-                            base64_encode(file_get_contents($logoPath));
-                    } catch (\Exception $e) {
-                        // Biarkan $logoSrc kosong jika ada error
-                    }
-                }
-            @endphp
             @if ($logoSrc)
-                <img src="{{ $logoSrc }}" alt="{{ $company->company_name ?? ($companyName ?? config('app.name')) }}"
+                <img src="{{ $logoSrc }}" alt="{{ $company?->company_name ?? ($companyName ?? config('app.name')) }}"
                     class="max-h-10 mx-auto mb-4">
             @endif
             {{-- <h1 class="text-[16px] font-bold uppercase tracking-wide text-gray-800">{{ $product->name ?? 'Nama Produk Tidak Tersedia' }}</h1> --}}
             <p class="text-[12px] text-gray-600 mt-1.5">
-                {{ $company->address ?? 'Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kecamatan Kemuning, Kota Palembang, Sumatera Selatan 30137' }}
+                {{ $company?->address ?? 'Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kecamatan Kemuning, Kota Palembang, Sumatera Selatan 30137' }}
             </p>
-            <p class="text-[12px] text-gray-600 mt-0">{{ $company->company_name ?? ($companyName ?? config('app.name')) }} |
-                {{ $company->email ?? 'maknawedding@gmail.com' }} | {{ $company->phone ?? '+62 822-9796-2600' }}</p>
+            <p class="text-[12px] text-gray-600 mt-0">{{ $company?->company_name ?? ($companyName ?? config('app.name')) }} |
+                {{ $company?->email ?? 'maknawedding@gmail.com' }} | {{ $company?->phone ?? '+62 822-9796-2600' }}</p>
         </div>
 
         {{-- Simulation Information --}}

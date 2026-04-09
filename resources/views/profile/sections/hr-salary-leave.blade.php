@@ -1,74 +1,19 @@
 @php
-    // Get current user with relationships
-    $user = auth()->user();
-    $latestPayroll = $user->payrolls()->latest()->first();
-    $currentYear = date('Y');
-    
-    $period = request()->get('period', 'year');
-    $leaveQueryForPeriod = function () use ($user, $period, $currentYear) {
-        $q = $user->leaveRequests();
-        if ($period === 'year') {
-            $q->whereYear('start_date', $currentYear);
-        } elseif ($period === 'last_year') {
-            $q->whereYear('start_date', (int) $currentYear - 1);
-        }
-        return $q;
-    };
-
-    $leaveStats = [
-        'approved' => $leaveQueryForPeriod()->where('status', 'approved')->sum('total_days'),
-        'pending' => $leaveQueryForPeriod()->where('status', 'pending')->sum('total_days'),
-        'rejected' => $leaveQueryForPeriod()->where('status', 'rejected')->sum('total_days'),
-    ];
-    
-    $leaveByType = $leaveQueryForPeriod()
-        ->with('leaveType')
-        ->where('status', 'approved')
-        ->get()
-        ->groupBy('leaveType.name')
-        ->map(function ($leaves) {
-            return $leaves->sum('total_days');
-        });
-    
-    // Annual leave calculations
-    $annualLeaveAllowance = $user->annual_leave_quota ?? 12;
-    
-    // Ensure minimum 12 days and handle invalid small values
-    if ($annualLeaveAllowance < 12) {
-        $annualLeaveAllowance = 12;
-    }
-    
-    $usedLeave = $leaveStats['approved'];
-    $remainingLeave = max(0, $annualLeaveAllowance - $usedLeave);
-    
-    // Handle extreme cases where used leave exceeds allowance (data inconsistency)
-    if ($usedLeave > $annualLeaveAllowance) {
-        // For display purposes, cap the visual at 100% but show actual numbers
-        $displayUsedLeave = $usedLeave;
-        $remainingLeave = 0; // No remaining days if over quota
-    } else {
-        $displayUsedLeave = $usedLeave;
-    }
-    
-    // Get recent leave requests (last 5)
-    $recentLeaves = $user->leaveRequests()
-        ->with('leaveType')
-        ->latest()
-        ->take(5)
-        ->get();
-
-    // Previous year summary
-    $prevYear = (int) $currentYear - 1;
-    $prevUsedLeave = $user->leaveRequests()
-        ->where('status', 'approved')
-        ->whereYear('start_date', $prevYear)
-        ->sum('total_days');
-    $prevUsagePercentage = $annualLeaveAllowance > 0 ? round(($prevUsedLeave / $annualLeaveAllowance) * 100) : 0;
-    $currentMonth = (int) date('n');
-    $prevRemaining = max(0, $annualLeaveAllowance - $prevUsedLeave);
-    $carryOver = $currentMonth <= 2 ? $prevRemaining : 0;
-    $effectiveAllowanceYear = $annualLeaveAllowance + $carryOver;
-    $leaveTypeTranslations = [
+    $user = $user ?? auth()->user();
+    $latestPayroll = $latestPayroll ?? null;
+    $currentYear = $currentYear ?? (int) date('Y');
+    $period = $period ?? request()->get('period', 'year');
+    $leaveStats = $leaveStats ?? ['approved' => 0, 'pending' => 0, 'rejected' => 0];
+    $leaveByType = $leaveByType ?? collect();
+    $annualLeaveAllowance = $annualLeaveAllowance ?? ($user?->annual_leave_quota ?? 12);
+    $usedLeave = $usedLeave ?? ($leaveStats['approved'] ?? 0);
+    $remainingLeave = $remainingLeave ?? max(0, $annualLeaveAllowance - $usedLeave);
+    $prevYear = $prevYear ?? ((int) $currentYear - 1);
+    $prevUsedLeave = $prevUsedLeave ?? 0;
+    $prevUsagePercentage = $prevUsagePercentage ?? 0;
+    $carryOver = $carryOver ?? 0;
+    $effectiveAllowanceYear = $effectiveAllowanceYear ?? $annualLeaveAllowance;
+    $leaveTypeTranslations = $leaveTypeTranslations ?? [
         'Annual Leave' => 'Cuti Tahunan',
         'Sick Leave' => 'Cuti Sakit',
         'Emergency Leave' => 'Cuti Darurat',
@@ -114,7 +59,7 @@
                         <!-- Salary Cards -->
                         <div class="space-y-4">
                             <!-- Monthly Salary -->
-                            <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-6 hover:shadow-md transition-all duration-300">
+                            <div class="bg-linear-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-6 hover:shadow-md transition-all duration-300">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <p class="text-sm font-medium text-emerald-700">Gaji Bulanan</p>
@@ -131,7 +76,7 @@
                             </div>
                             
                             <!-- Annual Salary -->
-                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 hover:shadow-md transition-all duration-300">
+                            <div class="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 hover:shadow-md transition-all duration-300">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <p class="text-sm font-medium text-blue-700">Gaji Tahunan</p>
@@ -150,13 +95,13 @@
                             
                             <!-- Bonus & Benefits -->
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4 text-center">
+                                <div class="bg-linear-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4 text-center">
                                     <p class="text-xs font-medium text-purple-700 mb-1">Bonus</p>
                                     <p class="text-lg font-bold text-purple-800">
                                         {{ $latestPayroll->formatted_bonus_with_prefix }}
                                     </p>
                                 </div>
-                                <div class="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-4 text-center">
+                                <div class="bg-linear-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-4 text-center">
                                     <p class="text-xs font-medium text-orange-700 mb-1">Total Kompensasi</p>
                                     <p class="text-lg font-bold text-orange-800">
                                         {{ $latestPayroll->formatted_total_compensation_with_prefix }}
@@ -208,7 +153,7 @@
                     </div>
 
                     <!-- Leave Balance Overview -->
-                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-6">
+                    <div class="bg-linear-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h5 class="font-semibold text-purple-800">Saldo Cuti Tahunan</h5>
                             <span class="text-sm font-medium text-purple-600">
@@ -253,7 +198,7 @@
                                 @if($usagePercentage > 100)
                                     {{-- Over quota - show full red bar with pattern --}}
                                     <div class="w-full h-5 bg-red-500 relative overflow-hidden">
-                                        <div class="absolute inset-0 bg-gradient-to-r from-red-600 via-red-400 to-red-600 animate-pulse"></div>
+                                        <div class="absolute inset-0 bg-linear-to-r from-red-600 via-red-400 to-red-600 animate-pulse"></div>
                                         <div class="absolute inset-0 flex items-center justify-center">
                                             <span class="text-white text-xs font-bold">MELEBIHI KUOTA</span>
                                         </div>
@@ -273,9 +218,9 @@
                                          transition-all duration-700 shadow-lg relative overflow-hidden" 
                                          style="width: {{ $remainingPercentage }}%">
                                         <!-- Animated shimmer effect -->
-                                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+                                        <div class="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
                                         <!-- Inner glow effect -->
-                                        <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-white/20"></div>
+                                        <div class="absolute inset-0 bg-linear-to-t from-black/10 to-white/20"></div>
                                     </div>
                                     @endif
                                 @endif

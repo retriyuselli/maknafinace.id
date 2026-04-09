@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Profile')
+@section('title', 'Edit Profil')
 
 @section('content')
     @include('front.header')
@@ -17,7 +17,7 @@
             @if (session('success'))
                 <div class="mb-6 rounded-md bg-green-50 p-4 border border-green-200">
                     <div class="flex">
-                        <div class="flex-shrink-0">
+                        <div class="shrink-0">
                             <i class="fas fa-check-circle text-green-400"></i>
                         </div>
                         <div class="ml-3">
@@ -30,7 +30,7 @@
             @if ($errors->any())
                 <div class="mb-6 rounded-md bg-red-50 p-4 border border-red-200">
                     <div class="flex">
-                        <div class="flex-shrink-0">
+                        <div class="shrink-0">
                             <i class="fas fa-times-circle text-red-400"></i>
                         </div>
                         <div class="ml-3">

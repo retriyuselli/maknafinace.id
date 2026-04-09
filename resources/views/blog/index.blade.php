@@ -6,7 +6,7 @@
     @include('front.header')
     <div class="min-h-screen bg-gray-50">
         <!-- Hero Section -->
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16"
+        <div class="bg-linear-to-r from-blue-600 to-indigo-700 text-white py-16"
             style="background: linear-gradient(to right, #2563eb, #4338ca);">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
@@ -221,7 +221,7 @@
                                         class="flex items-center justify-between text-gray-700 hover:text-blue-600 transition-colors">
                                         <span>{{ $category }}</span>
                                         <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-                                            {{ App\Models\Blog::where('category', $category)->where('is_published', true)->count() }}
+                                            {{ $categoryCounts[$category] ?? 0 }}
                                         </span>
                                     </a>
                                 @endforeach
@@ -232,16 +232,10 @@
                         <div class="bg-white rounded-2xl shadow-lg p-6">
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">Artikel Popular</h3>
                             <div class="space-y-4">
-                                @php
-                                    $popularPosts = App\Models\Blog::where('is_published', true)
-                                        ->orderBy('views_count', 'desc')
-                                        ->take(3)
-                                        ->get();
-                                @endphp
                                 @foreach ($popularPosts as $popularPost)
                                     <article class="flex space-x-3">
                                         <img src="{{ $popularPost->featured_image }}" alt="{{ $popularPost->title }}"
-                                            class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
+                                            class="w-16 h-16 object-cover rounded-lg shrink-0">
                                         <div>
                                             <h4
                                                 class="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
@@ -257,7 +251,7 @@
                         </div>
 
                         <!-- Newsletter -->
-                        {{-- <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-lg p-6 text-white">
+                        {{-- <div class="bg-linear-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-lg p-6 text-white">
                             <h3 class="text-lg font-semibold mb-3">Newsletter WOFINS</h3>
                             <p class="text-blue-100 text-sm mb-4">
                                 Dapatkan tips terbaru seputar manajemen wedding organizer langsung di inbox Anda.

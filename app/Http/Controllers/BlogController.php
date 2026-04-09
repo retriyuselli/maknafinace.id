@@ -28,7 +28,17 @@ class BlogController extends Controller
             ->distinct()
             ->pluck('category');
 
-        return view('blog.index', compact('featuredPosts', 'recentPosts', 'categories'));
+        $categoryCounts = Blog::where('is_published', true)
+            ->selectRaw('category, count(*) as total')
+            ->groupBy('category')
+            ->pluck('total', 'category');
+
+        $popularPosts = Blog::where('is_published', true)
+            ->orderBy('views_count', 'desc')
+            ->take(3)
+            ->get();
+
+        return view('blog.index', compact('featuredPosts', 'recentPosts', 'categories', 'categoryCounts', 'popularPosts'));
     }
 
     /**
@@ -71,7 +81,7 @@ class BlogController extends Controller
      */
     public function search(Request $request)
     {
-        $query = $request->get('q');
+        $query = $request->query('q');
 
         $posts = Blog::where('is_published', true)
             ->where(function ($q) use ($query) {

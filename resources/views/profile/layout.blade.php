@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Profile - ' . Auth::user()->name)
+@section('title', 'Dashboard - ' . (($user ?? null)?->name ?? Auth::user()->name))
 
 @section('content')
 @include('front.header')
 
 @php
-    $profileUser = Auth::user();
+    $profileUser = $user ?? Auth::user();
 @endphp
 
 <div class="min-h-screen bg-gray-50 py-8" x-data="{ sidebarOpen: false }">
@@ -26,7 +26,7 @@
             <button type="button"
                 class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm"
                 @click="sidebarOpen = !sidebarOpen">
-                <span class="text-sm font-semibold text-gray-800">Menu Profil</span>
+                <span class="text-sm font-semibold text-gray-800">Menu Dashboard</span>
                 <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -48,4 +48,3 @@
 @include('profile.sections.scripts')
 @include('front.footer')
 @endsection
-
