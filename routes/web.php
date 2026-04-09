@@ -14,11 +14,14 @@ use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\InvoiceController as FrontInvoiceController;
 use App\Http\Controllers\Front\LaporanFeatureController;
 use App\Http\Controllers\Front\PayrollFeatureController;
+use App\Http\Controllers\Front\ProductCatalogController;
+use App\Http\Controllers\Front\RegistrationController;
 use App\Http\Controllers\FrontendDataPribadiController;
 use App\Http\Controllers\InvoiceOrderController;
 use App\Http\Controllers\JournalPdfController;
 use App\Http\Controllers\LaporanKeuanganController;
 use App\Http\Controllers\NotaDinasPdfController;
+use App\Http\Controllers\PayrollSlipController;
 use App\Http\Controllers\ProductDisplayController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Profile\AdminToolsController;
@@ -29,15 +32,21 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SimulasiDisplayController;
 use App\Http\Controllers\SopPrintController;
 use App\Http\Controllers\UserFormPdfController;
+use App\Http\Controllers\LeaveApprovalController;
+use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\DocumentationController;
 use App\Enums\OrderStatus;
 use App\Models\DataPembayaran;
-use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+$authNoStore = ['filament.auth', 'no-store'];
+$authNoStoreThrottle = [...$authNoStore, 'throttle:60,1'];
+
 // Bank Reconciliation Template Route
 Route::get('/bank-reconciliation/template', [BankReconciliationTemplateController::class, 'downloadTemplate'])
-    ->name('bank-reconciliation.template');
+    ->name('bank-reconciliation.template')
+    ->middleware($authNoStoreThrottle);
 
 Route::get('/brand/logo', [BrandController::class, 'logo'])->name('brand.logo');
 Route::get('/brand/favicon', [BrandController::class, 'favicon'])->name('brand.favicon');
@@ -50,79 +59,82 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // Rute untuk preview HTML simulasi produk
 Route::get('/simulasi/{record:slug}', [SimulasiDisplayController::class, 'show'])
     ->name('simulasi.show')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 // Rute untuk download PDF simulasi produk
 Route::get('/simulasi/{record:slug}/download-pdf', [SimulasiDisplayController::class, 'downloadPdf'])
     ->name('simulasi.pdf')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // Rute untuk draft kontrak simulasi produk
 Route::get('/simulasi/{record:slug}/draft-kontrak', [SimulasiDisplayController::class, 'draftKontrak'])
     ->name('simulasi.draft-kontrak')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // USER REGISTRATION FORM PDF
 // Rute untuk generate form pendaftaran karyawan kosong (PDF)
 Route::get('/hr/user-form/blank', [UserFormPdfController::class, 'generateBlankForm'])
     ->name('user-form.blank')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // Rute untuk generate form pendaftaran karyawan terisi (PDF)
 Route::post('/hr/user-form/filled', [UserFormPdfController::class, 'generateFilledForm'])
     ->name('user-form.filled')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // Rute untuk generate form terisi dari session (GET request)
 Route::get('/hr/user-form/filled-session', [UserFormPdfController::class, 'generateFilledFormFromSession'])
     ->name('user-form.filled-session')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // PAYROLL SLIP GAJI
 // Rute untuk download PDF slip gaji
-Route::get('/payroll/{record}/slip-gaji', [App\Http\Controllers\PayrollSlipController::class, 'download'])
+Route::get('/payroll/{record}/slip-gaji', [PayrollSlipController::class, 'download'])
     ->name('payroll.slip-gaji.download')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // LEAVE APPROVAL DETAIL
 // Rute untuk melihat detail persetujuan cuti
-Route::get('/leave-request/{leaveRequest}/approval-detail', [App\Http\Controllers\LeaveApprovalController::class, 'show'])
+Route::get('/leave-request/{leaveRequest}/approval-detail', [LeaveApprovalController::class, 'show'])
     ->name('leave-request.approval-detail')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 // LEAVE REQUEST FORM
-Route::get('/leave/show', [\App\Http\Controllers\LeaveRequestController::class, 'create'])
+Route::get('/leave/show', [LeaveRequestController::class, 'create'])
     ->name('leave.show')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
-Route::get('/leave/create', [\App\Http\Controllers\LeaveRequestController::class, 'create'])
+Route::get('/leave/create', [LeaveRequestController::class, 'create'])
     ->name('leave.create')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
-Route::post('/leave', [\App\Http\Controllers\LeaveRequestController::class, 'store'])
+Route::post('/leave', [LeaveRequestController::class, 'store'])
     ->name('leave.store')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
-Route::put('/leave/{id}', [\App\Http\Controllers\LeaveRequestController::class, 'update'])
+Route::put('/leave/{id}', [LeaveRequestController::class, 'update'])
     ->name('leave.update')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore)
+    ->whereNumber('id');
 
-Route::get('/leave/status', [\App\Http\Controllers\LeaveRequestController::class, 'status'])
+Route::get('/leave/status', [LeaveRequestController::class, 'status'])
     ->name('leave.status')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 // DOCUMENT
 Route::get('/document/{record}/stream', [DocumentController::class, 'stream'])
     ->name('document.stream')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // SOP PRINT ROUTES
 Route::get('/sops/{id}/print', [SopPrintController::class, 'show'])
     ->name('sop.print')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore)
+    ->whereNumber('id');
 Route::get('/sops/{id}/pdf', [SopPrintController::class, 'pdf'])
     ->name('sop.pdf')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle)
+    ->whereNumber('id');
 
 // FRONTEND FEATURES
 Route::get('/features/invoice', [FrontInvoiceController::class, 'index'])->name('front.invoice');
@@ -135,39 +147,9 @@ Route::get('/features/payroll', [PayrollFeatureController::class, 'index'])->nam
 // PRICING
 Route::view('/harga', 'front.harga')->name('harga');
 
-// PRODUCT (FRONT)
-Route::get('/product', function () {
-    $search = request('q');
+Route::get('/product', [ProductCatalogController::class, 'index'])->name('product');
 
-    $products = Product::query()
-        ->where('is_approved', true)
-        ->when($search, function ($query, $search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%'.$search.'%')
-                    ->orWhere('description', 'like', '%'.$search.'%')
-                    ->orWhereHas('category', function ($categoryQuery) use ($search) {
-                        $categoryQuery->where('name', 'like', '%'.$search.'%');
-                    });
-            });
-        })
-        ->orderByDesc('created_at')
-        ->get();
-
-    return view('front.product', [
-        'products' => $products,
-        'search' => $search,
-    ]);
-})->name('product');
-
-// REGISTRATION (PENDAFTARAN)
-Route::get('/pendaftaran', function () {
-    // Get all industries from database
-    $industries = \App\Models\Industry::all();
-
-    return view('front.pendaftaran', [
-        'industries' => $industries,
-    ]);
-})->name('pendaftaran');
+Route::get('/pendaftaran', [RegistrationController::class, 'pendaftaran'])->name('pendaftaran');
 
 // CONTACT
 Route::view('/kontak', 'front.kontak')->name('kontak');
@@ -179,111 +161,117 @@ Route::get('/blog/category/{category}', [BlogController::class, 'category'])->na
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.detail');
 
 // INVOICE
-Route::middleware(['filament.auth', 'no-store'])->group(function () {
+Route::middleware($authNoStore)->group(function () {
     Route::get('/invoice/{order}', [InvoiceOrderController::class, 'show'])
         ->name('invoice.show');
     Route::get('/invoice/{order}/download', [InvoiceOrderController::class, 'download'])
-        ->name('invoice.download');
+        ->name('invoice.download')
+        ->middleware('throttle:60,1');
     Route::get('/invoice/{order}/print', [InvoiceOrderController::class, 'print'])
-        ->name('invoice.print');
+        ->name('invoice.print')
+        ->middleware('throttle:60,1');
     Route::post('/invoice/{order}/update-payment', [InvoiceOrderController::class, 'updatePayment'])
-        ->name('invoice.update-payment');
+        ->name('invoice.update-payment')
+        ->middleware('throttle:20,1');
 
     Route::get('/bank-statements/{bankStatement}/download', [BankStatementFileController::class, 'download'])
-        ->name('bank-statements.download');
+        ->name('bank-statements.download')
+        ->middleware('throttle:60,1');
     Route::get('/bank-statements/{bankStatement}/reconciliation/download', [BankStatementFileController::class, 'downloadReconciliation'])
-        ->name('bank-statements.reconciliation.download');
+        ->name('bank-statements.reconciliation.download')
+        ->middleware('throttle:60,1');
 
     Route::get('/journal/pdf/preview', [JournalPdfController::class, 'preview'])
         ->name('journal.pdf.preview');
     Route::get('/journal/pdf/download', [JournalPdfController::class, 'download'])
-        ->name('journal.pdf.download');
+        ->name('journal.pdf.download')
+        ->middleware('throttle:60,1');
 });
 
 // WIDGET ROUTE
 // Widget yang langsung link ke processing
 Route::get('/orders/reports/customer-payments/{status}', [ReportController::class, 'customerPayments'])
     ->name('reports.customer-payments')
-    ->middleware(['filament.auth', 'no-store'])
+    ->middleware($authNoStore)
     ->whereIn('status', array_map(fn (OrderStatus $case) => $case->value, OrderStatus::cases()));
 
 // REPORT ROUTES
 // Route untuk Laporan DataPembayaran HTML
 Route::get('/laporan/pembayaran/html', [ReportController::class, 'generateDataPembayaranHtmlReport'])
     ->name('data-pembayaran.html-report')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 Route::get('/laporan/pembayaran/pdf', [ReportController::class, 'generateDataPembayaranPdfReport'])
     ->name('data-pembayaran.pdf-report')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // Route untuk Laporan Pengeluaran Operasional HTML
 Route::get('/laporan/expense-ops/html', [ReportController::class, 'generateExpenseOpsHtmlReport'])
     ->name('expense-ops.html-report')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 // PRODUCT ROUTES
 // Detail product
 Route::get('/products/{product:slug}', [ProductDisplayController::class, 'show'])
     ->name('products.show')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 Route::get('/products/{product}/download-pdf', [ProductDisplayController::class, 'downloadPdf'])
     ->name('products.downloadPdf')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // Route for product details (preview, download, print)
 Route::get('/products/{product:slug}/details/{action}', [ProductDisplayController::class, 'details'])
     ->whereIn('action', ['preview', 'download', 'print'])
     ->name('products.details')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 // Route baru untuk ekspor detail produk ke Excel
 Route::get('/products/{product}/export-excel-detail', [ProductDisplayController::class, 'exportDetailToExcel'])
     ->name('products.exportExcelDetail')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // EXPENSE ROUTES
 // Route untuk Laporan Pengeluaran Wedding HTML
 Route::get('/laporan/expense/html', [ReportController::class, 'generateExpenseHtmlReport'])
     ->name('expense.html-report')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 // Route untuk Laporan Pengeluaran Operasional PDF
 Route::get('/laporan/expense-ops/pdf', [ReportController::class, 'generateExpenseOpsPdfReport'])
     ->name('expense-ops.pdf-report')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // Route untuk Laporan Pengeluaran Wedding PDF
 Route::get('/laporan/expense/pdf', [ReportController::class, 'generateExpensePdfReport'])
     ->name('expense.pdf-report')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // Route untuk Laporan Net Cash Flow PDF Stream
 Route::get('/laporan/net-cash-flow/pdf/stream', [ReportController::class, 'streamNetCashFlowPdf'])
     ->name('reports.net-cash-flow.pdf.stream')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // RUTE DATA PRIBADI
 // Route untuk menampilkan form tambah data pribadi
 Route::get('/data-pribadi/tambah', [FrontendDataPribadiController::class, 'create'])
     ->name('data-pribadi.create')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 // Route untuk menampilkan daftar data pribadi
 Route::get('/data-pribadi', [FrontendDataPribadiController::class, 'index'])
     ->name('data-pribadi.index')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 // Route untuk menyimpan data baru dari form
 Route::post('/data-pribadi', [FrontendDataPribadiController::class, 'store'])
     ->name('data-pribadi.store')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 // Route untuk halaman sukses setelah submit
 Route::get('/data-pribadi/success', [FrontendDataPribadiController::class, 'success'])
     ->name('data-pribadi.success')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 // AUTHENTICATION
 Route::middleware(['guest', 'no-store'])->group(function () {
@@ -298,7 +286,7 @@ Route::middleware(['guest', 'no-store'])->group(function () {
 });
 
 // PROFILE ROUTES
-Route::middleware(['filament.auth', 'no-store'])->group(function () {
+Route::middleware($authNoStore)->group(function () {
     Route::get('/profile', [ProfileController::class, 'overview'])->name('profile');
     Route::get('/profile/show', [ProfileController::class, 'overview'])->name('profile.show');
     Route::get('/profile/overview', [ProfileController::class, 'overview'])->name('profile.overview');
@@ -361,7 +349,7 @@ Route::get('/prospect/success', [ProspectController::class, 'success'])
 // Route untuk Prospect App Proposal PDF
 Route::get('/prospect-app/{prospectApp}/proposal', [ProspectAppController::class, 'generateProposalPdf'])
     ->name('prospect-app.proposal.pdf')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // Route untuk Prospect App (Frontend)
 Route::get('/prospect-app', [ProspectAppController::class, 'create'])->name('prospect-app.form');
@@ -372,7 +360,7 @@ Route::post('/prospect-app/check-email', [ProspectAppController::class, 'checkEm
 // Route untuk Download PDF Rekonsiliasi
 Route::get('/admin/reconciliation/download-pdf', [ReconciliationController::class, 'downloadPdf'])
     ->name('reconciliation.download-pdf')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 if (app()->environment('local')) {
     Route::get('/debug-report', function () {
@@ -394,50 +382,50 @@ if (app()->environment('local')) {
             'sql' => $joinedSql,
             'sample_data' => $data,
         ];
-    })->middleware(['filament.auth', 'no-store']);
+    })->middleware([...$authNoStore, 'super-admin']);
 }
 
 // LAPORAN KEUANGAN PDF DOWNLOAD
 Route::get('/laporan-keuangan/download-pdf', [LaporanKeuanganController::class, 'downloadPdf'])
     ->name('laporan-keuangan.download-pdf')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 Route::get('/laporan-keuangan/download-pdf-direct', [LaporanKeuanganController::class, 'downloadPdf'])
     ->name('laporan-keuangan.download-pdf-direct')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 // ACCOUNT MANAGER REPORT
 Route::get('/account-manager/report/html', [AccountManagerReportController::class, 'downloadHtmlReport'])
     ->name('account-manager.report.html')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 Route::get('/account-manager/report/pdf', [AccountManagerReportController::class, 'downloadPdfReport'])
     ->name('account-manager.report.pdf')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 Route::get('/account-manager/report/stream', [AccountManagerReportController::class, 'streamPdfReport'])
     ->name('account-manager.report.stream')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 Route::get('/account-manager/report/show', [AccountManagerReportController::class, 'showReport'])
     ->name('account-manager.report.show')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 // NOTA DINAS ROUTES
 Route::get('/nota-dinas/{notaDinas}/preview-web', [NotaDinasPdfController::class, 'previewWeb'])
     ->name('nota-dinas.preview-web')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 Route::get('/nota-dinas/{notaDinas}/preview-pdf', [NotaDinasPdfController::class, 'previewPdf'])
     ->name('nota-dinas.preview-pdf')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStoreThrottle);
 
 Route::get('/laporan/nota-dinas-details/bulan-ini', [ReportController::class, 'showNotaDinasDetailsCurrentMonth'])
     ->name('nota-dinas-details.current-month')
-    ->middleware(['filament.auth', 'no-store']);
+    ->middleware($authNoStore);
 
 // BANK STATEMENT RECONCILIATION ROUTE
 // Dihapus karena sudah menggunakan standard Filament Page di ViewReconciliation
 
 // DOCUMENTATION (FRONTEND)
-Route::get('/docs', [\App\Http\Controllers\DocumentationController::class, 'index'])->name('docs.index');
-Route::get('/docs/{slug}', [\App\Http\Controllers\DocumentationController::class, 'index'])->name('docs.show');
+Route::get('/docs', [DocumentationController::class, 'index'])->name('docs.index');
+Route::get('/docs/{slug}', [DocumentationController::class, 'index'])->name('docs.show');

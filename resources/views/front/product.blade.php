@@ -48,7 +48,7 @@
                     </form>
                 </div>
 
-                @if ($products->isEmpty())
+                @if ($products->count() === 0)
                     <div class="max-w-2xl mx-auto text-center text-gray-500">
                         Belum ada produk yang tersedia.
                     </div>
@@ -78,6 +78,9 @@
                                 </div>
                             </a>
                         @endforeach
+                    </div>
+                    <div class="mt-10">
+                        {{ $products->links() }}
                     </div>
                 @endif
             </div>

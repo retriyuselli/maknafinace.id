@@ -70,7 +70,7 @@ class NotaDinasDetailForm
                         FileUpload::make('invoice_file')
                             ->label('File Invoice')
                             ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
-                            ->maxSize(5120)
+                            ->maxSize(1024)
                             ->directory('nota-dinas/invoices')
                             ->visibility('private')
                             ->downloadable()
