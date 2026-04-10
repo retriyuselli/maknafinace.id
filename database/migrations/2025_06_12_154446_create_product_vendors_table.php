@@ -21,10 +21,10 @@ return new class extends Migration
             $table->string('kontrak_kerjasama')->nullable();
             $table->text('description')->nullable();
             $table->integer('quantity');
-            $table->decimal('harga_publish', 15, 2);
-            $table->decimal('harga_vendor', 15, 2);
-            $table->decimal('price_public', 15, 2); // publish * qty
-            $table->decimal('total_price', 15, 2); // vendor * qty
+            $table->unsignedBigInteger('harga_publish');
+            $table->unsignedBigInteger('harga_vendor');
+            $table->unsignedBigInteger('price_public'); // publish * qty
+            $table->unsignedBigInteger('total_price'); // vendor * qty
             $table->timestamps();
             $table->softDeletes();
         });

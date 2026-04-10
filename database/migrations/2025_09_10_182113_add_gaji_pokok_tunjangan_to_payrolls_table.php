@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payrolls', function (Blueprint $table) {
-            $table->decimal('gaji_pokok', 15, 2)->nullable()->after('user_id');
-            $table->decimal('tunjangan', 15, 2)->nullable()->after('gaji_pokok');
-            $table->decimal('pengurangan', 15, 2)->nullable()->after('tunjangan');
+            $table->unsignedBigInteger('gaji_pokok')->nullable()->after('user_id');
+            $table->unsignedBigInteger('tunjangan')->nullable()->after('gaji_pokok');
+            $table->unsignedBigInteger('pengurangan')->nullable()->after('tunjangan');
         });
     }
 

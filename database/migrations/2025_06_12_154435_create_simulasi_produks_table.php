@@ -17,10 +17,10 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade'); //
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); //
             $table->string('slug')->unique(); //
-            $table->decimal('total_price', 15, 2)->default(0); //
-            $table->decimal('promo', 15, 2)->default(0); //
-            $table->decimal('penambahan', 15, 2)->default(0); //
-            $table->decimal('pengurangan', 15, 2)->default(0); //
+            $table->unsignedBigInteger('total_price')->default(0); //
+            $table->unsignedBigInteger('promo')->default(0); //
+            $table->unsignedBigInteger('penambahan')->default(0); //
+            $table->unsignedBigInteger('pengurangan')->default(0); //
             $table->text('notes')->nullable(); //
             $table->timestamps();
             $table->softDeletes();

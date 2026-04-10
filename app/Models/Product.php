@@ -27,7 +27,6 @@ class Product extends Model
         'image',
         'is_approved',
         'pengurangan',
-        'free_pengurangan',
         'penambahan',
         'penambahan_publish',
         'penambahan_vendor',
@@ -129,16 +128,13 @@ class Product extends Model
         return 'slug';
     }
 
-    public static function generateUniqueSlug(string $name, ?int $ignoreId = null): string
+    public static function generateUniqueSlug(string $name): string
     {
         $slug = Str::slug($name);
         $originalSlug = $slug;
         $counter = 1;
 
-        while (self::withTrashed()
-            ->where('slug', $slug)
-            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
-            ->exists()) {
+        while (self::withTrashed()->where('slug', $slug)->exists()) {
             $slug = $originalSlug.'-'.$counter;
             $counter++;
         }

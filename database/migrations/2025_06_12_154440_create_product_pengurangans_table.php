@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->string('description');
-            $table->decimal('amount', 15, 2);
+            $table->unsignedBigInteger('amount');
             $table->enum('kategori_transaksi', ['uang_masuk', 'uang_keluar'])->default('uang_keluar');
             $table->text('notes')->nullable();
             $table->timestamps();

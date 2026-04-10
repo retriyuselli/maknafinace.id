@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('cabang')->nullable();
             $table->string('no_rekening')->nullable();
             $table->boolean('is_cash')->default(false);
-            $table->decimal('opening_balance', 15, 2)->default(0)->comment('Saldo awal rekening saat pertama kali dicatat di sistem.');
+            $table->unsignedBigInteger('opening_balance')->default(0)->comment('Saldo awal rekening saat pertama kali dicatat di sistem.');
             $table->date('opening_balance_date')->nullable()->comment('Tanggal saldo awal dicatat.');
             $table->timestamps();
             $table->softDeletes();

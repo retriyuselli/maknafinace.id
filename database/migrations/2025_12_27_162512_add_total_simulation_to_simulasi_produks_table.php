@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('simulasi_produks', function (Blueprint $table) {
-            $table->decimal('total_simulation', 15, 2)->default(0)->after('payment_simulation');
+            $table->unsignedBigInteger('total_simulation')->default(0)->after('payment_simulation');
         });
     }
 

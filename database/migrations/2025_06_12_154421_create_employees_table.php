@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->text('address')->nullable();
             $table->string('position')->nullable();
-            $table->decimal('salary', 12, 2)->nullable();
+            $table->unsignedBigInteger('salary')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->date('date_of_join')->nullable();
             $table->date('date_of_out')->nullable();

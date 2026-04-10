@@ -14,10 +14,10 @@ return new class extends Migration
             $table->string('nomor_pembayaran')->unique(); // PP/001/2025
 
             // Data Pembayaran
-            $table->decimal('jumlah_pembayaran', 15, 2);
-            $table->decimal('jumlah_bunga', 15, 2)->default(0);
-            $table->decimal('denda', 15, 2)->default(0);
-            $table->decimal('total_pembayaran', 15, 2);
+            $table->unsignedBigInteger('jumlah_pembayaran');
+            $table->unsignedBigInteger('jumlah_bunga')->default(0);
+            $table->unsignedBigInteger('denda')->default(0);
+            $table->unsignedBigInteger('total_pembayaran');
 
             // Metode & Tanggal
             $table->foreignId('payment_method_id')->constrained();

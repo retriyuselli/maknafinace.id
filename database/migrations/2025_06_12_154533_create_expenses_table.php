@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('payment_method_id')->nullable()->constrained('payment_methods')->onDelete('set null'); //
             $table->text('note')->nullable(); //
             $table->date('date_expense'); //
-            $table->decimal('amount', 15, 2); //
+            $table->unsignedBigInteger('amount'); //
             $table->text('no_nd')->nullable(); //
             $table->string('image')->nullable(); //
             $table->enum('kategori_transaksi', ['uang_masuk', 'uang_keluar'])->default('uang_keluar');

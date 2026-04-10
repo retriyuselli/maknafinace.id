@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -41,16 +42,17 @@ class ProductForm
                             Grid::make(2)->schema([
                                 TextInput::make('name')
                                     ->required()
+                                    ->unique(ignoreRecord: true)
                                     ->live(onBlur: true)
                                     ->maxLength(255)
                                     ->placeholder('nama pengantin_lokasi_pax')
                                     ->afterStateUpdated(fn (string $state, Set $set) => $set('slug', Str::slug($state))),
 
-                                TextInput::make('slug')
-                                    ->label('Slug / URL')
-                                    ->required()
-                                    ->readOnly()
-                                    ->helperText('Otomatis mengikuti nama (Read Only)'),
+                                Hidden::make('slug')
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->unique(ignoreRecord: true)
+                                    ->helperText('Otomatis dibuat dari nama'),
 
                                 FileUpload::make('image')
                                     ->image()
@@ -113,32 +115,19 @@ class ProductForm
                                 TextInput::make('price')
                                     ->prefix('Rp')
                                     ->readOnly()
-                                    ->label('Nett Product Price')
+                                    ->label('Product Price')
+                                    ->reactive()
                                     ->minValue(0)
+                                    ->live()
                                     ->dehydrated()
                                     ->formatStateUsing(fn ($state) => number_format(is_numeric($state) ? $state : self::stripCurrency($state), 0, '.', ','))
                                     ->dehydrateStateUsing(fn ($state) => self::stripCurrency($state))
-                                    ->helperText('Total Vendor Publish - Total Pengurangan + Total Addition Publish')
+                                    ->helperText('Total Harga Publish - Total Pengurangan + Total Penambahan')
                                     ->afterStateHydrated(function ($component, $state, $record) {
                                         if ($record) {
-                                            // 1. Get total vendor publish price (with fallback)
-                                            $productPrice = (int) $record->items->sum(function ($item) {
-                                                $pricePublic = (int) ($item->price_public ?? 0);
-                                                if ($pricePublic > 0) return $pricePublic;
-
-                                                $qty = (int) ($item->quantity ?? 1);
-                                                $publish = (int) ($item->harga_publish ?? 0);
-                                                return $publish * $qty;
-                                            });
-
-                                            // 2. Get total pengurangan (discounts)
-                                            $pengurangan = (int) $record->pengurangans->sum('amount');
-
-                                            // 3. Get total penambahan (additions)
-                                            $penambahan = (int) $record->penambahanHarga->sum('harga_publish');
-
-                                            // 4. Calculate final nett price
-                                            $final = $productPrice - $pengurangan + $penambahan;
+                                            $final = (int) ($record->product_price ?? 0)
+                                                - (int) ($record->pengurangan ?? 0)
+                                                + (int) ($record->penambahan_publish ?? 0);
                                             $component->state($final);
                                         }
                                     }),
@@ -181,6 +170,7 @@ class ProductForm
                                 ])
                                 ->collapsible(),
                         ]),
+
                     Tab::make('Basic Facilities')
                         ->icon('heroicon-o-cube')
                         ->schema([
@@ -190,20 +180,20 @@ class ProductForm
                                         ->formatStateUsing(fn ($state) => number_format(self::stripCurrency($state), 0, '.', ','))
                                         ->dehydrateStateUsing(fn ($state) => self::stripCurrency($state))
                                         ->prefix('Rp')
-                                        ->label('Total Vendor Publish')
+                                        ->label('Total Publish Price')
                                         ->readOnly()
+                                        ->live()
                                         ->minValue(0)
                                         ->dehydrated(true)
                                         ->helperText('Dihitung otomatis dari harga vendor')
-                                        ->afterStateHydrated(function (Set $set, Get $get, $component, $state, $record) {
+                                        ->afterStateHydrated(function ($component, $state, $record) {
                                             if ($record) {
                                                 $total = $record->items->sum(function ($item) {
-                                                    $pricePublic = (int) ($item->price_public ?? 0);
-                                                    if ($pricePublic > 0) return $pricePublic;
-
                                                     $qty = (int) ($item->quantity ?? 1);
                                                     $publish = (int) ($item->harga_publish ?? 0);
-                                                    return $publish * $qty;
+                                                    $pricePublic = (int) ($item->price_public ?? ($publish * $qty));
+
+                                                    return $pricePublic;
                                                 });
                                                 $component->state($total);
                                             }
@@ -212,22 +202,14 @@ class ProductForm
                                         ->formatStateUsing(fn ($state) => number_format(self::stripCurrency($state), 0, '.', ','))
                                         ->dehydrateStateUsing(fn ($state) => self::stripCurrency($state))
                                         ->prefix('Rp')
-                                        ->label('Total Vendor Cost')
+                                        ->label('Total Vendor Price')
                                         ->readOnly()
                                         ->minValue(0)
-                                        ->dehydrated(false)
-                                        ->helperText('Jumlah dari semua harga vendor (Modal)')
+                                        ->helperText('Jumlah dari semua harga vendor')
                                         ->afterStateHydrated(function ($component, $state, $record) {
                                             if ($record) {
-                                                $total = $record->items->sum(function ($item) {
-                                                    $totalPrice = (int) ($item->total_price ?? 0);
-                                                    if ($totalPrice > 0) return $totalPrice;
-
-                                                    $qty = (int) ($item->quantity ?? 1);
-                                                    $vendor = (int) ($item->harga_vendor ?? 0);
-                                                    return $vendor * $qty;
-                                                });
-                                                $component->state($total);
+                                                $total = $record->items->sum('total_price');
+                                                $component->state((int) $total);
                                             }
                                         }),
                                 ]),
@@ -241,21 +223,18 @@ class ProductForm
                                 ->label('Total Pengurangan')
                                 ->readOnly()
                                 ->default(0)
+                                ->live()
                                 ->dehydrated()
                                 ->formatStateUsing(fn ($state) => number_format(is_numeric($state) ? $state : self::stripCurrency($state), 0, '.', ','))
                                 ->dehydrateStateUsing(fn ($state) => self::stripCurrency($state))
                                 ->prefix('Rp')
                                 ->helperText('Dihitung otomatis dari harga diskon')
-                                ->afterStateHydrated(function (Set $set, Get $get, $component, $state, $record) {
+                                ->afterStateHydrated(function ($component, $state, $record) {
                                     if ($record) {
                                         $total = $record->pengurangans->sum('amount');
-                                        $component->state((int) $total);
+                                        $component->state($total);
                                     }
                                 }),
-                            RichEditor::make('free_pengurangan')
-                                ->label('Free')
-                                ->placeholder('Detail free / keterangan tambahan pengurangan')
-                                ->columnSpanFull(),
                             self::getDiscountRepeater(),
                         ]),
                     Tab::make('Penambahan Harga')
@@ -265,24 +244,26 @@ class ProductForm
                             Grid::make(2)
                                 ->schema([
                                     TextInput::make('penambahan_publish')
-                                        ->label('Total Addition Publish')
+                                        ->label('Total Publish Price')
                                         ->readOnly()
                                         ->default(0)
+                                        ->live()
                                         ->dehydrated()
                                         ->formatStateUsing(fn ($state) => number_format(self::stripCurrency($state), 0, '.', ','))
                                         ->dehydrateStateUsing(fn ($state) => self::stripCurrency($state))
                                         ->prefix('Rp')
                                         ->helperText('Dihitung otomatis dari penambahan harga publish')
-                                        ->afterStateHydrated(function (Set $set, Get $get, $component, $state, $record) {
+                                        ->afterStateHydrated(function ($component, $state, $record) {
                                             if ($record) {
                                                 $total = $record->penambahanHarga->sum('harga_publish');
-                                                $component->state((int) $total);
+                                                $component->state($total);
                                             }
                                         }),
                                     TextInput::make('penambahan_vendor')
-                                        ->label('Total Addition Cost')
+                                        ->label('Total Vendor Price')
                                         ->readOnly()
                                         ->default(0)
+                                        ->live()
                                         ->dehydrated()
                                         ->formatStateUsing(fn ($state) => number_format(self::stripCurrency($state), 0, '.', ','))
                                         ->dehydrateStateUsing(fn ($state) => self::stripCurrency($state))
@@ -320,6 +301,7 @@ class ProductForm
                             ->placeholder('Select a vendor')
                             ->required()
                             ->live()
+                            ->reactive()
                             ->afterStateHydrated(function (Set $set, Get $get, $state) {
                                 if ($state) {
                                     self::updateVendorData($set, $state);
@@ -341,7 +323,7 @@ class ProductForm
                             ->prefix('Rp')
                             ->formatStateUsing(fn ($state) => number_format(self::stripCurrency($state), 0, '.', ','))
                             ->dehydrateStateUsing(fn ($state) => self::stripCurrency($state))
-                            ->live(debounce: '1000ms')
+                            ->reactive()
                             ->afterStateUpdated(function (Set $set, Get $get) {
                                 self::calculatePrices($get, $set);
                             }),
@@ -351,7 +333,7 @@ class ProductForm
                             ->numeric()
                             ->minValue(1)
                             ->default(1)
-                            ->live(debounce: '1000ms')
+                            ->reactive()
                             ->afterStateUpdated(function (Set $set, Get $get) {
                                 self::calculatePrices($get, $set);
                             }),
@@ -422,6 +404,7 @@ class ProductForm
             })
             ->reorderable()
             ->cloneable()
+            ->reactive()
             ->live()
             ->afterStateUpdated(function (Get $get, Set $set) {
                 $itemsArray = $get('items') ?? [];
@@ -437,15 +420,9 @@ class ProductForm
 
                 $totalVendorPrice = collect($itemsArray)
                     ->sum(function ($item) {
-                        $total = $item['total_price'] ?? null;
-                        if ($total !== null && $total !== '') {
-                            return self::stripCurrency($total);
-                        }
+                        $val = $item['harga_vendor'] ?? 0;
 
-                        $unit = $item['harga_vendor'] ?? 0;
-                        $qty = (int) ($item['quantity'] ?? 1);
-
-                        return self::stripCurrency($unit) * $qty;
+                        return self::stripCurrency($val);
                     });
 
                 $set('../vendorTotal', self::formatCurrency($totalVendorPrice));
@@ -523,6 +500,7 @@ class ProductForm
                             ->placeholder('Select a vendor')
                             ->required()
                             ->live()
+                            ->reactive()
                             ->afterStateHydrated(function (Set $set, Get $get, $state) {
                                 if ($state) {
                                     self::updateAdditionVendorData($set, $state);
@@ -544,7 +522,7 @@ class ProductForm
                             ->prefix('Rp')
                             ->formatStateUsing(fn ($state) => number_format(is_numeric($state) ? $state : self::stripCurrency($state), 0, '.', ','))
                             ->dehydrateStateUsing(fn ($state) => self::stripCurrency($state))
-                            ->live(debounce: '1000ms')
+                            ->reactive()
                             ->afterStateUpdated(function (Set $set, Get $get) {
                                 self::calculateAdditionPrices($get, $set);
                             }),
@@ -554,7 +532,7 @@ class ProductForm
                             ->prefix('Rp')
                             ->formatStateUsing(fn ($state) => number_format(is_numeric($state) ? $state : self::stripCurrency($state), 0, '.', ','))
                             ->dehydrateStateUsing(fn ($state) => self::stripCurrency($state))
-                            ->live(debounce: '1000ms')
+                            ->reactive()
                             ->afterStateUpdated(function (Set $set, Get $get) {
                                 self::calculateAdditionPrices($get, $set);
                             }),
@@ -711,15 +689,9 @@ class ProductForm
 
         $total_vendor_price = collect($items)
             ->sum(function ($item) {
-                $total = $item['total_price'] ?? null;
-                if ($total !== null && $total !== '') {
-                    return self::stripCurrency($total);
-                }
+                $val = $item['harga_vendor'] ?? 0;
 
-                $unit = $item['harga_vendor'] ?? 0;
-                $qty = (int) ($item['quantity'] ?? 1);
-
-                return self::stripCurrency($unit) * $qty;
+                return self::stripCurrency($val);
             });
 
         $set('../../vendorTotal', self::formatCurrency($total_vendor_price));

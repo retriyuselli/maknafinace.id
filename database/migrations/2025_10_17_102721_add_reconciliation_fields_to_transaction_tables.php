@@ -17,7 +17,7 @@ return new class extends Migration
                 ->default('unmatched')
                 ->after('keterangan');
             $table->unsignedBigInteger('matched_bank_item_id')->nullable()->after('reconciliation_status');
-            $table->decimal('match_confidence', 5, 2)->nullable()->after('matched_bank_item_id');
+            $table->unsignedInteger('match_confidence')->nullable()->after('matched_bank_item_id');
             $table->text('reconciliation_notes')->nullable()->after('match_confidence');
         });
 
@@ -27,7 +27,7 @@ return new class extends Migration
                 ->default('unmatched')
                 ->after('keterangan');
             $table->unsignedBigInteger('matched_bank_item_id')->nullable()->after('reconciliation_status');
-            $table->decimal('match_confidence', 5, 2)->nullable()->after('matched_bank_item_id');
+            $table->unsignedInteger('match_confidence')->nullable()->after('matched_bank_item_id');
             $table->text('reconciliation_notes')->nullable()->after('match_confidence');
         });
 
@@ -37,7 +37,7 @@ return new class extends Migration
                 ->default('unmatched')
                 ->after('amount');
             $table->unsignedBigInteger('matched_bank_item_id')->nullable()->after('reconciliation_status');
-            $table->decimal('match_confidence', 5, 2)->nullable()->after('matched_bank_item_id');
+            $table->unsignedInteger('match_confidence')->nullable()->after('matched_bank_item_id');
             $table->text('reconciliation_notes')->nullable()->after('match_confidence');
         });
 
@@ -47,7 +47,7 @@ return new class extends Migration
                 ->default('unmatched')
                 ->after('amount');
             $table->unsignedBigInteger('matched_bank_item_id')->nullable()->after('reconciliation_status');
-            $table->decimal('match_confidence', 5, 2)->nullable()->after('matched_bank_item_id');
+            $table->unsignedInteger('match_confidence')->nullable()->after('matched_bank_item_id');
             $table->text('reconciliation_notes')->nullable()->after('match_confidence');
         });
 
@@ -57,7 +57,7 @@ return new class extends Migration
                 ->default('unmatched')
                 ->after('amount');
             $table->unsignedBigInteger('matched_bank_item_id')->nullable()->after('reconciliation_status');
-            $table->decimal('match_confidence', 5, 2)->nullable()->after('matched_bank_item_id');
+            $table->unsignedInteger('match_confidence')->nullable()->after('matched_bank_item_id');
             $table->text('reconciliation_notes')->nullable()->after('match_confidence');
         });
     }

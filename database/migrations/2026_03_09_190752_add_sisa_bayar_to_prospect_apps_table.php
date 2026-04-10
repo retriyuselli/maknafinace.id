@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('prospect_apps', function (Blueprint $table) {
-            $table->decimal('sisa_bayar', 15, 2)->nullable()->after('bayar');
+            $table->unsignedBigInteger('sisa_bayar')->nullable()->after('bayar');
         });
     }
 

@@ -17,9 +17,9 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->integer('stock')->default(0);
-            $table->decimal('product_price', 15, 2)->default(0); // Sum of vendor prices
-            $table->decimal('pengurangan', 15, 2)->default(0);
-            $table->decimal('price', 15, 2)->default(0); // Final price after deductions
+            $table->unsignedBigInteger('product_price')->default(0); // Sum of vendor prices
+            $table->unsignedBigInteger('pengurangan')->default(0);
+            $table->unsignedBigInteger('price')->default(0); // Final price after deductions
             $table->integer('pax')->nullable();
             $table->text('description')->nullable();
             $table->string('image')->nullable();

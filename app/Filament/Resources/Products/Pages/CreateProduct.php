@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\Products\Pages;
 
 use App\Filament\Resources\Products\ProductResource;
-use App\Models\Product;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Str;
 
 class CreateProduct extends CreateRecord
 {
@@ -12,11 +12,8 @@ class CreateProduct extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        return ProductResource::mutateFormDataBeforeSave($data);
-    }
+        $data['slug'] = Str::slug($data['name']);
 
-    protected function afterCreate(): void
-    {
-        $this->redirect($this->getResource()::getUrl('edit', ['record' => $this->record]));
+        return $data;
     }
 }

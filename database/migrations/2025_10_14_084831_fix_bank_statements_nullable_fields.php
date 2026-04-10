@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::table('bank_statements', function (Blueprint $table) {
             // Make sure all fields that should be nullable are nullable
-            $table->decimal('opening_balance', 15, 2)->nullable()->default(0)->change();
-            $table->decimal('closing_balance', 15, 2)->nullable()->default(0)->change();
+            $table->unsignedBigInteger('opening_balance')->nullable()->default(0)->change();
+            $table->unsignedBigInteger('closing_balance')->nullable()->default(0)->change();
             $table->integer('no_of_debit')->nullable()->default(0)->change();
-            $table->decimal('tot_debit', 15, 2)->nullable()->default(0)->change();
+            $table->unsignedBigInteger('tot_debit')->nullable()->default(0)->change();
             $table->integer('no_of_credit')->nullable()->default(0)->change();
-            $table->decimal('tot_credit', 15, 2)->nullable()->default(0)->change();
+            $table->unsignedBigInteger('tot_credit')->nullable()->default(0)->change();
             $table->string('branch')->nullable()->change();
             $table->timestamp('processed_at')->nullable();
         });

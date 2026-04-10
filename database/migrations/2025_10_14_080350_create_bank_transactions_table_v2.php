@@ -27,9 +27,9 @@ return new class extends Migration
             $table->string('reference_number')->nullable();
 
             // Amounts
-            $table->decimal('debit_amount', 15, 2)->default(0);
-            $table->decimal('credit_amount', 15, 2)->default(0);
-            $table->decimal('balance', 15, 2)->nullable();
+            $table->unsignedBigInteger('debit_amount')->default(0);
+            $table->unsignedBigInteger('credit_amount')->default(0);
+            $table->unsignedBigInteger('balance')->nullable();
 
             // Classification
             $table->enum('transaction_type', ['debit', 'credit']);
@@ -41,7 +41,7 @@ return new class extends Migration
             // Matching information
             $table->boolean('is_matched')->default(false);
             $table->unsignedBigInteger('matched_with_transaction_id')->nullable();
-            $table->decimal('matching_confidence', 5, 2)->nullable(); // 0.00 to 100.00
+            $table->unsignedInteger('matching_confidence')->nullable(); // 0 to 100
             $table->text('notes')->nullable();
 
             $table->timestamps();

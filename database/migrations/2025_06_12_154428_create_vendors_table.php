@@ -22,8 +22,8 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->integer('stock')->default(0)->nullable();
             $table->text('description')->nullable();
-            $table->decimal('harga_publish', 15, 2)->nullable();
-            $table->decimal('harga_vendor', 15, 2)->nullable();
+            $table->unsignedBigInteger('harga_publish')->nullable();
+            $table->unsignedBigInteger('harga_vendor')->nullable();
             $table->string('bank_name')->nullable();
             $table->string('account_holder')->nullable();
             $table->string('bank_account')->nullable();

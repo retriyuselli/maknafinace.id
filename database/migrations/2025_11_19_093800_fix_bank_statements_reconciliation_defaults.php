@@ -20,10 +20,10 @@ return new class extends Migration
                 $table->integer('total_records')->default(0)->after('reconciliation_original_filename');
             }
             if (! Schema::hasColumn('bank_statements', 'total_debit_reconciliation')) {
-                $table->decimal('total_debit_reconciliation', 15, 2)->default(0)->after('total_records');
+                $table->unsignedBigInteger('total_debit_reconciliation')->default(0)->after('total_records');
             }
             if (! Schema::hasColumn('bank_statements', 'total_credit_reconciliation')) {
-                $table->decimal('total_credit_reconciliation', 15, 2)->default(0)->after('total_debit_reconciliation');
+                $table->unsignedBigInteger('total_credit_reconciliation')->default(0)->after('total_debit_reconciliation');
             }
             if (! Schema::hasColumn('bank_statements', 'reconciliation_status')) {
                 $table->enum('reconciliation_status', ['uploaded', 'processing', 'completed', 'failed'])->default('uploaded')->after('total_credit_reconciliation');
@@ -35,10 +35,10 @@ return new class extends Migration
             DB::statement('ALTER TABLE bank_statements MODIFY total_records INT NOT NULL DEFAULT 0');
         }
         if (Schema::hasColumn('bank_statements', 'total_debit_reconciliation')) {
-            DB::statement('ALTER TABLE bank_statements MODIFY total_debit_reconciliation DECIMAL(15,2) NOT NULL DEFAULT 0');
+            DB::statement('ALTER TABLE bank_statements MODIFY total_debit_reconciliation BIGINT UNSIGNED NOT NULL DEFAULT 0');
         }
         if (Schema::hasColumn('bank_statements', 'total_credit_reconciliation')) {
-            DB::statement('ALTER TABLE bank_statements MODIFY total_credit_reconciliation DECIMAL(15,2) NOT NULL DEFAULT 0');
+            DB::statement('ALTER TABLE bank_statements MODIFY total_credit_reconciliation BIGINT UNSIGNED NOT NULL DEFAULT 0');
         }
         if (Schema::hasColumn('bank_statements', 'reconciliation_status')) {
             // Ensure enum default is 'uploaded'

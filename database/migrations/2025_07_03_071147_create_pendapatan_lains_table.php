@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->foreignId('payment_method_id')->constrained('payment_methods')->cascadeOnDelete();
-            $table->decimal('nominal', 15, 2);
+            $table->unsignedBigInteger('nominal');
             $table->string('image')->nullable();
             $table->date('tgl_bayar')->nullable();
             $table->text('keterangan')->nullable();

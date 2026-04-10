@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('vendors', function (Blueprint $table) {
             if (! Schema::hasColumn('vendors', 'profit_margin')) {
-                $table->decimal('profit_margin', 10, 2)->default(0)->after('profit_amount');
+                $table->integer('profit_margin')->default(0)->after('profit_amount');
             }
         });
     }

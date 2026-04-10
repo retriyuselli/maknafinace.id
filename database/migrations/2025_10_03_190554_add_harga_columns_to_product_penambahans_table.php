@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::table('product_penambahans', function (Blueprint $table) {
             $table->foreignId('vendor_id')->nullable()->constrained('vendors')->onDelete('cascade')->after('product_id');
-            $table->decimal('harga_publish', 15, 2)->default(0)->after('description');
-            $table->decimal('harga_vendor', 15, 2)->default(0)->after('harga_publish');
+            $table->unsignedBigInteger('harga_publish')->default(0)->after('description');
+            $table->unsignedBigInteger('harga_vendor')->default(0)->after('harga_publish');
         });
     }
 

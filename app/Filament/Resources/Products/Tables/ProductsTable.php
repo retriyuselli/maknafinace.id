@@ -21,7 +21,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -38,6 +37,7 @@ class ProductsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->poll('5s')
             ->defaultPaginationPageOption(25)
             ->columns([
                 TextColumn::make('name')
@@ -45,21 +45,13 @@ class ProductsTable
                     ->sortable()
                     ->weight(FontWeight::Bold)
                     ->formatStateUsing(fn (string $state): string => Str::title($state))
+                    ->tooltip(fn (Product $record): string => $record->price)
                     ->copyable()
                     ->copyMessage('Product name copied')
                     ->copyMessageDuration(1500)
                     ->description(function (Product $record): string {
-                        // Gunakan nilai dari database (fisik) atau hasil agregasi query (virtual)
-                        $productPrice = $record->product_price > 0 ? $record->product_price : ($record->calculated_product_price ?? 0);
-                        $pengurangan = $record->pengurangan > 0 ? $record->pengurangan : ($record->calculated_pengurangan ?? 0);
-                        $penambahan = $record->penambahan_publish > 0 ? $record->penambahan_publish : ($record->calculated_penambahan_publish ?? 0);
-
-                        // Kalkulasi nett price
-                        $nettPrice = $record->price > 0 ? $record->price : ($productPrice - $pengurangan + $penambahan);
-                        
-                        $priceValue = $nettPrice > 0 ? $nettPrice : $productPrice;
-                        
-                        if ($priceValue === null || ! is_numeric($priceValue) || $priceValue == 0) {
+                        $priceValue = $record->price;
+                        if ($priceValue === null || ! is_numeric($priceValue)) {
                             return 'Rp. -';
                         }
 
@@ -74,6 +66,7 @@ class ProductsTable
                     ->label('Category')
                     ->sortable()
                     ->searchable()
+                    ->toggleable()
                     ->badge()
                     ->color('gray')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -99,60 +92,29 @@ class ProductsTable
                     ->color('info')
                     ->tooltip('Number of unique orders this product is part of.'),
 
-                TextColumn::make('stock')
-                    ->label('Stock')
-                    ->alignCenter()
-                    ->badge()
-                    ->color(fn (int $state): string => match (true) {
-                        $state === 0 => 'danger',
-                        $state < 5 => 'warning',
-                        default => 'success',
-                    })
-                    ->icon(fn (int $state): string => $state === 0 ? 'heroicon-m-x-circle' : 'heroicon-m-archive-box')
-                    ->sortable(),
-
                 TextColumn::make('total_quantity_sold')
                     ->label('Total Sold')
                     ->formatStateUsing(fn ($state) => number_format((int) $state, 0, '.', ','))
                     ->sortable()
                     ->alignCenter()
-                    ->tooltip('Total quantity of this product sold across all orders.')
-                    ->summarize(Sum::make()->label('Total')),
-
-                TextColumn::make('product_price')
-                    ->label('Publish Price')
-                    ->getStateUsing(fn ($record) => $record->product_price > 0 
-                        ? $record->product_price 
-                        : ($record->calculated_product_price ?? 0))
-                    ->formatStateUsing(fn ($state) => 'Rp. '.number_format((int) $state, 0, '.', ','))
-                    ->sortable()
-                    ->alignEnd()
-                    ->tooltip('Total harga publish dari semua vendor'),
+                    ->tooltip('Total quantity of this product sold across all orders.'),
 
                 TextColumn::make('price')
-                    ->label('Nett Price')
-                    ->getStateUsing(function ($record) {
-                        $productPrice = $record->product_price > 0 ? $record->product_price : ($record->calculated_product_price ?? 0);
-                        $pengurangan = $record->pengurangan > 0 ? $record->pengurangan : ($record->calculated_pengurangan ?? 0);
-                        $penambahan = $record->penambahan_publish > 0 ? $record->penambahan_publish : ($record->calculated_penambahan_publish ?? 0);
-                        
-                        return $record->price > 0 
-                            ? $record->price 
-                            : ($productPrice - $pengurangan + $penambahan);
-                    })
+                    ->label('Product Price')
                     ->formatStateUsing(fn ($state) => 'Rp. '.number_format((int) $state, 0, '.', ','))
                     ->sortable()
                     ->alignEnd()
-                    ->badge()
-                    ->color(fn ($state) => $state > 0 ? 'success' : 'gray')
-                    ->tooltip('Harga akhir setelah diskon & penambahan')
-                    ->summarize(Sum::make()->label('Total Value')->money('IDR')),
+                    ->badge(),
+
+                TextColumn::make('product_price')
+                    ->label('Total Publish Price')
+                    ->formatStateUsing(fn ($state) => 'Rp. '.number_format((int) $state, 0, '.', ','))
+                    ->sortable()
+                    ->alignEnd(),
 
                 TextColumn::make('pengurangan')
                     ->label('Pengurangan')
-                    ->getStateUsing(fn ($record) => $record->pengurangan > 0 
-                        ? $record->pengurangan 
-                        : ($record->calculated_pengurangan ?? 0))
+                    ->getStateUsing(fn ($record) => $record->pengurangans->sum('amount'))
                     ->formatStateUsing(fn ($state) => 'Rp. '.number_format((int) $state, 0, '.', ','))
                     ->alignEnd()
                     ->sortable()
@@ -160,10 +122,8 @@ class ProductsTable
                     ->color(fn ($state) => $state == 0 ? 'warning' : 'danger'),
 
                 TextColumn::make('penambahan')
-                    ->label('Penambahan Harga')
-                    ->getStateUsing(fn ($record) => $record->penambahan_publish > 0 
-                        ? $record->penambahan_publish 
-                        : ($record->calculated_penambahan_publish ?? 0))
+                    ->label('Penambahan Publish')
+                    ->getStateUsing(fn ($record) => $record->penambahanHarga->sum('harga_publish'))
                     ->formatStateUsing(fn ($state) => 'Rp. '.number_format((int) $state, 0, '.', ','))
                     ->alignEnd()
                     ->sortable()
@@ -173,7 +133,6 @@ class ProductsTable
                 TextColumn::make('pax')
                     ->label('Capacity')
                     ->suffix(' pax')
-                    ->icon('heroicon-m-users')
                     ->alignCenter()
                     ->sortable()
                     ->numeric(
@@ -240,48 +199,6 @@ class ProductsTable
                         1 => 'Approved',
                         0 => 'Not Approved',
                     ]),
-
-                Filter::make('stock_status')
-                    ->label('Stok')
-                    ->schema([
-                        Select::make('status')
-                            ->options([
-                                'out' => 'Stok Habis (0)',
-                                'low' => 'Stok Rendah (< 5)',
-                                'available' => 'Tersedia (> 0)',
-                            ])
-                            ->placeholder('Semua Stok'),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when($data['status'] === 'out', fn ($q) => $q->where('stock', 0))
-                            ->when($data['status'] === 'low', fn ($q) => $q->where('stock', '>', 0)->where('stock', '<', 5))
-                            ->when($data['status'] === 'available', fn ($q) => $q->where('stock', '>', 0));
-                    }),
-
-                Filter::make('pax_range')
-                    ->label('Kapasitas (Pax)')
-                    ->schema([
-                        TextInput::make('min_pax')->numeric()->placeholder('Min'),
-                        TextInput::make('max_pax')->numeric()->placeholder('Max'),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when($data['min_pax'], fn ($q, $pax) => $q->where('pax', '>=', $pax))
-                            ->when($data['max_pax'], fn ($q, $pax) => $q->where('pax', '<=', $pax));
-                    })
-                    ->indicateUsing(function (array $data): ?string {
-                        if ($data['min_pax'] && $data['max_pax']) {
-                            return 'Pax: ' . $data['min_pax'] . ' - ' . $data['max_pax'];
-                        }
-                        if ($data['min_pax']) {
-                            return 'Pax >= ' . $data['min_pax'];
-                        }
-                        if ($data['max_pax']) {
-                            return 'Pax <= ' . $data['max_pax'];
-                        }
-                        return null;
-                    }),
 
                 Filter::make('vendor_usage')
                     ->label('Vendor Usage')
@@ -368,35 +285,23 @@ class ProductsTable
                         ->icon('heroicon-o-document-duplicate')
                         ->color('gray')
                         ->requiresConfirmation()
-                        ->modalDescription('Do you want to duplicate this product, its vendors, and all related settings?')
+                        ->modalDescription('Do you want to duplicate this product and its vendor relations?')
                         ->modalSubmitActionLabel('Yes, duplicate product')
-                        ->action(function (Product $record, Action $action) {
-                            // Duplicate main product with all essential fields
+                        ->action(function (Product $record) {
+                            // Duplicate main product
                             $attributes = $record->only([
                                 'category_id',
-                                'stock',
-                                'product_price',
                                 'price',
                                 'is_active',
                                 'pax',
-                                'pax_akad',
-                                'description',
-                                'image',
-                                'pengurangan',
-                                'free_pengurangan',
-                                'penambahan',
-                                'penambahan_publish',
-                                'penambahan_vendor',
-                                'parent_id',
                             ]);
 
                             $duplicate = new Product($attributes);
                             $duplicate->name = "{$record->name} (Copy)";
                             $duplicate->slug = Product::generateUniqueSlug($duplicate->name);
-                            $duplicate->is_approved = false; // Reset approval for the copy
                             $duplicate->save();
 
-                            // Duplicate vendor relationships (items)
+                            // Duplicate vendor relationships with all fields
                             foreach ($record->items as $item) {
                                 $duplicate->items()->create([
                                     'vendor_id' => $item->vendor_id,
@@ -406,28 +311,6 @@ class ProductsTable
                                     'total_price' => $item->total_price,
                                     'harga_vendor' => $item->harga_vendor,
                                     'description' => $item->description,
-                                    'kontrak_kerjasama' => $item->kontrak_kerjasama,
-                                    'simulasi_produk_id' => $item->simulasi_produk_id,
-                                ]);
-                            }
-
-                            // Duplicate discounts (pengurangans)
-                            foreach ($record->pengurangans as $pengurangan) {
-                                $duplicate->pengurangans()->create([
-                                    'description' => $pengurangan->description,
-                                    'amount' => $pengurangan->amount,
-                                    'notes' => $pengurangan->notes,
-                                ]);
-                            }
-
-                            // Duplicate additions (penambahanHarga)
-                            foreach ($record->penambahanHarga as $addition) {
-                                $duplicate->penambahanHarga()->create([
-                                    'vendor_id' => $addition->vendor_id,
-                                    'harga_publish' => $addition->harga_publish,
-                                    'harga_vendor' => $addition->harga_vendor,
-                                    'description' => $addition->description,
-                                    'amount' => $addition->amount,
                                 ]);
                             }
 
@@ -435,9 +318,6 @@ class ProductsTable
                                 ->success()
                                 ->title('Product duplicated successfully')
                                 ->send();
-
-                            // Use redirect directly on the action to avoid Redirector error
-                            return $action->redirect(ProductResource::getUrl('edit', ['record' => $duplicate]));
                         })
                         ->tooltip('Duplicate this product'),
 
@@ -541,30 +421,11 @@ class ProductsTable
                             return $user->hasRole('super_admin');
                         })
                         ->deselectRecordsAfterCompletion(),
-                    BulkAction::make('disapprove_selected')
-                        ->label('Disapprove Selected')
-                        ->icon('heroicon-s-hand-thumb-down')
-                        ->color('danger')
-                        ->requiresConfirmation()
-                        ->action(function (Collection $records) {
-                            $records->each->update(['is_approved' => false]);
-                            Notification::make()
-                                ->title('Products Disapproved')
-                                ->body(count($records).' product(s) have been disapproved.')
-                                ->warning()
-                                ->send();
-                        })
-                        ->visible(function (): bool {
-                            /** @var User $user */
-                            $user = Auth::user();
-
-                            return $user->hasRole('super_admin');
-                        })
-                        ->deselectRecordsAfterCompletion(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
             ->striped()
+            ->defaultPaginationPageOption(10)
             ->paginationPageOptions([10, 25, 50])
             ->emptyStateDescription('Silakan buat produk baru untuk memulai.')
             ->emptyStateActions([

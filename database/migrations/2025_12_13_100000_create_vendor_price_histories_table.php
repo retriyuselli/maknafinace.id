@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('vendor_price_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('vendor_id')->constrained('vendors')->onDelete('cascade');
-            $table->decimal('harga_publish', 15, 2)->nullable();
-            $table->decimal('harga_vendor', 15, 2)->nullable();
-            $table->decimal('profit_amount', 15, 2)->nullable();
-            $table->decimal('profit_margin', 10, 2)->nullable();
+            $table->unsignedBigInteger('harga_publish')->nullable();
+            $table->unsignedBigInteger('harga_vendor')->nullable();
+            $table->bigInteger('profit_amount')->nullable();
+            $table->integer('profit_margin')->nullable();
             $table->dateTime('effective_from')->nullable();
             $table->dateTime('effective_to')->nullable();
             $table->string('status')->nullable();

@@ -13,7 +13,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Cache;
 
 class ProductResource extends Resource
 {
@@ -33,20 +32,9 @@ class ProductResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-    private static function getCachedNavigationBadgeCount(): int
-    {
-        $modelClass = static::getModel();
-
-        return Cache::remember(
-            'nav:products:count',
-            60,
-            fn (): int => (int) $modelClass::count()
-        );
-    }
-
     public static function getNavigationBadge(): ?string
     {
-        return (string) static::getCachedNavigationBadgeCount();
+        return static::getModel()::count();
     }
 
     public static function form(Schema $schema): Schema
@@ -86,20 +74,29 @@ class ProductResource extends Resource
     {
         return parent::getEloquentQuery()
             ->with([
+                'items.vendor:id,name,harga_publish,harga_vendor,description',
+                'penambahanHarga.vendor:id,name,harga_publish,harga_vendor,description',
                 'category:id,name',
                 'parent:id,name',
-                'items',
-                'pengurangans',
-                'penambahanHarga',
             ])
             ->withCount([
                 'orders as unique_orders_count',
             ])
-            // Agregasi database untuk performa tabel
-            ->withSum('orderItems as total_quantity_sold', 'quantity')
-            ->withSum('items as calculated_product_price', 'price_public')
-            ->withSum('pengurangans as calculated_pengurangan', 'amount')
-            ->withSum('penambahanHarga as calculated_penambahan_publish', 'harga_publish');
+            // Bonus: Ini juga akan mengaktifkan kolom 'Total Sold'
+            ->withSum('orderItems as total_quantity_sold', 'quantity');
+    }
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        return static::mutateFormDataBeforeSave($data);
+    }
+
+    protected function mutateFormDataBeforeUpdate(array $data): array
+    {
+        // Preserve existing image if not changed
+        // This logic might need adjustment based on how FileUpload handles empty states
+        // For now, we assume $data will not contain 'image' if it's not being updated.
+        return static::mutateFormDataBeforeSave($data);
     }
 
     /**
@@ -107,16 +104,12 @@ class ProductResource extends Resource
      * This method recalculates product_price, pengurangan, penambahan, and price on the server-side
      * based on the submitted repeater data to ensure data integrity.
      */
-    public static function mutateFormDataBeforeSave(array $data, ?int $recordId = null): array
+    protected static function mutateFormDataBeforeSave(array $data): array
     {
         // Helper function to clean currency string values and convert to float
         $cleanCurrencyValue = function ($value): int {
             return ProductForm::stripCurrency($value);
         };
-
-        // 0. Ensure unique slug (automatic follow name or manual slug)
-        $slugSource = $data['slug'] ?? $data['name'];
-        $data['slug'] = Product::generateUniqueSlug($slugSource, $recordId);
 
         // 1. Recalculate 'product_price' from 'items' (vendor repeater)
         $calculatedProductPrice = 0;

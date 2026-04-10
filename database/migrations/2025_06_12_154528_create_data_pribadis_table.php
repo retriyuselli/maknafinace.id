@@ -22,7 +22,7 @@ return new class extends Migration
             $table->text('alamat')->nullable(); //
             $table->string('foto')->nullable(); //
             $table->string('pekerjaan')->nullable(); //
-            $table->decimal('gaji', 15, 2)->nullable(); //
+            $table->unsignedBigInteger('gaji')->nullable(); //
             $table->text('motivasi_kerja')->nullable(); //
             $table->text('pelatihan')->nullable(); //
             $table->timestamps();

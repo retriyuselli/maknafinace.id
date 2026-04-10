@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('batch_number', 20)->unique();
             $table->date('transaction_date');
             $table->text('description');
-            $table->decimal('total_debit', 15, 2)->default(0);
-            $table->decimal('total_credit', 15, 2)->default(0);
+            $table->unsignedBigInteger('total_debit')->default(0);
+            $table->unsignedBigInteger('total_credit')->default(0);
             $table->enum('status', ['draft', 'posted', 'reversed'])->default('draft');
             $table->string('reference_type')->nullable();
             $table->unsignedBigInteger('reference_id')->nullable();

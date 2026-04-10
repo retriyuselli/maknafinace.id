@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('vendors', function (Blueprint $table) {
             if (! Schema::hasColumn('vendors', 'profit_amount')) {
-                $table->decimal('profit_amount', 15, 2)->default(0)->after('harga_vendor');
+                $table->bigInteger('profit_amount')->default(0)->after('harga_vendor');
             }
         });
     }

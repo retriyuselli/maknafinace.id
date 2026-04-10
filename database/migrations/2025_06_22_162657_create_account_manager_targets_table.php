@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->year('year');
             $table->unsignedTinyInteger('month'); // 1-12
-            $table->decimal('target_amount', 15, 2)->default(1000000000.00);
-            $table->decimal('achieved_amount', 15, 2)->default(0);
+            $table->unsignedBigInteger('target_amount')->default(1000000000);
+            $table->unsignedBigInteger('achieved_amount')->default(0);
             $table->string('status')->default('pending'); // pending, on_track, achieved, behind
             $table->unique(['user_id', 'year', 'month']); // Setiap AM hanya punya 1 target per bulan
             $table->timestamps();

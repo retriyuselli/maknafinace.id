@@ -13,7 +13,7 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('payrolls', 'pengurangan')) {
             Schema::table('payrolls', function (Blueprint $table) {
-                $table->decimal('pengurangan', 15, 2)->nullable()->after('tunjangan');
+                $table->unsignedBigInteger('pengurangan')->nullable()->after('tunjangan');
             });
         }
     }

@@ -24,7 +24,7 @@ return new class extends Migration
             $table->date('date_akad')->nullable();
             $table->date('date_resepsi')->nullable();
             $table->string('venue')->nullable();
-            $table->decimal('total_penawaran', 15, 2)->nullable();
+            $table->unsignedBigInteger('total_penawaran')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();

@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('file_path');
             $table->string('original_filename');
             $table->integer('total_records')->default(0);
-            $table->decimal('total_debit', 15, 2)->default(0);
-            $table->decimal('total_credit', 15, 2)->default(0);
+            $table->unsignedBigInteger('total_debit')->default(0);
+            $table->unsignedBigInteger('total_credit')->default(0);
             $table->enum('status', ['uploaded', 'processing', 'completed', 'failed'])->default('uploaded');
             $table->foreignId('uploaded_by')->constrained('users')->onDelete('cascade');
             $table->timestamp('processed_at')->nullable();

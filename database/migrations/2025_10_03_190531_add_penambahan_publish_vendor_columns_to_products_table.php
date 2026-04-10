@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->decimal('penambahan_publish', 15, 2)->default(0)->after('penambahan');
-            $table->decimal('penambahan_vendor', 15, 2)->default(0)->after('penambahan_publish');
+            $table->unsignedBigInteger('penambahan_publish')->default(0)->after('penambahan');
+            $table->unsignedBigInteger('penambahan_vendor')->default(0)->after('penambahan_publish');
         });
     }
 

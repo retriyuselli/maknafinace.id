@@ -19,11 +19,11 @@ return new class extends Migration
             // Data Piutang
             $table->string('nama_debitur'); // Nama yang berhutang ke kita
             $table->text('keterangan'); // Keterangan piutang
-            $table->decimal('jumlah_pokok', 15, 2); // Pokok piutang
-            $table->decimal('persentase_bunga', 5, 2)->default(0); // Bunga %
-            $table->decimal('total_piutang', 15, 2); // Total piutang
-            $table->decimal('sudah_dibayar', 15, 2)->default(0); // Sudah dibayar
-            $table->decimal('sisa_piutang', 15, 2); // Sisa piutang
+            $table->unsignedBigInteger('jumlah_pokok'); // Pokok piutang
+            $table->unsignedInteger('persentase_bunga')->default(0); // Bunga %
+            $table->unsignedBigInteger('total_piutang'); // Total piutang
+            $table->unsignedBigInteger('sudah_dibayar')->default(0); // Sudah dibayar
+            $table->unsignedBigInteger('sisa_piutang'); // Sisa piutang
 
             // Tanggal
             $table->date('tanggal_piutang'); // Tanggal terjadi piutang

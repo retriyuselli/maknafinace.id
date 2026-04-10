@@ -13,9 +13,8 @@
     <!-- Mobile Specific Metas -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    @php($faviconUrl = url('/brand/favicon') . '?v=' . ($companyBrandVersion ?? 1))
-    <link rel="icon" href="{{ $faviconUrl }}">
-    <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
+    <link rel="icon" href="{{ $companyFaviconUrl ?? asset('images/favicon_makna.png') }}">
+    <link rel="apple-touch-icon" href="{{ $companyFaviconUrl ?? asset('images/favicon_makna.png') }}">
     <meta name="theme-color" content="#ffffff">
 
     <!--==============================
@@ -346,7 +345,7 @@ Invoice Area
                                                                     class="cta-button">
                                                                     <img src="{{ $logoSrc }}" alt="Logo Perusahaan"
                                                                         class="company-logo"
-                                                                        style="display: block; max-height: 100px; width: auto; margin-left: auto;">
+                                                                        style="display: block; max-height: 100px; width: 250px; margin-left: auto;">
                                                                 </a>
                                                             @endif
                                                         </div>

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('pengeluaran_lains', function (Blueprint $table) {
             $table->id();
             $table->string('name'); //
-            $table->decimal('amount', 15, 2); //
+            $table->unsignedBigInteger('amount'); //
             $table->foreignId('payment_method_id')->nullable()->constrained('payment_methods')->onDelete('set null'); //
             $table->date('date_expense'); //
             $table->string('image')->nullable(); //

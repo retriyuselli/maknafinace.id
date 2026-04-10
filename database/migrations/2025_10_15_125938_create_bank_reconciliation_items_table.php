@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('bank_reconciliation_id')->constrained('bank_reconciliations')->onDelete('cascade');
             $table->date('date');
             $table->text('description');
-            $table->decimal('debit', 15, 2)->default(0);
-            $table->decimal('credit', 15, 2)->default(0);
+            $table->unsignedBigInteger('debit')->default(0);
+            $table->unsignedBigInteger('credit')->default(0);
             $table->integer('row_number');
             $table->timestamps();
         });

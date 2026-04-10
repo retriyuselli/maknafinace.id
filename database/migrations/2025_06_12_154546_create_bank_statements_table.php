@@ -25,17 +25,17 @@ return new class extends Migration
                 ->default('pending'); //
             $table->string('branch')
                 ->nullable(); // Cabang pembuka rekening
-            $table->decimal('opening_balance', 15, 2)
+            $table->unsignedBigInteger('opening_balance')
                 ->nullable(); // Saldo awal rekening
-            $table->decimal('closing_balance', 15, 2)
+            $table->unsignedBigInteger('closing_balance')
                 ->nullable(); // Saldo akhir rekening
             $table->integer('no_of_debit')
                 ->nullable(); // Total number of debit transactions
-            $table->decimal('tot_debit', 15, 2)
+            $table->unsignedBigInteger('tot_debit')
                 ->nullable(); // Total debit amount
             $table->integer('no_of_credit')
                 ->nullable(); // Total number of credit transactions
-            $table->decimal('tot_credit', 15, 2)
+            $table->unsignedBigInteger('tot_credit')
                 ->nullable(); // Total cred
             $table->dateTime('uploaded_at')
                 ->nullable(); //

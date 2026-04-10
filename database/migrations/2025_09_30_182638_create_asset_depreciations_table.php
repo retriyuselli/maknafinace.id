@@ -19,11 +19,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('fixed_asset_id')->constrained('fixed_assets')->cascadeOnDelete();
             $table->date('depreciation_date');
-            $table->decimal('depreciation_amount', 15, 2);
-            $table->decimal('accumulated_depreciation_before', 15, 2);
-            $table->decimal('accumulated_depreciation_after', 15, 2);
-            $table->decimal('book_value_before', 15, 2);
-            $table->decimal('book_value_after', 15, 2);
+            $table->unsignedBigInteger('depreciation_amount');
+            $table->unsignedBigInteger('accumulated_depreciation_before');
+            $table->unsignedBigInteger('accumulated_depreciation_after');
+            $table->unsignedBigInteger('book_value_before');
+            $table->unsignedBigInteger('book_value_after');
             $table->unsignedBigInteger('journal_batch_id')->nullable();
             $table->text('notes')->nullable();
             $table->boolean('is_adjustment')->default(false);

@@ -148,14 +148,14 @@ class OrderResource extends Resource
                     ->live() // Anda bisa menambahkan live() jika ingin update instan saat produk dipilih
                     ->afterStateHydrated(function (Set $set, Get $get, $state) {
                         $product = Product::find($state);
-                        $set('unit_price', $product?->product_price ?? 0);
                         $set('stock', $product?->stock ?? 0);
+                        $set('unit_price', $product?->product_price ?? 0);
                     })
 
                     ->afterStateUpdated(function ($state, Set $set, Get $get) {
                         $product = Product::find($state);
-                        $set('unit_price', $product?->product_price ?? 0);
                         $set('stock', $product?->stock ?? 0);
+                        $set('unit_price', $product?->product_price ?? 0);
                         $quantity = $get('quantity') ?? 1; // Get quantity or default to 1
                         $stock = $get('stock');
                         self::updateTotalPrice($get, $set);

@@ -17,13 +17,13 @@ return new class extends Migration
             $table->string('asset_name');
             $table->enum('category', ['BUILDING', 'EQUIPMENT', 'FURNITURE', 'VEHICLE', 'COMPUTER', 'OTHER']);
             $table->date('purchase_date');
-            $table->decimal('purchase_price', 15, 2);
-            $table->decimal('accumulated_depreciation', 15, 2)->default(0);
+            $table->unsignedBigInteger('purchase_price');
+            $table->unsignedBigInteger('accumulated_depreciation')->default(0);
             $table->enum('depreciation_method', ['STRAIGHT_LINE', 'DECLINING_BALANCE', 'UNITS_OF_PRODUCTION'])->default('STRAIGHT_LINE');
             $table->integer('useful_life_years')->default(0);
             $table->integer('useful_life_months')->default(0);
-            $table->decimal('salvage_value', 15, 2)->default(0);
-            $table->decimal('current_book_value', 15, 2);
+            $table->unsignedBigInteger('salvage_value')->default(0);
+            $table->unsignedBigInteger('current_book_value');
             $table->string('location')->nullable();
             $table->enum('condition', ['EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'DAMAGED'])->default('GOOD');
             $table->string('supplier')->nullable();

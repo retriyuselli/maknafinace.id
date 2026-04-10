@@ -9,8 +9,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class EditProduct extends EditRecord
 {
@@ -85,7 +85,7 @@ class EditProduct extends EditRecord
                             'product_slug' => $record->slug,
                             'items_updated' => $itemsUpdated,
                             'additions_updated' => $additionsUpdated,
-                            'user_id' => Auth::id(),
+                            'user_id' => auth()->id(),
                             'timestamp' => now()->toIso8601String(),
                         ]);
                     });
@@ -99,16 +99,10 @@ class EditProduct extends EditRecord
         ];
     }
 
-    protected function mutateFormDataBeforeSave(array $data): array
+    protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // $this->record is available in EditRecord context
-        return ProductResource::mutateFormDataBeforeSave($data, $this->record->id);
-    }
+        $data['slug'] = Str::slug($data['name']);
 
-    protected function afterSave(): void
-    {
-        // Force a redirect to the new slug URL after saving to avoid "headers" error
-        // and handle slug changes gracefully in Livewire 3
-        $this->redirect($this->getResource()::getUrl('edit', ['record' => $this->record]));
+        return $data;
     }
 }

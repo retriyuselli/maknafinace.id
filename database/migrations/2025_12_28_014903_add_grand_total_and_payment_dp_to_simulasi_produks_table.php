@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('simulasi_produks', function (Blueprint $table) {
-            $table->decimal('grand_total', 15, 2)->default(0)->after('pengurangan');
-            $table->decimal('payment_dp_amount', 15, 2)->default(0)->after('grand_total');
+            $table->unsignedBigInteger('grand_total')->default(0)->after('pengurangan');
+            $table->unsignedBigInteger('payment_dp_amount')->default(0)->after('grand_total');
         });
     }
 

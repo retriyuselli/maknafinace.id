@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('vendor_id')->nullable();
             $table->string('keperluan');
             $table->string('event')->nullable();
-            $table->decimal('jumlah_transfer', 18, 2);
+            $table->unsignedBigInteger('jumlah_transfer');
             $table->string('invoice_number')->nullable();
             $table->foreignId('order_id')->nullable()->constrained('orders')->nullOnDelete();
 

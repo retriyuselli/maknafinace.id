@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('payrolls', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->decimal('monthly_salary', 15, 2);
-            $table->decimal('annual_salary', 15, 2)->nullable();
-            $table->decimal('bonus', 15, 2)->nullable();
+            $table->unsignedBigInteger('monthly_salary');
+            $table->unsignedBigInteger('annual_salary')->nullable();
+            $table->unsignedBigInteger('bonus')->nullable();
             $table->date('last_review_date')->nullable();
             $table->date('next_review_date')->nullable();
             $table->timestamps();
