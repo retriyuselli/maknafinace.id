@@ -20,23 +20,51 @@
     <style>
         @page {
             size: a4 portrait;
-            margin: 220px 1cm 1.5cm 1cm;
+            margin: 200px 1cm 1.5cm 1cm;
             /* top, right, bottom, left */
         }
 
-        /* Universal Noto Sans Font Application */
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 400;
+            src: url('{{ storage_path('fonts/Poppins-Regular.ttf') }}') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 500;
+            src: url('{{ storage_path('fonts/Poppins-Medium.ttf') }}') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 600;
+            src: url('{{ storage_path('fonts/Poppins-SemiBold.ttf') }}') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 700;
+            src: url('{{ storage_path('fonts/Poppins-Bold.ttf') }}') format('truetype');
+        }
+
+        /* Universal Poppins Font Application */
         *,
         *::before,
         *::after {
-            font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
         }
 
         body {
             color: #000000;
-            font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             font-size: 18px;
             font-weight: 400;
-            line-height: 1.2;
+            line-height: 1;
             margin: 0;
             font-smoothing: antialiased;
             padding: 0;
@@ -67,7 +95,7 @@
             height: 30px;
             text-align: center;
             font-size: 12px;
-            font-style: italic;
+            /* font-style: italic; */
             color: #555;
         }
 
@@ -78,11 +106,11 @@
         /* Header Company Info - Rapatkan jarak */
         header h2 {
             margin: 0 0 2px 0;
-            line-height: 1.1;
+            line-height: 1;
         }
 
         header td {
-            line-height: 1.2;
+            line-height: 1;
             padding: 0;
         }
 
@@ -99,7 +127,7 @@
         }
 
         header p {
-            font-size: 16px;
+            font-size: 13px;
             margin: 0;
         }
 
@@ -395,14 +423,24 @@
         }
 
         .notes-content ul {
+            list-style: none;
             padding-left: 0px;
             margin: 0;
         }
 
         .notes-content li {
+            list-style: none;
             margin-bottom: 0px;
-            padding-left: 0px;
-            margin-left: 15px;
+            padding-left: 14px;
+            margin-left: 0px;
+            position: relative;
+        }
+
+        .notes-content li:before {
+            content: '-';
+            left: 0;
+            position: absolute;
+            top: 0;
         }
 
         /* Menghilangkan margin default pada elemen p pertama agar sejajar dengan bullet */
@@ -416,6 +454,26 @@
             margin-bottom: 5px;
             margin-left: 0;
             padding-left: 0;
+        }
+
+        .footer ul {
+            list-style: none;
+            margin: 0;
+            padding-left: 0px;
+        }
+
+        .footer li {
+            list-style: none;
+            margin-bottom: 2px;
+            padding-left: 14px;
+            position: relative;
+        }
+
+        .footer li:before {
+            content: '-';
+            left: 0;
+            position: absolute;
+            top: 0;
         }
 
         .watermark.pending {
@@ -460,9 +518,8 @@
                 <td style="line-height: 1;">
                     <div>
                         <b>{{ $company->company_name ?? ($companyName ?? config('app.name')) }}</b><br>
-                        Alamat : {{ $company->address ?? 'Jln. Sintraman Jaya, No. 2148, Sekip Jaya, Palembang' }}<br>
-                        No. Tlp : {{ $company->phone ?? '+62 822-9796-2600' }}<br>
-                        Email : {{ $company->email ?? 'maknawedding@gmail.com' }}
+                        {{ $company->address ?? 'Jln. Sintraman Jaya, No. 2148, Sekip Jaya, Palembang' }}<br>
+                        {{ $company->phone ?? '+62 822-9796-2600' }} | {{ $company->email ?? 'maknawedding@gmail.com' }}
                     </div>
                 </td>
                 <td style="width: 60%; height: auto; text-align: right; vertical-align: middle;">
@@ -494,7 +551,7 @@
 
     <!-- Page Footer -->
     <div class="page-footer">
-        Dibuat secara otomatis sehingga tidak membutuhkan tanda tangan
+        --* Dibuat secara otomatis sehingga tidak membutuhkan tanda tangan *--
     </div>
 
     <!-- Invoice Title -->

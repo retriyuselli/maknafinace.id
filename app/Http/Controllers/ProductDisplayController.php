@@ -58,7 +58,7 @@ class ProductDisplayController extends Controller
         Gate::authorize('view', $product);
 
         // Eager load necessary relationships if needed
-        $product->load(['category', 'items.vendor', 'pengurangans', 'penambahanHarga.vendor']);
+        $product->load(['category', 'items.vendor', 'pengurangans', 'penambahanHarga.vendor', 'lastEditedBy']);
 
         $viewData = array_merge(compact('product', 'action'), $this->companyPreviewData());
 
@@ -68,6 +68,15 @@ class ProductDisplayController extends Controller
             return view('products.details-preview', $viewData);
         } elseif ($action === 'download') {
             $pdf = Pdf::loadView('products.details-preview', $viewData);
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->setOptions([
+                'dpi' => 150,
+                'defaultFont' => 'Poppins',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'isPhpEnabled' => true,
+                'isFontSubsettingEnabled' => true,
+            ]);
             return $pdf->download($product->slug.'-details.pdf');
         }
 
@@ -80,24 +89,34 @@ class ProductDisplayController extends Controller
         Gate::authorize('view', $product);
 
         // Load relasi yang mungkin dibutuhkan di view PDF (opsional tapi bagus untuk performa)
-        $product->load(['category', 'items.vendor', 'pengurangans', 'penambahanHarga.vendor']);
+        $product->load(['category', 'items.vendor', 'pengurangans', 'penambahanHarga.vendor', 'lastEditedBy']);
 
         // Data yang akan dikirim ke view PDF
-        $data = [
+        $data = array_merge([
             'product' => $product,
-            // Anda bisa menambahkan data lain di sini jika perlu
-        ];
+        ], $this->companyPreviewData());
 
         // Load view 'products.pdf' dengan data
         $pdf = Pdf::loadView('products.pdf', $data);
 
         // (Opsional) Konfigurasi PDF
         // $pdf->setPaper('A4', 'portrait'); // Contoh: set ukuran kertas dan orientasi
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->setOptions([
+            'dpi' => 150,
+            'defaultFont' => 'Poppins',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'isPhpEnabled' => true,
+            'isFontSubsettingEnabled' => true,
+        ]);
 
         // Buat nama file yang dinamis
         $fileName = 'product-'.$product->slug.'-'.now()->format('Ymd').'.pdf';
 
         // Kembalikan sebagai unduhan
+        // return $pdf->download($fileName);
+        // return $pdf->stream($fileName);
         return $pdf->download($fileName);
 
         // Atau jika ingin menampilkan di browser dulu (inline)

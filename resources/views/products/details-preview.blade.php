@@ -26,6 +26,32 @@
 
     {{-- CSS Khusus untuk Print --}}
     <style>
+        .details-notes ul {
+            list-style: none;
+            margin: 0;
+            padding-left: 0;
+        }
+
+        .details-notes ol {
+            list-style: none;
+            margin: 0;
+            padding-left: 0;
+        }
+
+        .details-notes li {
+            list-style: none;
+            margin: 0;
+            padding-left: 12px;
+            position: relative;
+        }
+
+        .details-notes li:before {
+            content: '-';
+            left: 0;
+            position: absolute;
+            top: 0;
+        }
+
         @media print {
 
             /* --- PENGATURAN HALAMAN DASAR --- */
@@ -273,7 +299,7 @@
         <table class="w-full mt-4 border-collapse text-sm">
             <tr>
                 <td class="border border-gray-300 p-3 w-1/2 align-top text-[13px]">
-                    <strong>WEDDING PACKAGE PRODUCT</strong><br>
+                    <strong>WEDDING PACKAGE PRODUCT1</strong><br>
                     Product Name : {{ $product->name ?? 'N/A' }}<br>
                     Category : {{ $product->category->name ?? 'N/A' }}<br>
                     Capacity : {{ $product->pax ?? 'N/A' }} Pax
@@ -289,7 +315,7 @@
 
         {{-- Package Details --}}
         <div class="mt-8 border border-slate-200 p-4 sm:p-5 rounded-lg bg-white shadow-sm">
-            <h3 class="text-sm font-semibold mb-5">Package Components & Services</h3>
+            <h3 class="text-sm font-semibold mb-5">Package Components & Services1</h3>
             <table class="w-full border-collapse text-sm">
                 <thead>
                     <tr>
@@ -318,7 +344,13 @@
                                 <div class="font-bold uppercase text-[13px]">
                                     {{ $item->vendor->name ?? 'Vendor Tidak Diketahui' }}</div>
                                 @if ($item->description)
-                                    <div class="text-sm text-slate-500 ml-10">{!! strip_tags($item->description, '<p><b><strong><em><ul><li><br><span><div>') !!}</div>
+                                    @php
+                                        $detailsNotes = strip_tags($item->description, '<p><b><strong><em><ul><li><br><span><div>');
+                                        $detailsNotes = str_replace(['•', '&bull;', '&#8226;', '●', '·'], '-', $detailsNotes);
+                                        $detailsNotes = preg_replace('/(^|<br\\s*\\/?>)\\s*\\d+\\.\\s*/i', '$1- ', $detailsNotes);
+                                        $detailsNotes = preg_replace('/<p([^>]*)>\\s*\\d+\\.\\s*/i', '<p$1>- ', $detailsNotes);
+                                    @endphp
+                                    <div class="details-notes text-sm text-black ml-4">{!! $detailsNotes !!}</div>
                                 @endif
                             </td>
                             <td class="border border-slate-300 px-4 text-[13px] py-3 text-right align-top">
@@ -365,7 +397,13 @@
                                     <div class="font-bold uppercase text-[13px]">
                                         {{ $addition->vendor->name ?? 'Item Tidak Diketahui' }}</div>
                                     @if ($addition->description)
-                                        <div class="text-sm text-slate-500 ml-10">{!! strip_tags($addition->description, '<p><b><strong><em><ul><li><br><span><div>') !!}</div>
+                                        @php
+                                            $detailsNotes = strip_tags($addition->description, '<p><b><strong><em><ul><li><br><span><div>');
+                                            $detailsNotes = str_replace(['•', '&bull;', '&#8226;', '●', '·'], '-', $detailsNotes);
+                                            $detailsNotes = preg_replace('/(^|<br\\s*\\/?>)\\s*\\d+\\.\\s*/i', '$1- ', $detailsNotes);
+                                            $detailsNotes = preg_replace('/<p([^>]*)>\\s*\\d+\\.\\s*/i', '<p$1>- ', $detailsNotes);
+                                        @endphp
+                                        <div class="details-notes text-sm text-black ml-4">{!! $detailsNotes !!}</div>
                                     @endif
                                 </td>
                                 <td class="border border-slate-300 px-4 py-3 text-right align-top text-[13px]"
@@ -408,7 +446,13 @@
                                     <div class="font-bold uppercase text-[13px]">
                                         {{ $discount->description ?? 'Vendor Tidak Diketahui' }}</div>
                                     @if ($discount->notes)
-                                        <div class="text-sm text-slate-500 ml-10">{!! strip_tags($discount->notes, '<p><b><strong><em><ul><li><br><span><div>') !!}</div>
+                                        @php
+                                            $detailsNotes = strip_tags($discount->notes, '<p><b><strong><em><ul><li><br><span><div>');
+                                            $detailsNotes = str_replace(['•', '&bull;', '&#8226;', '●', '·'], '-', $detailsNotes);
+                                            $detailsNotes = preg_replace('/(^|<br\\s*\\/?>)\\s*\\d+\\.\\s*/i', '$1- ', $detailsNotes);
+                                            $detailsNotes = preg_replace('/<p([^>]*)>\\s*\\d+\\.\\s*/i', '<p$1>- ', $detailsNotes);
+                                        @endphp
+                                        <div class="details-notes text-sm text-black ml-4">{!! $detailsNotes !!}</div>
                                     @endif
                                 </td>
                                 <td class="border border-slate-300 px-4 py-3 text-right align-top text-[13px]"
@@ -567,7 +611,7 @@
 
             {{-- Tombol Export Excel --}}
             <x-download-pdf-button :route="route('products.exportExcelDetail', $product)" label="Export to Excel"
-                class="px-4 py-2 bg-green-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs uppercase font-semibold rounded-md transition" />
+                class="px-4 py-2 bg-green-600 hover:bg-green-500 active:bg-green-700 text-white text-xs uppercase font-semibold rounded-md transition" />
         </div>
 </body>
 

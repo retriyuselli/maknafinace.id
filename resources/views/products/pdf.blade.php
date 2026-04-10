@@ -6,29 +6,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details PDF: {{ $product->name }}</title>
     <style>
-        /* Import Noto Sans font dari Google Fonts untuk PDF */
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 400;
+            src: url('{{ storage_path('fonts/Poppins-Regular.ttf') }}') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 500;
+            src: url('{{ storage_path('fonts/Poppins-Medium.ttf') }}') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 600;
+            src: url('{{ storage_path('fonts/Poppins-SemiBold.ttf') }}') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 700;
+            src: url('{{ storage_path('fonts/Poppins-Bold.ttf') }}') format('truetype');
+        }
 
         @page {
             /* margin: 2cm; */
             margin-top: 4cm;
             /* Perbesar margin atas untuk header */
-            margin-bottom: 2cm;
+            margin-bottom: 1cm;
             margin-left: 1cm;
             margin-right: 1cm;
             /* Margin atas dan bawah bisa disesuaikan lebih lanjut jika header/footer membutuhkan ruang spesifik */
             /* Contoh: margin-top: 1.5cm; margin-bottom: 1.5cm; */
         }
 
+        *,
+        *::before,
+        *::after {
+            font-family: 'Poppins', sans-serif !important;
+        }
+
         body {
-            font-family: 'Noto Sans', sans-serif;
+            font-family: 'Poppins', sans-serif;
             font-size: 10pt;
             /* Ukuran font standar untuk PDF */
             background-color: #ffffff;
             margin: 0;
             /* Body margin is 0, page margins are handled by @page */
             padding: 0;
-            line-height: 1.2;
+            line-height: 1;
             /* Sedikit lebih longgar dari 1 untuk keterbacaan dan potensi kalkulasi break yang lebih baik */
             color: #333;
         }
@@ -43,21 +74,40 @@
 
         .header {
             position: fixed;
-            top: -3.5cm;
+            top: -3cm;
             left: 0;
             right: 0;
-            height: 3cm;
-            text-align: center;
             margin-bottom: 0px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #000000;
+        }
+
+        .header-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .header-table td {
+            padding: 0;
+        }
+
+        .header-left {
+            font-size: 8pt;
+            line-height: 1;
+            text-align: left;
+            vertical-align: top;
+            width: 70%;
+        }
+
+        .header-right {
+            text-align: right;
+            vertical-align: top;
+            width: 30%;
         }
 
         .header img {
-            max-height: 40px;
-            /* Kembalikan ukuran logo yang lebih wajar */
-            margin-bottom: 10px;
-            margin-top: 0px;
+            max-height: 60px;
+            margin-top: 2px;
         }
 
         .header h1 {
@@ -87,8 +137,22 @@
             font-size: 8pt;
             margin-top: 3px;
             margin-bottom: 3px;
-            padding-left: 20px;
-            /* list-style-position: inside; */
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .vendor-description li {
+            list-style: none;
+            margin: 0;
+            padding-left: 16px;
+            position: relative;
+        }
+
+        .vendor-description li:before {
+            content: '-';
+            left: 0;
+            position: absolute;
+            top: 0;
         }
 
         .items-table,
@@ -219,9 +283,9 @@
 
         .footer {
             text-align: center;
-            margin-top: 15px;
+            margin-top: 0px;
             /* Jarak dari konten terakhir */
-            padding-top: 5px;
+            padding-top: 0px;
             font-size: 6pt;
             color: #777;
             position: fixed;
@@ -260,13 +324,21 @@
                 }
             }
         @endphp
-        @if ($logoSrc)
-            <img src="{{ $logoSrc }}" alt="{{ $companyName ?? config('app.name') }}">
-        @endif
-        {{-- <h1>{{ $product->name }}</h1> --}}
-        <p class="mt-1">Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kec. Kemuning, Kota Palembang, Sumatera
-            Selatan 30137</p>
-        <p>{{ $companyName ?? config('app.name') }} | maknawedding@gmail.com | 0813 7318 3794</p>
+        <table class="header-table">
+            <tr>
+                <td class="header-left">
+                    <strong>{{ $companyName ?? config('app.name') }}</strong><br>
+                    Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kec.<br>
+                    Kemuning, Kota Palembang, Sumatera Selatan<br>
+                    +6281373183794 | maknawedding@gmail.com
+                </td>
+                <td class="header-right">
+                    @if ($logoSrc)
+                        <img src="{{ $logoSrc }}" alt="{{ $companyName ?? config('app.name') }}">
+                    @endif
+                </td>
+            </tr>
+        </table>
     </div>
 
     <div class="pdf-container">
@@ -274,8 +346,8 @@
         {{-- Simulation Information --}}
         <table class="details-table">
             <tr>
-                <td style="width: 50%;">
-                    <strong>WEDDING PACKAGE SIMULATION</strong><br>
+                <td style="width: 80%;">
+                    <strong>Wedding Package Simulation</strong><br>
                     Product Name : {{ $product->name }}<br>
                     Category : {{ $product->category->name ?? 'N/A' }}<br>
                     Capacity : {{ $product->pax }} Pax
@@ -446,7 +518,7 @@
             @endphp
 
             <h3 class="section-title">Price Calculation</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 16px; margin-top: 10px;">
                 <thead>
                     <tr style="background-color: #f3f4f6;">
                         <th style="border: 1px solid #d1d5db; padding: 8px; text-align: left;">Keterangan</th>
@@ -520,10 +592,12 @@
             <tr>
                 {{-- Kolom Kiri: Approval By --}}
                 <td style="width: 48%; text-align: center; vertical-align: top; padding: 0;">
-                    <p style="margin-bottom: 50px;"><strong>Approval By:</strong></p>
+                    <p style="margin-bottom: 70px;"><strong>Approval By:</strong></p>
                     <br>
-                    <div style="border-top: 1px solid #000; margin: 0 20px;"></div>
-                    <p style="margin-top: 5px; font-size: 8pt;">Rama Dhona Utama</p>
+                    <br>
+                    <p style="margin-top: 2px; margin-bottom: 1.5px; font-size: 8pt;">{{ $company?->owner_name ?? 'Nama Owner' }}</p>
+                    <div style="border-top: 1px solid #000; width: 70%; margin: 2px auto 0;"></div>
+                    <p style="margin-top: 2px; font-size: 8pt;">{{ $company?->jabatan_owner ?? 'Jabatan Jawaban Owner' }}</p>
                 </td>
 
                 {{-- Spasi antara kolom --}}
@@ -531,10 +605,14 @@
 
                 {{-- Kolom Kanan: Prepared By --}}
                 <td style="width: 48%; text-align: center; vertical-align: top; padding: 0;">
-                    <p style="margin-bottom: 50px;"><strong>Prepared By:</strong></p>
+                    <p style="margin-bottom: 70px;"><strong>Prepared By:</strong></p>
                     <br>
-                    <div style="border-top: 1px solid #000; margin: 0 20px;"></div>
-                    <p style="margin-top: 5px; font-size: 8pt;">Account Manager</p>
+                    <br>
+                    <p style="margin-top: 2px; margin-bottom: 1.5px; font-size: 8pt;">
+                        {{ $product->lastEditedBy?->name ?? auth()->user()->name ?? 'System' }}
+                    </p>
+                    <div style="border-top: 1px solid #000; width: 70%; margin: 2px auto 0;"></div>
+                    <p style="margin-top: 2px; font-size: 8pt;">Account Manager</p>
                 </td>
             </tr>
         </table>

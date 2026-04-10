@@ -87,41 +87,6 @@
             font-weight: 600 !important;
         }
 
-        /* Marquee styles */
-        .marquee-container {
-            width: 100%;
-            overflow: hidden;
-            /* background: #2d7cfe; */
-            /* Theme color */
-            color: #ffffff;
-            padding: 8px 0;
-            margin-bottom: 20px;
-        }
-
-        .marquee-content {
-            display: inline-block;
-            white-space: nowrap;
-            padding-left: 100%;
-            animation: marquee 20s linear infinite;
-        }
-
-        .marquee-content p {
-            display: inline-block;
-            margin: 0;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        @keyframes marquee {
-            0% {
-                transform: translate(0, 0);
-            }
-
-            100% {
-                transform: translate(-100%, 0);
-            }
-        }
-
         /* Fix for excessive spacing in description lists/paragraphs */
         .invoice-table td p,
         .invoice-table td ul,
@@ -159,6 +124,13 @@
         /* Ensure list markers (dots/numbers) are also black */
         .invoice-table td li::marker {
             color: #000000 !important;
+        }
+
+        .themeholy-header address {
+            max-width: 100%;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         /* Print/PDF-specific rules */
@@ -336,10 +308,10 @@ Invoice Area
                                         <header class="themeholy-header header-layout1">
                                             <div class="row align-items-center gx-0">
                                                 <div class="col-12">
-                                                    <div class="d-flex align-items-center justify-content-between"
-                                                        style="border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+                                                    <div class="d-flex align-items-start justify-content-between"
+                                                        style="border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 20px; gap: 12px;">
 
-                                                        <div style="text-align: left; border: none !important;">
+                                                        <div style="text-align: left; border: none !important; min-width: 0; flex: 1 1 auto;">
                                                             @php
                                                                 $company = $company ?? \App\Models\Company::first();
 
@@ -358,7 +330,7 @@ Invoice Area
                                                                     : '';
                                                             @endphp
                                                             <b>Office Information :</b>
-                                                            <address>
+                                                            <address style="white-space: normal; overflow-wrap: anywhere; word-break: break-word;">
                                                                 {{ $company->company_name ?? ($companyName ?? config('app.name')) }}<br>
                                                                 {{ $company->address ?? 'Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kecamatan Kemuning, Kota Palembang, Sumatera Selatan 30137' }}
                                                                 |
@@ -367,13 +339,13 @@ Invoice Area
                                                         </div>
 
                                                         <div class="header-logo"
-                                                            style="max-height: 100px; text-align: left;">
+                                                            style="max-height: 100px; text-align: right; flex: 0 0 auto; margin-left: auto;">
                                                             @if ($logoSrc)
                                                                 <a href="{{ route('filament.admin.auth.login') }}"
                                                                     class="cta-button">
                                                                     <img src="{{ $logoSrc }}" alt="Logo Perusahaan"
                                                                         class="company-logo"
-                                                                        style="max-height: 100px; width: auto;">
+                                                                        style="display: block; max-height: 100px; width: auto; margin-left: auto;">
                                                                 </a>
                                                             @endif
                                                         </div>
@@ -673,21 +645,6 @@ Invoice Area
                                                 </tbody>
                                             </table>
                                         </div>
-
-                                        {{-- Note Section was here, moved it up before Pengurangan table --}}
-                                        <div class="invoice-note col-public-price"
-                                            style="margin-top: 20px; margin-bottom: 20px;">
-                                            <div class="marquee-container no-print">
-                                                <div class="marquee-content">
-                                                    <p>Pastikan ACCOUNT MANAGER memeriksa kembali detail item, profit &
-                                                        loss sebelum
-                                                        mencetak proposal.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Running Text Example -->
-
 
                                         {{-- Signature Section --}}
                                         <div class="signature-area"

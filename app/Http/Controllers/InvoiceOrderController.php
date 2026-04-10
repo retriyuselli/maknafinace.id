@@ -100,7 +100,7 @@ class InvoiceOrderController extends Controller
         $pdf->setPaper('a4', 'portrait');
         $pdf->setOptions([
             'dpi' => 150,
-            'defaultFont' => 'sans-serif',
+            'defaultFont' => 'Poppins',
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => true,
             'isPhpEnabled' => true,

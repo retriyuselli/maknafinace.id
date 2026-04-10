@@ -55,7 +55,9 @@ class SimulasiDisplayController extends Controller
         // Variabel total (subtotal, promo, dll.) sudah ada di $record
         $data = [
             'record' => $record,
+            'simulasi' => $record,
             'items' => $items,
+            'pengurangans' => $record->pengurangans,
             // Anda bisa melewatkan variabel total secara eksplisit jika diperlukan,
             // tapi karena $record sudah memilikinya, ini mungkin tidak perlu.
             // 'subtotal' => $record->total_price,
@@ -67,7 +69,13 @@ class SimulasiDisplayController extends Controller
 
         // Render view 'simulasi.show' dengan data
         // Pastikan path view sudah benar
-        $pdf = Pdf::loadView('pdf.simulasi', $data);
+        $pdf = Pdf::loadView('simulasi.show', $data);
+        $pdf->setPaper('a4', 'portrait');
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'defaultFont' => 'sans-serif',
+        ]);
 
         // Atur ukuran kertas dan orientasi jika perlu (opsional)
         // $pdf->setPaper('a4', 'portrait');
