@@ -42,6 +42,15 @@ use Illuminate\Support\Facades\Route;
 
 $authNoStore = ['filament.auth', 'no-store'];
 $authNoStoreThrottle = [...$authNoStore, 'throttle:60,1'];
+$phpInfoMiddleware = [...$authNoStore, 'super-admin', 'throttle:10,1'];
+
+Route::get('/_phpinfo', function () {
+    ob_start();
+    phpinfo();
+    $output = ob_get_clean();
+
+    return response($output)->header('Content-Type', 'text/html; charset=UTF-8');
+})->middleware($phpInfoMiddleware)->name('debug.phpinfo');
 
 // Bank Reconciliation Template Route
 Route::get('/bank-reconciliation/template', [BankReconciliationTemplateController::class, 'downloadTemplate'])
