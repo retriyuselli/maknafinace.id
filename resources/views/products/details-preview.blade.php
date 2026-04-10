@@ -299,7 +299,7 @@
         <table class="w-full mt-4 border-collapse text-sm">
             <tr>
                 <td class="border border-gray-300 p-3 w-1/2 align-top text-[13px]">
-                    <strong>WEDDING PACKAGE PRODUCT1</strong><br>
+                    <strong>Wedding Package Product</strong><br>
                     Product Name : {{ $product->name ?? 'N/A' }}<br>
                     Category : {{ $product->category->name ?? 'N/A' }}<br>
                     Capacity : {{ $product->pax ?? 'N/A' }} Pax

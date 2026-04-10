@@ -34,6 +34,33 @@
                 <div class="font-semibold text-gray-900">{{ $company->website ?? '-' }}</div>
             </div>
             <div>
+                <div class="text-xs text-gray-500">Logo</div>
+                @if ($company->logo_url && \Illuminate\Support\Facades\Storage::disk('public')->exists($company->logo_url))
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($company->logo_url) }}"
+                        alt="Logo" class="h-10 w-auto mt-1 rounded border border-gray-200 bg-white">
+                @else
+                    <div class="font-semibold text-gray-900">-</div>
+                @endif
+            </div>
+            <div>
+                <div class="text-xs text-gray-500">Favicon</div>
+                @if ($company->favicon_url && \Illuminate\Support\Facades\Storage::disk('public')->exists($company->favicon_url))
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($company->favicon_url) }}"
+                        alt="Favicon" class="h-8 w-8 mt-1 rounded border border-gray-200 bg-white">
+                @else
+                    <div class="font-semibold text-gray-900">-</div>
+                @endif
+            </div>
+            <div class="md:col-span-2">
+                <div class="text-xs text-gray-500">Image Login</div>
+                @if ($company->image_login && \Illuminate\Support\Facades\Storage::disk('public')->exists($company->image_login))
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($company->image_login) }}"
+                        alt="Image Login" class="h-12 w-auto mt-1 rounded border border-gray-200 bg-white">
+                @else
+                    <div class="font-semibold text-gray-900">-</div>
+                @endif
+            </div>
+            <div>
                 <div class="text-xs text-gray-500">Updated</div>
                 <div class="font-semibold text-gray-900">{{ optional($company->updated_at)->diffForHumans() }}</div>
             </div>
@@ -41,4 +68,3 @@
     @endif
 </div>
 @endsection
-

@@ -14,23 +14,10 @@
     <!-- Mobile Specific Metas -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <!-- Favicons - Makna Kreatif Favicon -->
-    <link rel="apple-touch-icon" sizes="57x57" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="apple-touch-icon" sizes="60x60" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="apple-touch-icon" sizes="72x72" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="apple-touch-icon" sizes="76x76" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="apple-touch-icon" sizes="114x114" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="apple-touch-icon" sizes="120x120" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="apple-touch-icon" sizes="144x144" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="apple-touch-icon" sizes="152x152" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon_makna.png') }}">
-    <link rel="shortcut icon" href="{{ asset('images/favicon_makna.png') }}" type="image/png">
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="{{ asset('images/favicon_makna.png') }}">
+    @php($faviconUrl = url('/brand/favicon') . '?v=' . ($companyBrandVersion ?? 1))
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ $faviconUrl }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ $faviconUrl }}">
+    <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
     <meta name="theme-color" content="#ffffff">
 
     <!--==============================

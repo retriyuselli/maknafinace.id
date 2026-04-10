@@ -127,6 +127,21 @@ class AppServiceProvider extends ServiceProvider
 
             return asset('images/favicon_makna.png');
         }));
+
+        View::share('companyBrandVersion', Cache::remember('company_brand_version', 60, function () {
+            if (Schema::hasTable('companies')) {
+                $updatedAt = Company::query()->value('updated_at');
+                if ($updatedAt) {
+                    try {
+                        return (int) \Illuminate\Support\Carbon::parse($updatedAt)->timestamp;
+                    } catch (\Throwable $e) {
+                        return 1;
+                    }
+                }
+            }
+
+            return 1;
+        }));
         
         FilamentClearCache::addCommand('optimize:clear');
     }

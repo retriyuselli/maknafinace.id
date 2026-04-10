@@ -22,7 +22,6 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -33,12 +32,9 @@ class AdminPanelProvider extends PanelProvider
         if (Schema::hasTable('companies')) {
             $company = Company::query()->first();
         }
-        $brandLogo = $company && $company->logo_url
-            ? Storage::disk('public')->url($company->logo_url)
-            : asset('images/logomki.png');
-        $favicon = $company && $company->favicon_url
-            ? Storage::disk('public')->url($company->favicon_url)
-            : asset('images/favicon_makna.png');
+        $brandVersion = $company?->updated_at?->timestamp ?? 1;
+        $brandLogo = url('/brand/logo').'?v='.$brandVersion;
+        $favicon = url('/brand/favicon').'?v='.$brandVersion;
 
         return $panel
             ->globalSearch(position: GlobalSearchPosition::Topbar)
