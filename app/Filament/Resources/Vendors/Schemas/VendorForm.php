@@ -4,8 +4,10 @@ namespace App\Filament\Resources\Vendors\Schemas;
 
 use App\Models\Category;
 use App\Models\Vendor;
+use App\Models\User;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -20,6 +22,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class VendorForm
@@ -32,6 +35,10 @@ class VendorForm
                     ->tabs([
                         Tab::make('Informasi Dasar')
                             ->schema([
+                                Placeholder::make('vendor_locked_notice')
+                                    ->content('⚠️ Vendor ini sedang digunakan atau memiliki child vendor. Beberapa field dikunci untuk menjaga konsistensi data. Silahkan hubungi super_admin jika ingin melakukan perubahan.')
+                                    ->columnSpanFull()
+                                    ->visible(fn (?Vendor $record): bool => self::isLocked($record)),
                                 Grid::make()
                                     ->columns(3)
                                     ->schema([
@@ -40,7 +47,7 @@ class VendorForm
                                         TextInput::make('slug')
                                             ->default(null)
                                             ->disabled()
-                                            ->dehydrated(false),
+                                            ->dehydrated(),
                                         TextInput::make('phone')
                                             ->tel()
                                             ->required()
@@ -55,6 +62,7 @@ class VendorForm
                                             ->options(['vendor' => 'Vendor', 'product' => 'Product'])
                                             ->default('product')
                                             ->required()
+                                            ->disabled(fn (?Vendor $record): bool => self::isLocked($record))
                                             ->reactive()
                                             ->afterStateUpdated(function ($state, callable $set): void {
                                                 $value = is_object($state) && property_exists($state, 'value') ? $state->value : $state;
@@ -79,6 +87,7 @@ class VendorForm
                                             })
                                             ->searchable()
                                             ->preload()
+                                            ->disabled(fn (?Vendor $record): bool => self::isLocked($record))
                                             ->visible(function (Get $get): bool {
                                                 $status = $get('status');
                                                 $value = is_object($status) && property_exists($status, 'value') ? $status->value : $status;
@@ -90,6 +99,7 @@ class VendorForm
                                             ->searchable()
                                             ->preload()
                                             ->required()
+                                            ->disabled(fn (?Vendor $record): bool => self::isLocked($record))
                                             ->createOptionForm([
                                                 TextInput::make('name')
                                                     ->required()
@@ -107,6 +117,7 @@ class VendorForm
                                             ->label('Master')
                                             ->helperText('Tandai vendor ini sebagai data master')
                                             ->reactive()
+                                            ->disabled(fn (?Vendor $record): bool => self::isLocked($record))
                                             ->default(false),
                                         Toggle::make('is_published')
                                             ->required()
@@ -114,6 +125,7 @@ class VendorForm
                                         RichEditor::make('description')
                                             ->columnSpanFull()
                                             ->label('Description')
+                                            ->disabled(fn (?Vendor $record): bool => self::isLocked($record))
                                             ->disableToolbarButtons([
                                                 'attachFiles',
                                             ]),
@@ -131,14 +143,16 @@ class VendorForm
                                             ->mask(RawJs::make('$money($input)'))
                                             ->stripCharacters(',')
                                             ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
-                                            ->placeholder('0'),
+                                            ->placeholder('0')
+                                            ->disabled(fn (?Vendor $record): bool => self::isLocked($record)),
                                         TextInput::make('harga_vendor')
                                             ->default(0.0)
                                             ->prefix('Rp. ')
                                             ->mask(RawJs::make('$money($input)'))
                                             ->stripCharacters(',')
                                             ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
-                                            ->placeholder('0'),
+                                            ->placeholder('0')
+                                            ->disabled(fn (?Vendor $record): bool => self::isLocked($record)),
                                         TextInput::make('profit_amount')
                                             ->required()
                                             ->readOnly()
@@ -151,8 +165,17 @@ class VendorForm
                                         TextInput::make('profit_margin')
                                             ->required()
                                             ->numeric()
+                                            ->readOnly()
                                             ->prefix('%')
-                                            ->default(0.0),
+                                            ->default(0.0)
+                                            ->afterStateHydrated(function ($component, $state): void {
+                                                if ($state === null) {
+                                                    return;
+                                                }
+
+                                                $component->state(((float) $state) / 100);
+                                            })
+                                            ->dehydrateStateUsing(fn ($state): int => (int) round(((float) $state) * 100)),
                                         TextInput::make('stock')
                                             ->numeric()
                                             ->default(10),
@@ -399,12 +422,16 @@ class VendorForm
                                 TextInput::make('profit_margin')
                                     ->label('Profit Margin')
                                     ->readOnly()
-                                    ->prefix('Rp. ')
-                                    ->mask(RawJs::make('$money($input)'))
-                                    ->stripCharacters(',')
-                                    ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                     ->prefix('%')
-                                    ->default(0),
+                                    ->default(0)
+                                    ->afterStateHydrated(function ($component, $state): void {
+                                        if ($state === null) {
+                                            return;
+                                        }
+
+                                        $component->state(number_format(((float) $state) / 100, 2, '.', ''));
+                                    })
+                                    ->dehydrated(false),
 
                                 FileUpload::make('kontrak')
                                     ->label('Kontrak')
@@ -423,5 +450,19 @@ class VendorForm
                     ->hidden(fn (Get $get) => ! (bool) $get('is_master'))
                     ->columnSpanFull(),
             ]);
+    }
+
+    private static function isLocked(?Vendor $record): bool
+    {
+        if (! $record) {
+            return false;
+        }
+
+        $user = Auth::user();
+        if ($user instanceof User && $user->hasRole('super_admin')) {
+            return false;
+        }
+
+        return $record->usage_status === 'In Use' || $record->children()->exists();
     }
 }

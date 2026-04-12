@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Vendors\Pages;
 
 use App\Filament\Resources\Vendors\VendorResource;
+use App\Models\User;
 use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -12,6 +13,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -21,6 +23,36 @@ class EditVendor extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        $record = $this->getRecord();
+        $actor = Auth::user();
+        $isSuperAdmin = $actor instanceof User && $actor->hasRole('super_admin');
+        $locked = $record
+            && ($record->usage_status === 'In Use' || $record->children()->exists())
+            && ! $isSuperAdmin;
+        if ($locked) {
+            if (array_key_exists('status', $data)) {
+                $data['status'] = $record->getRawOriginal('status');
+            }
+            if (array_key_exists('parent_id', $data)) {
+                $data['parent_id'] = $record->getRawOriginal('parent_id');
+            }
+            if (array_key_exists('category_id', $data)) {
+                $data['category_id'] = $record->getRawOriginal('category_id');
+            }
+            if (array_key_exists('is_master', $data)) {
+                $data['is_master'] = (bool) $record->getRawOriginal('is_master');
+            }
+            if (array_key_exists('harga_publish', $data)) {
+                $data['harga_publish'] = (int) $record->getRawOriginal('harga_publish');
+            }
+            if (array_key_exists('harga_vendor', $data)) {
+                $data['harga_vendor'] = (int) $record->getRawOriginal('harga_vendor');
+            }
+            if (array_key_exists('description', $data)) {
+                $data['description'] = $record->getRawOriginal('description');
+            }
+        }
+
         if (empty($data['slug']) && ! empty($data['name'])) {
             $data['slug'] = Str::slug((string) $data['name']);
         }
@@ -75,7 +107,7 @@ class EditVendor extends EditRecord
                         return false;
                     }
 
-                    return $record->usage_status === 'Available';
+                    return $record->usage_status === 'Available' && ! $record->children()->exists();
                 })
                 ->before(function () {
                     $record = $this->getRecord();
@@ -135,11 +167,27 @@ class EditVendor extends EditRecord
                         if ($usageDetails['notaDinasCount'] > 0) {
                             $details[] = "{$usageDetails['notaDinasCount']} nota dinas detail(s)";
                         }
+                        if (($usageDetails['productPenambahanCount'] ?? 0) > 0) {
+                            $details[] = "{$usageDetails['productPenambahanCount']} product addition(s)";
+                        }
 
                         Notification::make()
                             ->danger()
                             ->title('Deletion Not Allowed')
                             ->body("Vendor '{$record->name}' cannot be deleted because it is being used in ".implode(' and ', $details).'. Please remove these associations first.')
+                            ->persistent()
+                            ->send();
+
+                        return false;
+                    }
+
+                    if ($record->children()->exists()) {
+                        $childCount = $record->children()->count();
+
+                        Notification::make()
+                            ->danger()
+                            ->title('Deletion Not Allowed')
+                            ->body("Vendor '{$record->name}' cannot be deleted because it has {$childCount} child vendor(s). Please reassign or delete the child vendor(s) first.")
                             ->persistent()
                             ->send();
 
@@ -218,10 +266,21 @@ class EditVendor extends EditRecord
                         return false;
                     }
 
-                    return $record->usage_status === 'In Use';
+                    return $record->usage_status === 'In Use' || $record->children()->exists();
                 })
                 ->action(function () {
                     $record = $this->getRecord();
+                    if (! $record) {
+                        Notification::make()
+                            ->danger()
+                            ->title('Error')
+                            ->body('Vendor data not found. Please refresh the page and try again.')
+                            ->persistent()
+                            ->send();
+
+                        return;
+                    }
+
                     $usageDetails = $record->usage_details;
 
                     $details = [];
@@ -234,11 +293,17 @@ class EditVendor extends EditRecord
                     if ($usageDetails['notaDinasCount'] > 0) {
                         $details[] = "{$usageDetails['notaDinasCount']} nota dinas detail(s)";
                     }
+                    if (($usageDetails['productPenambahanCount'] ?? 0) > 0) {
+                        $details[] = "{$usageDetails['productPenambahanCount']} product addition(s)";
+                    }
+                    if ($record->children()->exists()) {
+                        $details[] = $record->children()->count().' child vendor(s)';
+                    }
 
                     Notification::make()
                         ->warning()
                         ->title('Cannot Delete Vendor')
-                        ->body("'{$record->name}' cannot be deleted because it has associated ".implode(' and ', $details).'. Please remove these associations first.')
+                        ->body("'{$record->name}' cannot be deleted because it has associated ".implode(' and ', $details).'. Please resolve these dependencies first.')
                         ->persistent()
                         ->send();
                 }),

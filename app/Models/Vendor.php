@@ -64,7 +64,8 @@ class Vendor extends Model
             $hv = (float) ($vendor->harga_vendor ?? 0);
             $vendor->calculateProfitAmount();
             $profit = (float) ($vendor->profit_amount ?? 0);
-            $vendor->profit_margin = $hp > 0 ? round(($profit / $hp) * 100, 2) : 0;
+            $marginPercent = $hp > 0 ? ($profit / $hp) * 100 : 0;
+            $vendor->profit_margin = (int) round($marginPercent * 100);
         });
     }
 

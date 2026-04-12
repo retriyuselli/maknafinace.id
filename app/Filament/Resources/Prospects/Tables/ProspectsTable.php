@@ -231,6 +231,37 @@ class ProspectsTable
 
                         return $indicators;
                     }),
+
+                Filter::make('created_at')
+                    ->label('Tanggal Dibuat')
+                    ->schema([
+                        \Filament\Forms\Components\DatePicker::make('from_date')
+                            ->label('Dari Tanggal'),
+                        \Filament\Forms\Components\DatePicker::make('until_date')
+                            ->label('Sampai Tanggal'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from_date'] ?? null,
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['until_date'] ?? null,
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['from_date'] ?? null) {
+                            $indicators['from'] = 'Dibuat dari '.Carbon::parse($data['from_date'])->toFormattedDateString();
+                        }
+                        if ($data['until_date'] ?? null) {
+                            $indicators['until'] = 'Dibuat sampai '.Carbon::parse($data['until_date'])->toFormattedDateString();
+                        }
+
+                        return $indicators;
+                    }),
             ])
             ->recordActions([
                 ActionGroup::make([

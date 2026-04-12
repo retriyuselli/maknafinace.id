@@ -126,9 +126,9 @@ class VendorsTable
 
                 TextColumn::make('profit_margin')
                     ->label('Margin')
-                    ->numeric()
                     ->sortable()
-                    ->prefix('Rp. ')
+                    ->formatStateUsing(fn ($state): string => $state === null ? '-' : number_format(((float) $state) / 100, 2, '.', ','))
+                    ->suffix('%')
                     ->alignment('end')
                     ->toggleable(isToggledHiddenByDefault: true),
 

@@ -38,7 +38,8 @@ class VendorPriceHistory extends Model
             $hv = (float) ($history->harga_vendor ?? 0);
             $profit = $hp - $hv;
             $history->profit_amount = $profit;
-            $history->profit_margin = $hp > 0 ? round(($profit / $hp) * 100, 2) : 0;
+            $marginPercent = $hp > 0 ? ($profit / $hp) * 100 : 0;
+            $history->profit_margin = (int) round($marginPercent * 100);
 
             // Ensure only one 'active' status per vendor (block save if more than one)
             if (Schema::hasColumn('vendor_price_histories', 'status')) {
@@ -63,11 +64,12 @@ class VendorPriceHistory extends Model
             $hp = (float) ($history->harga_publish ?? 0);
             $hv = (float) ($history->harga_vendor ?? 0);
             $profit = $hp - $hv;
-            $margin = $hp > 0 ? round(($profit / $hp) * 100, 2) : 0;
+            $marginPercent = $hp > 0 ? ($profit / $hp) * 100 : 0;
+            $margin = (int) round($marginPercent * 100);
 
             $needsUpdate = ($history->profit_amount === null) || ($history->profit_margin === null) ||
                 ((float) $history->profit_amount !== (float) $profit) ||
-                ((float) $history->profit_margin !== (float) $margin);
+                ((int) $history->profit_margin !== (int) $margin);
 
             if ($needsUpdate) {
                 $history->profit_amount = $profit;

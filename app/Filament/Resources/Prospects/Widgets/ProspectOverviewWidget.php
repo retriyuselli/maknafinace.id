@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Prospects\Widgets;
 
+use App\Filament\Resources\Prospects\ProspectResource;
 use App\Models\Prospect;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -23,6 +24,10 @@ class ProspectOverviewWidget extends BaseWidget
             ->count();
 
         $todayProspects = Prospect::whereDate('created_at', Carbon::today())->count();
+        $monthStart = Carbon::now()->startOfMonth()->toDateString();
+        $monthEnd = Carbon::now()->endOfMonth()->toDateString();
+        $weekStartDate = Carbon::now()->startOfWeek()->toDateString();
+        $weekEndDate = Carbon::now()->endOfWeek()->toDateString();
 
         return [
             Stat::make('Dengan Order', $withOrders)
@@ -31,11 +36,27 @@ class ProspectOverviewWidget extends BaseWidget
 
             Stat::make('Prospek Bulan Ini', $monthProspects)
                 ->icon('heroicon-o-users')
-                ->color('primary'),
+                ->color('primary')
+                ->url(ProspectResource::getUrl('index', [
+                    'tableFilters' => [
+                        'created_at' => [
+                            'from_date' => $monthStart,
+                            'until_date' => $monthEnd,
+                        ],
+                    ],
+                ])),
 
             Stat::make('Prospek Minggu Ini', $weekProspects)
                 ->icon('heroicon-o-calendar')
-                ->color('primary'),
+                ->color('primary')
+                ->url(ProspectResource::getUrl('index', [
+                    'tableFilters' => [
+                        'created_at' => [
+                            'from_date' => $weekStartDate,
+                            'until_date' => $weekEndDate,
+                        ],
+                    ],
+                ])),
 
             Stat::make('Prospek Hari Ini', $todayProspects)
                 ->icon('heroicon-o-clock')
