@@ -15,141 +15,31 @@ JS Index End
 
     /*----------- 01. Print and Download Button ----------*/
     // Using html2pdf.js for high-quality text-based PDF output
-    $("#download_btn").on("click", function () {
-        var downloadSection = document.getElementById("download_section");
-        // Select elements to hide for PDF generation - be more specific
-        var mainTableVendorCols = $(downloadSection).find(
-            ".invoice-table:not(.addition-table):not(.reduction-table) .col-vendor-price"
-        );
-        var mainTablePublicCols = $(downloadSection).find(
-            ".invoice-table:not(.addition-table):not(.reduction-table) .col-public-price"
-        );
-        var totalTablePublicCols = $(downloadSection).find(
-            ".total-table .col-public-price"
-        );
-        var additionVendorCols = $(downloadSection).find(
-            ".addition-table .col-vendor-price"
-        );
-
-        // Ambil nama event dari atribut data
-        var eventName = downloadSection.dataset.eventName;
-        var finalFilename;
-
-        if (eventName && eventName.trim() !== "") {
-            // Sanitasi nama event untuk nama file: ganti spasi dengan underscore dan hapus karakter yang tidak valid
-            // Memperbolehkan alfanumerik, underscore, tanda hubung, dan titik.
-            var sanitizedEventName = eventName
-                .trim()
-                .replace(/\s+/g, "_")
-                .replace(/[^\w.-]/g, "");
-            finalFilename = sanitizedEventName + "-penawaran.pdf";
-        } else {
-            finalFilename = "penawaran-event.pdf"; // Nama file default jika eventName tidak ada
+    $("#download_btn")
+        .off("click.simulasiDownload")
+        .on("click.simulasiDownload", function (e) {
+        e.preventDefault();
+        if (this.dataset.busy === "1") {
+            return;
         }
-
-        var opt = {
-            margin: [50, 30, 20, 30], // top, left, bottom, right
-            filename: finalFilename, // Menggunakan nama file dinamis
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                scrollY: 0,
-                windowWidth: document.body.scrollWidth,
-            },
-            pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-            jsPDF: { unit: "pt", format: "a4", orientation: "portrait" },
-        };
-
-        // Hide columns before generating PDF
-        mainTableVendorCols.hide();
-        mainTablePublicCols.hide();
-        totalTablePublicCols.hide();
-        additionVendorCols.hide();
-
-        var style = document.createElement("style");
-        style.innerHTML = `
-@media print {
-    body, * {
-        font-family: 'Noto Sans', sans-serif !important;
-        font-size: 10px !important;
-        line-height: 1.3 !important;
-        color: #000 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-    
-    .no-print, .invoice-buttons {
-        display: none !important;
-    }
-    
-    .col-vendor-price, .col-public-price {
-        display: none !important;
-    }
-    
-    .invoice-table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        margin-bottom: 15px !important;
-    }
-    
-    .invoice-table th, .invoice-table td {
-        border: 1px solid #ddd !important;
-        padding: 8px !important;
-        text-align: left !important;
-    }
-    
-    .invoice-table th {
-        background-color: #f8f9fa !important;
-        font-weight: bold !important;
-        text-transform: uppercase !important;
-    }
-    
-    .total-table th, .total-table td {
-        border: 1px solid #ddd !important;
-        padding: 6px 8px !important;
-    }
-    
-    .addition-row {
-        background-color: #f8f9fa !important;
-    }
-    
-    .addition-amount {
-        color: #28a745 !important;
-        font-weight: 600 !important;
-    }
-    
-    .reduction-amount {
-        color: #dc3545 !important;
-        font-weight: 600 !important;
-    }
-    
-    .signature-area {
-        page-break-inside: avoid !important;
-        margin-top: 40px !important;
-    }
-}
-`;
-        downloadSection.appendChild(style);
-        html2pdf()
-            .set(opt)
-            .from(downloadSection)
-            .save()
-            .then(function () {
-                mainTableVendorCols.show();
-                mainTablePublicCols.show();
-                totalTablePublicCols.show();
-                additionVendorCols.show();
-                style.remove();
-            })
-            .catch(function (error) {
-                mainTableVendorCols.show();
-                mainTablePublicCols.show();
-                totalTablePublicCols.show();
-                additionVendorCols.show();
-                style.remove();
-                console.error("Error generating PDF:", error);
-            });
+        this.dataset.busy = "1";
+        var downloadSection = document.getElementById("download_section");
+        if (!downloadSection) {
+            this.dataset.busy = "0";
+            return;
+        }
+        var pdfUrl = downloadSection.dataset.pdfUrl;
+        if (!pdfUrl) {
+            this.dataset.busy = "0";
+            return;
+        }
+        var url = new URL(pdfUrl, window.location.origin);
+        url.searchParams.set("download", "1");
+        window.location.href = url.toString();
+        var btn = this;
+        setTimeout(function () {
+            btn.dataset.busy = "0";
+        }, 1200);
     });
 
     // Print Html Document with enhanced functionality

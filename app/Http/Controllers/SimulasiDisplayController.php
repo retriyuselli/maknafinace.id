@@ -35,12 +35,17 @@ class SimulasiDisplayController extends Controller
             'simulasi' => $record,
             'items' => $items,
             'pengurangans' => $record->pengurangans,
+            'pdfMode' => false,
         ]);
     }
 
     public function downloadPdf(SimulasiProduk $record) // Menggunakan Route Model Binding
     {
         Gate::authorize('view', $record);
+
+        @set_time_limit(180);
+        @ini_set('max_execution_time', '180');
+        @ini_set('memory_limit', '512M');
 
         // Ambil item-item dari produk dasar jika ada
         $items = collect();
@@ -58,6 +63,7 @@ class SimulasiDisplayController extends Controller
             'simulasi' => $record,
             'items' => $items,
             'pengurangans' => $record->pengurangans,
+            'pdfMode' => true,
             // Anda bisa melewatkan variabel total secara eksplisit jika diperlukan,
             // tapi karena $record sudah memilikinya, ini mungkin tidak perlu.
             // 'subtotal' => $record->total_price,
@@ -67,14 +73,13 @@ class SimulasiDisplayController extends Controller
             // 'grand_total' => $record->grand_total,
         ];
 
-        // Render view 'simulasi.show' dengan data
-        // Pastikan path view sudah benar
-        $pdf = Pdf::loadView('simulasi.show', $data);
+        $pdf = Pdf::loadView('pdf.draft_simulasi', $data);
         $pdf->setPaper('a4', 'portrait');
         $pdf->setOptions([
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-            'defaultFont' => 'sans-serif',
+            'isRemoteEnabled' => false,
+            'defaultFont' => 'DejaVu Sans',
+            'isFontSubsettingEnabled' => true,
         ]);
 
         // Atur ukuran kertas dan orientasi jika perlu (opsional)
@@ -83,11 +88,7 @@ class SimulasiDisplayController extends Controller
         // Buat nama file PDF yang dinamis
         $fileName = 'simulasi_penawaran_'.$record->slug.'_'.now()->format('Ymd').'.pdf';
 
-        // Download PDF
         return $pdf->download($fileName);
-
-        // Atau jika ingin menampilkan di browser terlebih dahulu (inline)
-        // return $pdf->stream($fileName);
     }
 
     public function draftKontrak(SimulasiProduk $record)
