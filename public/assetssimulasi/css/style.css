@@ -1255,10 +1255,60 @@ hr.style1 {
   top: -50px;
   background-color: var(--white-color);
   box-shadow: 0px 0px 15px rgba(119, 119, 119, 0.25);
-  border-radius: 10px;
+  border-radius: 0px;
   max-width: 129px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.invoice-buttons--single {
+  max-width: none;
+  top: 0;
+  padding: 0;
+  background-color: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.invoice-buttons.invoice-buttons--single a,
+.invoice-buttons.invoice-buttons--single button {
+  width: auto !important;
+  height: auto !important;
+  line-height: normal !important;
+  text-align: left !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 8px 10px !important;
+  border: 1px solid #d1d5db !important;
+  background-color: #ffffff !important;
+  color: #1d4ed8 !important;
+  border-radius: 10px !important;
+}
+
+.invoice-buttons.invoice-buttons--single .download_btn {
+  background-color: #ffffff !important;
+  border-radius: 10px !important;
+}
+
+.invoice-buttons.invoice-buttons--single .download_btn:hover,
+.invoice-buttons.invoice-buttons--single button:hover,
+.invoice-buttons.invoice-buttons--single a:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.invoice-buttons.invoice-buttons--single button svg path,
+.invoice-buttons.invoice-buttons--single a svg path,
+.invoice-buttons.invoice-buttons--single button:hover svg path,
+.invoice-buttons.invoice-buttons--single a:hover svg path {
+  fill: currentColor !important;
+}
+
+.invoice-buttons.invoice-buttons--single .download_btn_label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .invoice-buttons a,

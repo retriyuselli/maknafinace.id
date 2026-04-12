@@ -8,7 +8,7 @@
     <title>Simulasi Penawaran</title>
     <style>
         @page {
-            margin: 110pt 35pt 18pt 40pt;
+            margin: 110pt 35pt 18pt 60pt;
             size: A4 portrait;
         }
 
@@ -106,10 +106,17 @@
 
         .invoice-table th,
         .invoice-table td {
-            border: 1px solid #ddd;
+            border: 0.8pt solid #ddd;
             padding: 6pt;
             text-align: left;
             vertical-align: top;
+        }
+
+        .invoice-table {
+            border: 0.8pt solid #ddd;
+            border-collapse: collapse;
+            border-spacing: 0;
+            table-layout: fixed;
         }
 
         .invoice-table tr {
@@ -295,7 +302,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="2">Tidak ada item spesifik yang terdaftar untuk produk ini.</td>
+                    <td>Tidak ada item spesifik yang terdaftar untuk produk ini.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -307,7 +314,6 @@
             <thead>
                 <tr>
                     <th>Description</th>
-                    <th class="amount">Vendor</th>
                     <th class="amount">Publish</th>
                 </tr>
             </thead>
@@ -320,7 +326,6 @@
                                 <div class="item-desc">{!! $penambahan_item->description !!}</div>
                             @endif
                         </td>
-                        <td class="amount addition-amount">{{ number_format($penambahan_item->harga_vendor ?? 0, 0, ',', '.') }}</td>
                         <td class="amount addition-amount">{{ number_format($penambahan_item->harga_publish ?? 0, 0, ',', '.') }}</td>
                     </tr>
                 @endforeach

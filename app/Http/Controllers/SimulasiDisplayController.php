@@ -88,7 +88,7 @@ class SimulasiDisplayController extends Controller
         // Buat nama file PDF yang dinamis
         $fileName = 'simulasi_penawaran_'.$record->slug.'_'.now()->format('Ymd').'.pdf';
 
-        return $pdf->download($fileName);
+        return $pdf->stream($fileName);
     }
 
     public function draftKontrak(SimulasiProduk $record)
