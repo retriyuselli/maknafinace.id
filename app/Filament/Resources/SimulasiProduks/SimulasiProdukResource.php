@@ -78,6 +78,7 @@ class SimulasiProdukResource extends Resource
         return parent::getEloquentQuery()
             ->with([
                 'prospect:id,name_event',
+                'prospect.latestOrder',
                 'product:id,name,price,product_price',
                 'user:id,name',
             ]);
