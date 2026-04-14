@@ -31,6 +31,7 @@ class Product extends Model
         'penambahan_publish',
         'penambahan_vendor',
         'last_edited_by_id',
+        'free_pengurangan',
         'parent_id',
     ];
 

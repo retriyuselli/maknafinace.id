@@ -21,7 +21,7 @@ class RedirectUnauthenticatedToAppUrl
 
             $appUrl = config('app.url') ?: url('/');
 
-            return redirect()->to($appUrl);
+            return response()->redirectTo($appUrl);
         }
 
         return $next($request);

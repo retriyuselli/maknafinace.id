@@ -5,6 +5,9 @@ namespace App\Filament\Resources\Prospects;
 use App\Filament\Resources\Prospects\Pages\CreateProspect;
 use App\Filament\Resources\Prospects\Pages\EditProspect;
 use App\Filament\Resources\Prospects\Pages\ListProspects;
+use App\Filament\Resources\Prospects\Pages\ProspectsThisMonth;
+use App\Filament\Resources\Prospects\Pages\ProspectsThisWeek;
+use App\Filament\Resources\Prospects\Pages\ViewProspect;
 use App\Filament\Resources\Prospects\Schemas\ProspectForm;
 use App\Filament\Resources\Prospects\Tables\ProspectsTable;
 use App\Models\Prospect;
@@ -50,6 +53,9 @@ class ProspectResource extends Resource
             'index' => ListProspects::route('/'),
             'create' => CreateProspect::route('/create'),
             'edit' => EditProspect::route('/{record}/edit'),
+            'view' => ViewProspect::route('/view'),
+            'this-month' => ProspectsThisMonth::route('/bulan-ini'),
+            'this-week' => ProspectsThisWeek::route('/minggu-ini'),
         ];
     }
 

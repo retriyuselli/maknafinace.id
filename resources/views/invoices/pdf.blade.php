@@ -1,18 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-@php
-    $paymentDetails = 'Please contact us for payment details.';
-    if (isset($company) && $company && $company->paymentMethod) {
-        $paymentDetails =
-            $company->paymentMethod->no_rekening .
-            ' ' .
-            $company->paymentMethod->bank_name .
-            ' (' .
-            $company->paymentMethod->name .
-            ')';
-    }
-@endphp
-
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,45 +11,10 @@
             /* top, right, bottom, left */
         }
 
-        @font-face {
-            font-family: 'Poppins';
-            font-style: normal;
-            font-weight: 400;
-            src: url('{{ storage_path('fonts/Poppins-Regular.ttf') }}') format('truetype');
-        }
-
-        @font-face {
-            font-family: 'Poppins';
-            font-style: normal;
-            font-weight: 500;
-            src: url('{{ storage_path('fonts/Poppins-Medium.ttf') }}') format('truetype');
-        }
-
-        @font-face {
-            font-family: 'Poppins';
-            font-style: normal;
-            font-weight: 600;
-            src: url('{{ storage_path('fonts/Poppins-SemiBold.ttf') }}') format('truetype');
-        }
-
-        @font-face {
-            font-family: 'Poppins';
-            font-style: normal;
-            font-weight: 700;
-            src: url('{{ storage_path('fonts/Poppins-Bold.ttf') }}') format('truetype');
-        }
-
-        /* Universal Poppins Font Application */
-        *,
-        *::before,
-        *::after {
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
-        }
-
         body {
             color: #000000;
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            font-size: 18px;
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 12px;
             font-weight: 400;
             line-height: 1;
             margin: 0;
@@ -79,7 +31,7 @@
             top: -160px;
             left: 0px;
             right: 0px;
-            height: 150px;
+            height: 100px;
             border-bottom: 1px solid #ddd;
             margin-bottom: 5px;
             padding-bottom: 5px;
@@ -115,19 +67,20 @@
         }
 
         header img {
-            max-height: 50px;
+            max-height: 30px;
+            max-width: 180px;
             width: auto;
             vertical-align: middle;
         }
 
         header h2 {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             margin: 0;
         }
 
         header p {
-            font-size: 13px;
+            font-size: 14px;
             margin: 0;
         }
 
@@ -157,18 +110,18 @@
 
         /* Invoice Title */
         .invoice-title {
-            margin: 5px 0;
+            margin: -30px 0 5px 0;
             text-align: center;
         }
 
         .invoice-title h1 {
-            font-size: 25px;
+            font-size: 24px;
             margin-bottom: 0;
             text-transform: uppercase;
         }
 
         .invoice-title h4 {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: normal;
             margin-top: 0;
         }
@@ -182,7 +135,7 @@
         }
 
         .invoice-details address {
-            font-size: 16px;
+            font-size: 12px;
             font-style: normal;
             line-height: 1;
         }
@@ -221,7 +174,7 @@
             border-right: 1px solid #cfd8dc;
             /* Light vertical separator */
             text-transform: uppercase;
-            font-size: 16px;
+            font-size: 12px;
             letter-spacing: 0.5px;
             vertical-align: middle;
         }
@@ -239,7 +192,7 @@
             border-right: 1px solid #cfd8dc;
             /* Light vertical separator */
             vertical-align: top;
-            font-size: 16px;
+            font-size: 12px;
             color: #000000;
             /* Slightly softer text color */
         }
@@ -264,7 +217,7 @@
 
         /* Vendor Items Table */
         .vendor-item {
-            font-size: 16px;
+            font-size: 12px;
             margin-bottom: 5px;
         }
 
@@ -314,7 +267,7 @@
         }
 
         .sub-section-title {
-            font-size: 1.1em;
+            font-size: 12px;
             margin-bottom: 10px;
             border-bottom: 1px solid #ddd;
             padding-bottom: 5px;
@@ -324,7 +277,7 @@
         /* Footer */
         .footer {
             border-top: 1px solid #ddd;
-            font-size: 16px;
+            font-size: 12px;
             margin-top: 10px;
             padding-top: 20px;
             page-break-inside: auto;
@@ -354,12 +307,12 @@
         }
 
         .small {
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .info-description {
             color: #000000;
-            font-size: 16px;
+            font-size: 12px;
             line-height: 1;
             margin-top: 0;
             white-space: normal;
@@ -367,7 +320,7 @@
 
         .vendor-description {
             color: #000000;
-            font-size: 16px;
+            font-size: 12px;
             line-height: 1;
             margin-top: 0;
             white-space: normal;
@@ -383,7 +336,7 @@
         .badge {
             border-radius: .25rem;
             display: inline-block;
-            font-size: 75%;
+            font-size: 12px;
             font-weight: 700;
             line-height: 1;
             padding: .25em .4em;
@@ -515,33 +468,17 @@
     <header>
         <table class="header-table">
             <tr>
-                <td style="line-height: 1;">
+                <td style="line-height: 1.2; font-size: 13px;">
                     <div>
                         <b>{{ $company->company_name ?? ($companyName ?? config('app.name')) }}</b><br>
                         {{ $company->address ?? 'Jln. Sintraman Jaya, No. 2148, Sekip Jaya, Palembang' }}<br>
                         {{ $company->phone ?? '+62 822-9796-2600' }} | {{ $company->email ?? 'maknawedding@gmail.com' }}
                     </div>
                 </td>
-                <td style="width: 60%; height: auto; text-align: right; vertical-align: middle;">
-                    {{-- Embed image using Base64 for reliable PDF rendering --}}
-                    @php
-                        $logoPath =
-                            $company && $company->logo_url
-                                ? \Illuminate\Support\Facades\Storage::disk('public')->path($company->logo_url)
-                                : public_path(config('invoice.logo', 'images/logo.png'));
-
-                        if (file_exists($logoPath)) {
-                            $logoType = pathinfo($logoPath, PATHINFO_EXTENSION);
-                            $logoData = file_get_contents($logoPath);
-                            $logoBase64 = 'data:image/' . $logoType . ';base64,' . base64_encode($logoData);
-                        } else {
-                            $logoBase64 = ''; /* Handle missing logo */
-                        }
-                    @endphp
-                    @if ($logoBase64)
+                <td style="width: auto; height: 35px; text-align: right; vertical-align: middle;">
+                    @if (! empty($logoBase64))
                         <img src="{{ $logoBase64 }}" alt="Company Logo">
                     @else
-                        {{-- Optional: Display text or placeholder if logo is missing --}}
                         <span>Logo</span>
                     @endif
                 </td>
@@ -565,7 +502,7 @@
         <tr>
             <td style="width: 60%;">
                 <div class="bold">Billed To :</div>
-                <table style="width: 100%; font-size: 15px; line-height: 1;">
+                <table style="width: 100%; font-size: 12px; line-height: 1;">
                     <tr>
                         <td style="width: 130px; vertical-align: top; padding: 2px 0;">Event</td>
                         <td style="width: 10px; vertical-align: top; padding: 2px 0;">:</td>
@@ -598,7 +535,7 @@
             </td>
             <td style="padding-left: 60px;">
                 <div class="bold">Invoice Information :</div>
-                <table style="width: 100%; font-size: 15px; line-height: 1;">
+                <table style="width: 100%; font-size: 12px; line-height: 1;">
                     <tr>
                         <td style="width: 120px; vertical-align: top; padding: 2px 0;">Invoice Date</td>
                         <td style="width: 10px; vertical-align: top; padding: 2px 0;">:</td>
@@ -637,20 +574,6 @@
         </tr>
     </table>
 
-    @php
-        // Hitung total penambahan harga dari semua produk dalam order
-        $totalAdditionAmount = 0;
-        if ($order->items && $order->items->count() > 0) {
-            foreach ($order->items as $orderItem) {
-                if ($orderItem->product && $orderItem->product->penambahanHarga) {
-                    $productAdditionPublish = $orderItem->product->penambahanHarga->sum('harga_publish');
-                    $quantity = $orderItem->quantity ?? 1;
-                    $totalAdditionAmount += $productAdditionPublish * $quantity;
-                }
-            }
-        }
-    @endphp
-
     <!-- Billing Summary Table -->
     <div class="billing-summary" style="margin-top: 30px;">
         <table class="bordered">
@@ -665,11 +588,11 @@
                     <td class="text-right">Rp {{ number_format($order->total_price, 0, ',', '.') }}</td>
                 </tr>
 
-                @if ($totalAdditionAmount > 0)
+                @if (($totalAdditionAmount ?? 0) > 0)
                     <tr>
                         <td>Total Penambahan dari Produk</td>
                         <td class="text-right addition-amount">+ Rp
-                            {{ number_format($totalAdditionAmount, 0, ',', '.') }}</td>
+                            {{ number_format((int) ($totalAdditionAmount ?? 0), 0, ',', '.') }}</td>
                     </tr>
                 @endif
 
@@ -712,31 +635,12 @@
     </div>
 
     <!-- Detail Penambahan per Produk dalam Order -->
-    @php
-        $allProductPenambahanHarga = collect();
-        if ($order->items && $order->items->count() > 0) {
-            foreach ($order->items as $orderItem) {
-                if (
-                    $orderItem->product &&
-                    $orderItem->product->penambahanHarga &&
-                    $orderItem->product->penambahanHarga->count() > 0
-                ) {
-                    foreach ($orderItem->product->penambahanHarga as $penambahan) {
-                        // Menambahkan nama produk ke objek penambahan untuk referensi
-                        $penambahan->product_name = $orderItem->product->name;
-                        $allProductPenambahanHarga->push($penambahan);
-                    }
-                }
-            }
-        }
-    @endphp
-
-    @if ($allProductPenambahanHarga->isNotEmpty())
+    @if (($allProductPenambahanHarga ?? collect())->isNotEmpty())
         <div class="section-container" style="margin-top: 20px;">
             <h3 class="sub-section-title"
-                style="font-size: 1em; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
+                style="font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
                 Rincian Item Penambahan Produk</h3>
-            <table class="bordered" style="font-size: 18px;">
+            <table class="bordered" style="font-size: 12px;">
                 <thead>
                     <tr>
                         <th style="width: 5%; text-align: center;">No</th>
@@ -745,13 +649,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($allProductPenambahanHarga as $index => $itemPenambahan)
+                    @foreach (($allProductPenambahanHarga ?? collect()) as $index => $itemPenambahan)
                         <tr>
                             <td style="text-align: center;">{{ $index + 1 }}</td>
                             <td>
                                 {{ $itemPenambahan->vendor->name ?? 'N/A' }}
                                 @if ($itemPenambahan->description)
-                                    <div class="notes-content" style="font-size: 15px; margin-left: 15px; color: #000000;">
+                                    <div class="notes-content" style="font-size: 12px; margin-left: 15px; color: #000000;">
                                         {!! strip_tags($itemPenambahan->description, '<li><strong><ul><li><br><span><div>') !!}
                                     </div>
                                 @endif
@@ -766,27 +670,12 @@
     @endif
 
     <!-- Detail Pengurangan per Produk dalam Order -->
-    @php
-        $allProductPengurangans = collect();
-        if ($order->items && $order->items->count() > 0) {
-            foreach ($order->items as $orderItem) {
-                if ($orderItem->product && $orderItem->product->pengurangans->count() > 0) {
-                    foreach ($orderItem->product->pengurangans as $pengurangan) {
-                        // Menambahkan nama produk ke objek pengurangan untuk referensi
-                        $pengurangan->product_name = $orderItem->product->name;
-                        $allProductPengurangans->push($pengurangan);
-                    }
-                }
-            }
-        }
-    @endphp
-
-    @if ($allProductPengurangans->isNotEmpty())
+    @if (($allProductPengurangans ?? collect())->isNotEmpty())
         <div class="section-container" style="margin-top: 20px;">
             <h3 class="sub-section-title"
-                style="font-size: 1em; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
+                style="font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
                 Rincian Item Pengurangan Produk</h3>
-            <table class="bordered" style="font-size: 18px;">
+            <table class="bordered" style="font-size: 12px;">
                 <thead>
                     <tr>
                         <th style="width: 5%; text-align: center;">No</th>
@@ -795,13 +684,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($allProductPengurangans as $index => $itemPengurangan)
+                    @foreach (($allProductPengurangans ?? collect()) as $index => $itemPengurangan)
                         <tr>
                             <td style="text-align: center;">{{ $index + 1 }}</td>
                             <td>
                                 {{ $itemPengurangan->description ?? 'N/A' }}
                                 @if ($itemPengurangan->notes)
-                                    <div class="notes-content" style="font-size: 15px; margin-left: 15px; color: #030303;">
+                                    <div class="notes-content" style="font-size: 12px; margin-left: 15px; color: #030303;">
                                         {!! strip_tags($itemPengurangan->notes, '<li><strong><ul><li><br><span><div><p>') !!}
                                     </div>
                                 @endif
@@ -850,7 +739,7 @@
             <td style="width: 65%; vertical-align: top;">
                 <div class="bold">Terms & Conditions</div>
                 <ul>
-                    <li>Silakan lakukan pembayaran melalui transfer bank ke rekening yang tertera. <br>{{ $paymentDetails }}</li>
+                    <li>Silakan lakukan pembayaran melalui transfer bank ke rekening yang tertera. <br>{{ $paymentDetails ?? 'Please contact us for payment details.' }}</li>
                     <li>Pembayaran diharapkan lunas dalam waktu {{ config('invoice.payment_days', 7) }} hari dari tanggal invoice.</li>
                     <li>Mohon lakukan pembayaran sesuai nominal yang tertera.</li>
                     <li>Setelah melakukan pembayaran, silakan kirim bukti pembayaran ke email kami.</li>

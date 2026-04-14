@@ -235,6 +235,10 @@ class ProductForm
                                         $component->state($total);
                                     }
                                 }),
+                            RichEditor::make('free_pengurangan')
+                                ->label('Free')
+                                ->placeholder('Detail free / keterangan tambahan pengurangan')
+                                ->columnSpanFull(),
                             self::getDiscountRepeater(),
                         ]),
                     Tab::make('Penambahan Harga')
@@ -420,7 +424,7 @@ class ProductForm
 
                 $totalVendorPrice = collect($itemsArray)
                     ->sum(function ($item) {
-                        $val = $item['harga_vendor'] ?? 0;
+                        $val = $item['total_price'] ?? 0;
 
                         return self::stripCurrency($val);
                     });
@@ -689,7 +693,7 @@ class ProductForm
 
         $total_vendor_price = collect($items)
             ->sum(function ($item) {
-                $val = $item['harga_vendor'] ?? 0;
+                $val = $item['total_price'] ?? 0;
 
                 return self::stripCurrency($val);
             });

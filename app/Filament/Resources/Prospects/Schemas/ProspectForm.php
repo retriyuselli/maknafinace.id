@@ -54,18 +54,15 @@ class ProspectForm
                                     ->schema([
                                         TimePicker::make('time_lamaran')
                                             ->label('Jam Lamaran')
-                                            ->seconds(false)
-                                            ->withoutSeconds(),
+                                            ->seconds(false),
 
                                         TimePicker::make('time_akad')
                                             ->label('Jam Akad Nikah')
-                                            ->seconds(false)
-                                            ->withoutSeconds(),
+                                            ->seconds(false),
 
                                         TimePicker::make('time_resepsi')
                                             ->label('Jam Resepsi')
-                                            ->seconds(false)
-                                            ->withoutSeconds(),
+                                            ->seconds(false),
                                     ]),
 
                                 TextInput::make('venue')

@@ -14,53 +14,48 @@ class ProspectOverviewWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $monthProspects = Prospect::whereMonth('created_at', now()->month)
+        $baseQuery = Prospect::query()->withTrashed();
+
+        $monthProspects = (clone $baseQuery)->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
-        $withOrders = Prospect::whereHas('orders')->count();
+        $withOrders = (clone $baseQuery)->whereHas('orders')->count();
         $weekStart = Carbon::now()->startOfWeek();
         $weekEnd = Carbon::now()->endOfWeek();
-        $weekProspects = Prospect::whereBetween('created_at', [$weekStart, $weekEnd])
+        $weekProspects = (clone $baseQuery)->whereBetween('created_at', [$weekStart, $weekEnd])
             ->count();
 
-        $todayProspects = Prospect::whereDate('created_at', Carbon::today())->count();
+        $todayProspects = (clone $baseQuery)->whereDate('created_at', Carbon::today())->count();
         $monthStart = Carbon::now()->startOfMonth()->toDateString();
         $monthEnd = Carbon::now()->endOfMonth()->toDateString();
         $weekStartDate = Carbon::now()->startOfWeek()->toDateString();
         $weekEndDate = Carbon::now()->endOfWeek()->toDateString();
+        $todayDate = Carbon::today()->toDateString();
 
         return [
             Stat::make('Dengan Order', $withOrders)
                 ->icon('heroicon-o-clipboard-document-check')
-                ->color('success'),
+                ->color('success')
+                ->url(ProspectResource::getUrl('view', [
+                    'metric' => 'with_orders',
+                ])),
 
             Stat::make('Prospek Bulan Ini', $monthProspects)
                 ->icon('heroicon-o-users')
                 ->color('primary')
-                ->url(ProspectResource::getUrl('index', [
-                    'tableFilters' => [
-                        'created_at' => [
-                            'from_date' => $monthStart,
-                            'until_date' => $monthEnd,
-                        ],
-                    ],
-                ])),
+                ->url(ProspectResource::getUrl('this-month')),
 
             Stat::make('Prospek Minggu Ini', $weekProspects)
                 ->icon('heroicon-o-calendar')
                 ->color('primary')
-                ->url(ProspectResource::getUrl('index', [
-                    'tableFilters' => [
-                        'created_at' => [
-                            'from_date' => $weekStartDate,
-                            'until_date' => $weekEndDate,
-                        ],
-                    ],
-                ])),
+                ->url(ProspectResource::getUrl('this-week')),
 
             Stat::make('Prospek Hari Ini', $todayProspects)
                 ->icon('heroicon-o-clock')
-                ->color('info'),
+                ->color('info')
+                ->url(ProspectResource::getUrl('view', [
+                    'metric' => 'today',
+                ])),
         ];
     }
 }
