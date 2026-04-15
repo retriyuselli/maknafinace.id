@@ -233,6 +233,7 @@ class ProspectsTable
                         return $indicators;
                     }),
             ])
+            ->recordUrl(fn (Prospect $record): string => ProspectResource::getUrl('edit', ['record' => $record]))
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()
