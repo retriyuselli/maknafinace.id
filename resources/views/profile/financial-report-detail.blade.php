@@ -35,9 +35,9 @@
                     <thead>
                         <tr class="text-left text-gray-500">
                             <th class="py-2 w-28">Tanggal</th>
-                            <th class="py-2 w-60">Nama</th>
-                            <th class="py-2 text-left">Keterangan</th>
-                            <th class="py-2 w-25 text-right">Jumlah</th>
+                            <th class="py-2 w-56">Nama</th>
+                            <th class="py-2">Keterangan</th>
+                            <th class="py-2 w-40 text-right">Jumlah</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
