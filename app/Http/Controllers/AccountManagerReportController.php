@@ -271,7 +271,8 @@ class AccountManagerReportController extends Controller
                 'isFontSubsettingEnabled' => true,
             ]);
 
-            return $pdf->stream("AM_Report_{$accountManager->name}_{$year}_{$month}.pdf");
+            // return $pdf->stream("AM_Report_{$accountManager->name}_{$year}_{$month}.pdf");
+            return $pdf->download("AM_Report_{$accountManager->name}_{$year}_{$month}.pdf");
 
         } catch (Exception $e) {
             return response()->make('Terjadi kesalahan: '.$e->getMessage(), 500);

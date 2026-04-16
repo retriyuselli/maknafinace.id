@@ -222,7 +222,7 @@ Invoice Area
                                                     </td>
                                                     <td style="width: 50%; text-align: right; vertical-align: middle;">
                                                         <h1 class="big-title" style="margin: 0; font-size: 24px;">
-                                                            Laporan Kinerja Account Manager</h1>
+                                                            Laporan Kinerja Account Manager1</h1>
                                                         <span style="display: block; margin-top: 5px;"><b>Periode: </b>
                                                             {{ $monthName ?? 'Unknown Month' }}
                                                             {{ $year ?? 'Unknown Year' }}</span>
@@ -769,7 +769,6 @@ Invoice Area
     </div>
     </div>
     <!-- Invoice Conainter End -->
-
 </body>
 
 </html>

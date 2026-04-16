@@ -198,6 +198,7 @@
                 <tr>
                     <th style="width: 28%;">Client</th>
                     <th style="width: 16%;">Tanggal</th>
+                    <th style="width: 28%;">Paket</th>
                     <th style="width: 14%;" class="right">Grand Total</th>
                 </tr>
             </thead>
@@ -226,12 +227,13 @@
                             {{ $order->prospect?->name_event ?? '-' }}<br>
                             <span class="muted">{{ $statusText }}</span>
                         </td>
-                        <td>{{ $order->closing_date ? \Carbon\Carbon::parse($order->closing_date)->format('d/m/Y') : \Carbon\Carbon::parse($order->created_at)->format('d/m/Y') }}</td>
+                        <td class="center">{{ $order->closing_date ? \Carbon\Carbon::parse($order->closing_date)->format('d/m/Y') : \Carbon\Carbon::parse($order->created_at)->format('d/m/Y') }}</td>
+                        <td class="center">{{ $package ?? '-' }}</td>
                         <td class="right">Rp {{ number_format((int) ($order->grand_total ?? $order->total_price ?? 0), 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="center muted">Tidak ada order pada periode ini.</td>
+                        <td colspan="4" class="center muted">Tidak ada order pada periode ini.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -411,7 +413,7 @@
         </table>
     </div>
 
-    <div class="section">
+    {{-- <div class="section">
         <div class="h">Payroll</div>
         @if (! empty($payrollData))
             <table class="grid">
@@ -437,7 +439,7 @@
         @else
             <div class="muted">Data payroll tidak tersedia untuk periode ini.</div>
         @endif
-    </div>
+    </div> --}}
 
     <div class="section">
         <div class="h">Leave ({{ $monthName ?? '-' }} {{ $year ?? '-' }})</div>
