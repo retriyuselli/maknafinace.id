@@ -52,7 +52,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="py-4 text-center text-gray-500">Tidak ada data pada periode ini.</td>
+                                <td colspan="4" class="py-4 text-center text-gray-500">Tidak ada data pada periode ini.</td>
                             </tr>
                         @endforelse
                     </tbody>
