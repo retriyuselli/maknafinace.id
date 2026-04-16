@@ -41,10 +41,10 @@
                 </div>
             </div>
             <div class="rounded-xl border border-gray-200 p-4">
-                <div class="text-sm text-gray-500">Laba Kotor</div>
-                @php $gp = (int) ($grossProfit ?? 0); @endphp
-                <div class="mt-1 text-xl font-bold {{ $gp >= 0 ? 'text-blue-700' : 'text-rose-700' }}">
-                    Rp {{ number_format($gp, 0, ',', '.') }}
+                <div class="text-sm text-gray-500">Net Cash Flow</div>
+                @php $ncf = (int) ($netCashFlow ?? 0); @endphp
+                <div class="mt-1 text-xl font-bold {{ $ncf >= 0 ? 'text-blue-700' : 'text-rose-700' }}">
+                    Rp {{ number_format($ncf, 0, ',', '.') }}
                 </div>
             </div>
         </div>
@@ -67,7 +67,14 @@
                                 <tr>
                                     <td class="py-2 text-gray-800">{{ $row['label'] ?? '-' }}</td>
                                     <td class="py-2 text-right text-gray-800">
-                                        Rp {{ number_format((int) ($row['amount'] ?? 0), 0, ',', '.') }}
+                                        @if (! empty($row['type']))
+                                            <a href="{{ route('profile.financial-report.detail', ['type' => $row['type'], 'month' => $selectedMonth ?? now()->format('Y-m')]) }}"
+                                                class="text-blue-700 hover:underline">
+                                                Rp {{ number_format((int) ($row['amount'] ?? 0), 0, ',', '.') }}
+                                            </a>
+                                        @else
+                                            Rp {{ number_format((int) ($row['amount'] ?? 0), 0, ',', '.') }}
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -99,7 +106,14 @@
                                 <tr>
                                     <td class="py-2 text-gray-800">{{ $row['label'] ?? '-' }}</td>
                                     <td class="py-2 text-right text-gray-800">
-                                        Rp {{ number_format((int) ($row['amount'] ?? 0), 0, ',', '.') }}
+                                        @if (! empty($row['type']))
+                                            <a href="{{ route('profile.financial-report.detail', ['type' => $row['type'], 'month' => $selectedMonth ?? now()->format('Y-m')]) }}"
+                                                class="text-blue-700 hover:underline">
+                                                Rp {{ number_format((int) ($row['amount'] ?? 0), 0, ',', '.') }}
+                                            </a>
+                                        @else
+                                            Rp {{ number_format((int) ($row['amount'] ?? 0), 0, ',', '.') }}
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -117,10 +131,9 @@
 
         <div class="rounded-xl border border-gray-200 p-4 bg-gray-50">
             <div class="text-sm text-gray-600">
-                Laba kotor dihitung dari <span class="font-semibold">Total Pemasukan - Total Pengeluaran</span>.
+                Net cash flow dihitung dari <span class="font-semibold">Total Pemasukan - Total Pengeluaran</span>.
             </div>
         </div>
     </div>
 </div>
 @endsection
-

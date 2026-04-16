@@ -253,19 +253,19 @@ class ProfileController extends Controller
             ->sum('amount');
 
         $incomeItems = [
-            ['label' => 'Pemasukan Wedding', 'amount' => $weddingIncome],
-            ['label' => 'Pendapatan Lain', 'amount' => $otherIncome],
+            ['type' => 'income_wedding', 'label' => 'Pemasukan Wedding', 'amount' => $weddingIncome],
+            ['type' => 'income_other', 'label' => 'Pendapatan Lain', 'amount' => $otherIncome],
         ];
 
         $expenseItems = [
-            ['label' => 'Pengeluaran Wedding', 'amount' => $weddingExpense],
-            ['label' => 'Pengeluaran Operasional', 'amount' => $opsExpense],
-            ['label' => 'Pengeluaran Lain', 'amount' => $otherExpense],
+            ['type' => 'expense_wedding', 'label' => 'Pengeluaran Wedding', 'amount' => $weddingExpense],
+            ['type' => 'expense_ops', 'label' => 'Pengeluaran Operasional', 'amount' => $opsExpense],
+            ['type' => 'expense_other', 'label' => 'Pengeluaran Lain', 'amount' => $otherExpense],
         ];
 
         $totalIncome = array_sum(array_map(fn ($row) => (int) ($row['amount'] ?? 0), $incomeItems));
         $totalExpense = array_sum(array_map(fn ($row) => (int) ($row['amount'] ?? 0), $expenseItems));
-        $grossProfit = $totalIncome - $totalExpense;
+        $netCashFlow = $totalIncome - $totalExpense;
 
         return view('profile.financial-report', array_merge(
             $this->profileViewData(),
@@ -277,7 +277,159 @@ class ProfileController extends Controller
                 'expenseItems' => $expenseItems,
                 'totalIncome' => $totalIncome,
                 'totalExpense' => $totalExpense,
-                'grossProfit' => $grossProfit,
+                'netCashFlow' => $netCashFlow,
+            ],
+        ));
+    }
+
+    public function financialReportDetail(Request $request, string $type)
+    {
+        $user = Auth::user();
+        if (! ($user instanceof User)) {
+            abort(403);
+        }
+
+        if (! $user->hasRole('super_admin')) {
+            abort(403);
+        }
+
+        $typeMap = [
+            'income_wedding' => ['label' => 'Pemasukan Wedding', 'kind' => 'income'],
+            'income_other' => ['label' => 'Pendapatan Lain', 'kind' => 'income'],
+            'expense_wedding' => ['label' => 'Pengeluaran Wedding', 'kind' => 'expense'],
+            'expense_ops' => ['label' => 'Pengeluaran Operasional', 'kind' => 'expense'],
+            'expense_other' => ['label' => 'Pengeluaran Lain', 'kind' => 'expense'],
+        ];
+
+        if (! array_key_exists($type, $typeMap)) {
+            abort(404);
+        }
+
+        $monthParam = (string) $request->query('month', now()->format('Y-m'));
+        $selectedMonth = preg_match('/^\d{4}-\d{2}$/', $monthParam) ? $monthParam : now()->format('Y-m');
+
+        try {
+            $selectedDate = Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth();
+        } catch (\Throwable) {
+            $selectedDate = now()->startOfMonth();
+            $selectedMonth = $selectedDate->format('Y-m');
+        }
+
+        $start = $selectedDate->copy()->startOfMonth();
+        $end = $selectedDate->copy()->endOfMonth();
+
+        $rows = collect();
+        $total = 0;
+
+        if ($type === 'income_wedding') {
+            $rows = DataPembayaran::query()
+                ->with(['order.prospect'])
+                ->whereBetween('tgl_bayar', [$start, $end])
+                ->orderBy('tgl_bayar')
+                ->orderBy('id')
+                ->get(['id', 'tgl_bayar', 'nominal', 'keterangan', 'order_id', 'kategori_transaksi']);
+            $total = (int) $rows->sum('nominal');
+            $rows = $rows->map(function (DataPembayaran $r) {
+                return [
+                    'id' => $r->id,
+                    'date' => $r->tgl_bayar?->format('d/m/Y') ?? '-',
+                    'reference' => ! empty($r->order_id) ? 'Order #'.$r->order_id : '-',
+                    'prospect' => $r->order?->prospect?->name_event ?? '-',
+                    'description' => $r->keterangan ?: '-',
+                    'amount' => (int) $r->nominal,
+                ];
+            });
+        } elseif ($type === 'income_other') {
+            $rows = PendapatanLain::query()
+                ->whereBetween('tgl_bayar', [$start, $end])
+                ->orderBy('tgl_bayar')
+                ->orderBy('id')
+                ->get(['id', 'tgl_bayar', 'nominal', 'name', 'keterangan', 'vendor_id', 'kategori_transaksi']);
+            $total = (int) $rows->sum('nominal');
+            $rows = $rows->map(function (PendapatanLain $r) {
+                $desc = $r->name ?: ($r->keterangan ?: '-');
+                return [
+                    'id' => $r->id,
+                    'date' => $r->tgl_bayar?->format('d/m/Y') ?? '-',
+                    'reference' => ! empty($r->vendor_id) ? 'Vendor #'.$r->vendor_id : '-',
+                    'prospect' => $r->name ?: '-',
+                    'description' => $desc,
+                    'amount' => (int) $r->nominal,
+                ];
+            });
+        } elseif ($type === 'expense_wedding') {
+            $rows = Expense::query()
+                ->with(['order.prospect'])
+                ->whereBetween('date_expense', [$start, $end])
+                ->orderBy('date_expense')
+                ->orderBy('id')
+                ->get(['id', 'date_expense', 'amount', 'note', 'order_id', 'vendor_id', 'kategori_transaksi']);
+            $total = (int) $rows->sum('amount');
+            $rows = $rows->map(function (Expense $r) {
+                $refs = [];
+                if (! empty($r->order_id)) {
+                    $refs[] = 'Order #'.$r->order_id;
+                }
+                if (! empty($r->vendor_id)) {
+                    $refs[] = 'Vendor #'.$r->vendor_id;
+                }
+                return [
+                    'id' => $r->id,
+                    'date' => $r->date_expense?->format('d/m/Y') ?? '-',
+                    'reference' => ! empty($refs) ? implode(' • ', $refs) : '-',
+                    'prospect' => $r->order?->prospect?->name_event ?? '-',
+                    'description' => $r->note ?: '-',
+                    'amount' => (int) $r->amount,
+                ];
+            });
+        } elseif ($type === 'expense_ops') {
+            $rows = ExpenseOps::query()
+                ->whereBetween('date_expense', [$start, $end])
+                ->orderBy('date_expense')
+                ->orderBy('id')
+                ->get(['id', 'date_expense', 'amount', 'name', 'note', 'vendor_id', 'kategori_transaksi']);
+            $total = (int) $rows->sum('amount');
+            $rows = $rows->map(function (ExpenseOps $r) {
+                $desc = $r->name ?: $r->note;
+                return [
+                    'id' => $r->id,
+                    'date' => $r->date_expense?->format('d/m/Y') ?? '-',
+                    'reference' => ! empty($r->vendor_id) ? 'Vendor #'.$r->vendor_id : '-',
+                    'prospect' => '-',
+                    'description' => $desc ?: '-',
+                    'amount' => (int) $r->amount,
+                ];
+            });
+        } elseif ($type === 'expense_other') {
+            $rows = PengeluaranLain::query()
+                ->whereBetween('date_expense', [$start, $end])
+                ->orderBy('date_expense')
+                ->orderBy('id')
+                ->get(['id', 'date_expense', 'amount', 'name', 'note', 'vendor_id', 'kategori_transaksi']);
+            $total = (int) $rows->sum('amount');
+            $rows = $rows->map(function (PengeluaranLain $r) {
+                $desc = $r->name ?: $r->note;
+                return [
+                    'id' => $r->id,
+                    'date' => $r->date_expense?->format('d/m/Y') ?? '-',
+                    'reference' => ! empty($r->vendor_id) ? 'Vendor #'.$r->vendor_id : '-',
+                    'prospect' => '-',
+                    'description' => $desc ?: '-',
+                    'amount' => (int) $r->amount,
+                ];
+            });
+        }
+
+        return view('profile.financial-report-detail', array_merge(
+            $this->profileViewData(),
+            [
+                'selectedMonth' => $selectedMonth,
+                'selectedMonthLabel' => $selectedDate->copy()->locale('id')->translatedFormat('F Y'),
+                'type' => $type,
+                'typeLabel' => $typeMap[$type]['label'],
+                'kind' => $typeMap[$type]['kind'],
+                'rows' => $rows->values()->all(),
+                'total' => $total,
             ],
         ));
     }
