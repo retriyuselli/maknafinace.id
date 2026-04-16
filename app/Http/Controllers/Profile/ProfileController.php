@@ -407,13 +407,12 @@ class ProfileController extends Controller
                 ->get(['id', 'date_expense', 'amount', 'name', 'note', 'vendor_id', 'kategori_transaksi']);
             $total = (int) $rows->sum('amount');
             $rows = $rows->map(function (PengeluaranLain $r) {
-                $desc = $r->name ?: $r->note;
                 return [
                     'id' => $r->id,
                     'date' => $r->date_expense?->format('d/m/Y') ?? '-',
                     'reference' => ! empty($r->vendor_id) ? 'Vendor #'.$r->vendor_id : '-',
-                    'prospect' => '-',
-                    'description' => $desc ?: '-',
+                    'prospect' => $r->name ?: '-',
+                    'description' => $r->note ?: '-',
                     'amount' => (int) $r->amount,
                 ];
             });

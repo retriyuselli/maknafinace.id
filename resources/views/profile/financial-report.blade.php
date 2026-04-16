@@ -14,7 +14,7 @@
             <form method="GET" action="{{ route('profile.financial-report') }}" class="flex items-center gap-3">
                 <label for="month" class="text-sm font-medium text-gray-700">Bulan</label>
                 <select id="month" name="month"
-                    class="rounded-lg border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    class="rounded-lg border border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
                     onchange="this.form.submit()">
                     @foreach (($availableMonths ?? []) as $opt)
                         <option value="{{ $opt['value'] ?? '' }}" {{ ($selectedMonth ?? '') === ($opt['value'] ?? '') ? 'selected' : '' }}>
