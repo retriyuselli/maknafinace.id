@@ -30,6 +30,7 @@
             $overviewActive = request()->routeIs('profile') || request()->routeIs('profile.show') || request()->routeIs('profile.overview');
             $compensationActive = request()->routeIs('profile.compensation');
             $scheduleActive = request()->routeIs('profile.schedule');
+            $financialReportActive = request()->routeIs('profile.financial-report');
         @endphp
 
         <a href="{{ route('profile') }}"
@@ -56,6 +57,16 @@
             <span>Jadwal & Riwayat</span>
         </a>
 
+        @if($isSuperAdmin)
+            <a href="{{ route('profile.financial-report') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $financialReportActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-10V6m0 12v-2M4 6h16M4 18h16" />
+                </svg>
+                <span>Laporan Keuangan</span>
+            </a>
+        @endif
+
         <div class="my-3 border-t border-gray-200"></div>
 
         <a href="{{ route('profile.edit') }}"
@@ -71,7 +82,7 @@
             <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6" />
             </svg>
-            <span>Admin Panel</span>
+            <span>Admin Panel1</span>
         </a>
 
         @if($canManageLeaveRequests)

@@ -3,7 +3,13 @@
 namespace App\Http\Controllers\Profile;
 
 use App\Http\Controllers\Controller;
+use App\Models\DataPembayaran;
+use App\Models\Expense;
+use App\Models\ExpenseOps;
+use App\Models\PendapatanLain;
+use App\Models\PengeluaranLain;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -192,6 +198,88 @@ class ProfileController extends Controller
     public function schedule()
     {
         return view('profile.schedule', $this->profileViewData());
+    }
+
+    public function financialReport(Request $request)
+    {
+        $user = Auth::user();
+        if (! ($user instanceof User)) {
+            abort(403);
+        }
+
+        if (! $user->hasRole('super_admin')) {
+            abort(403);
+        }
+
+        $monthParam = (string) $request->query('month', now()->format('Y-m'));
+        $selectedMonth = preg_match('/^\d{4}-\d{2}$/', $monthParam) ? $monthParam : now()->format('Y-m');
+
+        try {
+            $selectedDate = Carbon::createFromFormat('Y-m', $selectedMonth)->startOfMonth();
+        } catch (\Throwable) {
+            $selectedDate = now()->startOfMonth();
+            $selectedMonth = $selectedDate->format('Y-m');
+        }
+
+        $availableMonths = collect(range(0, 11))
+            ->map(function (int $i) {
+                $d = now()->startOfMonth()->subMonths($i)->startOfMonth();
+                return [
+                    'value' => $d->format('Y-m'),
+                    'label' => $d->copy()->locale('id')->translatedFormat('F Y'),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $start = $selectedDate->copy()->startOfMonth();
+        $end = $selectedDate->copy()->endOfMonth();
+
+        $weddingIncome = (int) DataPembayaran::query()
+            ->whereBetween('tgl_bayar', [$start, $end])
+            ->sum('nominal');
+        $otherIncome = (int) PendapatanLain::query()
+            ->whereBetween('tgl_bayar', [$start, $end])
+            ->sum('nominal');
+
+        $weddingExpense = (int) Expense::query()
+            ->whereBetween('date_expense', [$start, $end])
+            ->sum('amount');
+        $opsExpense = (int) ExpenseOps::query()
+            ->whereBetween('date_expense', [$start, $end])
+            ->sum('amount');
+        $otherExpense = (int) PengeluaranLain::query()
+            ->whereBetween('date_expense', [$start, $end])
+            ->sum('amount');
+
+        $incomeItems = [
+            ['label' => 'Pemasukan Wedding', 'amount' => $weddingIncome],
+            ['label' => 'Pendapatan Lain', 'amount' => $otherIncome],
+        ];
+
+        $expenseItems = [
+            ['label' => 'Pengeluaran Wedding', 'amount' => $weddingExpense],
+            ['label' => 'Pengeluaran Operasional', 'amount' => $opsExpense],
+            ['label' => 'Pengeluaran Lain', 'amount' => $otherExpense],
+        ];
+
+        $totalIncome = array_sum(array_map(fn ($row) => (int) ($row['amount'] ?? 0), $incomeItems));
+        $totalExpense = array_sum(array_map(fn ($row) => (int) ($row['amount'] ?? 0), $expenseItems));
+        $grossProfit = $totalIncome - $totalExpense;
+
+        return view('profile.financial-report', array_merge(
+            $this->profileViewData(),
+            [
+                'selectedMonth' => $selectedMonth,
+                'selectedMonthLabel' => $selectedDate->copy()->locale('id')->translatedFormat('F Y'),
+                'availableMonths' => $availableMonths,
+                'incomeItems' => $incomeItems,
+                'expenseItems' => $expenseItems,
+                'totalIncome' => $totalIncome,
+                'totalExpense' => $totalExpense,
+                'grossProfit' => $grossProfit,
+            ],
+        ));
     }
 
     /**
