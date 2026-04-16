@@ -14,10 +14,9 @@
     <!-- Mobile Specific Metas -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    @php($faviconUrl = url('/brand/favicon') . '?v=' . ($companyBrandVersion ?? 1))
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ $faviconUrl }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ $faviconUrl }}">
-    <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url('/brand/favicon') }}?v={{ $companyBrandVersion ?? 1 }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url('/brand/favicon') }}?v={{ $companyBrandVersion ?? 1 }}">
+    <link rel="apple-touch-icon" href="{{ url('/brand/favicon') }}?v={{ $companyBrandVersion ?? 1 }}">
     <meta name="theme-color" content="#ffffff">
 
     <!--==============================

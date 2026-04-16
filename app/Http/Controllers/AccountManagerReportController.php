@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AccountManagerTarget;
+use App\Models\Company;
 use App\Models\LeaveRequest;
 use App\Models\Order;
 use App\Models\Payroll;
@@ -12,6 +13,9 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class AccountManagerReportController extends Controller
 {
@@ -57,7 +61,7 @@ class AccountManagerReportController extends Controller
                 ->whereNotNull('closing_date')
                 ->whereYear('closing_date', $year)
                 ->whereMonth('closing_date', $month)
-                ->with(['prospect'])
+                ->with(['prospect', 'items.product'])
                 ->get();
 
             // Calculate sales statistics
@@ -157,7 +161,7 @@ class AccountManagerReportController extends Controller
                 ->whereNotNull('closing_date')
                 ->whereYear('closing_date', $year)
                 ->whereMonth('closing_date', $month)
-                ->with(['prospect'])
+                ->with(['prospect', 'items.product'])
                 ->get();
 
             // Calculate sales statistics
@@ -200,7 +204,40 @@ class AccountManagerReportController extends Controller
             // Detail Tahun Sebelumnya (Previous Year)
             $previousYearData = $this->getYearlyPerformanceData($userId, $currentYear - 1, 12);
 
-            $pdf = Pdf::loadView('reports.account-manager-report-new', [
+            $company = null;
+            if (Schema::hasTable('companies')) {
+                $company = Company::query()->first();
+            }
+
+            $companyName = $company?->company_name;
+            $companyAddress = $company?->address;
+            $companyEmail = $company?->email;
+            $companyPhone = $company?->phone;
+
+            $logoCacheKey = 'am_report:logo:'.
+                ($company?->id ?? 'none').':'.
+                ($company?->updated_at?->timestamp ?? '0').':'.
+                md5((string) ($company?->logo_url ?? ''));
+
+            $logoBase64 = Cache::remember($logoCacheKey, 3600, function () use ($company): string {
+                $logoPath = $company && $company->logo_url
+                    ? Storage::disk('public')->path($company->logo_url)
+                    : public_path('images/logomki.png');
+
+                if (! is_string($logoPath) || ! file_exists($logoPath)) {
+                    return '';
+                }
+
+                $logoType = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $logoData = @file_get_contents($logoPath);
+                if (! is_string($logoData) || $logoData === '') {
+                    return '';
+                }
+
+                return 'data:image/'.$logoType.';base64,'.base64_encode($logoData);
+            });
+
+            $pdf = Pdf::loadView('reports.account-manager-report-dompdf', [
                 'accountManager' => $accountManager,
                 'target' => $target,
                 'orders' => $orders,
@@ -217,11 +254,24 @@ class AccountManagerReportController extends Controller
                 'previousYearData' => $previousYearData,
                 'currentYear' => $currentYear,
                 'currentMonth' => $currentMonth,
+                'companyName' => $companyName,
+                'companyAddress' => $companyAddress,
+                'companyEmail' => $companyEmail,
+                'companyPhone' => $companyPhone,
+                'logoBase64' => $logoBase64,
             ]);
 
             $pdf->setPaper('a4', 'portrait');
+            $pdf->setOptions([
+                'dpi' => 96,
+                'defaultFont' => 'DejaVu Sans',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => false,
+                'isPhpEnabled' => false,
+                'isFontSubsettingEnabled' => true,
+            ]);
 
-            return $pdf->download("AM_Report_{$accountManager->name}_{$year}_{$month}.pdf");
+            return $pdf->stream("AM_Report_{$accountManager->name}_{$year}_{$month}.pdf");
 
         } catch (Exception $e) {
             return response()->make('Terjadi kesalahan: '.$e->getMessage(), 500);
@@ -313,7 +363,40 @@ class AccountManagerReportController extends Controller
             // Detail Tahun Sebelumnya (Previous Year)
             $previousYearData = $this->getYearlyPerformanceData($userId, $currentYear - 1, 12);
 
-            $pdf = Pdf::loadView('reports.account-manager-report-new', [
+            $company = null;
+            if (Schema::hasTable('companies')) {
+                $company = Company::query()->first();
+            }
+
+            $companyName = $company?->company_name;
+            $companyAddress = $company?->address;
+            $companyEmail = $company?->email;
+            $companyPhone = $company?->phone;
+
+            $logoCacheKey = 'am_report:logo:'.
+                ($company?->id ?? 'none').':'.
+                ($company?->updated_at?->timestamp ?? '0').':'.
+                md5((string) ($company?->logo_url ?? ''));
+
+            $logoBase64 = Cache::remember($logoCacheKey, 3600, function () use ($company): string {
+                $logoPath = $company && $company->logo_url
+                    ? Storage::disk('public')->path($company->logo_url)
+                    : public_path('images/logomki.png');
+
+                if (! is_string($logoPath) || ! file_exists($logoPath)) {
+                    return '';
+                }
+
+                $logoType = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $logoData = @file_get_contents($logoPath);
+                if (! is_string($logoData) || $logoData === '') {
+                    return '';
+                }
+
+                return 'data:image/'.$logoType.';base64,'.base64_encode($logoData);
+            });
+
+            $pdf = Pdf::loadView('reports.account-manager-report-dompdf', [
                 'accountManager' => $accountManager,
                 'target' => $target,
                 'orders' => $orders,
@@ -330,9 +413,22 @@ class AccountManagerReportController extends Controller
                 'previousYearData' => $previousYearData,
                 'currentYear' => $currentYear,
                 'currentMonth' => $currentMonth,
+                'companyName' => $companyName,
+                'companyAddress' => $companyAddress,
+                'companyEmail' => $companyEmail,
+                'companyPhone' => $companyPhone,
+                'logoBase64' => $logoBase64,
             ]);
 
             $pdf->setPaper('a4', 'portrait');
+            $pdf->setOptions([
+                'dpi' => 96,
+                'defaultFont' => 'DejaVu Sans',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => false,
+                'isPhpEnabled' => false,
+                'isFontSubsettingEnabled' => true,
+            ]);
 
             return $pdf->stream("AM_Report_{$accountManager->name}_{$year}_{$month}.pdf");
 

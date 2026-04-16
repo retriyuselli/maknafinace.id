@@ -412,12 +412,12 @@ Invoice Area
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    @foreach ($currentYearData['monthly'] as $month => $data)
-                                                        @if ($month <= date('n'))
+                                                    @foreach ($currentYearData['monthly'] as $monthNumber => $data)
+                                                        @if ($monthNumber <= date('n'))
                                                             <tr>
                                                                 <td>
                                                                     <strong>{{ $data['name'] }}</strong>
-                                                                    @if ($month == date('n'))
+                                                                    @if ($monthNumber == date('n'))
                                                                         <small style="color: #4F7FFF;"> (Bulan
                                                                             Ini)</small>
                                                                     @endif
@@ -487,7 +487,7 @@ Invoice Area
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    @foreach ($previousYearData['monthly'] as $month => $data)
+                                                    @foreach ($previousYearData['monthly'] as $monthNumber => $data)
                                                         <tr>
                                                             <td>
                                                                 <strong>{{ $data['name'] }}</strong>
