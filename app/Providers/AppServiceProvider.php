@@ -40,6 +40,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $hasTable = function (string $table): bool {
+            try {
+                return Schema::hasTable($table);
+            } catch (\Throwable $e) {
+                return false;
+            }
+        };
+
+        $cache = Cache::store();
+        if (config('cache.default') === 'database' && ! $hasTable('cache')) {
+            $cache = Cache::store('array');
+        }
+
         // Register User Observer for auto-generating leave balances
         User::observe(UserObserver::class);
 
@@ -74,40 +87,40 @@ class AppServiceProvider extends ServiceProvider
             });
         }
 
-        View::share('companyName', Cache::remember('company_name', 3600, function () {
-            if (Schema::hasTable('companies')) {
+        View::share('companyName', $cache->remember('company_name', 3600, function () use ($hasTable) {
+            if ($hasTable('companies')) {
                 return Company::value('company_name');
             }
 
             return config('app.name');
         }));
 
-        View::share('companyAddress', Cache::remember('company_address', 3600, function () {
-            if (Schema::hasTable('companies')) {
+        View::share('companyAddress', $cache->remember('company_address', 3600, function () use ($hasTable) {
+            if ($hasTable('companies')) {
                 return Company::value('address');
             }
 
             return null;
         }));
 
-        View::share('companyEmail', Cache::remember('company_email', 3600, function () {
-            if (Schema::hasTable('companies')) {
+        View::share('companyEmail', $cache->remember('company_email', 3600, function () use ($hasTable) {
+            if ($hasTable('companies')) {
                 return Company::value('email');
             }
 
             return null;
         }));
 
-        View::share('companyPhone', Cache::remember('company_phone', 3600, function () {
-            if (Schema::hasTable('companies')) {
+        View::share('companyPhone', $cache->remember('company_phone', 3600, function () use ($hasTable) {
+            if ($hasTable('companies')) {
                 return Company::value('phone');
             }
 
             return null;
         }));
 
-        View::share('companyLogoUrl', Cache::remember('company_logo_url', 3600, function () {
-            if (Schema::hasTable('companies')) {
+        View::share('companyLogoUrl', $cache->remember('company_logo_url', 3600, function () use ($hasTable) {
+            if ($hasTable('companies')) {
                 $path = Company::value('logo_url');
                 if ($path && Storage::disk('public')->exists($path)) {
                     return asset('storage/'.ltrim($path, '/'));
@@ -117,8 +130,8 @@ class AppServiceProvider extends ServiceProvider
             return asset('images/logomki.png');
         }));
 
-        View::share('companyFaviconUrl', Cache::remember('company_favicon_url', 3600, function () {
-            if (Schema::hasTable('companies')) {
+        View::share('companyFaviconUrl', $cache->remember('company_favicon_url', 3600, function () use ($hasTable) {
+            if ($hasTable('companies')) {
                 $path = Company::value('favicon_url');
                 if ($path && Storage::disk('public')->exists($path)) {
                     return asset('storage/'.ltrim($path, '/'));
@@ -128,8 +141,8 @@ class AppServiceProvider extends ServiceProvider
             return asset('images/favicon_makna.png');
         }));
 
-        View::share('companyBrandVersion', Cache::remember('company_brand_version', 60, function () {
-            if (Schema::hasTable('companies')) {
+        View::share('companyBrandVersion', $cache->remember('company_brand_version', 60, function () use ($hasTable) {
+            if ($hasTable('companies')) {
                 $updatedAt = Company::query()->value('updated_at');
                 if ($updatedAt) {
                     try {

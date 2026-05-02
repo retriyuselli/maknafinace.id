@@ -691,16 +691,22 @@
 
     @php
         $product = $record->product;
-        $baseTotalPrice = (float) ($record->total_price ?? 0);
+        $baseTotalPrice = 0.0;
         $productPenambahan = (float) ($record->penambahan ?? 0);
-        $productPengurangan = (float) ($record->pengurangan ?? 0);
-        $promo = (float) ($record->promo ?? 0);
+        $productPengurangan = abs((float) ($record->pengurangan ?? 0));
+        $promo = abs((float) ($record->promo ?? 0));
 
-        if ($product && $baseTotalPrice <= 0) {
+        if ($product) {
             $baseTotalPrice = (float) ($product->product_price ?? 0);
             if ($baseTotalPrice <= 0 && isset($items)) {
                 $baseTotalPrice = (float) $items->sum('price_public');
             }
+        } else {
+            $baseTotalPrice = (float) ($record->total_price ?? 0);
+        }
+
+        if ($baseTotalPrice <= 0) {
+            $baseTotalPrice = (float) ($record->total_price ?? 0);
         }
 
         if ($product && $productPenambahan <= 0) {
@@ -711,9 +717,9 @@
         }
 
         if ($product && $productPengurangan <= 0) {
-            $productPengurangan = (float) ($product->pengurangan ?? 0);
+            $productPengurangan = abs((float) ($product->pengurangan ?? 0));
             if ($productPengurangan <= 0 && $product?->pengurangans) {
-                $productPengurangan = (float) $product->pengurangans->sum('amount');
+                $productPengurangan = abs((float) $product->pengurangans->sum('amount'));
             }
         }
         $computedGrandTotal = \App\Services\OrderFinance::computeGrandTotalFromValues(
@@ -909,7 +915,11 @@
     @endif
 
     <!-- Free -->
-    @if (!empty($record->product?->free_pengurangan))
+    @php
+        $freePenguranganHtml = (string) ($record->product?->free_pengurangan ?? '');
+        $freePenguranganText = trim(str_replace("\xc2\xa0", ' ', strip_tags($freePenguranganHtml)));
+    @endphp
+    @if ($freePenguranganText !== '')
         <div class="section-title">FREE</div>
         <div class="facility-list">
             {!! $record->product->free_pengurangan !!}

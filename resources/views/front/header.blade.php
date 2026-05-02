@@ -11,53 +11,6 @@
                 <!-- Desktop Navigation Menu -->
                 <div class="hidden md:block">
                     <div class="ml-2 flex items-center space-x-4">
-                        <!-- Fitur Dropdown -->
-                        <div class="relative group">
-                            <a href="#"
-                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 flex items-center {{ request()->routeIs('front.*') ? 'text-blue-600 bg-blue-50' : '' }}">
-                                Fitur
-                                <svg class="ml-1 h-4 w-4 transform group-hover:rotate-180 transition-transform duration-200"
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </a>
-
-                            <!-- Fitur Dropdown Menu -->
-                            <div
-                                class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-1 group-hover:translate-y-0">
-                                <a href="{{ route('front.invoice') }}"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Invoice</a>
-                                <a href="{{ route('front.biaya_feature') }}"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Biaya</a>
-                                <a href="{{ route('front.laporan_feature') }}"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Laporan</a>
-                                <a href="{{ route('front.aset_feature') }}"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Aset
-                                    Tetap</a>
-
-                                <a href="{{ route('front.payroll_feature') }}"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Payroll</a>
-                            </div>
-                        </div>
-                        <a href="{{ route('harga') }}"
-                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('harga') ? 'text-blue-600 bg-blue-50' : '' }}">
-                            Harga
-                        </a>
-                        <a href="{{ route('blog') }}"
-                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('blog*') ? 'text-blue-600 bg-blue-50' : '' }}">
-                            Blog
-                        </a>
-                        <a href="/docs"
-                            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->is('docs*') ? 'text-blue-600 bg-blue-50' : '' }}">
-                            Docs
-                        </a>
-                        @guest
-                            <a href="{{ route('front.login') }}"
-                                class="text-gray-700 hover:text-blue-600 px-4 py-2 rounded-md text-sm font-medium transition duration-300">
-                                Login
-                            </a>
-                        @endguest
                         @auth
                             <a href="{{ route('profile') }}"
                                 class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('profile') ? 'text-blue-600 bg-blue-50' : '' }}">
@@ -67,19 +20,52 @@
                                 class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 Admin
                             </a>
-                            @php
-                                $navUser = Auth::user();
-                                $allowedRoles = ['super_admin', 'Finance', 'Account Manager'];
-                                $canSeeProduct =
-                                    $navUser &&
-                                    ((method_exists($navUser, 'hasRole') &&
-                                        collect($allowedRoles)->contains(function ($role) use ($navUser) {
-                                            return $navUser->hasRole($role);
-                                        })) ||
-                                        (!method_exists($navUser, 'hasRole') &&
-                                            in_array($navUser->role, $allowedRoles, true)));
-                            @endphp
                         @endauth
+                        @guest
+                            <div class="relative group">
+                                <a href="#"
+                                    class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 flex items-center {{ request()->routeIs('front.*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                    Fitur
+                                    <svg class="ml-1 h-4 w-4 transform group-hover:rotate-180 transition-transform duration-200"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </a>
+
+                                <div
+                                    class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-1 group-hover:translate-y-0">
+                                    <a href="{{ route('front.invoice') }}"
+                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Invoice</a>
+                                    <a href="{{ route('front.biaya_feature') }}"
+                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Biaya</a>
+                                    <a href="{{ route('front.laporan_feature') }}"
+                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Laporan</a>
+                                    <a href="{{ route('front.aset_feature') }}"
+                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Aset
+                                        Tetap</a>
+
+                                    <a href="{{ route('front.payroll_feature') }}"
+                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition duration-150">Payroll</a>
+                                </div>
+                            </div>
+                            <a href="{{ route('harga') }}"
+                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('harga') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                Harga
+                            </a>
+                            <a href="{{ route('blog') }}"
+                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('blog*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                Blog
+                            </a>
+                            <a href="/docs"
+                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->is('docs*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                Docs
+                            </a>
+                            <a href="{{ route('front.login') }}"
+                                class="text-gray-700 hover:text-blue-600 px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                                Login
+                            </a>
+                        @endguest
                     </div>
                 </div>
 
@@ -125,29 +111,6 @@
                                     </svg>
                                     Admin Panel
                                 </a>
-                                @php
-                                    $navUser = Auth::user();
-                                    $allowedRoles = ['super_admin', 'Finance', 'Account Manager'];
-                                    $canSeeProduct =
-                                        $navUser &&
-                                        ((method_exists($navUser, 'hasRole') &&
-                                            collect($allowedRoles)->contains(function ($role) use ($navUser) {
-                                                return $navUser->hasRole($role);
-                                            })) ||
-                                            (!method_exists($navUser, 'hasRole') &&
-                                                in_array($navUser->role, $allowedRoles, true)));
-                                @endphp
-                                @if ($canSeeProduct)
-                                    <a href="{{ route('product') }}"
-                                        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        <svg class="mr-3 h-4 w-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M3 3h18v4H3zM3 9h18v12H3z"></path>
-                                        </svg>
-                                        Product
-                                    </a>
-                                @endif
                                 <a href="{{ route('profile') }}"
                                     class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <svg class="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,53 +173,7 @@
                             x-data="{ mobileFiturOpen: false }">
 
                             <!-- Fitur Dropdown for Mobile -->
-                            <div>
-                                <button @click="mobileFiturOpen = !mobileFiturOpen"
-                                    class="flex items-center justify-between w-full px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('front.*') ? 'bg-blue-50 text-blue-600' : '' }}">
-                                    <span>Fitur</span>
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </button>
-                                <div x-show="mobileFiturOpen" class="pl-4 bg-gray-50">
-                                    <a href="{{ route('front.invoice') }}"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.invoice') ? 'text-blue-600 bg-blue-50' : '' }}">Invoice</a>
-                                    <a href="{{ route('front.biaya_feature') }}"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.biaya_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Biaya</a>
-                                    <a href="{{ route('front.laporan_feature') }}"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.laporan_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Laporan</a>
-                                    <a href="{{ route('front.aset_feature') }}"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.aset_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Aset Tetap</a>
-
-                                    <a href="{{ route('front.payroll_feature') }}"
-                                        class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.payroll_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Payroll</a>
-                                </div>
-                            </div>
-
-                            <a href="{{ route('harga') }}"
-                                class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Harga</a>
-                            <a href="{{ route('blog') }}"
-                                class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Blog</a>
-                            <a href="/docs"
-                                class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Docs</a>
                             @auth
-                                @php
-                                    $navUser = Auth::user();
-                                    $allowedRoles = ['super_admin', 'Finance', 'Account Manager'];
-                                    $canSeeProduct =
-                                        $navUser &&
-                                        ((method_exists($navUser, 'hasRole') &&
-                                            collect($allowedRoles)->contains(function ($role) use ($navUser) {
-                                                return $navUser->hasRole($role);
-                                            })) ||
-                                            (!method_exists($navUser, 'hasRole') &&
-                                                in_array($navUser->role, $allowedRoles, true)));
-                                @endphp
-                                @if ($canSeeProduct)
-                                    <a href="{{ route('product') }}"
-                                        class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('product') ? 'bg-blue-50 text-blue-600' : '' }}">Product</a>
-                                @endif
                                 <a href="{{ route('profile') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('profile') ? 'bg-blue-50 text-blue-600' : '' }}">Dashboard</a>
                                 <a href="{{ route('dashboard') }}"
@@ -264,6 +181,36 @@
                             @endauth
 
                             @guest
+                                <div>
+                                    <button @click="mobileFiturOpen = !mobileFiturOpen"
+                                        class="flex items-center justify-between w-full px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('front.*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                                        <span>Fitur</span>
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                    <div x-show="mobileFiturOpen" class="pl-4 bg-gray-50">
+                                        <a href="{{ route('front.invoice') }}"
+                                            class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.invoice') ? 'text-blue-600 bg-blue-50' : '' }}">Invoice</a>
+                                        <a href="{{ route('front.biaya_feature') }}"
+                                            class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.biaya_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Biaya</a>
+                                        <a href="{{ route('front.laporan_feature') }}"
+                                            class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.laporan_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Laporan</a>
+                                        <a href="{{ route('front.aset_feature') }}"
+                                            class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.aset_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Aset Tetap</a>
+
+                                        <a href="{{ route('front.payroll_feature') }}"
+                                            class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 {{ request()->routeIs('front.payroll_feature') ? 'text-blue-600 bg-blue-50' : '' }}">Payroll</a>
+                                    </div>
+                                </div>
+
+                                <a href="{{ route('harga') }}"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Harga</a>
+                                <a href="{{ route('blog') }}"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Blog</a>
+                                <a href="/docs"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Docs</a>
                                 <hr class="my-2">
                                 <a href="{{ route('front.login') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Login</a>
