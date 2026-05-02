@@ -887,7 +887,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div style="margin-right: 10px;">
                                 <div style="font-weight: normal; overflow: hidden;">
-                                    {{ strtoupper($item->description ?? 'Pengurangan Tanpa Nama') }}
+                                    {{ \Illuminate\Support\Str::ucfirst(\Illuminate\Support\Str::lower($item->description ?? 'Pengurangan Tanpa Nama')) }}
                                     @if (!is_null($item->amount))
                                         <span class="price-right">
                                             Rp {{ number_format((int) $item->amount, 0, ',', '.') }},-
