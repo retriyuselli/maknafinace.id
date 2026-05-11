@@ -21,18 +21,40 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Throwable;
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        $company = null;
-        if (Schema::hasTable('companies')) {
-            $company = Company::query()->first();
+        $hasTable = function (string $table): bool {
+            try {
+                return Schema::hasTable($table);
+            } catch (Throwable) {
+                return false;
+            }
+        };
+
+        $cache = Cache::store();
+        if (config('cache.default') === 'database' && ! $hasTable('cache')) {
+            $cache = Cache::store('array');
         }
-        $brandVersion = $company?->updated_at?->timestamp ?? 1;
+
+        $brandVersion = $cache->remember('company_brand_version', 60, function () use ($hasTable) {
+            if (! $hasTable('companies')) {
+                return 1;
+            }
+
+            try {
+                return Company::query()->value('updated_at')?->timestamp ?? 1;
+            } catch (Throwable) {
+                return 1;
+            }
+        });
+
         $brandLogo = url('/brand/logo').'?v='.$brandVersion;
         $favicon = url('/brand/favicon').'?v='.$brandVersion;
 
