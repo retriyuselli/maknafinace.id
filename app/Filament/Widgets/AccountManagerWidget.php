@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\User;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use Filament\Facades\Filament;
 use Filament\Actions\BulkAction;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\ImageColumn;
@@ -15,7 +16,9 @@ use Illuminate\Support\Collection;
 
 class AccountManagerWidget extends BaseWidget
 {
-    use HasWidgetShield;
+    use HasWidgetShield {
+        canView as canViewShield;
+    }
 
     protected static ?string $heading = 'Account Manager Performance Dashboard';
 
@@ -25,6 +28,18 @@ class AccountManagerWidget extends BaseWidget
 
     protected int $pageSize = 5;  // Limits number of items per page for better performance
 
+    public static function canView(): bool
+    {
+        if (static::canViewShield()) {
+            return true;
+        }
+
+        $user = Filament::auth()?->user();
+
+        return $user?->can('View:AccountManagerWidget')
+            || $user?->can('widget_AccountManagerWidget');
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -32,15 +47,7 @@ class AccountManagerWidget extends BaseWidget
             ->query(
                 User::query()
                     ->withCount(['orders as am_count']) // Menghitung jumlah order dan menamakannya am_count
-                    ->whereHas('status', function (Builder $query) {
-                        $query->where('status_name', 'Account Manager');
-                    })
-                    // ->where('status', 'active')
-                    // Only users who exclusively have the Account Manager role
-                    ->has('roles', '=', 1)
-                    ->whereHas('roles', function (Builder $query) {
-                        $query->where('name', 'Account Manager');
-                    })
+                    ->role('Account Manager')
                     // Add a condition to ensure they have an active employee record
                     ->whereHas('employees', function (Builder $query) { // Ensure they have an employee record
                         $query->whereDate('date_of_join', '<=', now()); // And have joined on or before today

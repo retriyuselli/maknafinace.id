@@ -2,10 +2,12 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\AccountManagerWidget;
 use App\Filament\Widgets\ComingSoonAkadWidget;
 use App\Filament\Widgets\ComingSoonResepsiWidget;
 use App\Filament\Widgets\DashboardKeuangan;
 use App\Filament\Widgets\DocumentInboxWidget;
+use App\Filament\Widgets\EventManager;
 use App\Filament\Widgets\StatsOverviewWidget;
 use BackedEnum;
 use Filament\Forms\Components\DatePicker;
@@ -55,10 +57,10 @@ class ProjectDashboard extends Page
             DocumentInboxWidget::class,
             DashboardKeuangan::class,
             StatsOverviewWidget::class,
+            EventManager::class,
+            AccountManagerWidget::class,
             ComingSoonAkadWidget::class,
             ComingSoonResepsiWidget::class,
-            // EventManager::class,
-            // AccountManagerWidget::class,
         ];
     }
 }

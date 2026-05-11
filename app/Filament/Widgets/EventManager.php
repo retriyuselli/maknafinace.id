@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\Employee;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use Filament\Facades\Filament;
 use Filament\Actions\BulkAction;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
@@ -15,7 +16,9 @@ use Illuminate\Support\Collection;
 
 class EventManager extends BaseWidget
 {
-    use HasWidgetShield;
+    use HasWidgetShield {
+        canView as canViewShield;
+    }
 
     protected static ?string $heading = 'Event Manager Performance Dashboard';
 
@@ -24,6 +27,18 @@ class EventManager extends BaseWidget
     protected static ?int $contentHeight = 400;
 
     protected int $pageSize = 5;
+
+    public static function canView(): bool
+    {
+        if (static::canViewShield()) {
+            return true;
+        }
+
+        $user = Filament::auth()?->user();
+
+        return $user?->can('View:EventManager')
+            || $user?->can('widget_EventManager');
+    }
 
     public function table(Table $table): Table
     {
