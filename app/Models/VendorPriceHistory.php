@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class VendorPriceHistory extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'vendor_id',
         'harga_publish',
@@ -80,6 +84,15 @@ class VendorPriceHistory extends Model
                 }
             }
         });
+    }
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['vendor_id', 'harga_publish', 'harga_vendor', 'effective_from', 'status'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('vendor_price_history');
     }
 
     public function calculateProfitAmount(): void

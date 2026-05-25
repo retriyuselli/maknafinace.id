@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Company extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'company_name',
         'business_license',
@@ -53,6 +57,15 @@ class Company extends Model
         'npwp_issued_date' => 'date',
         'legal_documents' => 'array',
     ];
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['company_name', 'owner_name', 'email', 'phone'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('company');
+    }
 
     public function getFaviconPathAttribute(): string
     {

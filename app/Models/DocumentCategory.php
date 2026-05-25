@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class DocumentCategory extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'name',
@@ -23,6 +25,15 @@ class DocumentCategory extends Model
     protected $casts = [
         'is_approval_required' => 'boolean',
     ];
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'code', 'type', 'is_approval_required'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('document_category');
+    }
 
     public function parent(): BelongsTo
     {

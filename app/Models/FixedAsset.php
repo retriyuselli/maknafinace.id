@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class FixedAsset extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'asset_code',
@@ -75,6 +77,15 @@ class FixedAsset extends Model
     ];
 
     // Relationships
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'purchase_price', 'current_value', 'status'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('fixed_asset');
+    }
+
     public function chartOfAccount(): BelongsTo
     {
         return $this->belongsTo(ChartOfAccount::class);

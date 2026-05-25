@@ -10,10 +10,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Order extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     public static function computeGrandTotalFromValues($totalPrice, $penambahan, $promo, $pengurangan)
     {
@@ -59,6 +61,15 @@ class Order extends Model
         'closing_date' => 'date',
         'kategori_transaksi' => 'string',
     ];
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'total_price', 'closing_date', 'user_id', 'number', 'name'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('order');
+    }
 
     protected function finance(): OrderFinance
     {

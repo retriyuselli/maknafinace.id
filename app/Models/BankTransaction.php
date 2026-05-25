@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class BankTransaction extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'bank_statement_id',
@@ -36,6 +38,15 @@ class BankTransaction extends Model
         'is_matched' => 'boolean',
         'matching_confidence' => 'integer',
     ];
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['amount', 'type', 'date', 'description', 'bank_statement_id'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('bank_transaction');
+    }
 
     public function bankStatement(): BelongsTo
     {

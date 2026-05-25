@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class CompanyLogo extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'company_name',
@@ -30,6 +32,15 @@ class CompanyLogo extends Model
     /**
      * Get the full URL for the logo
      */
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['company_name', 'is_active', 'display_order'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('company_logo');
+    }
+
     public function getLogoUrlAttribute(): string
     {
         if (! $this->logo_path) {

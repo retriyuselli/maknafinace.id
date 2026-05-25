@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class UnifiedTransaction extends Model
 {
+    use LogsActivity;
+
     /**
      * Virtual model untuk menggabungkan semua transaksi PaymentMethod
      * Tidak memerlukan tabel fisik di database
@@ -33,6 +37,15 @@ class UnifiedTransaction extends Model
 
     // Disable database table usage
     public $timestamps = false;
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['payment_method_id', 'transaction_date', 'debit_amount', 'credit_amount', 'source_type'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('unified_transaction');
+    }
 
     public function paymentMethod(): BelongsTo
     {

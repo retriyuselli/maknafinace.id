@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class LeaveBalance extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'user_id',
         'leave_type_id',
@@ -31,6 +35,15 @@ class LeaveBalance extends Model
                 $leaveBalance->allocated_days = $leaveBalance->leaveType->max_days_per_year;
             }
         });
+    }
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['user_id', 'leave_type_id', 'year', 'allocated_days', 'used_days', 'remaining_days'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('leave_balance');
     }
 
     public function user()

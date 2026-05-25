@@ -19,6 +19,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -157,5 +158,10 @@ class AppServiceProvider extends ServiceProvider
         }));
         
         FilamentClearCache::addCommand('optimize:clear');
+
+        // Log Viewer — hanya bisa diakses oleh super_admin
+        Gate::define('viewLogViewer', function (?User $user): bool {
+            return $user !== null && $user->hasRole('super_admin');
+        });
     }
 }

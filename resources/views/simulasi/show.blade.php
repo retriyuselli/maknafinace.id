@@ -505,7 +505,7 @@ Invoice Area
                                                             </div>
                                                             @if ($item->description)
                                                                 <div style="text-transform: capitalize;">
-                                                                    {!! strtolower($item->description) !!}
+                                                                    {!! strip_tags(strtolower($item->description), '<p><br><b><strong><em><i><ul><ol><li><span><a>') !!}
                                                                 </div>
                                                             @endif
                                                         </td>
@@ -552,7 +552,7 @@ Invoice Area
                                                                 </div>
                                                                 @if (!empty($penambahan_item->description))
                                                                     <div>
-                                                                        {!! $penambahan_item->description !!}
+                                                                        {!! strip_tags($penambahan_item->description, '<p><br><b><strong><em><i><ul><ol><li><span><a>') !!}
                                                                     </div>
                                                                 @endif
                                                             </td>
@@ -586,7 +586,7 @@ Invoice Area
                                                                     <strong>{{ $pengurangan_item->description ?? ($pengurangan_item->name ?? 'Pengurangan Tanpa Nama') }}</strong>
                                                                 </div>
                                                                 @if (!empty($pengurangan_item->notes))
-                                                                    <div>{!! $pengurangan_item->notes !!}</div>
+                                                                    <div>{!! strip_tags($pengurangan_item->notes, '<p><br><b><strong><em><i><ul><ol><li><span><a>') !!}</div>
                                                                 @endif
                                                             </td>
                                                             <td class="col-public-price">
@@ -604,7 +604,7 @@ Invoice Area
                                                     <tr>
                                                         <td style="text-align: left;">
                                                             <b>Notes (Jika ada) :</b>
-                                                            <p style="margin: 0;">{!! $simulasi->notes !!}</p>
+                                                            <p style="margin: 0;">{!! strip_tags($simulasi->notes, '<p><br><b><strong><em><i><ul><ol><li><span><a>') !!}</p>
                                                         </td>
                                                     </tr>
                                                 </tbody>

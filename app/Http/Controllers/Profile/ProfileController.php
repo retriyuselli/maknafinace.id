@@ -14,7 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 
@@ -469,13 +468,6 @@ class ProfileController extends Controller
         }
 
         $request->validate($rules);
-
-        // Debugging: Log request
-        Log::info('Profile Update Request', [
-            'method' => $request->method(),
-            'has_avatar' => $request->hasFile('avatar'),
-            'avatar_error' => $request->hasFile('avatar') ? $request->file('avatar')->getError() : null,
-        ]);
 
         // Handle avatar upload
         if ($request->hasFile('avatar')) {

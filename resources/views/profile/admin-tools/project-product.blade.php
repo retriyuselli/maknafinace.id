@@ -84,7 +84,7 @@
                     <div class="mt-6">
                         <div class="text-sm font-semibold text-gray-900 mb-2">Free</div>
                         <div class="prose max-w-none text-sm">
-                            {!! $product->free_pengurangan !!}
+                            {!! strip_tags($product->free_pengurangan, '<p><br><b><strong><em><i><ul><ol><li><span><a>') !!}
                         </div>
                     </div>
                 @endif
@@ -152,7 +152,7 @@
                                         </tr>
                                         @if (!empty($disc->notes))
                                             <tr class="text-gray-700">
-                                                <td class="pb-3 pr-4" colspan="2">{!! $disc->notes !!}</td>
+                                                <td class="pb-3 pr-4" colspan="2">{!! strip_tags($disc->notes, '<p><br><b><strong><em><i><ul><ol><li><span><a>') !!}</td>
                                             </tr>
                                         @endif
                                     @endforeach
@@ -183,7 +183,7 @@
                                         </tr>
                                         @if (!empty($add->description))
                                             <tr class="text-gray-700">
-                                                <td class="pb-3 pr-4" colspan="3">{!! $add->description !!}</td>
+                                                <td class="pb-3 pr-4" colspan="3">{!! strip_tags($add->description, '<p><br><b><strong><em><i><ul><ol><li><span><a>') !!}</td>
                                             </tr>
                                         @endif
                                     @endforeach

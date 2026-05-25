@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Arr;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class BankStatement extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'payment_method_id', // Changed to match migration and resource
         'period_start',
@@ -53,6 +57,15 @@ class BankStatement extends Model
         'total_debit_reconciliation' => 'integer',
         'total_credit_reconciliation' => 'integer',
     ];
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['payment_method_id', 'period_start', 'period_end', 'status'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('bank_statement');
+    }
 
     public function paymentMethod(): BelongsTo // Corrected typo
     {

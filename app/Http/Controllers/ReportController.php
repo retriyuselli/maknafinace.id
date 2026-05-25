@@ -146,7 +146,7 @@ class ReportController extends Controller
     {
         Gate::authorize('viewAny', ExpenseOps::class);
 
-        $query = ExpenseOps::query(); // Using fully qualified name to avoid ambiguity
+        $query = ExpenseOps::query()->with(['vendor', 'paymentMethod']); // Eager load untuk menghindari N+1
 
         $selectedMonth = $request->input('month');
         $selectedYear = $request->input('year');
@@ -211,7 +211,7 @@ class ReportController extends Controller
     {
         Gate::authorize('viewAny', ExpenseOps::class);
 
-        $query = ExpenseOps::query();
+        $query = ExpenseOps::query()->with(['vendor', 'paymentMethod']); // Eager load untuk menghindari N+1
 
         $selectedMonth = $request->input('month');
         $selectedYear = $request->input('year');
@@ -265,14 +265,12 @@ class ReportController extends Controller
     {
         Gate::authorize('viewAny', Expense::class);
 
-        $query = Expense::query(); // Menggunakan model Expense
-
         $selectedMonth = $request->input('month');
         $selectedYear = $request->input('year');
         $searchName = $request->input('search_name'); // Asumsi nama pengeluaran ada di kolom 'name'
         $searchNote = $request->input('search_note'); // Asumsi catatan ada di kolom 'note'
         $selectedOrderStatus = $request->input('order_status');
-        $query = Expense::query()->with(['order', 'vendor']); // Pastikan relasi order di-load
+        $query = Expense::query()->with(['order', 'vendor']); // Eager load relasi untuk menghindari N+1
 
         if ($selectedYear) {
             $query->whereYear('date_expense', $selectedYear);
@@ -298,7 +296,7 @@ class ReportController extends Controller
         }
 
         $expenses = $query->orderBy('date_expense', 'desc')->get();
-        $expensesWedding = $query->get();
+        $expensesWedding = $expenses; // Gunakan hasil yang sama, hindari query duplikat
         $orderStatuses = OrderStatus::cases();
 
         // Data untuk dropdown filter
@@ -339,13 +337,12 @@ class ReportController extends Controller
     {
         Gate::authorize('viewAny', Expense::class);
 
-        $query = Expense::query(); // Menggunakan model Expense
-
         $selectedMonth = $request->input('month');
         $selectedYear = $request->input('year');
         $searchName = $request->input('search_name'); // Ini akan mencari nama dari relasi order
         $searchNote = $request->input('search_note');
         $selectedOrderStatus = $request->input('order_status'); // Ambil status order dari request
+        $query = Expense::query()->with(['order', 'vendor']); // Eager load untuk menghindari N+1
 
         if ($selectedYear) {
             $query->whereYear('date_expense', $selectedYear);

@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class PendapatanLain extends Model
 {
     use HasFactory,
-        SoftDeletes;
+        SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'name',
@@ -32,6 +34,15 @@ class PendapatanLain extends Model
         'nominal' => 'integer',
         'kategori_transaksi' => 'string',
     ];
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['nominal', 'tanggal', 'keterangan', 'category_id'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('pendapatan_lain');
+    }
 
     public function paymentMethod(): BelongsTo
     {

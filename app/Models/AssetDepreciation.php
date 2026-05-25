@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class AssetDepreciation extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'fixed_asset_id',
@@ -35,6 +37,15 @@ class AssetDepreciation extends Model
     ];
 
     // Relationships
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['fixed_asset_id', 'depreciation_date', 'depreciation_amount', 'book_value_after'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('asset_depreciation');
+    }
+
     public function fixedAsset(): BelongsTo
     {
         return $this->belongsTo(FixedAsset::class);

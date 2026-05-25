@@ -289,9 +289,12 @@ Route::middleware(['guest', 'no-store'])->group(function () {
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('front.register');
     Route::post('/register', [AuthController::class, 'register'])->name('front.register.submit')->middleware('throttle:10,1');
 
-    // Google Login
-    Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
-    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+    // Forgot & Reset Password
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('front.password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('front.password.email')->middleware('throttle:5,1');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('front.password.update')->middleware('throttle:5,1');
+
 });
 
 // PROFILE ROUTES
@@ -309,7 +312,7 @@ Route::middleware($authNoStore)->group(function () {
         ->middleware('super-admin');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update')->middleware('throttle:5,1');
     Route::post('/profile/report', [ProfileController::class, 'generateReport'])->name('profile.report');
     Route::get('/profile/events', [ProfileController::class, 'getEvents'])->name('profile.events');
     Route::get('/profile/benefits', [ProfileController::class, 'getBenefits'])->name('profile.benefits');
@@ -347,7 +350,7 @@ Route::middleware($authNoStore)->group(function () {
         request()->session()->regenerateToken();
 
         return redirect('/');
-    })->name('logout');
+    })->name('logout')->middleware('throttle:10,1');
 });
 
 // Route untuk Prospect (Original)

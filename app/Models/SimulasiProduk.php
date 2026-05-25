@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class SimulasiProduk extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'prospect_id',
@@ -55,6 +57,15 @@ class SimulasiProduk extends Model
         static::updating(function ($model) {
             $model->last_edited_by = Auth::id();
         });
+    }
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['prospect_id', 'product_id', 'total_price', 'promo'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('simulasi');
     }
 
     public function lastEditedBy()

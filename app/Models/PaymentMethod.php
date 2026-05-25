@@ -4,9 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class PaymentMethod extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'name',
         'bank_name',
@@ -21,6 +25,15 @@ class PaymentMethod extends Model
         'opening_balance' => 'integer',
         'opening_balance_date' => 'date',
     ];
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'bank_name', 'no_rekening', 'is_cash'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('payment_method');
+    }
 
     public function orders(): HasMany
     {

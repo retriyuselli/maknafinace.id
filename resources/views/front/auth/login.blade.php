@@ -14,7 +14,19 @@
                         <h1 class="text-3xl font-bold text-gray-900">Sign In</h1>
                         <p class="mt-1 text-sm text-gray-500">Unlock Smarter Financial Decisions.</p>
                         @if (session('status'))
-                            <p class="mt-3 text-sm text-green-600">{{ session('status') }}</p>
+                            <div class="mt-3 p-3 rounded-lg bg-green-50 border border-green-200">
+                                <p class="text-sm text-green-700">{{ session('status') }}</p>
+                            </div>
+                        @endif
+                        @if (session('error'))
+                            <div class="mt-3 p-3 rounded-lg bg-red-50 border border-red-200">
+                                <p class="text-sm text-red-700">{{ session('error') }}</p>
+                            </div>
+                        @endif
+                        @if (session('warning'))
+                            <div class="mt-3 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+                                <p class="text-sm text-yellow-700">{{ session('warning') }}</p>
+                            </div>
                         @endif
                         <form class="mt-8 space-y-6" action="{{ route('front.login') }}" method="POST">
                             @csrf
@@ -58,29 +70,15 @@
                                 </div>
                             </div>
                             <div class="space-y-3">
+                                <div class="flex justify-end">
+                                    <a href="{{ route('front.password.request') }}"
+                                        class="text-sm text-blue-600 hover:text-blue-500 font-medium">
+                                        Lupa Password?
+                                    </a>
+                                </div>
                                 <button type="submit"
                                     class="w-full px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Sign
                                     In</button>
-                                @if (false)
-                                    <div class="flex items-center my-2">
-                                        <div class="flex-1 h-px bg-gray-200"></div>
-                                        <span class="px-3 text-xs text-gray-500">Or</span>
-                                        <div class="flex-1 h-px bg-gray-200"></div>
-                                    </div>
-                                    @if (Route::has('auth.google.redirect'))
-                                        <a href="{{ route('auth.google.redirect') }}"
-                                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
-                                            <i class="fab fa-google text-red-500"></i>
-                                            Sign in with Google
-                                        </a>
-                                    @else
-                                        <a href="#"
-                                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
-                                            <i class="fab fa-google text-red-500"></i>
-                                            Sign in with Google
-                                        </a>
-                                    @endif
-                                @endif
                                 <p class="mt-2 text-center text-sm text-gray-600">
                                     Belum punya akun?
                                     <a href="{{ route('pendaftaran') }}" class="font-medium text-blue-600 hover:text-blue-500">

@@ -6,8 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
-use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -85,44 +86,69 @@ class AuthController extends Controller
         return redirect()->route('home')->with('success', 'Anda telah logout.');
     }
 
-    public function redirectToGoogle()
+    /**
+     * Show the forgot password form
+     */
+    public function showForgotPasswordForm()
     {
-        return Socialite::driver('google')
-            ->redirectUrl(route('auth.google.callback'))
-            ->stateless()
-            ->redirect();
+        return view('front.auth.forgot-password');
     }
 
-    public function handleGoogleCallback()
+    /**
+     * Send password reset link to email
+     */
+    public function sendResetLink(Request $request)
     {
-        try {
-            $googleUser = Socialite::driver('google')
-                ->redirectUrl(route('auth.google.callback'))
-                ->stateless()
-                ->user();
+        $request->validate([
+            'email' => 'required|email',
+        ]);
 
-            $user = User::where('email', $googleUser->getEmail())->first();
+        $status = Password::sendResetLink($request->only('email'));
 
-            if (! $user) {
-                $user = User::create([
-                    'name' => $googleUser->getName() ?: $googleUser->getNickname() ?: 'Pengguna Google',
-                    'email' => $googleUser->getEmail(),
-                    'password' => str()->random(32),
-                ]);
-
-                $user->email_verified_at = now();
-                $user->save();
-            }
-
-            if (method_exists($user, 'isExpired') && $user->isExpired()) {
-                return redirect()->route('front.login')->with('error', 'Akun Anda sudah kedaluwarsa. Hubungi admin untuk aktivasi.');
-            }
-
-            Auth::login($user, true);
-
-            return redirect()->route('profile')->with('success', 'Berhasil masuk dengan Google.');
-        } catch (\Throwable $e) {
-            return redirect()->route('front.login')->with('error', 'Login Google gagal: '.$e->getMessage());
+        if ($status === Password::RESET_LINK_SENT) {
+            return back()->with('status', 'Link reset password telah dikirim ke email Anda.');
         }
+
+        return back()->withErrors(['email' => __($status)]);
+    }
+
+    /**
+     * Show the reset password form
+     */
+    public function showResetPasswordForm(Request $request, string $token)
+    {
+        return view('front.auth.reset-password', [
+            'token' => $token,
+            'email' => $request->email,
+        ]);
+    }
+
+    /**
+     * Handle reset password
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token'                 => 'required',
+            'email'                 => 'required|email',
+            'password'              => 'required|min:8|confirmed',
+            'password_confirmation' => 'required',
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                ])->save();
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return redirect()->route('front.login')
+                ->with('status', 'Password berhasil direset. Silakan login.');
+        }
+
+        return back()->withErrors(['email' => __($status)]);
     }
 }

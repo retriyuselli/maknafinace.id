@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class LeaveRequest extends Model
 {
@@ -61,6 +63,15 @@ class LeaveRequest extends Model
     /**
      * Update atau create LeaveBalance untuk user ini
      */
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['user_id', 'start_date', 'end_date', 'total_days', 'status'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('leave_request');
+    }
+
     public function updateLeaveBalance()
     {
         $year = $this->start_date ? $this->start_date->year : now()->year;

@@ -12,10 +12,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class DataPribadi extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'nama_lengkap',
@@ -72,6 +74,15 @@ class DataPribadi extends Model
     /**
      * Encrypt sensitive data mutator - GAJI
      */
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['nama_lengkap', 'email', 'nomor_telepon', 'tanggal_mulai_gabung'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('data_pribadi');
+    }
+
     public function setGajiAttribute($value)
     {
         if (! is_null($value)) {

@@ -6,9 +6,13 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class BankReconciliationItem extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'bank_reconciliation_id',
         'date',
@@ -32,6 +36,15 @@ class BankReconciliationItem extends Model
      * Get transaction direction (user-friendly)
      * Returns: 'masuk' or 'keluar'
      */
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['date', 'description', 'debit', 'credit'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('bank_reconciliation');
+    }
+
     public function getDirectionAttribute(): string
     {
         return $this->debit > 0 ? 'keluar' : 'masuk';

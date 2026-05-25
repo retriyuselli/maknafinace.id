@@ -6,10 +6,12 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Prospect extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'name_event',
@@ -46,6 +48,15 @@ class Prospect extends Model
                 throw new Exception("Cannot delete prospect '{$prospect->name_event}' because it has associated orders.");
             }
         });
+    }
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name_event', 'name_cpp', 'name_cpw', 'phone', 'date_akad', 'date_resepsi'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('prospect');
     }
 
     public function employee()

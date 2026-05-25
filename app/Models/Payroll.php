@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Payroll extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'user_id',
@@ -105,6 +107,15 @@ class Payroll extends Model
     }
 
     // Accessor untuk menghitung annual salary berdasarkan monthly salary
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['user_id', 'period_year', 'period_month', 'take_home_pay', 'status'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('payroll');
+    }
+
     public function getCalculatedAnnualSalaryAttribute(): float
     {
         return (float) self::computeAnnualBase($this->gaji_pokok ?? 0, $this->tunjangan ?? 0);

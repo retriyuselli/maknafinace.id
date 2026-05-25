@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Employee extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'name',
         'slug',
@@ -28,6 +32,15 @@ class Employee extends Model
         'photo',
         'note',
     ];
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'email', 'position', 'phone', 'date_of_out'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('employee');
+    }
 
     public function prospects(): HasMany
     {

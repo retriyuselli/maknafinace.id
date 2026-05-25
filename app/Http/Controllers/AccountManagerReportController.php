@@ -26,89 +26,32 @@ class AccountManagerReportController extends Controller
     {
         $validated = $request->validate([
             'userId' => ['required', 'integer', 'exists:users,id'],
-            'year' => ['required', 'integer', 'min:2000', 'max:2100'],
-            'month' => ['required', 'integer', 'min:1', 'max:12'],
+            'year'   => ['required', 'integer', 'min:2000', 'max:2100'],
+            'month'  => ['required', 'integer', 'min:1', 'max:12'],
         ]);
 
         $userId = (int) $validated['userId'];
-        $year = (int) $validated['year'];
-        $month = (int) $validated['month'];
+        $year   = (int) $validated['year'];
+        $month  = (int) $validated['month'];
 
         try {
-            // Get Account Manager user data
-            $accountManager = User::with(['roles'])->find($userId);
+            $data = $this->fetchReportData($userId, $year, $month, ['prospect', 'items.product']);
+            extract($data);
 
-            if (! $accountManager || ! $accountManager->hasRole('Account Manager')) {
-                return response()->make('Account Manager tidak ditemukan atau tidak memiliki role yang sesuai.', 404);
-            }
-
-            // Authorization check
-            $currentUser = Auth::user();
-            $isSuperAdmin = $currentUser && $currentUser->roles->where('name', 'super_admin')->count() > 0;
-
-            if (! $isSuperAdmin && $userId != $currentUser->id) {
-                abort(403, 'Anda tidak memiliki akses untuk melihat report ini.');
-            }
-
-            // Get target data for the period
-            $target = AccountManagerTarget::where('user_id', $userId)
-                ->where('year', $year)
-                ->where('month', $month)
-                ->first();
-
-            // Get orders data for the period
-            $orders = Order::where('user_id', $userId)
-                ->whereNotNull('closing_date')
-                ->whereYear('closing_date', $year)
-                ->whereMonth('closing_date', $month)
-                ->with(['prospect', 'items.product'])
-                ->get();
-
-            // Calculate sales statistics
-            $totalRevenue = $orders->sum('total_price');
-            $totalOrders = $orders->count();
-            $averageOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
-
-            // Get payroll data
-            $payrollData = null;
-            if (class_exists(Payroll::class)) {
-                $payrollData = Payroll::where('user_id', $userId)
-                    ->where('period_year', $year)
-                    ->where('period_month', $month)
-                    ->first();
-            }
-
-            // Get leave data
-            $leaveData = collect();
-            if (class_exists(LeaveRequest::class)) {
-                $leaveData = LeaveRequest::where('user_id', $userId)
-                    ->where(function ($query) use ($year, $month) {
-                        $query->whereYear('start_date', $year)
-                            ->whereMonth('start_date', $month);
-                    })
-                    ->orWhere(function ($query) use ($year, $month) {
-                        $query->whereYear('end_date', $year)
-                            ->whereMonth('end_date', $month);
-                    })
-                    ->with('leaveType')
-                    ->get();
-            }
-
-            // Generate the report view
-            return response()->streamDownload(function () use ($accountManager, $target, $orders, $payrollData, $leaveData, $year, $month, $totalRevenue, $totalOrders, $averageOrderValue) {
+            return response()->streamDownload(function () use ($accountManager, $target, $orders, $payrollData, $leaveData, $year, $month, $totalRevenue, $totalOrders, $averageOrderValue, $achievementPercentage) {
                 echo view('reports.account-manager-report', [
-                    'accountManager' => $accountManager,
-                    'target' => $target,
-                    'orders' => $orders,
-                    'payrollData' => $payrollData,
-                    'leaveData' => $leaveData,
-                    'year' => $year,
-                    'month' => $month,
-                    'monthName' => Carbon::create()->month($month)->format('F'),
-                    'totalRevenue' => $totalRevenue,
-                    'totalOrders' => $totalOrders,
-                    'averageOrderValue' => $averageOrderValue,
-                    'achievementPercentage' => $target ? ($target->target_amount > 0 ? ($totalRevenue / $target->target_amount) * 100 : 0) : 0,
+                    'accountManager'       => $accountManager,
+                    'target'               => $target,
+                    'orders'               => $orders,
+                    'payrollData'          => $payrollData,
+                    'leaveData'            => $leaveData,
+                    'year'                 => $year,
+                    'month'                => $month,
+                    'monthName'            => Carbon::create()->month($month)->format('F'),
+                    'totalRevenue'         => $totalRevenue,
+                    'totalOrders'          => $totalOrders,
+                    'averageOrderValue'    => $averageOrderValue,
+                    'achievementPercentage' => $achievementPercentage,
                 ])->render();
             }, "AM_Report_{$accountManager->name}_{$year}_{$month}.html", [
                 'Content-Type' => 'text/html',
@@ -126,152 +69,55 @@ class AccountManagerReportController extends Controller
     {
         $validated = $request->validate([
             'userId' => ['required', 'integer', 'exists:users,id'],
-            'year' => ['required', 'integer', 'min:2000', 'max:2100'],
-            'month' => ['required', 'integer', 'min:1', 'max:12'],
+            'year'   => ['required', 'integer', 'min:2000', 'max:2100'],
+            'month'  => ['required', 'integer', 'min:1', 'max:12'],
         ]);
 
         $userId = (int) $validated['userId'];
-        $year = (int) $validated['year'];
-        $month = (int) $validated['month'];
+        $year   = (int) $validated['year'];
+        $month  = (int) $validated['month'];
 
         try {
-            // Get Account Manager user data
-            $accountManager = User::with(['roles'])->find($userId);
+            $data = $this->fetchReportData($userId, $year, $month);
+            extract($data);
 
-            if (! $accountManager || ! $accountManager->hasRole('Account Manager')) {
-                return response()->make('Account Manager tidak ditemukan atau tidak memiliki role yang sesuai.', 404);
-            }
-
-            // Authorization check
-            $currentUser = Auth::user();
-            $isSuperAdmin = $currentUser && $currentUser->roles->where('name', 'super_admin')->count() > 0;
-
-            if (! $isSuperAdmin && $userId != $currentUser->id) {
-                abort(403, 'Anda tidak memiliki akses untuk melihat report ini.');
-            }
-
-            // Get target data for the period
-            $target = AccountManagerTarget::where('user_id', $userId)
-                ->where('year', $year)
-                ->where('month', $month)
-                ->first();
-
-            // Get orders data for the period
-            $orders = Order::where('user_id', $userId)
-                ->whereNotNull('closing_date')
-                ->whereYear('closing_date', $year)
-                ->whereMonth('closing_date', $month)
-                ->with(['prospect', 'items.product'])
-                ->get();
-
-            // Calculate sales statistics
-            $totalRevenue = $orders->sum('total_price');
-            $totalOrders = $orders->count();
-            $averageOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
-
-            // Get payroll data
-            $payrollData = null;
-            if (class_exists(Payroll::class)) {
-                $payrollData = Payroll::where('user_id', $userId)
-                    ->where('period_year', $year)
-                    ->where('period_month', $month)
-                    ->first();
-            }
-
-            // Get leave data
-            $leaveData = collect();
-            if (class_exists(LeaveRequest::class)) {
-                $leaveData = LeaveRequest::where('user_id', $userId)
-                    ->where(function ($query) use ($year, $month) {
-                        $query->whereYear('start_date', $year)
-                            ->whereMonth('start_date', $month);
-                    })
-                    ->orWhere(function ($query) use ($year, $month) {
-                        $query->whereYear('end_date', $year)
-                            ->whereMonth('end_date', $month);
-                    })
-                    ->with('leaveType')
-                    ->get();
-            }
-
-            // Get Yearly Performance Data
-            $currentYear = (int) date('Y');
-            $currentMonth = (int) date('n');
-
-            // Detail Tahun Berjalan (Current Year)
-            $currentYearData = $this->getYearlyPerformanceData($userId, $currentYear, $currentMonth);
-
-            // Detail Tahun Sebelumnya (Previous Year)
-            $previousYearData = $this->getYearlyPerformanceData($userId, $currentYear - 1, 12);
-
-            $company = null;
-            if (Schema::hasTable('companies')) {
-                $company = Company::query()->first();
-            }
-
-            $companyName = $company?->company_name;
-            $companyAddress = $company?->address;
-            $companyEmail = $company?->email;
-            $companyPhone = $company?->phone;
-
-            $logoCacheKey = 'am_report:logo:'.
-                ($company?->id ?? 'none').':'.
-                ($company?->updated_at?->timestamp ?? '0').':'.
-                md5((string) ($company?->logo_url ?? ''));
-
-            $logoBase64 = Cache::remember($logoCacheKey, 3600, function () use ($company): string {
-                $logoPath = $company && $company->logo_url
-                    ? Storage::disk('public')->path($company->logo_url)
-                    : public_path('images/logomki.png');
-
-                if (! is_string($logoPath) || ! file_exists($logoPath)) {
-                    return '';
-                }
-
-                $logoType = pathinfo($logoPath, PATHINFO_EXTENSION);
-                $logoData = @file_get_contents($logoPath);
-                if (! is_string($logoData) || $logoData === '') {
-                    return '';
-                }
-
-                return 'data:image/'.$logoType.';base64,'.base64_encode($logoData);
-            });
+            [$currentYearData, $previousYearData, $currentYear, $currentMonth] = $this->fetchYearlyData($userId);
+            [$company, $companyName, $companyAddress, $companyEmail, $companyPhone, $logoBase64] = $this->fetchCompanyData();
 
             $pdf = Pdf::loadView('reports.account-manager-report-dompdf', [
-                'accountManager' => $accountManager,
-                'target' => $target,
-                'orders' => $orders,
-                'payrollData' => $payrollData,
-                'leaveData' => $leaveData,
-                'year' => $year,
-                'month' => $month,
-                'monthName' => Carbon::create()->month($month)->format('F'),
-                'totalRevenue' => $totalRevenue,
-                'totalOrders' => $totalOrders,
-                'averageOrderValue' => $averageOrderValue,
-                'achievementPercentage' => $target ? ($target->target_amount > 0 ? ($totalRevenue / $target->target_amount) * 100 : 0) : 0,
-                'currentYearData' => $currentYearData,
-                'previousYearData' => $previousYearData,
-                'currentYear' => $currentYear,
-                'currentMonth' => $currentMonth,
-                'companyName' => $companyName,
-                'companyAddress' => $companyAddress,
-                'companyEmail' => $companyEmail,
-                'companyPhone' => $companyPhone,
-                'logoBase64' => $logoBase64,
+                'accountManager'       => $accountManager,
+                'target'               => $target,
+                'orders'               => $orders,
+                'payrollData'          => $payrollData,
+                'leaveData'            => $leaveData,
+                'year'                 => $year,
+                'month'                => $month,
+                'monthName'            => Carbon::create()->month($month)->format('F'),
+                'totalRevenue'         => $totalRevenue,
+                'totalOrders'          => $totalOrders,
+                'averageOrderValue'    => $averageOrderValue,
+                'achievementPercentage' => $achievementPercentage,
+                'currentYearData'      => $currentYearData,
+                'previousYearData'     => $previousYearData,
+                'currentYear'          => $currentYear,
+                'currentMonth'         => $currentMonth,
+                'companyName'          => $companyName,
+                'companyAddress'       => $companyAddress,
+                'companyEmail'         => $companyEmail,
+                'companyPhone'         => $companyPhone,
+                'logoBase64'           => $logoBase64,
             ]);
 
             $pdf->setPaper('a4', 'portrait');
             $pdf->setOptions([
-                'dpi' => 96,
-                'defaultFont' => 'DejaVu Sans',
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => false,
-                'isPhpEnabled' => false,
+                'dpi'                     => 96,
+                'defaultFont'             => 'DejaVu Sans',
+                'isHtml5ParserEnabled'    => true,
+                'isRemoteEnabled'         => false,
+                'isPhpEnabled'            => false,
                 'isFontSubsettingEnabled' => true,
             ]);
 
-            // return $pdf->stream("AM_Report_{$accountManager->name}_{$year}_{$month}.pdf");
             return $pdf->download("AM_Report_{$accountManager->name}_{$year}_{$month}.pdf");
 
         } catch (Exception $e) {
@@ -286,148 +132,52 @@ class AccountManagerReportController extends Controller
     {
         $validated = $request->validate([
             'userId' => ['required', 'integer', 'exists:users,id'],
-            'year' => ['required', 'integer', 'min:2000', 'max:2100'],
-            'month' => ['required', 'integer', 'min:1', 'max:12'],
+            'year'   => ['required', 'integer', 'min:2000', 'max:2100'],
+            'month'  => ['required', 'integer', 'min:1', 'max:12'],
         ]);
 
         $userId = (int) $validated['userId'];
-        $year = (int) $validated['year'];
-        $month = (int) $validated['month'];
+        $year   = (int) $validated['year'];
+        $month  = (int) $validated['month'];
 
         try {
-            // Get Account Manager user data
-            $accountManager = User::with(['roles'])->find($userId);
+            $data = $this->fetchReportData($userId, $year, $month);
+            extract($data);
 
-            if (! $accountManager || ! $accountManager->hasRole('Account Manager')) {
-                return response()->make('Account Manager tidak ditemukan atau tidak memiliki role yang sesuai.', 404);
-            }
-
-            // Authorization check
-            $currentUser = Auth::user();
-            $isSuperAdmin = $currentUser && $currentUser->roles->where('name', 'super_admin')->count() > 0;
-
-            if (! $isSuperAdmin && $userId != $currentUser->id) {
-                abort(403, 'Anda tidak memiliki akses untuk melihat report ini.');
-            }
-
-            // Get target data for the period
-            $target = AccountManagerTarget::where('user_id', $userId)
-                ->where('year', $year)
-                ->where('month', $month)
-                ->first();
-
-            // Get orders data for the period
-            $orders = Order::where('user_id', $userId)
-                ->whereNotNull('closing_date')
-                ->whereYear('closing_date', $year)
-                ->whereMonth('closing_date', $month)
-                ->with(['prospect'])
-                ->get();
-
-            // Calculate sales statistics
-            $totalRevenue = $orders->sum('total_price');
-            $totalOrders = $orders->count();
-            $averageOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
-
-            // Get payroll data
-            $payrollData = null;
-            if (class_exists(Payroll::class)) {
-                $payrollData = Payroll::where('user_id', $userId)
-                    ->where('period_year', $year)
-                    ->where('period_month', $month)
-                    ->first();
-            }
-
-            // Get leave data
-            $leaveData = collect();
-            if (class_exists(LeaveRequest::class)) {
-                $leaveData = LeaveRequest::where('user_id', $userId)
-                    ->where(function ($query) use ($year, $month) {
-                        $query->whereYear('start_date', $year)
-                            ->whereMonth('start_date', $month);
-                    })
-                    ->orWhere(function ($query) use ($year, $month) {
-                        $query->whereYear('end_date', $year)
-                            ->whereMonth('end_date', $month);
-                    })
-                    ->with('leaveType')
-                    ->get();
-            }
-
-            // Get Yearly Performance Data
-            $currentYear = (int) date('Y');
-            $currentMonth = (int) date('n');
-
-            // Detail Tahun Berjalan (Current Year)
-            $currentYearData = $this->getYearlyPerformanceData($userId, $currentYear, $currentMonth);
-
-            // Detail Tahun Sebelumnya (Previous Year)
-            $previousYearData = $this->getYearlyPerformanceData($userId, $currentYear - 1, 12);
-
-            $company = null;
-            if (Schema::hasTable('companies')) {
-                $company = Company::query()->first();
-            }
-
-            $companyName = $company?->company_name;
-            $companyAddress = $company?->address;
-            $companyEmail = $company?->email;
-            $companyPhone = $company?->phone;
-
-            $logoCacheKey = 'am_report:logo:'.
-                ($company?->id ?? 'none').':'.
-                ($company?->updated_at?->timestamp ?? '0').':'.
-                md5((string) ($company?->logo_url ?? ''));
-
-            $logoBase64 = Cache::remember($logoCacheKey, 3600, function () use ($company): string {
-                $logoPath = $company && $company->logo_url
-                    ? Storage::disk('public')->path($company->logo_url)
-                    : public_path('images/logomki.png');
-
-                if (! is_string($logoPath) || ! file_exists($logoPath)) {
-                    return '';
-                }
-
-                $logoType = pathinfo($logoPath, PATHINFO_EXTENSION);
-                $logoData = @file_get_contents($logoPath);
-                if (! is_string($logoData) || $logoData === '') {
-                    return '';
-                }
-
-                return 'data:image/'.$logoType.';base64,'.base64_encode($logoData);
-            });
+            [$currentYearData, $previousYearData, $currentYear, $currentMonth] = $this->fetchYearlyData($userId);
+            [$company, $companyName, $companyAddress, $companyEmail, $companyPhone, $logoBase64] = $this->fetchCompanyData();
 
             $pdf = Pdf::loadView('reports.account-manager-report-dompdf', [
-                'accountManager' => $accountManager,
-                'target' => $target,
-                'orders' => $orders,
-                'payrollData' => $payrollData,
-                'leaveData' => $leaveData,
-                'year' => $year,
-                'month' => $month,
-                'monthName' => Carbon::create()->month($month)->format('F'),
-                'totalRevenue' => $totalRevenue,
-                'totalOrders' => $totalOrders,
-                'averageOrderValue' => $averageOrderValue,
-                'achievementPercentage' => $target ? ($target->target_amount > 0 ? ($totalRevenue / $target->target_amount) * 100 : 0) : 0,
-                'currentYearData' => $currentYearData,
-                'previousYearData' => $previousYearData,
-                'currentYear' => $currentYear,
-                'currentMonth' => $currentMonth,
-                'companyName' => $companyName,
-                'companyAddress' => $companyAddress,
-                'companyEmail' => $companyEmail,
-                'companyPhone' => $companyPhone,
-                'logoBase64' => $logoBase64,
+                'accountManager'       => $accountManager,
+                'target'               => $target,
+                'orders'               => $orders,
+                'payrollData'          => $payrollData,
+                'leaveData'            => $leaveData,
+                'year'                 => $year,
+                'month'                => $month,
+                'monthName'            => Carbon::create()->month($month)->format('F'),
+                'totalRevenue'         => $totalRevenue,
+                'totalOrders'          => $totalOrders,
+                'averageOrderValue'    => $averageOrderValue,
+                'achievementPercentage' => $achievementPercentage,
+                'currentYearData'      => $currentYearData,
+                'previousYearData'     => $previousYearData,
+                'currentYear'          => $currentYear,
+                'currentMonth'         => $currentMonth,
+                'companyName'          => $companyName,
+                'companyAddress'       => $companyAddress,
+                'companyEmail'         => $companyEmail,
+                'companyPhone'         => $companyPhone,
+                'logoBase64'           => $logoBase64,
             ]);
 
             $pdf->setPaper('a4', 'portrait');
             $pdf->setOptions([
-                'dpi' => 96,
-                'defaultFont' => 'DejaVu Sans',
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => false,
-                'isPhpEnabled' => false,
+                'dpi'                     => 96,
+                'defaultFont'             => 'DejaVu Sans',
+                'isHtml5ParserEnabled'    => true,
+                'isRemoteEnabled'         => false,
+                'isPhpEnabled'            => false,
                 'isFontSubsettingEnabled' => true,
             ]);
 
@@ -444,111 +194,176 @@ class AccountManagerReportController extends Controller
     public function showReport(Request $request)
     {
         $userId = $request->input('userId');
-        $year = (int) $request->input('year');
-        $month = (int) $request->input('month');
+        $year   = (int) $request->input('year');
+        $month  = (int) $request->input('month');
 
         if (! $userId || ! $year || ! $month) {
             abort(400, 'Missing required parameters');
         }
 
         try {
-            // Get Account Manager user data
-            $accountManager = User::with(['roles'])->find($userId);
+            $data = $this->fetchReportData((int) $userId, $year, $month);
+            extract($data);
 
-            if (! $accountManager || ! $accountManager->hasRole('Account Manager')) {
-                return response()->make('Account Manager tidak ditemukan atau tidak memiliki role yang sesuai.', 404);
-            }
-
-            // Authorization check
-            $currentUser = Auth::user();
-            $isSuperAdmin = $currentUser && $currentUser->roles->where('name', 'super_admin')->count() > 0;
-
-            if (! $isSuperAdmin && $userId != $currentUser->id) {
-                abort(403, 'Anda tidak memiliki akses untuk melihat report ini.');
-            }
-
-            // Get target data for the period
-            $target = AccountManagerTarget::where('user_id', $userId)
-                ->where('year', $year)
-                ->where('month', $month)
-                ->first();
-
-            // Get orders data for the period
-            $orders = Order::where('user_id', $userId)
-                ->whereNotNull('closing_date')
-                ->whereYear('closing_date', $year)
-                ->whereMonth('closing_date', $month)
-                ->with(['prospect'])
-                ->get();
-
-            // Calculate sales statistics
-            $totalRevenue = $orders->sum('total_price');
-            $totalOrders = $orders->count();
-            $averageOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
-            $achievementPercentage = $target ? ($target->target_amount > 0 ? ($totalRevenue / $target->target_amount) * 100 : 0) : 0;
-
-            // Get payroll data
-            $payrollData = null;
-            if (class_exists(Payroll::class)) {
-                $payrollData = Payroll::where('user_id', $userId)
-                    ->where('period_year', $year)
-                    ->where('period_month', $month)
-                    ->first();
-            }
-
-            // Get leave data
-            $leaveData = collect();
-            if (class_exists(LeaveRequest::class)) {
-                $leaveData = LeaveRequest::where('user_id', $userId)
-                    ->where(function ($query) use ($year, $month) {
-                        $query->whereYear('start_date', $year)
-                            ->whereMonth('start_date', $month);
-                    })
-                    ->orWhere(function ($query) use ($year, $month) {
-                        $query->whereYear('end_date', $year)
-                            ->whereMonth('end_date', $month);
-                    })
-                    ->with('leaveType')
-                    ->get();
-            }
-
-            // Get Yearly Performance Data
-            $currentYear = (int) date('Y');
-            $currentMonth = (int) date('n');
-
-            // Detail Tahun Berjalan (Current Year)
-            $currentYearData = $this->getYearlyPerformanceData($userId, $currentYear, $currentMonth);
-
-            // Detail Tahun Sebelumnya (Previous Year)
-            // For previous year, we show full 12 months
-            $previousYearData = $this->getYearlyPerformanceData($userId, $currentYear - 1, 12);
-
-            $reportData = [
-                'target' => $target,
-                'orders' => $orders,
-                'payrollData' => $payrollData,
-                'leaveData' => $leaveData,
-                'totalRevenue' => $totalRevenue,
-                'totalOrders' => $totalOrders,
-                'averageOrderValue' => $averageOrderValue,
-                'achievementPercentage' => $achievementPercentage,
-            ];
+            [$currentYearData, $previousYearData, $currentYear, $currentMonth] = $this->fetchYearlyData((int) $userId);
 
             return view('account-manager-show', [
-                'accountManager' => $accountManager,
-                'year' => $year,
-                'month' => $month,
-                'monthName' => Carbon::create()->month($month)->format('F'),
-                'reportData' => $reportData,
-                'currentYearData' => $currentYearData,
+                'accountManager'  => $accountManager,
+                'year'            => $year,
+                'month'           => $month,
+                'monthName'       => Carbon::create()->month($month)->format('F'),
+                'reportData'      => [
+                    'target'               => $target,
+                    'orders'               => $orders,
+                    'payrollData'          => $payrollData,
+                    'leaveData'            => $leaveData,
+                    'totalRevenue'         => $totalRevenue,
+                    'totalOrders'          => $totalOrders,
+                    'averageOrderValue'    => $averageOrderValue,
+                    'achievementPercentage' => $achievementPercentage,
+                ],
+                'currentYearData'  => $currentYearData,
                 'previousYearData' => $previousYearData,
-                'currentYear' => $currentYear,
-                'currentMonth' => $currentMonth,
+                'currentYear'      => $currentYear,
+                'currentMonth'     => $currentMonth,
             ]);
 
         } catch (Exception $e) {
             return response()->make('Terjadi kesalahan: '.$e->getMessage(), 500);
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Private helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Fetch all common report data: accountManager, target, orders, stats,
+     * payroll, and leave — with authorization check baked in.
+     */
+    private function fetchReportData(int $userId, int $year, int $month, array $orderWith = ['prospect']): array
+    {
+        $accountManager = User::with(['roles'])->find($userId);
+
+        if (! $accountManager || ! $accountManager->hasRole('Account Manager')) {
+            abort(404, 'Account Manager tidak ditemukan atau tidak memiliki role yang sesuai.');
+        }
+
+        // Authorization
+        $currentUser   = Auth::user();
+        $isSuperAdmin  = $currentUser && $currentUser->roles->where('name', 'super_admin')->count() > 0;
+
+        if (! $isSuperAdmin && $userId != $currentUser->id) {
+            abort(403, 'Anda tidak memiliki akses untuk melihat report ini.');
+        }
+
+        // Target
+        $target = AccountManagerTarget::where('user_id', $userId)
+            ->where('year', $year)
+            ->where('month', $month)
+            ->first();
+
+        // Orders
+        $orders = Order::where('user_id', $userId)
+            ->whereNotNull('closing_date')
+            ->whereYear('closing_date', $year)
+            ->whereMonth('closing_date', $month)
+            ->with($orderWith)
+            ->get();
+
+        // Sales statistics
+        $totalRevenue         = $orders->sum('total_price');
+        $totalOrders          = $orders->count();
+        $averageOrderValue    = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
+        $achievementPercentage = $target
+            ? ($target->target_amount > 0 ? ($totalRevenue / $target->target_amount) * 100 : 0)
+            : 0;
+
+        // Payroll
+        $payrollData = null;
+        if (class_exists(Payroll::class)) {
+            $payrollData = Payroll::where('user_id', $userId)
+                ->where('period_year', $year)
+                ->where('period_month', $month)
+                ->first();
+        }
+
+        // Leave
+        $leaveData = collect();
+        if (class_exists(LeaveRequest::class)) {
+            $leaveData = LeaveRequest::where('user_id', $userId)
+                ->where(function ($query) use ($year, $month) {
+                    $query->whereYear('start_date', $year)->whereMonth('start_date', $month);
+                })
+                ->orWhere(function ($query) use ($year, $month) {
+                    $query->whereYear('end_date', $year)->whereMonth('end_date', $month);
+                })
+                ->with('leaveType')
+                ->get();
+        }
+
+        return compact(
+            'accountManager', 'target', 'orders',
+            'totalRevenue', 'totalOrders', 'averageOrderValue', 'achievementPercentage',
+            'payrollData', 'leaveData'
+        );
+    }
+
+    /**
+     * Fetch current-year and previous-year performance data.
+     * Returns [$currentYearData, $previousYearData, $currentYear, $currentMonth].
+     */
+    private function fetchYearlyData(int $userId): array
+    {
+        $currentYear  = (int) date('Y');
+        $currentMonth = (int) date('n');
+
+        $currentYearData  = $this->getYearlyPerformanceData($userId, $currentYear, $currentMonth);
+        $previousYearData = $this->getYearlyPerformanceData($userId, $currentYear - 1, 12);
+
+        return [$currentYearData, $previousYearData, $currentYear, $currentMonth];
+    }
+
+    /**
+     * Fetch company info and build a cached base64 logo string.
+     * Returns [$company, $companyName, $companyAddress, $companyEmail, $companyPhone, $logoBase64].
+     */
+    private function fetchCompanyData(): array
+    {
+        $company = null;
+        if (Schema::hasTable('companies')) {
+            $company = Company::query()->first();
+        }
+
+        $companyName    = $company?->company_name;
+        $companyAddress = $company?->address;
+        $companyEmail   = $company?->email;
+        $companyPhone   = $company?->phone;
+
+        $logoCacheKey = 'am_report:logo:'.
+            ($company?->id ?? 'none').':'.
+            ($company?->updated_at?->timestamp ?? '0').':'.
+            md5((string) ($company?->logo_url ?? ''));
+
+        $logoBase64 = Cache::remember($logoCacheKey, 3600, function () use ($company): string {
+            $logoPath = $company && $company->logo_url
+                ? Storage::disk('public')->path($company->logo_url)
+                : public_path('images/logomki.png');
+
+            if (! is_string($logoPath) || ! file_exists($logoPath)) {
+                return '';
+            }
+
+            $logoType = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $logoData = @file_get_contents($logoPath);
+            if (! is_string($logoData) || $logoData === '') {
+                return '';
+            }
+
+            return 'data:image/'.$logoType.';base64,'.base64_encode($logoData);
+        });
+
+        return [$company, $companyName, $companyAddress, $companyEmail, $companyPhone, $logoBase64];
     }
 
     /**
@@ -577,39 +392,38 @@ class AccountManagerReportController extends Controller
                     return Carbon::parse($order->closing_date)->month == $month;
                 });
 
-                $monthlyRevenue = $monthlyOrders->sum('total_price') ?? 0;
+                $monthlyRevenue    = $monthlyOrders->sum('total_price') ?? 0;
                 $monthlyOrderCount = $monthlyOrders->count();
             } else {
-                $monthlyRevenue = 0;
+                $monthlyRevenue    = 0;
                 $monthlyOrderCount = 0;
             }
 
             $yearlyData[$month] = [
-                'name' => $months[$month],
-                'orders' => $monthlyOrderCount,
-                'revenue' => $monthlyRevenue,
-                'target' => $fixedTargetAmount,
+                'name'        => $months[$month],
+                'orders'      => $monthlyOrderCount,
+                'revenue'     => $monthlyRevenue,
+                'target'      => $fixedTargetAmount,
                 'achievement' => $fixedTargetAmount > 0 ? ($monthlyRevenue / $fixedTargetAmount) * 100 : 0,
             ];
         }
 
-        // Calculate totals
-        $totalOrders = 0;
+        $totalOrders  = 0;
         $totalRevenue = 0;
-        $totalTarget = 0;
+        $totalTarget  = 0;
 
         for ($month = 1; $month <= $limitMonth; $month++) {
-            $totalOrders += $yearlyData[$month]['orders'];
+            $totalOrders  += $yearlyData[$month]['orders'];
             $totalRevenue += $yearlyData[$month]['revenue'];
-            $totalTarget += $yearlyData[$month]['target'];
+            $totalTarget  += $yearlyData[$month]['target'];
         }
 
         return [
             'monthly' => $yearlyData,
             'summary' => [
-                'orders' => $totalOrders,
-                'revenue' => $totalRevenue,
-                'target' => $totalTarget,
+                'orders'      => $totalOrders,
+                'revenue'     => $totalRevenue,
+                'target'      => $totalTarget,
                 'achievement' => $totalTarget > 0 ? ($totalRevenue / $totalTarget) * 100 : 0,
             ],
         ];

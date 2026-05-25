@@ -101,7 +101,7 @@
                                     <div class="mb-1">
                                         <div class="fw-bold">{{ $productVendor->vendor->name }}</div>
                                         <div class="d-flex justify-content-between small">
-                                            <span>{!! ($productVendor->description) !!}</span>
+                                            <span>{!! strip_tags($productVendor->description, '<p><br><b><strong><em><i><ul><ol><li><span><a>') !!}</span>
                                             @if(isset($productVendor->quantity) && $productVendor->quantity > 0)
                                             {{-- <span class="badge bg-info">Qty: {{ $productVendor->quantity }}</span> --}}
                                             @endif

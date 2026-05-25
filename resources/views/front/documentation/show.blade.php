@@ -167,7 +167,7 @@
 
                         <!-- Menggunakan custom class documentation-content untuk styling -->
                         <div class="documentation-content text-sm">
-                            {!! $currentArticle->content !!}
+                            {!! strip_tags($currentArticle->content, '<p><br><b><strong><em><i><ul><ol><li><span><a><h1><h2><h3><h4><h5><h6><table><thead><tbody><tr><td><th><blockquote><code><pre><img>') !!}
                         </div>
 
                         @if($currentArticle->related_resource)

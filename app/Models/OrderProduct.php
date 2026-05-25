@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class OrderProduct extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'order_id',
         'product_id',
@@ -17,6 +21,15 @@ class OrderProduct extends Model
         'quantity' => 'integer',
         'unit_price' => 'integer',
     ];
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['order_id', 'product_id', 'quantity', 'unit_price'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('order_product');
+    }
 
     public function product()
     {

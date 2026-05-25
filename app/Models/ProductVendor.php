@@ -4,9 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class ProductVendor extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'product_id',
         'vendor_id',
@@ -27,6 +31,15 @@ class ProductVendor extends Model
         'total_price' => 'integer',
         'harga_vendor' => 'integer',
     ];
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['product_id', 'vendor_id', 'harga_publish', 'quantity'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('product_vendor');
+    }
 
     public function product(): BelongsTo
     {

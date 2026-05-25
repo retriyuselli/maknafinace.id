@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class JournalBatch extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'batch_number',
@@ -40,6 +42,15 @@ class JournalBatch extends Model
     const STATUS_REVERSED = 'reversed';
 
     // Relationships
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['batch_number', 'transaction_date', 'total_debit', 'total_credit', 'status'])
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('journal_batch');
+    }
+
     public function journalEntries(): HasMany
     {
         return $this->hasMany(JournalEntry::class);

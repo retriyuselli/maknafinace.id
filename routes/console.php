@@ -16,3 +16,8 @@ Schedule::command('targets:generate --auto-12-months')
 Schedule::command('targets:generate --update')
     ->daily() // Update achieved amounts setiap hari
     ->description('Update Account Manager targets achieved amounts');
+
+// Bersihkan activity log yang lebih tua dari 365 hari (sesuai config activitylog.php)
+Schedule::command('activitylog:clean')
+    ->monthly()
+    ->description('Clean old activity logs');
