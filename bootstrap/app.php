@@ -11,6 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Replace default CSRF middleware with patched version to fix Livewire Redirector compatibility.
+        // @see app/Http/Middleware/VerifyCsrfToken.php
+        $middleware->replace(
+            \Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class,
+            \App\Http\Middleware\VerifyCsrfToken::class,
+        );
+
         $middleware->use([
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);
