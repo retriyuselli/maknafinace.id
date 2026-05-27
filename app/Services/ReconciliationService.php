@@ -7,115 +7,115 @@ use App\Models\BankStatement;
 use App\Models\DataPembayaran;
 use App\Models\Expense;
 use App\Models\ExpenseOps;
-use App\Models\PaymentMethod;
 use App\Models\PendapatanLain;
 use App\Models\PengeluaranLain;
 use App\Models\UnifiedTransaction;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class ReconciliationService
 {
-    const EXACT_MATCH_CONFIDENCE = 100.00;
+    // Confidence thresholds
+    const EXACT_MATCH_CONFIDENCE  = 100;
+    const HIGH_CONFIDENCE         = 85;
+    const MEDIUM_CONFIDENCE       = 70;
+    const LOW_CONFIDENCE          = 50;
 
-    const HIGH_CONFIDENCE = 85.00;
-
-    const MEDIUM_CONFIDENCE = 70.00;
-
-    const LOW_CONFIDENCE = 50.00;
+    // -------------------------------------------------------------------------
+    // PUBLIC API
+    // -------------------------------------------------------------------------
 
     /**
-     * Perform reconciliation between PaymentMethod transactions and BankStatement items
+     * Jalankan algoritma pencocokan antara transaksi sistem dan mutasi bank.
+     *
+     * @param  bool  $saveMatches  Jika true, hasil match disimpan ke DB.
+     *                             Gunakan false untuk preview tanpa menulis ke DB.
      */
-    public function reconcile(int $paymentMethodId, ?string $startDate = null, ?string $endDate = null, bool $saveMatches = true): array
-    {
-        // Get unified transactions from PaymentMethod
-        $appTransactions = UnifiedTransaction::getForPaymentMethod(
-            $paymentMethodId,
-            $startDate,
-            $endDate
-        );
-
-        // Get bank statement items for the same PaymentMethod
-        $bankItems = $this->getBankItemsForPaymentMethod($paymentMethodId, $startDate, $endDate);
+    public function reconcile(
+        int $paymentMethodId,
+        ?string $startDate = null,
+        ?string $endDate   = null,
+        bool $saveMatches  = false          // default false — caller harus eksplisit meminta save
+    ): array {
+        $appTransactions = UnifiedTransaction::getForPaymentMethod($paymentMethodId, $startDate, $endDate);
+        $bankItems       = $this->getBankItemsForPaymentMethod($paymentMethodId, $startDate, $endDate);
 
         $results = [
-            'matched' => [],
+            'matched'       => [],
             'unmatched_app' => [],
             'unmatched_bank' => [],
-            'disputed' => [],
-            'statistics' => [
+            'disputed'      => [],
+            'statistics'    => [
                 'total_app_transactions' => $appTransactions->count(),
-                'total_bank_items' => $bankItems->count(),
-                'matched_count' => 0,
-                'unmatched_app_count' => 0,
-                'unmatched_bank_count' => 0,
-                'disputed_count' => 0,
+                'total_bank_items'       => $bankItems->count(),
+                'matched_count'          => 0,
+                'unmatched_app_count'    => 0,
+                'unmatched_bank_count'   => 0,
+                'disputed_count'         => 0,
             ],
         ];
 
         $matchedBankIds = [];
-        $matchedAppIds = [];
+        $matchedAppKeys = [];
 
-        // Phase 1: Exact matches (Date + Amount)
+        // ── Phase 1: Exact match (tanggal sama + nominal sama persis) ──────────
         foreach ($appTransactions as $appTx) {
             $exactMatch = $this->findExactMatch($appTx, $bankItems, $matchedBankIds);
 
             if ($exactMatch) {
-                // DEBUG: Log exact matches for analysis
-                Log::info("EXACT_MATCH_FOUND: App({$appTx->description}) vs Bank({$exactMatch->description}) - AppCredit={$appTx->credit_amount}, BankCredit={$exactMatch->credit}");
+                Log::info('EXACT_MATCH_FOUND', [
+                    'app'  => $appTx->description,
+                    'bank' => $exactMatch->description,
+                ]);
 
-                // Save match to database if requested
                 if ($saveMatches) {
-                    $this->markAsMatched($appTx, $exactMatch, self::EXACT_MATCH_CONFIDENCE, ['date', 'amount']);
+                    $this->saveMatch($appTx, $exactMatch, self::EXACT_MATCH_CONFIDENCE, ['date', 'amount']);
                 }
 
                 $results['matched'][] = [
                     'app_transaction' => $appTx,
-                    'bank_item' => $exactMatch,
-                    'confidence' => self::EXACT_MATCH_CONFIDENCE,
-                    'match_type' => 'exact',
-                    'match_criteria' => ['date', 'amount'],
+                    'bank_item'       => $exactMatch,
+                    'confidence'      => self::EXACT_MATCH_CONFIDENCE,
+                    'match_type'      => 'exact',
+                    'match_criteria'  => ['date', 'amount'],
                 ];
 
                 $matchedBankIds[] = $exactMatch->id;
-                $matchedAppIds[] = $this->getTransactionKey($appTx);
+                $matchedAppKeys[] = $this->txKey($appTx);
             }
         }
 
-        // Phase 2: Fuzzy matches (Date range + Amount tolerance + Description similarity)
+        // ── Phase 2: Fuzzy match (toleransi tanggal ≤3 hari + nominal ≤2%) ────
         foreach ($appTransactions as $appTx) {
-            $txKey = $this->getTransactionKey($appTx);
-            if (in_array($txKey, $matchedAppIds)) {
-                continue; // Already matched
+            if (in_array($this->txKey($appTx), $matchedAppKeys)) {
+                continue;
             }
 
-            $fuzzyMatch = $this->findFuzzyMatch($appTx, $bankItems, $matchedBankIds);
+            $fuzzy = $this->findFuzzyMatch($appTx, $bankItems, $matchedBankIds);
 
-            if ($fuzzyMatch['item'] && $fuzzyMatch['confidence'] >= self::LOW_CONFIDENCE) {
-                // Save match to database if requested
+            if ($fuzzy['item'] && $fuzzy['confidence'] >= self::LOW_CONFIDENCE) {
                 if ($saveMatches) {
-                    $this->markAsMatched($appTx, $fuzzyMatch['item'], $fuzzyMatch['confidence'], $fuzzyMatch['criteria']);
+                    $this->saveMatch($appTx, $fuzzy['item'], $fuzzy['confidence'], $fuzzy['criteria']);
                 }
 
                 $results['matched'][] = [
                     'app_transaction' => $appTx,
-                    'bank_item' => $fuzzyMatch['item'],
-                    'confidence' => $fuzzyMatch['confidence'],
-                    'match_type' => 'fuzzy',
-                    'match_criteria' => $fuzzyMatch['criteria'],
+                    'bank_item'       => $fuzzy['item'],
+                    'confidence'      => $fuzzy['confidence'],
+                    'match_type'      => 'fuzzy',
+                    'match_criteria'  => $fuzzy['criteria'],
                 ];
 
-                $matchedBankIds[] = $fuzzyMatch['item']->id;
-                $matchedAppIds[] = $txKey;
+                $matchedBankIds[] = $fuzzy['item']->id;
+                $matchedAppKeys[] = $this->txKey($appTx);
             }
         }
 
-        // Collect unmatched transactions
+        // ── Kumpulkan unmatched ────────────────────────────────────────────────
         foreach ($appTransactions as $appTx) {
-            $txKey = $this->getTransactionKey($appTx);
-            if (! in_array($txKey, $matchedAppIds)) {
+            if (! in_array($this->txKey($appTx), $matchedAppKeys)) {
                 $results['unmatched_app'][] = $appTx;
             }
         }
@@ -126,81 +126,140 @@ class ReconciliationService
             }
         }
 
-        // Update statistics
-        $results['statistics']['matched_count'] = count($results['matched']);
+        // ── Statistik ─────────────────────────────────────────────────────────
+        $total = $results['statistics']['total_app_transactions'];
+
+        $results['statistics']['matched_count']       = count($results['matched']);
         $results['statistics']['unmatched_app_count'] = count($results['unmatched_app']);
         $results['statistics']['unmatched_bank_count'] = count($results['unmatched_bank']);
-
-        // Calculate match percentage
-        $totalAppTransactions = $results['statistics']['total_app_transactions'];
-        $results['statistics']['match_percentage'] = $totalAppTransactions > 0
-            ? round(($results['statistics']['matched_count'] / $totalAppTransactions) * 100, 1)
+        $results['statistics']['match_percentage']    = $total > 0
+            ? round((count($results['matched']) / $total) * 100, 1)
             : 0;
-
-        // Calculate totals for export
-        $results['statistics']['total_app_debit'] = $appTransactions->sum('debit_amount');
-        $results['statistics']['total_app_credit'] = $appTransactions->sum('credit_amount');
-        $results['statistics']['total_bank_debit'] = $bankItems->sum('debit');
-        $results['statistics']['total_bank_credit'] = $bankItems->sum('credit');
+        $results['statistics']['total_app_debit']    = $appTransactions->sum('debit_amount');
+        $results['statistics']['total_app_credit']   = $appTransactions->sum('credit_amount');
+        $results['statistics']['total_bank_debit']   = $bankItems->sum('debit');
+        $results['statistics']['total_bank_credit']  = $bankItems->sum('credit');
 
         return $results;
     }
 
     /**
-     * Find exact match (same date and amount)
+     * Baca hasil rekonsiliasi yang sudah tersimpan di DB.
+     * Digunakan untuk menampilkan halaman rekonsiliasi — tidak menulis ke DB.
      */
-    private function findExactMatch($appTx, Collection $bankItems, array $excludeIds)
-    {
-        return $bankItems->first(function ($bankItem) use ($appTx, $excludeIds) {
+    public function getStoredMatches(
+        int $paymentMethodId,
+        ?string $startDate = null,
+        ?string $endDate   = null
+    ): array {
+        $bankItems = $this->getBankItemsForPaymentMethod($paymentMethodId, $startDate, $endDate);
+
+        // Baca semua transaksi dari 5 tabel sumber (dengan status asli dari DB)
+        $allAppTransactions = $this->buildStoredTransactions($paymentMethodId, $startDate, $endDate);
+
+        $matchedAppTxs    = $allAppTransactions->filter(fn (UnifiedTransaction $tx) => $tx->reconciliation_status === 'matched'
+            && ! empty($tx->matched_bank_item_id));
+        $unmatchedAppTxs  = $allAppTransactions->filter(fn (UnifiedTransaction $tx) => $tx->reconciliation_status !== 'matched');
+
+        $matchedBankIds   = $matchedAppTxs->pluck('matched_bank_item_id')->filter()->unique()->values();
+        $matchedBankItems = $bankItems->whereIn('id', $matchedBankIds);
+        $unmatchedBankItems = $bankItems->whereNotIn('id', $matchedBankIds);
+
+        // Bangun array matched dengan pasangan app ↔ bank
+        $matches = [];
+        foreach ($matchedAppTxs as $appTx) {
+            $bankItem = $matchedBankItems->firstWhere('id', $appTx->matched_bank_item_id);
+            if ($bankItem) {
+                $matches[] = [
+                    'app_transaction' => $appTx,
+                    'bank_item'       => $bankItem,
+                    'confidence'      => $appTx->match_confidence ?? self::EXACT_MATCH_CONFIDENCE,
+                    'match_type'      => 'stored',
+                    'match_criteria'  => ['database'],
+                ];
+            }
+        }
+
+        $total = $allAppTransactions->count();
+
+        return [
+            'matched'       => collect($matches),
+            'unmatched_app' => $unmatchedAppTxs,
+            'unmatched_bank' => $unmatchedBankItems,
+            'disputed'      => collect(),
+            'statistics'    => [
+                'total_app_transactions'  => $total,
+                'total_bank_items'        => $bankItems->count(),
+                'matched_count'           => count($matches),
+                'unmatched_app_count'     => $unmatchedAppTxs->count(),
+                'unmatched_bank_count'    => $unmatchedBankItems->count(),
+                'disputed_count'          => 0,
+                'match_percentage'        => $total > 0
+                    ? round((count($matches) / $total) * 100, 1)
+                    : 0,
+                'avg_confidence'          => count($matches) > 0
+                    ? collect($matches)->avg('confidence')
+                    : 0,
+                'total_app_debit'         => $allAppTransactions->sum('debit_amount'),
+                'total_app_credit'        => $allAppTransactions->sum('credit_amount'),
+                'total_bank_debit'        => $bankItems->sum('debit'),
+                'total_bank_credit'       => $bankItems->sum('credit'),
+            ],
+        ];
+    }
+
+    // -------------------------------------------------------------------------
+    // PRIVATE — Matching Logic
+    // -------------------------------------------------------------------------
+
+    /**
+     * Exact match: tanggal sama DAN nominal identik (tidak ada toleransi desimal
+     * karena Rupiah selalu integer).
+     */
+    private function findExactMatch(
+        UnifiedTransaction $appTx,
+        Collection $bankItems,
+        array $excludeIds
+    ): ?BankReconciliationItem {
+        return $bankItems->first(function (BankReconciliationItem $bankItem) use ($appTx, $excludeIds) {
             if (in_array($bankItem->id, $excludeIds)) {
                 return false;
             }
 
-            // Check date match
             $dateMatch = $appTx->transaction_date->isSameDay($bankItem->date);
-
-            // Check amount match with zero validation
-            $amountMatch = false;
-            if ($appTx->is_income) {
-                // App transaction is income (credit), should match bank credit
-                $appAmount = $appTx->credit_amount ?? 0;
-                $bankAmount = $bankItem->credit ?? 0;
-
-                // CRITICAL: Reject if either amount is zero
-                if ($appAmount <= 0 || $bankAmount <= 0) {
-                    Log::info("EXACT_MATCH_REJECTED: App={$appAmount}, Bank={$bankAmount}, Description: {$appTx->description}");
-
-                    return false;
-                }
-
-                $amountMatch = abs($appAmount - $bankAmount) < 0.01;
-            } else {
-                // App transaction is expense (debit), should match bank debit
-                $appAmount = $appTx->debit_amount ?? 0;
-                $bankAmount = $bankItem->debit ?? 0;
-
-                // CRITICAL: Reject if either amount is zero
-                if ($appAmount <= 0 || $bankAmount <= 0) {
-                    Log::info("EXACT_MATCH_REJECTED: App={$appAmount}, Bank={$bankAmount}, Description: {$appTx->description}");
-
-                    return false;
-                }
-
-                $amountMatch = abs($appAmount - $bankAmount) < 0.01;
+            if (! $dateMatch) {
+                return false;
             }
 
-            return $dateMatch && $amountMatch;
+            if ($appTx->is_income) {
+                $appAmount  = (int) ($appTx->credit_amount ?? 0);
+                $bankAmount = (int) ($bankItem->credit ?? 0);
+            } else {
+                $appAmount  = (int) ($appTx->debit_amount ?? 0);
+                $bankAmount = (int) ($bankItem->debit ?? 0);
+            }
+
+            // Rupiah = integer — tolak jika salah satu nol
+            if ($appAmount <= 0 || $bankAmount <= 0) {
+                return false;
+            }
+
+            // Exact integer match (tidak ada toleransi floating point)
+            return $appAmount === $bankAmount;
         });
     }
 
     /**
-     * Find fuzzy match with confidence scoring
+     * Fuzzy match: toleransi tanggal ≤3 hari + nominal ≤2% + kemiripan deskripsi.
      */
-    private function findFuzzyMatch($appTx, Collection $bankItems, array $excludeIds): array
-    {
-        $bestMatch = null;
+    private function findFuzzyMatch(
+        UnifiedTransaction $appTx,
+        Collection $bankItems,
+        array $excludeIds
+    ): array {
+        $best           = null;
         $bestConfidence = 0;
-        $bestCriteria = [];
+        $bestCriteria   = [];
 
         foreach ($bankItems as $bankItem) {
             if (in_array($bankItem->id, $excludeIds)) {
@@ -208,339 +267,264 @@ class ReconciliationService
             }
 
             $confidence = 0;
-            $criteria = [];
+            $criteria   = [];
 
-            // Date proximity (max 3 days tolerance)
+            // ── Poin tanggal (max +40) ────────────────────────────────────────
             $daysDiff = abs($appTx->transaction_date->diffInDays($bankItem->date));
-            if ($daysDiff == 0) {
-                $confidence += 40; // Same day
-                $criteria[] = 'same_date';
-            } elseif ($daysDiff <= 1) {
-                $confidence += 30; // 1 day difference
-                $criteria[] = 'close_date';
+
+            if ($daysDiff === 0) {
+                $confidence += 40;
+                $criteria[]  = 'same_date';
+            } elseif ($daysDiff === 1) {
+                $confidence += 30;
+                $criteria[]  = 'close_date';
             } elseif ($daysDiff <= 3) {
-                $confidence += 15; // 2-3 days difference
-                $criteria[] = 'near_date';
+                $confidence += 15;
+                $criteria[]  = 'near_date';
             } else {
-                continue; // Too far apart
+                continue; // Terlalu jauh
             }
 
-            // Amount match with zero protection
-            $amountMatch = false;
+            // ── Poin nominal (max +40) ────────────────────────────────────────
             if ($appTx->is_income) {
-                $appAmount = $appTx->credit_amount ?? 0;
-                $bankAmount = $bankItem->credit ?? 0;
-
-                // CRITICAL: Skip if either amount is zero or null
-                if ($appAmount <= 0 || $bankAmount <= 0) {
-                    continue; // Skip this bank item
-                }
-
-                $amountDiff = abs($appAmount - $bankAmount);
-                if ($amountDiff < 0.01) {
-                    $confidence += 40; // Exact amount
-                    $criteria[] = 'exact_amount';
-                    $amountMatch = true;
-                } elseif ($amountDiff / $appAmount <= 0.02) {
-                    $confidence += 25; // Within 2%
-                    $criteria[] = 'close_amount';
-                    $amountMatch = true;
-                }
+                $appAmount  = (int) ($appTx->credit_amount ?? 0);
+                $bankAmount = (int) ($bankItem->credit ?? 0);
             } else {
-                $appAmount = $appTx->debit_amount ?? 0;
-                $bankAmount = $bankItem->debit ?? 0;
-
-                // CRITICAL: Skip if either amount is zero or null
-                if ($appAmount <= 0 || $bankAmount <= 0) {
-                    continue; // Skip this bank item
-                }
-
-                $amountDiff = abs($appAmount - $bankAmount);
-                if ($amountDiff < 0.01) {
-                    $confidence += 40; // Exact amount
-                    $criteria[] = 'exact_amount';
-                    $amountMatch = true;
-                } elseif ($amountDiff / $appAmount <= 0.02) {
-                    $confidence += 25; // Within 2%
-                    $criteria[] = 'close_amount';
-                    $amountMatch = true;
-                }
+                $appAmount  = (int) ($appTx->debit_amount ?? 0);
+                $bankAmount = (int) ($bankItem->debit ?? 0);
             }
 
-            if (! $amountMatch) {
-                continue; // Amount too different
+            // Tolak jika salah satu nol
+            if ($appAmount <= 0 || $bankAmount <= 0) {
+                continue;
             }
 
-            // Description similarity (using Levenshtein distance)
-            $similarity = $this->calculateDescriptionSimilarity(
-                $appTx->description,
-                $bankItem->description
+            $amountDiff = abs($appAmount - $bankAmount);
+
+            if ($amountDiff === 0) {
+                $confidence += 40;
+                $criteria[]  = 'exact_amount';
+            } elseif ($appAmount > 0 && ($amountDiff / $appAmount) <= 0.02) {
+                // Toleransi 2% — untuk kasus pembulatan antar sistem
+                $confidence += 25;
+                $criteria[]  = 'close_amount';
+            } else {
+                continue; // Selisih terlalu besar
+            }
+
+            // ── Poin deskripsi (max +20) ──────────────────────────────────────
+            $similarity = $this->descriptionSimilarity(
+                $appTx->description ?? '',
+                $bankItem->description ?? ''
             );
 
             if ($similarity > 0.8) {
-                $confidence += 20; // High similarity
-                $criteria[] = 'high_desc_similarity';
+                $confidence += 20;
+                $criteria[]  = 'high_desc_similarity';
             } elseif ($similarity > 0.6) {
-                $confidence += 10; // Medium similarity
-                $criteria[] = 'medium_desc_similarity';
+                $confidence += 10;
+                $criteria[]  = 'medium_desc_similarity';
             } elseif ($similarity > 0.4) {
-                $confidence += 5; // Low similarity
-                $criteria[] = 'low_desc_similarity';
+                $confidence += 5;
+                $criteria[]  = 'low_desc_similarity';
             }
 
             if ($confidence > $bestConfidence) {
                 $bestConfidence = $confidence;
-                $bestMatch = $bankItem;
-                $bestCriteria = $criteria;
+                $best           = $bankItem;
+                $bestCriteria   = $criteria;
             }
         }
 
-        return [
-            'item' => $bestMatch,
-            'confidence' => $bestConfidence,
-            'criteria' => $bestCriteria,
-        ];
+        return ['item' => $best, 'confidence' => $bestConfidence, 'criteria' => $bestCriteria];
     }
 
-    /**
-     * Calculate description similarity using Levenshtein distance
-     */
-    private function calculateDescriptionSimilarity(string $desc1, string $desc2): float
-    {
-        $desc1 = strtolower(trim($desc1));
-        $desc2 = strtolower(trim($desc2));
-
-        if (empty($desc1) || empty($desc2)) {
-            return 0.0;
-        }
-
-        $maxLength = max(strlen($desc1), strlen($desc2));
-        if ($maxLength == 0) {
-            return 1.0;
-        }
-
-        $distance = levenshtein($desc1, $desc2);
-
-        return 1 - ($distance / $maxLength);
-    }
+    // -------------------------------------------------------------------------
+    // PRIVATE — Data Access
+    // -------------------------------------------------------------------------
 
     /**
-     * Get bank reconciliation items for specific PaymentMethod
+     * Ambil BankReconciliationItem untuk PaymentMethod dan rentang tanggal tertentu.
      */
-    private function getBankItemsForPaymentMethod(int $paymentMethodId, ?string $startDate, ?string $endDate): Collection
-    {
-        // Get BankStatements for this PaymentMethod within the date range
-        $bankStatements = BankStatement::where('payment_method_id', $paymentMethodId)
-            ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
-                // Find statements that overlap with the requested date range
-                return $q->where(function ($q) use ($startDate, $endDate) {
-                    $q->where('period_start', '<=', $endDate)
-                        ->where('period_end', '>=', $startDate);
-                });
-            })
-            ->when($startDate && ! $endDate, fn ($q) => $q->where('period_end', '>=', $startDate))
-            ->when(! $startDate && $endDate, fn ($q) => $q->where('period_start', '<=', $endDate))
+    private function getBankItemsForPaymentMethod(
+        int $paymentMethodId,
+        ?string $startDate,
+        ?string $endDate
+    ): Collection {
+        $statementIds = BankStatement::where('payment_method_id', $paymentMethodId)
+            ->when($startDate && $endDate, fn (Builder $q) => $q->where(function (Builder $q) use ($startDate, $endDate) {
+                $q->where('period_start', '<=', $endDate)
+                  ->where('period_end',   '>=', $startDate);
+            }))
+            ->when($startDate && ! $endDate, fn (Builder $q) => $q->where('period_end', '>=', $startDate))
+            ->when(! $startDate && $endDate, fn (Builder $q) => $q->where('period_start', '<=', $endDate))
             ->pluck('id');
 
-        // Get all BankReconciliationItems for these statements
-        $bankItems = BankReconciliationItem::whereIn('bank_reconciliation_id', $bankStatements)
-            ->when($startDate, fn ($q) => $q->where('date', '>=', $startDate))
-            ->when($endDate, fn ($q) => $q->where('date', '<=', $endDate))
+        return BankReconciliationItem::whereIn('bank_reconciliation_id', $statementIds)
+            ->when($startDate, fn (Builder $q) => $q->where('date', '>=', $startDate))
+            ->when($endDate,   fn (Builder $q) => $q->where('date', '<=', $endDate))
             ->orderBy('date')
             ->get();
-
-        return $bankItems;
     }
 
     /**
-     * Get stored matches from database
+     * Bangun UnifiedTransaction langsung dari tabel sumber dengan status asli.
+     * Digunakan oleh getStoredMatches() — konsisten dengan UnifiedTransaction::getForPaymentMethod().
      */
-    public function getStoredMatches(int $paymentMethodId, ?string $startDate = null, ?string $endDate = null): array
-    {
-        $allAppTransactions = collect();
+    private function buildStoredTransactions(
+        int $paymentMethodId,
+        ?string $startDate,
+        ?string $endDate
+    ): Collection {
+        $all = collect();
 
-        // Get from all source tables with their reconciliation status
-        $sourceTables = [
+        $sources = [
             [
-                'model' => DataPembayaran::class,
-                'table' => 'data_pembayarans',
-                'date_field' => 'tgl_bayar',
+                'model'        => DataPembayaran::class,
+                'date_field'   => 'tgl_bayar',
                 'amount_field' => 'nominal',
-                'credit' => true,
-                'source_type' => 'wedding_payment',
+                'is_credit'    => true,
+                'source_type'  => UnifiedTransaction::SOURCE_WEDDING_PAYMENT,
+                'source_table' => 'data_pembayarans',
+                'desc_field'   => 'keterangan',
             ],
             [
-                'model' => PendapatanLain::class,
-                'table' => 'pendapatan_lains',
-                'date_field' => 'tgl_bayar',
+                'model'        => PendapatanLain::class,
+                'date_field'   => 'tgl_bayar',
                 'amount_field' => 'nominal',
-                'credit' => true,
-                'source_type' => 'other_income',
+                'is_credit'    => true,
+                'source_type'  => UnifiedTransaction::SOURCE_OTHER_INCOME,
+                'source_table' => 'pendapatan_lains',
+                'desc_field'   => 'keterangan',
             ],
             [
-                'model' => Expense::class,
-                'table' => 'expenses',
-                'date_field' => 'date_expense',
+                'model'        => Expense::class,
+                'date_field'   => 'date_expense',
                 'amount_field' => 'amount',
-                'credit' => false,
-                'source_type' => 'expense',
+                'is_credit'    => false,
+                'source_type'  => UnifiedTransaction::SOURCE_WEDDING_EXPENSE,  // konsisten dengan UnifiedTransaction
+                'source_table' => 'expenses',
+                'desc_field'   => 'note',
             ],
             [
-                'model' => ExpenseOps::class,
-                'table' => 'expense_ops',
-                'date_field' => 'date_expense',
+                'model'        => ExpenseOps::class,
+                'date_field'   => 'date_expense',
                 'amount_field' => 'amount',
-                'credit' => false,
-                'source_type' => 'operational_expense',
+                'is_credit'    => false,
+                'source_type'  => UnifiedTransaction::SOURCE_OPERATIONAL_EXPENSE,
+                'source_table' => 'expense_ops',
+                'desc_field'   => 'name',
             ],
             [
-                'model' => PengeluaranLain::class,
-                'table' => 'pengeluaran_lains',
-                'date_field' => 'date_expense',
+                'model'        => PengeluaranLain::class,
+                'date_field'   => 'date_expense',
                 'amount_field' => 'amount',
-                'credit' => false,
-                'source_type' => 'other_expense',
+                'is_credit'    => false,
+                'source_type'  => UnifiedTransaction::SOURCE_OTHER_EXPENSE,
+                'source_table' => 'pengeluaran_lains',
+                'desc_field'   => 'name',
             ],
         ];
 
-        foreach ($sourceTables as $tableConfig) {
-            if (! class_exists($tableConfig['model'])) {
+        foreach ($sources as $cfg) {
+            if (! class_exists($cfg['model'])) {
                 continue;
             }
 
-            $query = $tableConfig['model']::where('payment_method_id', $paymentMethodId);
-
-            if ($startDate) {
-                $query->where($tableConfig['date_field'], '>=', $startDate);
-            }
-            if ($endDate) {
-                $query->where($tableConfig['date_field'], '<=', $endDate);
-            }
-
-            $records = $query->get();
+            $records = $cfg['model']::where('payment_method_id', $paymentMethodId)
+                ->when($startDate, fn (Builder $q) => $q->where($cfg['date_field'], '>=', $startDate))
+                ->when($endDate,   fn (Builder $q) => $q->where($cfg['date_field'], '<=', $endDate))
+                ->get();
 
             foreach ($records as $record) {
-                $unifiedTx = new UnifiedTransaction([
-                    'payment_method_id' => $record->payment_method_id,
-                    'transaction_date' => Carbon::parse($record->{$tableConfig['date_field']}),
-                    'description' => $record->keterangan ?? $record->note ?? $record->name ?? 'Transaction',
-                    'debit_amount' => $tableConfig['credit'] ? 0 : ($record->{$tableConfig['amount_field']} ?? 0),
-                    'credit_amount' => $tableConfig['credit'] ? ($record->{$tableConfig['amount_field']} ?? 0) : 0,
-                    'source_type' => $tableConfig['source_type'],
-                    'source_id' => $record->id,
-                    'source_table' => $tableConfig['table'],
+                $amount = $record->{$cfg['amount_field']} ?? 0;
+                $all->push(new UnifiedTransaction([
+                    'payment_method_id'     => $record->payment_method_id,
+                    'transaction_date'      => Carbon::parse($record->{$cfg['date_field']}),
+                    'description'           => $record->{$cfg['desc_field']} ?? $cfg['source_type'],
+                    'debit_amount'          => $cfg['is_credit'] ? 0 : $amount,
+                    'credit_amount'         => $cfg['is_credit'] ? $amount : 0,
+                    'source_type'           => $cfg['source_type'],
+                    'source_id'             => $record->id,
+                    'source_table'          => $cfg['source_table'],
                     'reconciliation_status' => $record->reconciliation_status ?? 'unmatched',
-                    'matched_bank_item_id' => $record->matched_bank_item_id,
-                    'match_confidence' => $record->match_confidence,
-                ]);
-
-                $allAppTransactions->push($unifiedTx);
+                    'matched_bank_item_id'  => $record->matched_bank_item_id ?? null,
+                    'match_confidence'      => $record->match_confidence ?? null,
+                ]));
             }
         }
 
-        $appTransactions = $allAppTransactions;
-
-        // Get bank items
-        $bankItems = $this->getBankItemsForPaymentMethod($paymentMethodId, $startDate, $endDate);
-
-        // Separate matched and unmatched app transactions
-        $matchedAppTxs = $appTransactions->filter(function ($tx) {
-            return $tx->reconciliation_status === 'matched' && ! empty($tx->matched_bank_item_id);
-        });
-
-        $unmatchedAppTxs = $appTransactions->filter(function ($tx) {
-            return $tx->reconciliation_status !== 'matched';
-        });
-
-        // Get matched bank item IDs
-        $matchedBankItemIds = $matchedAppTxs->pluck('matched_bank_item_id')->filter()->unique()->values();
-
-        // Separate matched and unmatched bank items
-        $matchedBankItems = $bankItems->whereIn('id', $matchedBankItemIds);
-        $unmatchedBankItems = $bankItems->whereNotIn('id', $matchedBankItemIds);
-
-        // Build matches array
-        $matches = [];
-        foreach ($matchedAppTxs as $appTx) {
-            $bankItem = $matchedBankItems->where('id', $appTx->matched_bank_item_id)->first();
-            if ($bankItem) {
-                $matches[] = [
-                    'app_transaction' => $appTx,
-                    'bank_item' => $bankItem,
-                    'confidence' => $appTx->match_confidence ?? 100,
-                    'match_type' => 'stored',
-                    'match_criteria' => ['database'],
-                ];
-            }
-        }
-
-        return [
-            'matched' => collect($matches),
-            'unmatched_app' => $unmatchedAppTxs,
-            'unmatched_bank' => $unmatchedBankItems,
-            'disputed' => collect([]),
-            'statistics' => [
-                'total_app_transactions' => $appTransactions->count(),
-                'total_bank_items' => $bankItems->count(),
-                'matched_count' => count($matches),
-                'unmatched_app_count' => $unmatchedAppTxs->count(),
-                'unmatched_bank_count' => $unmatchedBankItems->count(),
-                'disputed_count' => 0,
-                'match_percentage' => $appTransactions->count() > 0
-                    ? round((count($matches) / $appTransactions->count()) * 100, 1)
-                    : 0,
-                'avg_confidence' => count($matches) > 0 ? collect($matches)->avg('confidence') : 0,
-                'total_app_debit' => $appTransactions->sum('debit_amount'),
-                'total_app_credit' => $appTransactions->sum('credit_amount'),
-                'total_bank_debit' => $bankItems->sum('debit'),
-                'total_bank_credit' => $bankItems->sum('credit'),
-            ],
-        ];
+        return $all->sortBy('transaction_date')->values();
     }
 
-    /**
-     * Get unique key for app transaction
-     */
-    private function getTransactionKey($appTx): string
-    {
-        return $appTx->source_table.'_'.$appTx->source_id;
-    }
+    // -------------------------------------------------------------------------
+    // PRIVATE — Helpers
+    // -------------------------------------------------------------------------
 
     /**
-     * Mark transactions as matched in database
+     * Simpan hasil pencocokan ke record sumber (DataPembayaran, Expense, dll.).
+     * Dipanggil ketika $saveMatches = true, atau langsung dari ReconciliationController.
      */
-    public function markAsMatched($appTransaction, $bankItem, float $confidence, array $criteria): void
-    {
-        // Update the source transaction record
-        $model = $this->getSourceModel($appTransaction);
-        if ($model) {
-            $model->update([
-                'reconciliation_status' => 'matched',
-                'matched_bank_item_id' => $bankItem->id,
-                'match_confidence' => $confidence,
-                'reconciliation_notes' => 'Auto-matched: '.implode(', ', $criteria),
+    public function saveMatch(
+        UnifiedTransaction $appTx,
+        BankReconciliationItem $bankItem,
+        int $confidence,
+        array $criteria
+    ): void {
+        $model = $this->resolveSourceModel($appTx);
+
+        if (! $model) {
+            Log::warning('ReconciliationService: source model not found', [
+                'source_table' => $appTx->source_table,
+                'source_id'    => $appTx->source_id,
             ]);
+            return;
         }
+
+        $model->update([
+            'reconciliation_status' => 'matched',
+            'matched_bank_item_id'  => $bankItem->id,
+            'match_confidence'      => $confidence,
+            'reconciliation_notes'  => 'Auto-matched: ' . implode(', ', $criteria),
+        ]);
     }
 
     /**
-     * Get source model instance for app transaction
+     * Resolve model sumber dari source_table dan source_id.
      */
-    private function getSourceModel($appTransaction)
+    private function resolveSourceModel(UnifiedTransaction $appTx): ?object
     {
-        switch ($appTransaction->source_table) {
-            case 'data_pembayarans':
-                return DataPembayaran::find($appTransaction->source_id);
-            case 'pendapatan_lains':
-                return PendapatanLain::find($appTransaction->source_id);
-            case 'expenses':
-                return Expense::find($appTransaction->source_id);
-            case 'expense_ops':
-                return ExpenseOps::find($appTransaction->source_id);
-            case 'pengeluaran_lains':
-                return PengeluaranLain::find($appTransaction->source_id);
-            default:
-                return null;
+        $map = [
+            'data_pembayarans'  => DataPembayaran::class,
+            'pendapatan_lains'  => PendapatanLain::class,
+            'expenses'          => Expense::class,
+            'expense_ops'       => ExpenseOps::class,
+            'pengeluaran_lains' => PengeluaranLain::class,
+        ];
+
+        $class = $map[$appTx->source_table] ?? null;
+
+        return $class ? $class::find($appTx->source_id) : null;
+    }
+
+    /** Unique key untuk satu app transaction (source_table + source_id). */
+    private function txKey(UnifiedTransaction $appTx): string
+    {
+        return $appTx->source_table . '_' . $appTx->source_id;
+    }
+
+    /** Kemiripan dua string menggunakan Levenshtein distance (0.0 – 1.0). */
+    private function descriptionSimilarity(string $a, string $b): float
+    {
+        $a = strtolower(trim($a));
+        $b = strtolower(trim($b));
+
+        if ($a === '' || $b === '') {
+            return 0.0;
         }
+
+        $maxLen = max(strlen($a), strlen($b));
+
+        return $maxLen > 0 ? 1 - (levenshtein($a, $b) / $maxLen) : 1.0;
     }
 }

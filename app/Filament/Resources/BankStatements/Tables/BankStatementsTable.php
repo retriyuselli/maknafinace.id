@@ -16,7 +16,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 
 class BankStatementsTable
@@ -29,93 +29,178 @@ class BankStatementsTable
                 TextColumn::make('index')
                     ->label('No.')
                     ->rowIndex(),
+                TextColumn::make('match_percentage')
+                    ->label('Tingkat Kecocokan')
+                    ->getStateUsing(function (BankStatement $record): string {
+                        // Hanya hitung jika ada data rekonsiliasi
+                        if ($record->reconciliation_status === 'processing') {
+                            return 'processing';
+                        }
+                        if (empty($record->reconciliation_file) || $record->total_records == 0) {
+                            return 'none';
+                        }
+                        if ($record->reconciliation_status === 'failed') {
+                            return 'failed';
+                        }
+
+                        // UNION COUNT — satu query untuk semua 5 tabel sumber
+                        $result = DB::selectOne('
+                            SELECT SUM(cnt) AS total FROM (
+                                SELECT COUNT(*) AS cnt FROM data_pembayarans
+                                    WHERE matched_bank_item_id IN (SELECT id FROM bank_reconciliation_items WHERE bank_reconciliation_id = ?)
+                                UNION ALL
+                                SELECT COUNT(*) AS cnt FROM pendapatan_lains
+                                    WHERE matched_bank_item_id IN (SELECT id FROM bank_reconciliation_items WHERE bank_reconciliation_id = ?)
+                                UNION ALL
+                                SELECT COUNT(*) AS cnt FROM expenses
+                                    WHERE matched_bank_item_id IN (SELECT id FROM bank_reconciliation_items WHERE bank_reconciliation_id = ?)
+                                UNION ALL
+                                SELECT COUNT(*) AS cnt FROM expense_ops
+                                    WHERE matched_bank_item_id IN (SELECT id FROM bank_reconciliation_items WHERE bank_reconciliation_id = ?)
+                                UNION ALL
+                                SELECT COUNT(*) AS cnt FROM pengeluaran_lains
+                                    WHERE matched_bank_item_id IN (SELECT id FROM bank_reconciliation_items WHERE bank_reconciliation_id = ?)
+                            ) AS counts
+                        ', array_fill(0, 5, $record->id));
+
+                        $matched = (int) ($result->total ?? 0);
+                        $total   = (int) $record->total_records;
+                        $pct     = $total > 0 ? round($matched / $total * 100, 1) : 0;
+
+                        // Encode sebagai "pct|matched|total" untuk formatStateUsing
+                        return "{$pct}|{$matched}|{$total}";
+                    })
+                    ->formatStateUsing(function (string $state): HtmlString {
+                        // State khusus
+                        if ($state === 'none') {
+                            return new HtmlString('<span class="text-gray-400 text-xs">—</span>');
+                        }
+                        if ($state === 'processing') {
+                            return new HtmlString(
+                                '<span class="inline-flex items-center gap-1 text-blue-600 text-xs">'.
+                                '<svg class="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">'.
+                                '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>'.
+                                'Memproses…</span>'
+                            );
+                        }
+                        if ($state === 'failed') {
+                            return new HtmlString('<span class="text-red-500 text-xs font-medium">Gagal</span>');
+                        }
+
+                        [$pct, $matched, $total] = explode('|', $state);
+                        $pct = (float) $pct;
+
+                        // Warna berdasarkan persentase
+                        [$barColor, $textColor, $bgColor] = match (true) {
+                            $pct >= 85 => ['bg-green-500',  'text-green-700',  'bg-green-100'],
+                            $pct >= 60 => ['bg-yellow-400', 'text-yellow-700', 'bg-yellow-100'],
+                            $pct >= 30 => ['bg-orange-400', 'text-orange-700', 'bg-orange-100'],
+                            default    => ['bg-red-400',    'text-red-700',    'bg-red-100'],
+                        };
+
+                        // Progress bar width (bulatkan ke 5% terdekat agar tidak terlalu presisi secara visual)
+                        $barWidth = min(100, max(0, (int) round($pct)));
+
+                        return new HtmlString(
+                            '<div class="flex flex-col items-center gap-1 min-w-20">'.
+                            // Badge persentase
+                            '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold '.$textColor.' '.$bgColor.'">'.
+                            number_format($pct, 1).'%</span>'.
+                            // Progress bar
+                            '<div class="w-full bg-gray-200 rounded-full h-1.5">'.
+                            '<div class="'.$barColor.' h-1.5 rounded-full transition-all" style="width:'.$barWidth.'%"></div>'.
+                            '</div>'.
+                            // Label cocok/total
+                            '<span class="text-gray-400 text-xs leading-none">'.$matched.'/'.$total.' cocok</span>'.
+                            '</div>'
+                        );
+                    })
+                    ->alignCenter()
+                    ->sortable(false),
                 TextColumn::make('paymentMethod.no_rekening')
-                    ->label('No. Rekening')
+                    ->label('No. Rekening / Pemilik')
                     ->searchable()
                     ->sortable()
-                    ->formatStateUsing(function ($state, BankStatement $record): string {
-                        if ($record->paymentMethod) {
-                            return $record->paymentMethod->bank_name.' - '.$record->paymentMethod->no_rekening;
+                    ->formatStateUsing(function (mixed $_state, BankStatement $record): HtmlString {
+                        if (! $record->paymentMethod) {
+                            return new HtmlString('<span class="text-gray-400">—</span>');
                         }
-                        return '-';
+
+                        $pm      = $record->paymentMethod;
+                        $rekening = e($pm->bank_name.' - '.$pm->no_rekening);
+                        $pemilik  = e($pm->name ?? '');
+
+                        return new HtmlString(
+                            '<div class="flex flex-col gap-0.5">'.
+                            '<span class="font-medium text-sm">'.$rekening.'</span>'.
+                            ($pemilik ? '<span class="text-xs text-gray-400">'.$pemilik.'</span>' : '').
+                            '</div>'
+                        );
                     }),
-                TextColumn::make('paymentMethod.name')
-                    ->label('Pemilik'),
                 TextColumn::make('period_start')
-                    ->label('Tanggal Mulai')
-                    ->date('d M Y')
-                    ->sortable(),
-                TextColumn::make('period_end')
-                    ->label('Tanggal Akhir')
-                    ->date('d M Y')
-                    ->sortable(),
+                    ->label('Periode')
+                    ->sortable()
+                    ->formatStateUsing(function (mixed $_state, BankStatement $record): HtmlString {
+                        $start = $record->period_start?->format('d M Y') ?? '—';
+                        $end   = $record->period_end?->format('d M Y') ?? '—';
+
+                        return new HtmlString(
+                            '<div class="flex flex-col gap-0.5">'.
+                            '<span class="text-sm font-medium">'.$start.'</span>'.
+                            '<span class="text-xs text-gray-400">'.$end.'</span>'.
+                            '</div>'
+                        );
+                    }),
                 TextColumn::make('branch')
                     ->label('Cabang')
                     ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('opening_balance')
-                    ->label('Saldo Awal')
-                    ->prefix('Rp. ')
-                    ->numeric()
-                    ->sortable()
-                    ->alignEnd(),
-                TextColumn::make('closing_balance')
-                    ->label('Saldo Akhir')
-                    ->prefix('Rp. ')
-                    ->numeric()
-                    ->sortable()
-                    ->alignEnd(),
-                TextColumn::make('no_of_debit')
-                    ->label('Jumlah Debit')
-                    ->numeric()
+                    ->label('Saldo Awal / Akhir')
                     ->sortable()
                     ->alignEnd()
-                    ->suffix(' transaksi')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('tot_debit')
-                    ->label('Total Debit')
-                    ->prefix('Rp. ')
-                    ->numeric()
-                    ->sortable()
-                    ->alignEnd()
-                    ->color('danger'),
-                TextColumn::make('no_of_credit')
-                    ->label('Jumlah Kredit')
-                    ->numeric()
-                    ->sortable()
-                    ->alignEnd()
-                    ->suffix(' transaksi')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('tot_credit')
-                    ->label('Total Kredit')
-                    ->prefix('Rp. ')
-                    ->numeric()
-                    ->sortable()
-                    ->alignEnd()
-                    ->color('success'),
-                TextColumn::make('source_type')
-                    ->label('Tipe Sumber')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pdf' => 'danger',
-                        'excel' => 'success',
-                        'manual_input' => 'warning',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn (string $state) => BankStatement::getSourceTypeOptions()[$state] ?? $state),
+                    ->formatStateUsing(function (mixed $_state, BankStatement $record): HtmlString {
+                        $fmt = fn (?int $val): string => 'Rp '.number_format((int) $val, 0, ',', '.');
 
+                        return new HtmlString(
+                            '<div class="flex flex-col gap-0.5 items-end">'.
+                            '<span class="text-sm font-medium">'.$fmt($record->opening_balance).'</span>'.
+                            '<span class="text-xs text-gray-400">'.$fmt($record->closing_balance).'</span>'.
+                            '</div>'
+                        );
+                    }),
+                TextColumn::make('tot_debit')
+                    ->label('Total Debit / Kredit')
+                    ->sortable()
+                    ->alignEnd()
+                    ->formatStateUsing(function (mixed $_state, BankStatement $record): HtmlString {
+                        $fmt = fn (?int $val): string => 'Rp '.number_format((int) $val, 0, ',', '.');
+
+                        $txDebit  = $record->no_of_debit  ? '('.$record->no_of_debit.' tx)'  : '';
+                        $txCredit = $record->no_of_credit ? '('.$record->no_of_credit.' tx)' : '';
+
+                        return new HtmlString(
+                            '<div class="flex flex-col gap-0.5 items-end">'.
+                            '<span class="text-sm font-medium text-danger-600">'.$fmt($record->tot_debit).'<span class="text-xs font-normal text-gray-400 ml-1">'.$txDebit.'</span></span>'.
+                            '<span class="text-xs font-medium text-success-600">'.$fmt($record->tot_credit).'<span class="text-xs font-normal text-gray-400 ml-1">'.$txCredit.'</span></span>'.
+                            '</div>'
+                        );
+                    }),
                 TextColumn::make('reconciliation_status')
                     ->label('Status Rekonsiliasi')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'uploaded' => 'warning',
+                    ->color(fn (?string $state): string => match ($state) {
+                        'uploaded'   => 'warning',
                         'processing' => 'info',
-                        'completed' => 'success',
-                        'failed' => 'danger',
-                        default => 'gray',
+                        'completed'  => 'success',
+                        'failed'     => 'danger',
+                        default      => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state) => BankStatement::getReconciliationStatusOptions()[$state] ?? $state),
+                    ->formatStateUsing(fn (?string $state): string => $state
+                        ? (BankStatement::getReconciliationStatusOptions()[$state] ?? $state)
+                        : '-'
+                    ),
 
                 TextColumn::make('total_records')
                     ->label('Total Records')

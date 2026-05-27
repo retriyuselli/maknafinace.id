@@ -58,14 +58,30 @@ class UserResource extends Resource
      */
     public static function getEloquentQuery(): Builder
     {
+        $currentYear = (int) date('Y');
+
         $query = parent::getEloquentQuery()
-            ->with(['payrolls' => function ($query) {
-                $query->latest(); // Load payrolls ordered by latest
-            }])
-            ->with('employmentStatus')
+            // Payrolls diload sekali untuk semua baris — gunakan $record->payrolls->first() di Table
+            ->with(['payrolls' => fn ($q) => $q->latest()])
             ->with('statuses')
-            ->with('roles') // Load roles for display and counting
-            ->withCount('roles'); // Add roles count for sorting and display
+            ->with('roles')
+            ->withCount('roles')
+            // Pre-compute leave aggregates — hindari N+1 di kolom cuti
+            ->withSum([
+                'leaveRequests as leave_approved_days' => fn ($q) => $q
+                    ->where('status', 'approved')
+                    ->whereYear('start_date', $currentYear),
+            ], 'total_days')
+            ->withSum([
+                'leaveRequests as leave_pending_days' => fn ($q) => $q
+                    ->where('status', 'pending')
+                    ->whereYear('start_date', $currentYear),
+            ], 'total_days')
+            ->withSum([
+                'leaveRequests as leave_rejected_days' => fn ($q) => $q
+                    ->where('status', 'rejected')
+                    ->whereYear('start_date', $currentYear),
+            ], 'total_days');
 
         // If current user is not super_admin, only show their own data
         if (! static::isSuperAdmin()) {

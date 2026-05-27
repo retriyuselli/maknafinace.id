@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -30,23 +31,40 @@ class BankTransaction extends Model
     ];
 
     protected $casts = [
-        'transaction_date' => 'date',
-        'value_date' => 'date',
-        'debit_amount' => 'integer',
-        'credit_amount' => 'integer',
-        'balance' => 'integer',
-        'is_matched' => 'boolean',
+        'transaction_date'    => 'date',
+        'value_date'          => 'date',
+        'debit_amount'        => 'decimal:0',
+        'credit_amount'       => 'decimal:0',
+        'balance'             => 'decimal:0',
+        'is_matched'          => 'boolean',
         'matching_confidence' => 'integer',
     ];
 
+    // -------------------------------------------------------------------------
+    // Activity Log
+    // -------------------------------------------------------------------------
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['amount', 'type', 'date', 'description', 'bank_statement_id'])
-            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            // Fix: gunakan nama kolom yang sebenarnya ada di tabel
+            ->logOnly([
+                'bank_statement_id',
+                'transaction_date',
+                'debit_amount',
+                'credit_amount',
+                'transaction_type',
+                'description',
+                'is_matched',
+            ])
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn (string $eventName) => $eventName)
             ->useLogName('bank_transaction');
     }
+
+    // -------------------------------------------------------------------------
+    // Relationships
+    // -------------------------------------------------------------------------
 
     public function bankStatement(): BelongsTo
     {
@@ -55,14 +73,17 @@ class BankTransaction extends Model
 
     public function matchedTransaction(): BelongsTo
     {
-        // Return relationship to itself for now since Transaction model doesn't exist
         return $this->belongsTo(BankTransaction::class, 'matched_with_transaction_id');
     }
+
+    // -------------------------------------------------------------------------
+    // Static Option Helpers
+    // -------------------------------------------------------------------------
 
     public static function getTransactionTypes(): array
     {
         return [
-            'debit' => 'Debit - Uang Keluar',
+            'debit'  => 'Debit - Uang Keluar',
             'credit' => 'Credit - Uang Masuk',
         ];
     }
@@ -70,105 +91,108 @@ class BankTransaction extends Model
     public static function getCategories(): array
     {
         return [
-            'transfer' => 'Transfer',
-            'deposit' => 'Setoran',
+            'transfer'   => 'Transfer',
+            'deposit'    => 'Setoran',
             'withdrawal' => 'Penarikan',
-            'fee' => 'Biaya Admin',
-            'interest' => 'Bunga',
-            'charge' => 'Biaya Lainnya',
+            'fee'        => 'Biaya Admin',
+            'interest'   => 'Bunga',
+            'charge'     => 'Biaya Lainnya',
             'correction' => 'Koreksi',
-            'other' => 'Lainnya',
+            'other'      => 'Lainnya',
         ];
     }
 
-    // Get the amount (debit or credit)
+    // -------------------------------------------------------------------------
+    // Accessors
+    // -------------------------------------------------------------------------
+
+    /** Jumlah transaksi (ambil debit atau credit mana yang ada nilainya). */
     public function getAmountAttribute(): float
     {
-        return $this->debit_amount ?: $this->credit_amount;
+        return (float) ($this->debit_amount ?: $this->credit_amount);
     }
 
-    // Get the net amount (credit positive, debit negative)
+    /** Net amount: credit positif, debit negatif. */
     public function getNetAmountAttribute(): float
     {
-        return $this->credit_amount - $this->debit_amount;
+        return (float) ($this->credit_amount - $this->debit_amount);
     }
 
-    // Check if this is a debit transaction
     public function getIsDebitAttribute(): bool
     {
         return $this->debit_amount > 0;
     }
 
-    // Check if this is a credit transaction
     public function getIsCreditAttribute(): bool
     {
         return $this->credit_amount > 0;
     }
 
-    // Get transaction direction for display
     public function getDirectionAttribute(): string
     {
         return $this->is_debit ? 'Keluar' : 'Masuk';
     }
 
-    // Get formatted amount with direction
     public function getFormattedAmountAttribute(): string
     {
         $amount = number_format($this->amount, 0, ',', '.');
         $prefix = $this->is_debit ? '-' : '+';
 
-        return $prefix.'Rp '.$amount;
+        return $prefix . 'Rp ' . $amount;
     }
 
-    // Scope for unmatched transactions
-    public function scopeUnmatched($query)
+    // -------------------------------------------------------------------------
+    // Query Scopes
+    // -------------------------------------------------------------------------
+
+    public function scopeUnmatched(Builder $query): Builder
     {
         return $query->where('is_matched', false);
     }
 
-    // Scope for matched transactions
-    public function scopeMatched($query)
+    public function scopeMatched(Builder $query): Builder
     {
         return $query->where('is_matched', true);
     }
 
-    // Scope for debit transactions
-    public function scopeDebits($query)
+    public function scopeDebits(Builder $query): Builder
     {
         return $query->where('debit_amount', '>', 0);
     }
 
-    // Scope for credit transactions
-    public function scopeCredits($query)
+    public function scopeCredits(Builder $query): Builder
     {
         return $query->where('credit_amount', '>', 0);
     }
 
-    // Scope for transactions in date range
-    public function scopeInDateRange($query, $startDate, $endDate)
+    public function scopeInDateRange(Builder $query, string $startDate, string $endDate): Builder
     {
         return $query->whereBetween('transaction_date', [$startDate, $endDate]);
     }
 
-    // Mark as matched with a system transaction
-    public function markAsMatched($transactionId, $confidence = 100.0, $notes = null): void
+    // -------------------------------------------------------------------------
+    // Business Logic
+    // -------------------------------------------------------------------------
+
+    /** Tandai transaksi ini sudah dicocokkan dengan transaksi sistem. */
+    public function markAsMatched(int $transactionId, int $confidence = 100, ?string $notes = null): void
     {
         $this->update([
-            'is_matched' => true,
+            'is_matched'                  => true,
             'matched_with_transaction_id' => $transactionId,
-            'matching_confidence' => $confidence,
-            'notes' => $notes,
+            'matching_confidence'         => $confidence,
+            'notes'                       => $notes,
         ]);
     }
 
-    // Unmark as matched
+    /** Batalkan pencocokan transaksi. */
     public function unmarkAsMatched(): void
     {
         $this->update([
-            'is_matched' => false,
+            'is_matched'                  => false,
             'matched_with_transaction_id' => null,
-            'matching_confidence' => null,
-            'notes' => null,
+            'matching_confidence'         => null,
+            'notes'                       => null,
         ]);
     }
 }

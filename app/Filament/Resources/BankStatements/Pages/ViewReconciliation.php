@@ -3,10 +3,8 @@
 namespace App\Filament\Resources\BankStatements\Pages;
 
 use App\Filament\Resources\BankStatements\BankStatementResource;
-use App\Models\BankStatement;
 use App\Services\ReconciliationService;
 use Filament\Resources\Pages\ViewRecord;
-use Illuminate\Support\Facades\Gate;
 
 class ViewReconciliation extends ViewRecord
 {
@@ -18,28 +16,18 @@ class ViewReconciliation extends ViewRecord
 
     protected function getViewData(): array
     {
-        // Initialize reconciliation service
-        $reconciliationService = app(ReconciliationService::class);
+        $service     = app(ReconciliationService::class);
+        $paymentId   = $this->record->payment_method_id;
+        $periodStart = $this->record->period_start->format('Y-m-d');
+        $periodEnd   = $this->record->period_end->format('Y-m-d');
 
-        // Run reconciliation
-        $reconciliationResults = $reconciliationService->reconcile(
-            $this->record->payment_method_id,
-            $this->record->period_start->format('Y-m-d'),
-            $this->record->period_end->format('Y-m-d'),
-            true
-        );
+        // Hanya baca dari DB — tidak menulis apapun saat halaman dibuka.
+        // Penulisan (auto-match) dilakukan oleh tombol ⚡ Auto Match via endpoint terpisah.
+        $results = $service->getStoredMatches($paymentId, $periodStart, $periodEnd);
 
-        $storedResults = $reconciliationService->getStoredMatches(
-            $this->record->payment_method_id,
-            $this->record->period_start->format('Y-m-d'),
-            $this->record->period_end->format('Y-m-d')
-        );
-
-        $reconciliationResults['matched'] = $storedResults['matched'];
-        
         return [
-            'reconciliationResults' => $reconciliationResults,
-            'statistics' => $reconciliationResults['statistics'],
+            'reconciliationResults' => $results,
+            'statistics'            => $results['statistics'],
         ];
     }
 

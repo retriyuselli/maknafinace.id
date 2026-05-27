@@ -8,7 +8,6 @@ use Exception;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -30,22 +29,11 @@ class CreateBankStatement extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Set uploaded_by to current user
-        $data['uploaded_by'] = Auth::id();
-
-        // Handle reconciliation file
+        // Handle reconciliation file — jadwalkan import via session
+        // 'reconciliation_original_filename' sudah diisi oleh storeFileNamesIn() di form (tidak perlu basename manual)
         if (! empty($data['reconciliation_file'])) {
-            $reconciliationFilePath = $data['reconciliation_file'];
-
-            // Set reconciliation original filename
-            $data['reconciliation_original_filename'] = basename($reconciliationFilePath);
-
-            // Store reconciliation file path in session for processing after create
-            session(['pending_reconciliation_file' => $reconciliationFilePath]);
+            session(['pending_reconciliation_file' => $data['reconciliation_file']]);
         }
-
-        // Remove reconciliation_file from data as it's not a database field
-        unset($data['reconciliation_file']);
 
         return $data;
     }

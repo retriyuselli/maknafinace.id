@@ -2,17 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\ReconciliationExport;
 use App\Models\BankReconciliationItem;
 use App\Models\PaymentMethod;
 use App\Services\ReconciliationService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Maatwebsite\Excel\Facades\Excel;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReconciliationController extends Controller
 {
@@ -72,37 +70,47 @@ class ReconciliationController extends Controller
     }
 
     /**
-     * Mark individual transaction as matched
+     * Mark individual transaction as matched (manual match from UI)
      */
     public function markMatched(Request $request)
     {
         $request->validate([
-            'source_id' => 'required|integer',
+            'source_id'    => 'required|integer',
             'source_table' => 'required|string',
             'bank_item_id' => 'required|integer',
-            'confidence' => 'required|numeric',
+            'confidence'   => 'required|numeric',
         ]);
 
         try {
-            // Get bank item
+            // Authorization via bank item
             $bankItem = BankReconciliationItem::findOrFail($request->bank_item_id);
-            
-            // Authorization check
             \Illuminate\Support\Facades\Gate::authorize('update', $bankItem);
 
-            // Create a mock transaction object for the service
-            $mockTransaction = (object) [
-                'source_table' => $request->source_table,
-                'source_id' => $request->source_id,
-            ];
+            $table = $request->source_table;
 
-            // Mark as matched
-            $this->reconciliationService->markAsMatched(
-                $mockTransaction,
-                $bankItem,
-                $request->confidence,
-                ['manual_match']
-            );
+            if (! Schema::hasColumn($table, 'reconciliation_status')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Table {$table} does not have reconciliation_status field",
+                ], 400);
+            }
+
+            $updated = DB::table($table)
+                ->where('id', $request->source_id)
+                ->update([
+                    'reconciliation_status' => 'matched',
+                    'matched_bank_item_id'  => $bankItem->id,
+                    'match_confidence'      => $request->confidence,
+                    'reconciliation_notes'  => 'Manually matched at ' . now()->format('Y-m-d H:i:s'),
+                    'updated_at'            => now(),
+                ]);
+
+            if ($updated === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaction not found',
+                ], 404);
+            }
 
             return response()->json([
                 'success' => true,
@@ -112,7 +120,7 @@ class ReconciliationController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menandai transaksi: '.$e->getMessage(),
+                'message' => 'Gagal menandai transaksi: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -142,7 +150,7 @@ class ReconciliationController extends Controller
 
             foreach ($results['matched'] as $match) {
                 if ($match['confidence'] >= ReconciliationService::HIGH_CONFIDENCE) {
-                    $this->reconciliationService->markAsMatched(
+                    $this->reconciliationService->saveMatch(
                         $match['app_transaction'],
                         $match['bank_item'],
                         $match['confidence'],

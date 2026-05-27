@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -68,28 +67,10 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         'emergency_contact',
     ];
 
-    /**
-     * Attributes yang tidak boleh di-mass assign (PROTECTED)
-     * Harus diupdate secara eksplisit dengan authorization check
-     *
-     * @var array<string>
-     */
-    protected $guarded = [
-        'password',          // Harus melalui hash + validation
-        'role',              // Hanya admin yang bisa ubah
-        'status',            // Hanya admin yang bisa ubah
-        'status_id',         // Hanya admin yang bisa ubah
-        'status_user',       // Hanya admin yang bisa ubah
-        'expire_date',       // Hanya super admin yang bisa set
-        'hire_date',         // Hanya HR yang bisa ubah
-        'last_working_date', // Hanya HR yang bisa ubah
-        'department',        // Hanya HR/Admin yang bisa ubah
-        'annual_leave_quota', // Hanya HR yang bisa ubah
-        'remember_token',    // System generated
-        'email_verified_at', // System generated
-        'created_at',        // System generated
-        'updated_at',        // System generated
-    ];
+    // CATATAN: $guarded dihapus — Laravel hanya menggunakan $fillable ATAU $guarded, tidak keduanya.
+    // Ketika $fillable sudah didefinisikan, $guarded sepenuhnya diabaikan (tidak memberikan proteksi apapun).
+    // Proteksi field sensitif sudah ditangani oleh $fillable di atas (hanya field yang terdaftar di sana
+    // yang bisa di-mass assign) ditambah method updatePassword/updateRole/updateStatus di bawah.
 
     /**
      * The attributes that should be hidden for serialization.
@@ -110,20 +91,20 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         'avatar',
     ];
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'email', 'status', 'expire_date'])
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
+            ->useLogName('user');
+    }
+
     /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
      */
-
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'is_active', 'expired_at'])
-            ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
-            ->useLogName('user');
-    }
-
     protected function casts(): array
     {
         return [
@@ -159,7 +140,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             throw new InvalidArgumentException('Password must be at least 8 characters');
         }
 
-        $this->password = bcrypt($newPassword);
+        // Cukup assign plain text — cast 'hashed' di casts() otomatis menghash
+        $this->password = $newPassword;
 
         // Log activity
         Log::info('Password updated', [
@@ -301,11 +283,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         return $this->belongsTo(Status::class, 'status_id');
     }
 
-    public function employmentStatus(): BelongsTo
-    {
-        return $this->belongsTo(Status::class, 'status_id');
-    }
-
     public function statuses(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Status::class, 'status_user');
@@ -316,22 +293,15 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         return $this->hasMany(Vendor::class, 'created_by');
     }
 
-    public function notifications(): HasMany
-    {
-        return $this->hasMany(DatabaseNotification::class, 'notifiable_id');
-    }
-
     // Computed attributes for HR data
     public function getClosingAttribute()
     {
         return $this->orders->sum('total_price');
     }
 
-    public function getAmCountAttribute()
+    public function getAmCountAttribute(): int
     {
-        $totAM = Order::where('user_id', $this->id)->count();
-
-        return $totAM;
+        return $this->orders()->count();
     }
 
     public function getTotalRevenueAttribute()
@@ -420,7 +390,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             return false;
         }
 
-        $expireDate = Carbon::parse($this->expire_date);
+        // expire_date sudah di-cast ke datetime, jadi sudah Carbon instance
+        $expireDate = $this->expire_date;
         $sevenDaysFromNow = Carbon::now()->addDays(7);
 
         return Carbon::now()->lessThan($expireDate) && $expireDate->lessThanOrEqualTo($sevenDaysFromNow);
@@ -439,17 +410,17 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     }
 
     // new fields
-    public function payrolls()
+    public function payrolls(): HasMany
     {
         return $this->hasMany(Payroll::class);
     }
 
-    public function leaveRequests()
+    public function leaveRequests(): HasMany
     {
         return $this->hasMany(LeaveRequest::class);
     }
 
-    public function leaveBalances()
+    public function leaveBalances(): HasMany
     {
         return $this->hasMany(LeaveBalance::class);
     }

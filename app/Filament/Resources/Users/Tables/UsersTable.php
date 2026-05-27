@@ -22,36 +22,36 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema as DBSchema;
 
 class UsersTable
 {
+    /**
+     * Cache hasil isSuperAdmin per request — hindari 200+ DB query per halaman
+     * (dipanggil di setiap visible() closure × jumlah baris)
+     */
+    private static ?bool $cachedIsSuperAdmin = null;
+
     private static function isSuperAdmin(): bool
     {
-        $user = Auth::user();
-        if (! $user) {
-            return false;
+        if (static::$cachedIsSuperAdmin === null) {
+            /** @var User|null $user */
+            $user = Auth::user();
+            // hasRole() Spatie sudah di-cache di memory — tidak DB query ulang
+            static::$cachedIsSuperAdmin = $user ? $user->hasRole('super_admin') : false;
         }
 
-        return DB::table('model_has_roles')
-            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-            ->where('model_has_roles.model_id', $user->id)
-            ->where('roles.name', 'super_admin')
-            ->exists();
+        return static::$cachedIsSuperAdmin;
     }
 
-    private static function isTargetUserSuperAdmin($record): bool
+    private static function isTargetUserSuperAdmin(?User $record): bool
     {
         if (! $record) {
             return false;
         }
 
-        return DB::table('model_has_roles')
-            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-            ->where('model_has_roles.model_id', $record->id)
-            ->where('roles.name', 'super_admin')
-            ->exists();
+        // $record->roles sudah di-eager load via ->with('roles') di UserResource
+        return $record->roles->contains('name', 'super_admin');
     }
 
     public static function configure(Table $table): Table
@@ -216,7 +216,8 @@ class UsersTable
                     ->sortable()
                     ->placeholder('Belum diatur')
                     ->getStateUsing(function ($record) {
-                        $latestPayroll = $record->payrolls()->latest()->first();
+                        // payrolls sudah di-eager load (latest) — gunakan koleksi, bukan query baru
+                        $latestPayroll = $record->payrolls->first();
 
                         return $latestPayroll ? $latestPayroll->monthly_salary : null;
                     })
@@ -235,7 +236,7 @@ class UsersTable
                     })
                     ->icon('heroicon-o-banknotes')
                     ->tooltip(function ($record) {
-                        $latestPayroll = $record->payrolls()->latest()->first();
+                        $latestPayroll = $record->payrolls->first();
                         if (! $latestPayroll) {
                             return 'Belum ada data payroll';
                         }
@@ -252,10 +253,8 @@ class UsersTable
                 TextColumn::make('total_leave_taken')
                     ->label('Cuti Diambil')
                     ->getStateUsing(function ($record) {
-                        return $record->leaveRequests()
-                            ->where('status', 'approved')
-                            ->whereYear('start_date', date('Y'))
-                            ->sum('total_days');
+                        // leave_approved_days pre-computed via withSum di UserResource
+                        return (int) ($record->leave_approved_days ?? 0);
                     })
                     ->formatStateUsing(function ($state) {
                         return $state.' hari';
@@ -276,21 +275,11 @@ class UsersTable
                     })
                     ->icon('heroicon-o-calendar-days')
                     ->tooltip(function ($record) {
+                        // Gunakan pre-computed aggregates dari withSum di UserResource
                         $currentYear = date('Y');
-                        $totalApproved = $record->leaveRequests()
-                            ->where('status', 'approved')
-                            ->whereYear('start_date', $currentYear)
-                            ->sum('total_days');
-
-                        $totalPending = $record->leaveRequests()
-                            ->where('status', 'pending')
-                            ->whereYear('start_date', $currentYear)
-                            ->sum('total_days');
-
-                        $totalRejected = $record->leaveRequests()
-                            ->where('status', 'rejected')
-                            ->whereYear('start_date', $currentYear)
-                            ->sum('total_days');
+                        $totalApproved = (int) ($record->leave_approved_days ?? 0);
+                        $totalPending  = (int) ($record->leave_pending_days ?? 0);
+                        $totalRejected = (int) ($record->leave_rejected_days ?? 0);
 
                         return sprintf(
                             "Tahun %s:\nDisetujui: %d hari\nMenunggu: %d hari\nDitolak: %d hari",
@@ -306,10 +295,7 @@ class UsersTable
                     ->label('Sisa Cuti')
                     ->getStateUsing(function ($record) {
                         $annualLeaveAllowance = 12;
-                        $usedLeave = $record->leaveRequests()
-                            ->where('status', 'approved')
-                            ->whereYear('start_date', date('Y'))
-                            ->sum('total_days');
+                        $usedLeave = (int) ($record->leave_approved_days ?? 0);
 
                         return max(0, $annualLeaveAllowance - $usedLeave);
                     })
@@ -333,14 +319,11 @@ class UsersTable
                     ->icon('heroicon-o-clock')
                     ->tooltip(function ($record) {
                         $annualLeaveAllowance = 12;
-                        $currentYear = date('Y');
-                        $usedLeave = $record->leaveRequests()
-                            ->where('status', 'approved')
-                            ->whereYear('start_date', $currentYear)
-                            ->sum('total_days');
-
+                        $usedLeave    = (int) ($record->leave_approved_days ?? 0);
                         $remainingLeave = max(0, $annualLeaveAllowance - $usedLeave);
-                        $percentage = $annualLeaveAllowance > 0 ? round(($usedLeave / $annualLeaveAllowance) * 100, 1) : 0;
+                        $percentage   = $annualLeaveAllowance > 0
+                            ? round(($usedLeave / $annualLeaveAllowance) * 100, 1)
+                            : 0;
 
                         return sprintf(
                             "Jatah Tahunan: %d hari\nTerpakai: %d hari (%.1f%%)\nSisa: %d hari",
@@ -622,8 +605,9 @@ class UsersTable
                                 ->same('new_password'),
                         ])
                         ->action(function (array $data, $record): void {
+                            // Cast 'hashed' di User::casts() menangani hashing otomatis — jangan hash dua kali
                             $record->update([
-                                'password' => Hash::make($data['new_password']),
+                                'password' => $data['new_password'],
                             ]);
 
                             Notification::make()
@@ -645,7 +629,8 @@ class UsersTable
                         ->icon('heroicon-o-banknotes')
                         ->color('success')
                         ->url(function ($record) {
-                            $latestPayroll = $record->payrolls()->latest()->first();
+                            // payrolls sudah di-eager load — gunakan koleksi
+                            $latestPayroll = $record->payrolls->first();
                             if ($latestPayroll) {
                                 return route('filament.admin.resources.payrolls.edit', $latestPayroll);
                             } else {
@@ -654,7 +639,7 @@ class UsersTable
                         })
                         ->openUrlInNewTab()
                         ->tooltip(function ($record) {
-                            $latestPayroll = $record->payrolls()->latest()->first();
+                            $latestPayroll = $record->payrolls->first();
                             if ($latestPayroll) {
                                 return sprintf(
                                     "Gaji saat ini: %s\nKlik untuk edit",
@@ -676,7 +661,8 @@ class UsersTable
                             return "Riwayat Gaji - {$record->name}";
                         })
                         ->modalContent(function ($record) {
-                            $payrolls = $record->payrolls()->orderBy('created_at', 'desc')->get();
+                            // Modal dibuka on-demand — payrolls sudah di-eager load, gunakan koleksi
+                            $payrolls = $record->payrolls; // sudah diurutkan latest()
 
                             if ($payrolls->isEmpty()) {
                                 return view('filament.modals.no-payroll-history');
@@ -690,7 +676,7 @@ class UsersTable
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Tutup')
                         ->visible(function ($record) {
-                            return static::isSuperAdmin() && $record->payrolls()->exists();
+                            return static::isSuperAdmin() && $record->payrolls->isNotEmpty();
                         }),
 
                     Action::make('deactivate_user')

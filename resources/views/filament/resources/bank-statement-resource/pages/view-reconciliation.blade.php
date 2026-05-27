@@ -4,7 +4,7 @@
         <div class="flex flex-wrap gap-2 sm:gap-3 justify-end">
             <a href="{{ url('/admin/bank-statements/' . $record->id) }}" class="bg-gray-500 hover:bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium">← Kembali</a>
             <a href="{{ url('/admin/reconciliation/download-pdf?' . http_build_query(['payment_method_id' => $record->payment_method_id,'start_date' => $record->period_start->format('Y-m-d'),'end_date' => $record->period_end->format('Y-m-d'),])) }}" target="_blank" class="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1">
-                <span>�</span>
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd"></path></svg>
                 <span>Download PDF</span>
             </a>
             <button onclick="autoMatchHighConfidence()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium">⚡ Auto Match (85%+)</button>
@@ -438,7 +438,7 @@
                             @php $amount = $item->debit ?: $item->credit; $isDebit = (bool) $item->debit; @endphp
                             <tr class="hover:bg-gray-50">
                                 <td class="px-3 py-2 sm:px-6 sm:py-4 text-gray-900">{{ \Carbon\Carbon::parse($item->date)->format('d M Y') }}</td>
-                                <td class="px-3 py-2 sm:px-6 sm:py-4 text-gray-900 max-md"><div class="truncate" title="{{ $item->description }}">{{ Str::limit($item->description, 80) }}</div></td>
+                                <td class="px-3 py-2 sm:px-6 sm:py-4 text-gray-900 max-w-md"><div class="truncate" title="{{ $item->description }}">{{ Str::limit($item->description, 80) }}</div></td>
                                 <td class="px-3 py-2 sm:px-6 sm:py-4 text-right"><span class="font-medium {{ $isDebit ? 'text-red-600' : 'text-green-600' }}">{{ $isDebit ? '-' : '+' }}Rp {{ number_format($amount, 0, ',', '.') }}</span></td>
                                 <td class="px-3 py-2 sm:px-6 sm:py-4 text-center"><button type="button" onclick="findManualMatchBank('{{ $item->id }}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Manual Match</button></td>
                             </tr>

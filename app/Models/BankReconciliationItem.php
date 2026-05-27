@@ -2,10 +2,8 @@
 
 namespace App\Models;
 
-use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -41,6 +39,7 @@ class BankReconciliationItem extends Model
     {
         return LogOptions::defaults()
             ->logOnly(['date', 'description', 'debit', 'credit'])
+            ->logOnlyDirty()   // hindari log perubahan yang tidak nyata
             ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
             ->useLogName('bank_reconciliation');
     }
@@ -102,47 +101,9 @@ class BankReconciliationItem extends Model
         return $this->credit > 0;
     }
 
-    // Main relationship to BankStatement (new integrated approach)
+    // Relasi ke BankStatement induk
     public function bankStatement(): BelongsTo
     {
         return $this->belongsTo(BankStatement::class, 'bank_reconciliation_id', 'id');
-    }
-
-    // Get the parent record - checks both BankStatement and legacy data
-    public function getParentRecord()
-    {
-        // First try BankStatement (new integrated approach)
-        $bankStatement = BankStatement::find($this->bank_reconciliation_id);
-        if ($bankStatement) {
-            return $bankStatement;
-        }
-
-        // Fallback to check if there's a bank_reconciliations table record (legacy data)
-        try {
-            $legacyRecord = DB::table('bank_reconciliations')
-                ->where('id', $this->bank_reconciliation_id)
-                ->first();
-
-            if ($legacyRecord) {
-                // Return a simple object for legacy compatibility
-                return (object) [
-                    'id' => $legacyRecord->id,
-                    'title' => $legacyRecord->title ?? 'Legacy Record',
-                    'description' => $legacyRecord->description ?? '',
-                    'status' => $legacyRecord->status ?? 'completed',
-                    'type' => 'legacy',
-                ];
-            }
-        } catch (Exception $e) {
-            // If bank_reconciliations table doesn't exist, ignore
-        }
-
-        return null;
-    }
-
-    // Dynamic relationship - works with both new and legacy data
-    public function parent()
-    {
-        return $this->getParentRecord();
     }
 }

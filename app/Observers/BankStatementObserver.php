@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\BankStatement;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 
 class BankStatementObserver
 {
@@ -13,8 +14,13 @@ class BankStatementObserver
     public function creating(BankStatement $bankStatement): void
     {
         if (Auth::check()) {
-            $bankStatement->uploaded_by = Auth::id();
+            $bankStatement->uploaded_by    = Auth::id();
             $bankStatement->last_edited_by = Auth::id();
+        }
+
+        // Catat waktu upload jika belum diset
+        if (empty($bankStatement->uploaded_at)) {
+            $bankStatement->uploaded_at = Carbon::now();
         }
     }
 
@@ -26,29 +32,5 @@ class BankStatementObserver
         if (Auth::check()) {
             $bankStatement->last_edited_by = Auth::id();
         }
-    }
-
-    /**
-     * Handle the BankStatement "deleted" event.
-     */
-    public function deleted(BankStatement $bankStatement): void
-    {
-        //
-    }
-
-    /**
-     * Handle the BankStatement "restored" event.
-     */
-    public function restored(BankStatement $bankStatement): void
-    {
-        //
-    }
-
-    /**
-     * Handle the BankStatement "force deleted" event.
-     */
-    public function forceDeleted(BankStatement $bankStatement): void
-    {
-        //
     }
 }

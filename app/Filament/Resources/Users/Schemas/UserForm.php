@@ -13,7 +13,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
 class UserForm
@@ -92,7 +91,8 @@ class UserForm
                                             ->label('Password')
                                             ->password()
                                             ->required(fn (string $operation): bool => $operation === 'create')
-                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? Hash::make($state) : null)
+                                            // Cast 'hashed' di User::casts() menangani hashing otomatis — jangan hash dua kali
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? $state : null)
                                             ->dehydrated(fn ($state) => filled($state))
                                             ->minLength(8)
                                             ->maxLength(255)
@@ -145,7 +145,7 @@ class UserForm
                                             ->columnSpanFull(),
                                     ]),
 
-                                Section::make('Employment Information')
+                                Section::make('Informasi Kepegawaian')
                                     ->schema([
                                         Grid::make(2)
                                             ->schema([
@@ -158,10 +158,19 @@ class UserForm
                                                     ->label('Tanggal Berakhir Kerja')
                                                     ->displayFormat('d/m/Y')
                                                     ->helperText('Kosongkan jika masih aktif bekerja'),
+
+                                                TextInput::make('annual_leave_quota')
+                                                    ->label('Kuota Cuti Tahunan')
+                                                    ->numeric()
+                                                    ->suffix('hari')
+                                                    ->default(12)
+                                                    ->minValue(0)
+                                                    ->maxValue(365)
+                                                    ->helperText('Jumlah hari cuti yang diberikan per tahun (default: 12 hari)'),
                                             ]),
                                     ]),
 
-                                Section::make('Account Settings')
+                                Section::make('Pengaturan Akun')
                                     ->schema([
                                         Grid::make(2)
                                             ->schema([
@@ -230,15 +239,17 @@ class UserForm
                                     ]),
                             ]),
 
-                        Tab::make('Documents & Notes')
+                        Tab::make('Dokumen & Catatan')
                             ->icon('heroicon-o-document-text')
                             ->schema([
-                                Section::make('Document Upload')
+                                Section::make('Upload Dokumen')
                                     ->schema([
                                         Grid::make(2)
                                             ->schema([
                                                 FileUpload::make('contract_document')
                                                     ->label('Dokumen Kontrak')
+                                                    ->disk('private')
+                                                    ->visibility('private')
                                                     ->directory('user-contracts')
                                                     ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
                                                     ->maxSize(5120)
@@ -248,6 +259,8 @@ class UserForm
 
                                                 FileUpload::make('identity_document')
                                                     ->label('Dokumen Identitas')
+                                                    ->disk('private')
+                                                    ->visibility('private')
                                                     ->directory('user-identity')
                                                     ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
                                                     ->maxSize(5120)
@@ -258,6 +271,8 @@ class UserForm
 
                                         FileUpload::make('additional_documents')
                                             ->label('Dokumen Tambahan')
+                                            ->disk('private')
+                                            ->visibility('private')
                                             ->directory('user-documents')
                                             ->multiple()
                                             ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
@@ -269,7 +284,7 @@ class UserForm
                                             ->columnSpanFull(),
                                     ]),
 
-                                Section::make('Notes & Comments')
+                                Section::make('Catatan & Kontak Darurat')
                                     ->schema([
                                         Textarea::make('notes')
                                             ->label('Catatan Karyawan')

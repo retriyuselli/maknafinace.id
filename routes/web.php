@@ -380,6 +380,15 @@ Route::get('/admin/reconciliation/download-pdf', [ReconciliationController::clas
     ->name('reconciliation.download-pdf')
     ->middleware($authNoStoreThrottle);
 
+// Routes untuk Auto-Match dan Unmark Rekonsiliasi
+Route::post('/admin/reconciliation/auto-match', [ReconciliationController::class, 'autoMatch'])
+    ->name('reconciliation.auto-match')
+    ->middleware($authNoStoreThrottle);
+
+Route::post('/admin/reconciliation/unmark', [ReconciliationController::class, 'unmarkMatched'])
+    ->name('reconciliation.unmark')
+    ->middleware($authNoStoreThrottle);
+
 if (app()->environment('local')) {
     Route::get('/debug-report', function () {
         $query = DataPembayaran::query()->with(['order', 'paymentMethod']);

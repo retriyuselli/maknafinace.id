@@ -19,7 +19,6 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 
@@ -41,7 +40,8 @@ class BankStatementForm
                                             ->relationship(
                                                 'paymentMethod',
                                                 'no_rekening',
-                                                fn ($query) => $query->whereNotNull('no_rekening')
+                                                fn (\Illuminate\Database\Eloquent\Builder $query) => $query
+                                                    ->whereNotNull('no_rekening')
                                                     ->where('no_rekening', '!=', '')
                                                     ->whereNotNull('bank_name')
                                                     ->where('bank_name', '!=', '')
@@ -54,7 +54,7 @@ class BankStatementForm
                                             ->label('Rekening Bank')
                                             ->placeholder('Pilih rekening bank...')
                                             ->helperText('Pilih rekening bank yang memiliki nomor rekening valid')
-                                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->no_rekening && $record->bank_name
+                                            ->getOptionLabelFromRecordUsing(fn (PaymentMethod $record) => $record->no_rekening && $record->bank_name
                                                     ? "{$record->bank_name} - {$record->no_rekening}".
                                                       ($record->cabang ? " - {$record->name}" : '')
                                                     : 'Data rekening tidak lengkap'
@@ -79,7 +79,7 @@ class BankStatementForm
                                                     ->maxLength(255)
                                                     ->placeholder('Nama cabang (opsional)'),
                                             ])
-                                            ->afterStateUpdated(function ($state, callable $set) {
+                                            ->afterStateUpdated(function (?int $state, callable $set) {
                                                 if ($state) {
                                                     $paymentMethod = PaymentMethod::find($state);
                                                     if ($paymentMethod) {
@@ -111,7 +111,7 @@ class BankStatementForm
                                                     ->placeholder('Pilih tanggal mulai')
                                                     ->helperText('Tanggal awal periode rekening koran')
                                                     ->live()
-                                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                                    ->afterStateUpdated(function (?string $state, callable $set, callable $get) {
                                                         if ($state && ! $get('period_end')) {
                                                             $endDate = \Carbon\Carbon::parse($state)->addDays(29);
                                                             $set('period_end', $endDate->format('Y-m-d'));
@@ -134,26 +134,30 @@ class BankStatementForm
                                                 ->color('primary')
                                                 ->action(function (callable $set) {
                                                     $now = \Carbon\Carbon::now();
-                                                    $set('period_start', $now->startOfMonth()->format('Y-m-d'));
-                                                    $set('period_end', $now->endOfMonth()->format('Y-m-d'));
+                                                    // copy() agar startOfMonth/endOfMonth tidak mutasi instance yang sama
+                                                    $set('period_start', $now->copy()->startOfMonth()->format('Y-m-d'));
+                                                    $set('period_end', $now->copy()->endOfMonth()->format('Y-m-d'));
                                                 }),
                                             Action::make('set_last_month')
                                                 ->label('Bulan Lalu')
                                                 ->icon('heroicon-o-calendar-days')
                                                 ->color('gray')
                                                 ->action(function (callable $set) {
-                                                    $lastMonth = \Carbon\Carbon::now()->subMonth();
-                                                    $set('period_start', $lastMonth->startOfMonth()->format('Y-m-d'));
-                                                    $set('period_end', $lastMonth->endOfMonth()->format('Y-m-d'));
+                                                    // subMonthNoOverflow agar Jan → Des, bukan Feb 31 → Mar 3
+                                                    $lastMonth = \Carbon\Carbon::now()->subMonthNoOverflow();
+                                                    $set('period_start', $lastMonth->copy()->startOfMonth()->format('Y-m-d'));
+                                                    $set('period_end', $lastMonth->copy()->endOfMonth()->format('Y-m-d'));
                                                 }),
                                             Action::make('set_last_30_days')
                                                 ->label('30 Hari Terakhir')
                                                 ->icon('heroicon-o-clock')
                                                 ->color('success')
                                                 ->action(function (callable $set) {
-                                                    $now = \Carbon\Carbon::now();
-                                                    $set('period_start', $now->subDays(30)->format('Y-m-d'));
-                                                    $set('period_end', $now->format('Y-m-d'));
+                                                    // Gunakan copy() agar instance $end tidak termutasi saat subDays
+                                                    $end   = \Carbon\Carbon::today();
+                                                    $start = $end->copy()->subDays(30);
+                                                    $set('period_start', $start->format('Y-m-d'));
+                                                    $set('period_end', $end->format('Y-m-d'));
                                                 }),
                                         ])->extraAttributes(['class' => 'mt-4']),
                                     ]),
@@ -167,14 +171,12 @@ class BankStatementForm
                                     ->schema([
                                         Select::make('source_type')
                                             ->label('Tipe Sumber File')
-                                            ->options([
-                                                'pdf' => 'PDF - File rekening koran PDF dari bank',
-                                            ])
+                                            ->options(BankStatement::getSourceTypeOptions())
                                             ->required()
                                             ->default('pdf')
                                             ->helperText('Pilih jenis file yang akan diupload')
                                             ->live()
-                                            ->afterStateUpdated(function ($state, callable $set) {
+                                            ->afterStateUpdated(function (?string $state, callable $set) {
                                                 if ($state === 'manual_input') {
                                                     $set('file_path', null);
                                                 }
@@ -184,6 +186,7 @@ class BankStatementForm
                                             ->label('Upload File Rekening Koran')
                                             ->disk('private')
                                             ->directory('bank-statements')
+                                            ->storeFileNamesIn('original_filename')   // otomatis simpan nama file asli
                                             ->acceptedFileTypes(function (callable $get) {
                                                 $sourceType = $get('source_type');
 
@@ -263,21 +266,23 @@ class BankStatementForm
                                             ->schema([
                                                 TextInput::make('opening_balance')
                                                     ->label('Saldo Awal')
-                                                    ->prefix('Rp. ')
+                                                    ->prefix('Rp ')
                                                     ->mask(RawJs::make('$money($input)'))
                                                     ->stripCharacters(',')
-                                                    ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                                    ->dehydrateStateUsing(fn (mixed $state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                                     ->placeholder('0')
-                                                    ->helperText('Saldo awal periode'),
+                                                    ->helperText('Saldo awal periode')
+                                                    ->live(debounce: 500),
 
                                                 TextInput::make('closing_balance')
                                                     ->label('Saldo Akhir')
-                                                    ->prefix('IDR')
+                                                    ->prefix('Rp ')
                                                     ->placeholder('0')
                                                     ->mask(RawJs::make('$money($input)'))
-                                                    ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                                    ->dehydrateStateUsing(fn (mixed $state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                                     ->stripCharacters(',')
-                                                    ->helperText('Saldo akhir periode'),
+                                                    ->helperText('Saldo akhir periode')
+                                                    ->live(debounce: 500),
 
                                                 Placeholder::make('balance_difference')
                                                     ->label('Selisih Saldo')
@@ -320,7 +325,7 @@ class BankStatementForm
 
                                                         TextInput::make('tot_debit')
                                                             ->label('Total Nominal Debit')
-                                                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                                            ->dehydrateStateUsing(fn (mixed $state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                                             ->prefix('IDR')
                                                             ->placeholder('0')
                                                             ->mask(RawJs::make('$money($input)'))
@@ -342,7 +347,7 @@ class BankStatementForm
 
                                                         TextInput::make('tot_credit')
                                                             ->label('Total Nominal Kredit')
-                                                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                                            ->dehydrateStateUsing(fn (mixed $state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                                             ->prefix('IDR')
                                                             ->placeholder('0')
                                                             ->mask(RawJs::make('$money($input)'))
@@ -366,15 +371,31 @@ class BankStatementForm
                                             ->directory('bank-reconciliations')
                                             ->preserveFilenames()
                                             ->downloadable(false)
+                                            ->previewable(false)
+                                            ->deletable(true)
+                                            ->removeUploadedFileButtonPosition('right')
+                                            ->loadingIndicatorPosition('left')
+                                            ->uploadButtonPosition('left')
+                                            ->uploadProgressIndicatorPosition('left')
                                             ->maxSize(10240)
-                                            ->helperText('Upload file Excel dengan format: Tanggal, Keterangan, Debit, Credit')
-                                            ->live()
-                                            ->required(fn (string $operation): bool => $operation === 'create')
-                                            ->afterStateUpdated(function ($state, callable $set) {
-                                                if ($state) {
-                                                    $set('reconciliation_original_filename', basename($state));
+                                            // Existing file tidak diisi kembali ke field ini saat edit
+                                            // (private disk tidak bisa di-serve via URL → stuck loading).
+                                            // Untuk hapus file yang ada: gunakan tombol "Hapus File Rekonsiliasi" di header.
+                                            ->helperText(function ($livewire) {
+                                                $record = $livewire->record ?? null;
+                                                if ($record && filled($record->reconciliation_file)) {
+                                                    $name = $record->reconciliation_original_filename ?? basename($record->reconciliation_file);
+
+                                                    return new \Illuminate\Support\HtmlString(
+                                                        '<span class="text-amber-600 font-medium">⚠ File saat ini: '.e($name).'</span><br>'.
+                                                        'Upload file baru di sini untuk mengganti. Untuk menghapus, gunakan tombol <strong>Hapus File Rekonsiliasi</strong> di bagian atas halaman.'
+                                                    );
                                                 }
-                                            }),
+
+                                                return 'Upload file Excel rekening koran. Didukung: (1) File asli Bank Mandiri (.xlsx) — langsung dari internet banking, atau (2) Template 4-kolom: Tanggal | Keterangan | Debit | Credit. Format terdeteksi otomatis.';
+                                            })
+                                            ->storeFileNamesIn('reconciliation_original_filename')
+                                            ->nullable(),
                                         Placeholder::make('reconciliation_file_info')
                                             ->label('Informasi File Rekonsiliasi')
                                             ->content(function ($livewire) {
@@ -432,17 +453,19 @@ class BankStatementForm
                                             ->prefix('Rp ')
                                             ->mask(RawJs::make('$money($input)'))
                                             ->stripCharacters(',')
-                                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                            ->dehydrateStateUsing(fn (mixed $state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                             ->disabled()
+                                            ->dehydrated(true)   // disabled tidak otomatis dehydrate — harus eksplisit
                                             ->default(0),
 
                                         TextInput::make('total_credit_reconciliation')
                                             ->label('Total Credit Rekonsiliasi')
-                                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                                            ->dehydrateStateUsing(fn (mixed $state) => (int) preg_replace('/[^\d]/', '', (string) $state))
                                             ->prefix('Rp ')
                                             ->mask(RawJs::make('$money($input)'))
                                             ->stripCharacters(',')
                                             ->disabled()
+                                            ->dehydrated(true)   // disabled tidak otomatis dehydrate — harus eksplisit
                                             ->default(0),
                                     ])->columns(2)
                                     ->collapsible()
@@ -450,9 +473,8 @@ class BankStatementForm
                             ]),
                     ])->columnSpanFull(),
 
+                // status diset default 'pending' saat create; Observer menangani uploaded_by & last_edited_by
                 Hidden::make('status')->default('pending'),
-                Hidden::make('uploaded_by')->default(fn () => Auth::id()),
-                Hidden::make('last_edited_by')->default(fn () => Auth::id()),
                 Hidden::make('original_filename'),
                 Hidden::make('reconciliation_original_filename'),
             ]);
