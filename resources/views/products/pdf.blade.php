@@ -6,32 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details PDF: {{ $product->name }}</title>
     <style>
-        @font-face {
-            font-family: 'Poppins';
-            font-style: normal;
-            font-weight: 400;
-            src: url('{{ storage_path('fonts/Poppins-Regular.ttf') }}') format('truetype');
-        }
-
-        @font-face {
-            font-family: 'Poppins';
-            font-style: normal;
-            font-weight: 500;
-            src: url('{{ storage_path('fonts/Poppins-Medium.ttf') }}') format('truetype');
-        }
-
-        @font-face {
-            font-family: 'Poppins';
-            font-style: normal;
-            font-weight: 600;
-            src: url('{{ storage_path('fonts/Poppins-SemiBold.ttf') }}') format('truetype');
-        }
-
-        @font-face {
-            font-family: 'Poppins';
-            font-style: normal;
-            font-weight: 700;
-            src: url('{{ storage_path('fonts/Poppins-Bold.ttf') }}') format('truetype');
+        /* DomPDF: jangan load @font-face Poppins (TTF besar) — bisa >2 menit per PDF.
+           Pakai DejaVu Sans bawaan DomPDF (cepat + mendukung karakter umum). */
+        *,
+        *::before,
+        *::after {
+            font-family: DejaVu Sans, sans-serif !important;
         }
 
         @page {
@@ -45,14 +25,8 @@
             /* Contoh: margin-top: 1.5cm; margin-bottom: 1.5cm; */
         }
 
-        *,
-        *::before,
-        *::after {
-            font-family: 'Poppins', sans-serif !important;
-        }
-
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: DejaVu Sans, sans-serif;
             font-size: 10pt;
             /* Ukuran font standar untuk PDF */
             background-color: #ffffff;
@@ -95,19 +69,24 @@
             font-size: 8pt;
             line-height: 1;
             text-align: left;
-            vertical-align: top;
-            width: 70%;
+            vertical-align: middle;
+            width: 68%;
+            padding-right: 24px;
         }
 
         .header-right {
             text-align: right;
-            vertical-align: top;
-            width: 30%;
+            vertical-align: middle;
+            width: 32%;
+            padding-left: 16px;
         }
 
         .header img {
-            max-height: 60px;
-            margin-top: 2px;
+            max-height: 36px;
+            max-width: 110px;
+            width: auto;
+            height: auto;
+            margin-top: 0;
         }
 
         .header h1 {
@@ -207,33 +186,16 @@
         }
 
         .description-html-content {
-            /* Kelas baru untuk styling HTML dari deskripsi */
             font-size: 8pt;
             color: #555;
             margin-top: 3px;
-            text-transform: capitalize;
-            line-height: 1.3;
-            padding-left: 1px;
-            list-style-position: inside;
-            margin-bottom: 3px;
-
-        }
-
-        .description-html-content p,
-        .description-html-content ul,
-        .description-html-content ol {
-            margin-top: 3px;
+            line-height: 1.35;
+            padding-left: 0;
             margin-bottom: 3px;
         }
 
-        .description-html-content ul,
-        .description-html-content ol {
-            padding-left: 5px;
-            /* Indentasi untuk list */
-        }
-
-        .description-html-content li {
-            margin-bottom: 2px;
+        .description-html-content br {
+            line-height: 1.35;
         }
 
         .total-table td {
@@ -305,36 +267,32 @@
 </head>
 
 <body>
-    {{-- Header Section --}}
+    {{-- Header Section — branding dari model Company (+ logoSrc dari controller) --}}
     <div class="header">
         @php
-            $logoPath = public_path('images/logomki.png');
-            $logoSrc = '';
-            if (file_exists($logoPath)) {
-                try {
-                    $logoData = base64_encode(file_get_contents($logoPath));
-                    $mimeType = mime_content_type($logoPath);
-                    if ($mimeType) {
-                        // Pastikan mime type valid
-                        $logoSrc = 'data:' . $mimeType . ';base64,' . $logoData;
-                    }
-                } catch (\Exception $e) {
-                    // Handle error jika file tidak bisa dibaca atau base64 gagal
-                    $logoSrc = ''; // Kosongkan jika error
-                }
-            }
+            $displayCompanyName = $company?->company_name ?? ($companyName ?? config('app.name'));
+            $addressParts = array_filter([
+                $company?->address,
+                $company?->city,
+                $company?->province,
+                $company?->postal_code,
+            ]);
+            $displayAddress = ! empty($addressParts)
+                ? implode(', ', $addressParts)
+                : 'Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kecamatan Kemuning, Kota Palembang, Sumatera Selatan 30137';
+            $displayPhone = $company?->phone ?? '+62 822-9796-2600';
+            $displayEmail = $company?->email ?? 'maknawedding@gmail.com';
         @endphp
         <table class="header-table">
             <tr>
                 <td class="header-left">
-                    <strong>{{ $companyName ?? config('app.name') }}</strong><br>
-                    Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kec.<br>
-                    Kemuning, Kota Palembang, Sumatera Selatan<br>
-                    +6281373183794 | maknawedding@gmail.com
+                    <strong>{{ $displayCompanyName }}</strong><br>
+                    {{ $displayAddress }}<br>
+                    {{ $displayPhone }} | {{ $displayEmail }}
                 </td>
                 <td class="header-right">
-                    @if ($logoSrc)
-                        <img src="{{ $logoSrc }}" alt="{{ $companyName ?? config('app.name') }}">
+                    @if (! empty($logoSrc))
+                        <img src="{{ $logoSrc }}" alt="{{ $displayCompanyName }}">
                     @endif
                 </td>
             </tr>
@@ -346,8 +304,8 @@
         {{-- Simulation Information --}}
         <table class="details-table">
             <tr>
-                <td style="width: 80%;">
-                    <strong>Wedding Package Simulation</strong><br>
+                <td style="width: 50%;">
+                    <strong>Wedding Package Product</strong><br>
                     Product Name : {{ $product->name }}<br>
                     Category : {{ $product->category->name ?? 'N/A' }}<br>
                     Capacity : {{ $product->pax }} Pax
@@ -361,7 +319,7 @@
             </tr>
         </table>
 
-        {{-- Package Details --}}
+        {{-- Package Details — angka mengikuti preview (harga × quantity) --}}
         <div class="package-details-box">
             <h3 class="section-title">Package Components & Services</h3>
             <table class="items-table">
@@ -374,29 +332,36 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php
-                        $totalVendorPrice = 0;
-                        $totalPublicPrice = 0;
-                    @endphp
                     @forelse($product->items ?? [] as $item)
+                        @php
+                            $vendorLineTotal = $item->total_price
+                                ?? $item->calculate_price_vendor
+                                ?? (($item->harga_vendor ?? 0) * max(1, (int) ($item->quantity ?? 1)));
+                            $publicLineTotal = $item->price_public
+                                ?? $item->calculate_price_public
+                                ?? (($item->harga_publish ?? 0) * max(1, (int) ($item->quantity ?? 1)));
+                            $detailsNotes = \App\Support\ProductNotesFormatter::forPdf($item->description);
+                        @endphp
                         <tr>
                             <td style="text-align: center; vertical-align: top;">{{ $loop->iteration }}</td>
                             <td>
-                                <div>
+                                <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 2px;">
                                     {{ $item->vendor->name ?? 'Vendor Tidak Diketahui' }}
                                 </div>
-                                @isset($item->description)
-                                    <ol class="vendor-description">
-                                        {!! strip_tags($item->description, '<li>') !!}
-                                    </ol>
-                                @endisset
+                                @if ($detailsNotes !== '')
+                                    <div class="description-html-content" style="margin-left: 8px;">
+                                        {!! $detailsNotes !!}
+                                    </div>
+                                @endif
                             </td>
                             <td style="text-align: right; vertical-align: top;">
-                                {{ number_format($item->harga_vendor ?? 0, 0, ',', '.') }}</td>
-                            <td style="text-align: right; vertical-align: top;">
-                                {{ number_format($item->price_public ?? ($item->harga_publish ?? 0), 0, ',', '.') }}
+                                {{ number_format((int) $vendorLineTotal, 0, ',', '.') }}
                             </td>
-                        @empty
+                            <td style="text-align: right; vertical-align: top;">
+                                {{ number_format((int) $publicLineTotal, 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @empty
                         <tr>
                             <td colspan="4" style="text-align: center; padding: 10px;">Tidak ada item spesifik yang
                                 terdaftar untuk produk ini.</td>
@@ -409,29 +374,32 @@
         {{-- Addition Details --}}
         @if ($product->penambahanHarga && $product->penambahanHarga->count() > 0)
             <div class="package-details-box">
-                <h3 class="section-title">Additional Price Details</h3>
+                <h3 class="section-title">Penambahan</h3>
                 <table class="items-table">
                     <thead>
                         <tr>
-                            <th style="width: 5%; vertical-align: top;">No.</th>
+                            <th style="width: 5%; vertical-align: top;">No</th>
                             <th style="vertical-align: top;">Description</th>
                             <th style="width: 15%; text-align: right; vertical-align: top;">Vendor</th>
-                            <th style="width: 15%; text-align: right; vertical-align: top;">Publish</th>
+                            <th style="width: 15%; text-align: right; vertical-align: top;">Public</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($product->penambahanHarga as $addition)
+                            @php
+                                $detailsNotes = \App\Support\ProductNotesFormatter::forPdf($addition->description);
+                            @endphp
                             <tr>
                                 <td style="text-align: center; vertical-align: top;">{{ $loop->iteration }}</td>
                                 <td>
-                                    <div style="font-weight: bold; margin-bottom: 2px;">
+                                    <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 2px;">
                                         {{ $addition->vendor->name ?? 'N/A' }}
                                     </div>
-                                    @isset($addition->description)
-                                        <ol class="vendor-description">
-                                            {!! strip_tags($addition->description, '<li>') !!}
-                                        </ol>
-                                    @endisset
+                                    @if ($detailsNotes !== '')
+                                        <div class="description-html-content" style="margin-left: 8px;">
+                                            {!! $detailsNotes !!}
+                                        </div>
+                                    @endif
                                 </td>
                                 <td style="text-align: right; vertical-align: top;">
                                     {{ number_format($addition->harga_vendor ?? 0, 0, ',', '.') }}
@@ -447,139 +415,124 @@
         @endif
 
         {{-- Reduction Details --}}
-        <div class="package-details-box"> {{-- Gunakan box yang sudah ada stylenya --}}
-            <h3 class="section-title">Reduction Details</h3> {{-- Gunakan kelas judul --}}
-            <table class="items-table">
-                <thead>
-                    <tr>
-                        <th style="width: 5%; vertical-align: top;">No.</th> {{-- Ganti Vendor Name menjadi No. --}}
-                        <th style="vertical-align: top;">Description</th>
-                        <th style="width: 15%; text-align: right; vertical-align: top;">Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($product->pengurangans ?? [] as $discount)
+        @if (($product->pengurangans ?? collect())->count() > 0)
+            <div class="package-details-box">
+                <h3 class="section-title">Pengurangan</h3>
+                <table class="items-table">
+                    <thead>
                         <tr>
-                            <td style="text-align: center; vertical-align: top;">{{ $loop->iteration }}</td>
-                            {{-- Tambahkan nomor urut --}}
-                            <td>
-                                <div style="font-weight: bold; margin-bottom: 2px;">
-                                    {{ $discount->description ?? 'N/A' }}</div> {{-- Nama Vendor --}}
-                                @isset($discount->notes)
-                                    <ol class="vendor-description">
-                                        {!! strip_tags($discount->notes, '<li>') !!}
-                                    </ol>
-                                @endisset
-                            </td>
-                            <td style="text-align: right; vertical-align: top;">
-                                {{ number_format($discount->amount ?? 0, 0, ',', '.') }}</td>
+                            <th style="width: 5%; vertical-align: top;">No</th>
+                            <th style="vertical-align: top;">Description</th>
+                            <th style="width: 15%; text-align: right; vertical-align: top;">Value</th>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="3" style="text-align: center; padding: 10px;">No reductions listed for this
-                                product.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @foreach ($product->pengurangans as $discount)
+                            @php
+                                $detailsNotes = \App\Support\ProductNotesFormatter::forPdf($discount->notes);
+                            @endphp
+                            <tr>
+                                <td style="text-align: center; vertical-align: top;">{{ $loop->iteration }}</td>
+                                <td>
+                                    <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 2px;">
+                                        {{ $discount->description ?? 'N/A' }}
+                                    </div>
+                                    @if ($detailsNotes !== '')
+                                        <div class="description-html-content" style="margin-left: 8px;">
+                                            {!! $detailsNotes !!}
+                                        </div>
+                                    @endif
+                                </td>
+                                <td style="text-align: right; vertical-align: top;">
+                                    {{ number_format($discount->amount ?? 0, 0, ',', '.') }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
 
 
-        {{-- Price Calculation --}}
+        {{-- Price Calculation (dari ProductPricingCalculator) --}}
+        @php
+            $pricing = $pricing ?? \App\Services\ProductPricingCalculator::calculateForProduct($product);
+            $totalPublicPrice = $pricing['total_public_price'];
+            $totalVendorPrice = $pricing['total_vendor_price'];
+            $totalDiscountAmount = $pricing['total_discount_amount'];
+            $totalAdditionAmount = $pricing['total_addition_publish'];
+            $totalAdditionVendorAmount = $pricing['total_addition_vendor'];
+            $subtotalPublish = $pricing['subtotal_publish'];
+            $subtotalVendor = $pricing['subtotal_vendor'];
+            $finalPriceAfterDiscounts = $pricing['final_publish'];
+            $finalVendorPriceAfterDiscounts = $pricing['final_vendor'];
+            $profitAndLoss = $pricing['profit_and_loss'];
+        @endphp
+
         <div class="package-details-box">
-            @php
-                // Hitung total berdasarkan jumlah harga publik item
-                $totalPublicPrice = ($product->items ?? collect())->sum(function ($item) {
-                    return ($item->harga_publish ?? 0) * ($item->quantity ?? 1);
-                });
-
-                // Hitung total berdasarkan jumlah harga vendor item
-                $totalVendorPrice = ($product->items ?? collect())->sum(function ($item) {
-                    return ($item->harga_vendor ?? 0) * ($item->quantity ?? 1);
-                });
-
-                // Hitung total jumlah diskon
-                $totalDiscountAmount = ($product->pengurangans ?? collect())->sum('amount');
-
-                // Hitung total jumlah penambahan harga
-                $totalAdditionAmount = ($product->penambahanHarga ?? collect())->sum('harga_publish');
-                $totalAdditionVendorAmount = ($product->penambahanHarga ?? collect())->sum('harga_vendor');
-
-                // Hitung Subtotal
-                $subtotalPublish = $totalPublicPrice + $totalAdditionAmount;
-                $subtotalVendor = $totalVendorPrice + $totalAdditionVendorAmount;
-
-                // Hitung harga final setelah diskon dan penambahan
-                $finalPriceAfterDiscounts = $totalPublicPrice - $totalDiscountAmount + $totalAdditionAmount;
-                $finalVendorPriceAfterDiscounts = $totalVendorPrice - $totalDiscountAmount + $totalAdditionVendorAmount;
-
-                // Hitung Profit & Loss
-                $profitAndLoss = $finalPriceAfterDiscounts - $finalVendorPriceAfterDiscounts;
-            @endphp
-
             <h3 class="section-title">Price Calculation</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 16px; margin-top: 10px;">
+            <table class="items-table" style="width: 100%; border-collapse: collapse; font-size: 8pt; margin-top: 10px;">
                 <thead>
                     <tr style="background-color: #f3f4f6;">
-                        <th style="border: 1px solid #d1d5db; padding: 8px; text-align: left;">Keterangan</th>
-                        <th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Publish (Rp)</th>
-                        <th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Vendor (Rp)</th>
+                        <th style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: left; font-size: 8pt;">Keterangan</th>
+                        <th style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-size: 8pt;">Publish (Rp)</th>
+                        <th style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-size: 8pt;">Vendor (Rp)</th>
                     </tr>
                 </thead>
                 <tbody>
                     {{-- Harga Awal --}}
                     <tr>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Harga Awal</td>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; font-weight: bold; font-size: 8pt;">Harga Awal</td>
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-size: 8pt;">
                             {{ number_format($totalPublicPrice, 0, ',', '.') }}</td>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-size: 8pt;">
                             {{ number_format($totalVendorPrice, 0, ',', '.') }}</td>
                     </tr>
 
                     {{-- Addition (Penambahan) --}}
                     <tr>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Addition (Penambahan)
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; font-weight: bold; font-size: 8pt;">Addition (Penambahan)
                         </td>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: green;">+
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; color: green; font-size: 8pt;">+
                             {{ number_format($totalAdditionAmount, 0, ',', '.') }}</td>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: green;">+
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; color: green; font-size: 8pt;">+
                             {{ number_format($totalAdditionVendorAmount, 0, ',', '.') }}</td>
                     </tr>
 
                     {{-- Subtotal --}}
                     <tr style="background-color: #f9fafb;">
-                        <td style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Subtotal</td>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: bold;">
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; font-weight: bold; font-size: 8pt;">Subtotal</td>
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-weight: bold; font-size: 8pt;">
                             {{ number_format($subtotalPublish, 0, ',', '.') }}</td>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: bold;">
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-weight: bold; font-size: 8pt;">
                             {{ number_format($subtotalVendor, 0, ',', '.') }}</td>
                     </tr>
 
                     {{-- Reduction (Pengurangan) --}}
                     <tr>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Reduction (Pengurangan)
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; font-weight: bold; font-size: 8pt;">Reduction (Pengurangan)
                         </td>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: red;">-
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; color: red; font-size: 8pt;">-
                             {{ number_format($totalDiscountAmount, 0, ',', '.') }}</td>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: red;">-
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; color: red; font-size: 8pt;">-
                             {{ number_format($totalDiscountAmount, 0, ',', '.') }}</td>
                     </tr>
 
                     {{-- Total Paket --}}
                     <tr style="background-color: #f9fafb;">
-                        <td style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Total Paket</td>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: bold;">
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; font-weight: bold; font-size: 8pt;">Total Paket</td>
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-weight: bold; font-size: 8pt;">
                             {{ number_format($finalPriceAfterDiscounts, 0, ',', '.') }}</td>
-                        <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: bold;">
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-weight: bold; font-size: 8pt;">
                             {{ number_format($finalVendorPriceAfterDiscounts, 0, ',', '.') }}</td>
                     </tr>
 
                     {{-- Profit / (Loss) --}}
                     <tr>
-                        <td colspan="2" style="border: 1px solid #d1d5db; padding: 8px; font-weight: bold;">Profit /
+                        <td colspan="2" style="border: 1px solid #d1d5db; padding: 6px 8px; font-weight: bold; font-size: 8pt;">Profit /
                             (Loss)</td>
                         <td
-                            style="border: 1px solid #d1d5db; padding: 8px; text-align: right; font-weight: bold; color: {{ $profitAndLoss < 0 ? 'red' : 'green' }};">
+                            style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-weight: bold; font-size: 8pt; color: {{ $profitAndLoss < 0 ? 'red' : 'green' }};">
                             {{ number_format($profitAndLoss, 0, ',', '.') }}
                         </td>
                     </tr>
@@ -619,7 +572,7 @@
 
         {{-- Footer (jika diperlukan di setiap halaman) --}}
         <div class="footer">
-            {{ $companyName ?? config('app.name') }} | {{ now()->format('d F Y H:i:s') }}
+            {{ $displayCompanyName ?? ($company?->company_name ?? config('app.name')) }} | {{ now()->format('d F Y H:i:s') }}
         </div>
     </div>
 </body>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProspectAppStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,24 +31,14 @@ class ProspectApp extends Model
         'reason_for_interest',
         'status',
         'submitted_at',
-        'sisa_bayar',
     ];
 
     protected $casts = [
         'submitted_at' => 'datetime',
-        'tgl_bayar' => 'date',
-        'harga' => 'integer',
-        'bayar' => 'integer',
-        'sisa_bayar' => 'integer',
-        'status' => 'string',
-    ];
-
-    protected $dates = [
-        'submitted_at',
-        'created_at',
-        'updated_at',
-        'deleted_at',
-        'tgl_bayar',
+        'tgl_bayar'    => 'date',
+        'harga'        => 'integer',
+        'bayar'        => 'integer',
+        'status'       => ProspectAppStatus::class,
     ];
 
     // Relationships
@@ -84,21 +75,16 @@ class ProspectApp extends Model
     // Accessors
     public function getStatusBadgeColorAttribute(): string
     {
-        return match ($this->status) {
-            'pending' => 'warning',
-            'approved' => 'success',
-            'rejected' => 'danger',
-            default => 'gray'
-        };
+        return $this->status->getColor();
     }
 
     public function getStatusLabelAttribute(): string
     {
-        return match ($this->status) {
-            'pending' => 'Pending Review',
-            'approved' => 'Approved',
-            'rejected' => 'Rejected',
-            default => 'Unknown'
-        };
+        return $this->status->getLabel();
+    }
+
+    public function getSisaBayarAttribute(): int
+    {
+        return max(0, ($this->harga ?? 0) - ($this->bayar ?? 0));
     }
 }

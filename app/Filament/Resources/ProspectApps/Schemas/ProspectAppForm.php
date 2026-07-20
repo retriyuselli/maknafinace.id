@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ProspectApps\Schemas;
 
+use App\Enums\ProspectAppStatus;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\RichEditor;
@@ -100,33 +101,31 @@ class ProspectAppForm
 
                         Select::make('status')
                             ->label('Status Aplikasi')
-                            ->options([
-                                'pending' => 'Menunggu Tinjauan',
-                                'approved' => 'Disetujui',
-                                'rejected' => 'Ditolak',
-                            ])
-                            ->default('pending')
+                            ->options(ProspectAppStatus::class)
+                            ->default(ProspectAppStatus::Pending)
                             ->required(),
 
                         Select::make('service')
                             ->label('Paket Layanan')
                             ->options([
-                                'hastana' => 'Paket Anggota Hastana - Rp 8.500.000 / 2 Tahun',
+                                'hastana'     => 'Paket Anggota Hastana - Rp 8.500.000 / 2 Tahun',
                                 'non_hastana' => 'Paket Non Hastana - Rp 10.000.000 / 2 Tahun',
+                                'lain_lain'   => 'Lain-lain (Custom)',
                             ])
                             ->reactive()
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (?string $state, \Filament\Schemas\Components\Utilities\Set $set) {
+                            ->afterStateUpdated(function (?string $state, Set $set) {
                                 $mapping = [
-                                    'hastana' => 8500000,
+                                    'hastana'     => 8500000,
                                     'non_hastana' => 10000000,
                                 ];
                                 $set('harga', $mapping[$state] ?? null);
-                                // Reset sisa_bayar if service changes
                                 $set('sisa_bayar', $mapping[$state] ?? null);
-                                $set('bayar', null); // Reset payment amount
+                                $set('bayar', null);
                             })
-                            ->helperText('Pilih paket layanan untuk mengisi anggaran otomatis'),
+                            ->helperText(fn (Get $get): string => $get('service') === 'lain_lain'
+                                ? 'Paket custom — isi anggaran secara manual'
+                                : 'Pilih paket layanan untuk mengisi anggaran otomatis'),
                     ])
                     ->columns(1),
 
@@ -138,8 +137,18 @@ class ProspectAppForm
                             ->mask(RawJs::make('$money($input)'))
                             ->stripCharacters(',')
                             ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
-                            ->readOnly()
-                            ->helperText('Anggaran otomatis terisi saat memilih paket'),
+                            ->readOnly(fn (Get $get): bool => $get('service') !== 'lain_lain')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, $get, Set $set) {
+                                if ($get('service') === 'lain_lain') {
+                                    $harga = (int) preg_replace('/[^\d]/', '', (string) $state);
+                                    $bayar = (int) preg_replace('/[^\d]/', '', (string) $get('bayar'));
+                                    $set('sisa_bayar', max(0, $harga - $bayar));
+                                }
+                            })
+                            ->helperText(fn (Get $get): string => $get('service') === 'lain_lain'
+                                ? 'Masukkan anggaran secara manual'
+                                : 'Anggaran otomatis terisi saat memilih paket'),
 
                         DatePicker::make('tgl_bayar')
                             ->label('Tanggal Pembayaran')
@@ -174,7 +183,7 @@ class ProspectAppForm
                             ->prefix('Rp. ')
                             ->mask(RawJs::make('$money($input)'))
                             ->stripCharacters(',')
-                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                            ->dehydrated(false)
                             ->readOnly()
                             ->helperText('Otomatis: Anggaran - Jumlah Dibayar'),
 

@@ -190,7 +190,8 @@ class ProspectAppController extends Controller
 
             $filename = 'invoice-'.$prospectApp->company_name.'-'.$prospectApp->id.'.pdf';
 
-            return $pdf->download($filename);
+            // return $pdf->download($filename);
+            return $pdf->stream($filename);
 
         } catch (Exception $e) {
             Log::error('PDF Generation Error: '.$e->getMessage());

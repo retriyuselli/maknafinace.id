@@ -25,36 +25,66 @@
             max-width: 100%;
         }
 
-        /* Header */
+        /* Header — fixed agar muncul di setiap halaman */
         .header {
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 1px;
-            padding-bottom: 1px;
-            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 8px;
+            background-color: #ffffff;
         }
 
-        .header img {
-            max-height: 50px;
-            width: auto;
+        /* Dorong konten utama ke bawah agar tidak tertimpa header */
+        .content {
+            margin-top: 120px;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-table td {
+            padding: 0;
             vertical-align: middle;
         }
 
+        .header-info {
+            text-align: left;
+        }
+
+        .header-logo {
+            text-align: right;
+            width: 250px;
+        }
+
+        .header-logo img {
+            max-height: 250px;
+            max-width: 250px;
+            width: auto;
+        }
+
         .header h2 {
-            font-size: 16px;
-            font-weight: bold;
-            margin: 1px 0;
+            font-size: 14px;
+            font-weight: normal;
+            margin: 2px 0;
+            color: #555;
         }
 
         .header p {
-            font-size: 16px;
-            margin: 0;
-            line-height: 1;
+            font-size: 13px;
+            margin: 2px 0;
+            line-height: 1.3;
+            color: #555;
         }
 
         .header h1 {
-            font-size: 25px;
-            margin: 0;
+            font-size: 22px;
+            margin: 0 0 4px 0;
             font-weight: bold;
+            color: #2c3e50;
         }
 
         /* Table Base */
@@ -288,16 +318,36 @@
     <div class="watermark {{ $isPaid ? 'lunas' : 'belum-lunas' }}">
         {{ $isPaid ? 'Lunas' : 'Belum Lunas' }}
     </div>
+    @php
+        $logoPath = public_path('images/logomkiinv.png');
+        $logoBase64 = file_exists($logoPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            : null;
+    @endphp
+
     <!-- Header -->
     <div class="header">
-        <h1>{{ $companyName ?? config('app.name') }}</h1>
-        <h2>Wedding Organizer Financial System - {{ config('app.name', 'WOFINS') }}</h2>
-        <p>Email: office@wofins.id | Phone: +62 813 7318 3794</p>
+        <table class="header-table">
+            <tr>
+                <td class="header-info">
+                    <h1>{{ $companyName ?? config('app.name') }}</h1>
+                    <h2>Wedding Organizer Financial System - {{ config('app.name', 'WOFINS') }}</h2>
+                    <h2>Jl. Sintraman Jaya I No.2148, 20 Ilir D II, Kec. Kemuning, Kota Palembang, Sumatera Selatan 30137</h2>
+                    <p>Email: office@wofins.id | Phone: +62 813 7318 3794</p>
+                </td>
+                @if ($logoBase64)
+                    <td class="header-logo">
+                        <img src="{{ $logoBase64 }}" alt="Logo">
+                    </td>
+                @endif
+            </tr>
+        </table>
     </div>
 
+    <div class="content">
     <!-- Document Title -->
     <div class="document-title">
-        <h1>INVOICE Aplikasi Financial System</h1>
+        <h1>INVOICE</h1>
         <h4>Application User: #{{ $prospectApp->company_name }}</h4>
     </div>
 
@@ -517,6 +567,7 @@
         <p>© {{ date('Y') }} {{ config('app.name', 'Wedding Organizer Financial System') }}. All rights reserved.
         </p>
     </div>
+    </div>{{-- end .content --}}
 
 </body>
 

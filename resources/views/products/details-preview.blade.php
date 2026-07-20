@@ -315,7 +315,7 @@
 
         {{-- Package Details --}}
         <div class="mt-8 border border-slate-200 p-4 sm:p-5 rounded-lg bg-white shadow-sm">
-            <h3 class="text-sm font-semibold mb-5">Package Components & Services1</h3>
+            <h3 class="text-sm font-semibold mb-5">Package Components & Services</h3>
             <table class="w-full border-collapse text-sm">
                 <thead>
                     <tr>
@@ -344,22 +344,16 @@
                                 <div class="font-bold uppercase text-[13px]">
                                     {{ $item->vendor->name ?? 'Vendor Tidak Diketahui' }}</div>
                                 @if ($item->description)
-                                    @php
-                                        $detailsNotes = strip_tags($item->description, '<p><b><strong><em><ul><li><br><span><div>');
-                                        $detailsNotes = str_replace(['•', '&bull;', '&#8226;', '●', '·'], '-', $detailsNotes);
-                                        $detailsNotes = preg_replace('/(^|<br\\s*\\/?>)\\s*\\d+\\.\\s*/i', '$1- ', $detailsNotes);
-                                        $detailsNotes = preg_replace('/<p([^>]*)>\\s*\\d+\\.\\s*/i', '<p$1>- ', $detailsNotes);
-                                    @endphp
-                                    <div class="details-notes text-sm text-black ml-4">{!! $detailsNotes !!}</div>
+                                    <div class="details-notes text-sm text-black ml-4">{!! \App\Support\ProductNotesFormatter::forPreview($item->description) !!}</div>
                                 @endif
                             </td>
                             <td class="border border-slate-300 px-4 text-[13px] py-3 text-right align-top">
-                                <!--{{ number_format($item->price_vendor ?? ($item->harga_vendor ?? 0), 0, ',', '.') }}</td>-->
-                                {{ number_format($item->calculate_price_vendor, 0, ',', '.') }}
-                                {{-- Menampilkan harga_publish atau harga publik yang dihitung --}}
-                            <td class="border border-slate-300 px-4 py-3 text-[13px] text-right align-top">
-                                {{ number_format($item->price_public ?? ($item->harga_publish ?? 0), 0, ',', '.') }}
+                                {{ number_format($item->total_price ?? $item->calculate_price_vendor ?? (($item->harga_vendor ?? 0) * max(1, (int) ($item->quantity ?? 1))), 0, ',', '.') }}
                             </td>
+                            <td class="border border-slate-300 px-4 py-3 text-[13px] text-right align-top">
+                                {{ number_format($item->price_public ?? $item->calculate_price_public ?? (($item->harga_publish ?? 0) * max(1, (int) ($item->quantity ?? 1))), 0, ',', '.') }}
+                            </td>
+                        </tr>
                         @empty
                         <tr>
                             <td colspan="4" class="border border-slate-300 p-4 text-center text-slate-500">Tidak ada
@@ -466,34 +460,20 @@
             </div>
         @endif
 
-        {{-- Price Calculation --}}
+        {{-- Price Calculation (dari ProductPricingCalculator) --}}
         @php
-            // Hitung total berdasarkan jumlah harga publik item
-            $totalPublicPrice = ($product->items ?? collect())->sum(function ($item) {
-                return ($item->harga_publish ?? 0) * ($item->quantity ?? 1);
-            });
-
-            // Hitung total berdasarkan jumlah harga vendor item
-            $totalVendorPrice = ($product->items ?? collect())->sum(function ($item) {
-                return ($item->harga_vendor ?? 0) * ($item->quantity ?? 1);
-            });
-
-            // Harga dasar paket adalah total harga publik
+            $pricing = $pricing ?? \App\Services\ProductPricingCalculator::calculateForProduct($product);
+            $totalPublicPrice = $pricing['total_public_price'];
+            $totalVendorPrice = $pricing['total_vendor_price'];
             $basePackagePrice = $totalPublicPrice;
-
-            // Hitung total jumlah diskon
-            $totalDiscountAmount = ($product->pengurangans ?? collect())->sum('amount');
-
-            // Hitung total jumlah penambahan
-            $totalAdditionAmount = ($product->penambahanHarga ?? collect())->sum('harga_publish');
-            $totalAdditionVendorAmount = ($product->penambahanHarga ?? collect())->sum('harga_vendor');
-
-            // Hitung harga final setelah diskon dan penambahan
-            $finalPriceAfterDiscounts = $basePackagePrice - $totalDiscountAmount + $totalAdditionAmount;
-            $finalVendorPriceAfterDiscounts = $totalVendorPrice - $totalDiscountAmount + $totalAdditionVendorAmount;
-
-            // Hitung Profit & Loss
-            $profitAndLoss = $finalPriceAfterDiscounts - $finalVendorPriceAfterDiscounts;
+            $totalDiscountAmount = $pricing['total_discount_amount'];
+            $totalAdditionAmount = $pricing['total_addition_publish'];
+            $totalAdditionVendorAmount = $pricing['total_addition_vendor'];
+            $subtotalPublish = $pricing['subtotal_publish'];
+            $subtotalVendor = $pricing['subtotal_vendor'];
+            $finalPriceAfterDiscounts = $pricing['final_publish'];
+            $finalVendorPriceAfterDiscounts = $pricing['final_vendor'];
+            $profitAndLoss = $pricing['profit_and_loss'];
         @endphp
 
         <div class="mt-6 border border-gray-300 p-4 rounded-md bg-gray-50/50">
@@ -526,10 +506,6 @@
                     </tr>
 
                     {{-- Subtotal --}}
-                    @php
-                        $subtotalPublish = $totalPublicPrice + $totalAdditionAmount;
-                        $subtotalVendor = $totalVendorPrice + $totalAdditionVendorAmount;
-                    @endphp
                     <tr class="bg-gray-50">
                         <td class="border border-gray-300 p-2 font-bold">Subtotal</td>
                         <td class="border border-gray-300 p-2 text-right font-bold">

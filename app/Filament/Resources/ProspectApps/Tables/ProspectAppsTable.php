@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ProspectApps\Tables;
 
+use App\Enums\ProspectAppStatus;
 use App\Filament\Resources\ProspectApps\ProspectAppResource;
 use App\Models\ProspectApp;
 use Filament\Actions\Action;
@@ -61,25 +62,18 @@ class ProspectAppsTable
 
                 TextColumn::make('status')
                     ->label('Status')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'pending' => 'warning',
-                        'approved' => 'success',
-                        'rejected' => 'danger',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'pending' => 'Menunggu',
-                        'approved' => 'Disetujui',
-                        'rejected' => 'Ditolak',
-                        default => ucfirst($state),
-                    }),
+                    ->badge(),
 
                 TextColumn::make('service')
                     ->label('Paket Layanan')
                     ->badge()
                     ->color('primary')
-                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'hastana'     => 'Paket Hastana',
+                        'non_hastana' => 'Paket Non Hastana',
+                        'lain_lain'   => 'Lain-lain',
+                        default       => ucfirst((string) $state),
+                    })
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('harga')
@@ -92,6 +86,13 @@ class ProspectAppsTable
                     ->label('Jumlah Dibayar')
                     ->money('IDR')
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('sisa_bayar')
+                    ->label('Sisa Pembayaran')
+                    ->money('IDR')
+                    ->sortable(false)
+                    ->color(fn ($state): string => $state > 0 ? 'danger' : 'success')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('tgl_bayar')
@@ -108,7 +109,7 @@ class ProspectAppsTable
 
                 TextColumn::make('submitted_at')
                     ->label('Diajukan')
-                    ->dateTime('d M Y')
+                    ->date('d M Y')
                     ->sortable(),
 
                 TextColumn::make('created_at')
@@ -126,11 +127,7 @@ class ProspectAppsTable
             ->filters([
                 SelectFilter::make('status')
                     ->label('Status')
-                    ->options([
-                        'pending' => 'Menunggu',
-                        'approved' => 'Disetujui',
-                        'rejected' => 'Ditolak',
-                    ])
+                    ->options(ProspectAppStatus::class)
                     ->placeholder('All Statuses'),
 
                 SelectFilter::make('industry')
@@ -139,14 +136,23 @@ class ProspectAppsTable
                     ->preload()
                     ->placeholder('All Industries'),
 
-                SelectFilter::make('user_size')
-                    ->label('Company Size')
+                SelectFilter::make('service')
+                    ->label('Paket Layanan')
                     ->options([
-                        '1-10' => '1-10 employees',
-                        '11-50' => '11-50 employees',
-                        '50+' => '50+ employees',
+                        'hastana'     => 'Paket Anggota Hastana',
+                        'non_hastana' => 'Paket Non Hastana',
+                        'lain_lain'   => 'Lain-lain (Custom)',
                     ])
-                    ->placeholder('All Sizes'),
+                    ->placeholder('Semua Paket'),
+
+                SelectFilter::make('user_size')
+                    ->label('Ukuran Perusahaan')
+                    ->options([
+                        '1-10'  => '1-10 karyawan',
+                        '11-50' => '11-50 karyawan',
+                        '50+'   => '50+ karyawan',
+                    ])
+                    ->placeholder('Semua Ukuran'),
 
                 TrashedFilter::make(),
             ])

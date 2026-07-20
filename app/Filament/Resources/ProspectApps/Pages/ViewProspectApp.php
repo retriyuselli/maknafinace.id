@@ -81,14 +81,7 @@ class ViewProspectApp extends ViewRecord
 
                         TextEntry::make('status')
                             ->label('Application Status')
-                            ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'pending' => 'warning',
-                                'approved' => 'success',
-                                'rejected' => 'danger',
-                                default => 'gray'
-                            })
-                            ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                            ->badge(),
 
                         TextEntry::make('submitted_at')
                             ->label('Submission Date')
