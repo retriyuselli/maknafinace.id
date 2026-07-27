@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AccountManagerReportController;
+use App\Http\Controllers\AbsensiLaporanController;
+use App\Http\Controllers\AbsensiPhotoController;
 use App\Http\Controllers\BankReconciliationTemplateController;
 use App\Http\Controllers\BankStatementFileController;
 use App\Http\Controllers\NotaDinasInvoiceFileController;
@@ -23,6 +25,7 @@ use App\Http\Controllers\LaporanKeuanganController;
 use App\Http\Controllers\NotaDinasPdfController;
 use App\Http\Controllers\PayrollSlipController;
 use App\Http\Controllers\ProductDisplayController;
+use App\Http\Controllers\Profile\AbsensiController as ProfileAbsensiController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Profile\AdminToolsController;
 use App\Http\Controllers\ProspectAppController;
@@ -44,13 +47,15 @@ $authNoStore = ['filament.auth', 'no-store'];
 $authNoStoreThrottle = [...$authNoStore, 'throttle:60,1'];
 $phpInfoMiddleware = [...$authNoStore, 'super-admin', 'throttle:10,1'];
 
-Route::get('/_phpinfo', function () {
-    ob_start();
-    phpinfo();
-    $output = ob_get_clean();
+if (app()->isLocal() || config('app.debug')) {
+    Route::get('/_phpinfo', function () {
+        ob_start();
+        phpinfo();
+        $output = ob_get_clean();
 
-    return response($output)->header('Content-Type', 'text/html; charset=UTF-8');
-})->middleware($phpInfoMiddleware)->name('debug.phpinfo');
+        return response($output)->header('Content-Type', 'text/html; charset=UTF-8');
+    })->middleware($phpInfoMiddleware)->name('debug.phpinfo');
+}
 
 // Bank Reconciliation Template Route
 Route::get('/bank-reconciliation/template', [BankReconciliationTemplateController::class, 'downloadTemplate'])
@@ -195,6 +200,17 @@ Route::middleware($authNoStore)->group(function () {
     Route::get('/journal/pdf/download', [JournalPdfController::class, 'download'])
         ->name('journal.pdf.download')
         ->middleware('throttle:60,1');
+
+    Route::get('/absensi/laporan/excel', [AbsensiLaporanController::class, 'excel'])
+        ->name('absensi.laporan.excel')
+        ->middleware('throttle:30,1');
+    Route::get('/absensi/laporan/pdf', [AbsensiLaporanController::class, 'pdf'])
+        ->name('absensi.laporan.pdf')
+        ->middleware('throttle:30,1');
+
+    Route::get('/absensi/logs/{logAbsensi}/foto', [AbsensiPhotoController::class, 'show'])
+        ->name('absensi.logs.foto')
+        ->middleware(['signed', 'throttle:60,1']);
 });
 
 // WIDGET ROUTE
@@ -302,6 +318,31 @@ Route::middleware($authNoStore)->group(function () {
     Route::get('/profile', [ProfileController::class, 'overview'])->name('profile');
     Route::get('/profile/show', [ProfileController::class, 'overview'])->name('profile.show');
     Route::get('/profile/overview', [ProfileController::class, 'overview'])->name('profile.overview');
+    Route::get('/profile/absensi', [ProfileAbsensiController::class, 'index'])
+        ->name('profile.absensi')
+        ->middleware('absensi.headers');
+    Route::post('/profile/absensi/masuk', [ProfileAbsensiController::class, 'masuk'])
+        ->name('profile.absensi.masuk')
+        ->middleware('absensi.headers')
+        ->middleware('throttle:20,1');
+    Route::post('/profile/absensi/pulang', [ProfileAbsensiController::class, 'pulang'])
+        ->name('profile.absensi.pulang')
+        ->middleware('absensi.headers')
+        ->middleware('throttle:20,1');
+    Route::post('/profile/absensi/koreksi', [ProfileAbsensiController::class, 'koreksi'])
+        ->name('profile.absensi.koreksi')
+        ->middleware('absensi.headers')
+        ->middleware('throttle:10,1');
+    Route::post('/profile/absensi/lembur', [ProfileAbsensiController::class, 'lembur'])
+        ->name('profile.absensi.lembur')
+        ->middleware('absensi.headers')
+        ->middleware('throttle:10,1');
+    Route::get('/profile/absensi/laporan/excel', [ProfileAbsensiController::class, 'laporanExcel'])
+        ->name('profile.absensi.laporan.excel')
+        ->middleware('throttle:20,1');
+    Route::get('/profile/absensi/laporan/pdf', [ProfileAbsensiController::class, 'laporanPdf'])
+        ->name('profile.absensi.laporan.pdf')
+        ->middleware('throttle:20,1');
     Route::get('/profile/compensation', [ProfileController::class, 'compensation'])->name('profile.compensation');
     Route::get('/profile/schedule', [ProfileController::class, 'schedule'])->name('profile.schedule');
     Route::get('/profile/laporan-keuangan', [ProfileController::class, 'financialReport'])

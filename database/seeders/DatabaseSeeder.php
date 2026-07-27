@@ -49,6 +49,7 @@ class DatabaseSeeder extends Seeder
             AccountManagerTargetSeeder::class, // Target bulanan Account Manager.
             LeaveBalanceSeeder::class,     // Saldo cuti per user & tipe cuti.
             LeaveManagementSeeder::class,  // Manajemen cuti tambahan (tipe, saldo, request).
+            AbsensiSeeder::class,          // Pengaturan & lokasi absensi.
 
             // 5. Data Bisnis (tergantung pada User, Industry, Product)
             ProspectSeeder::class,         // Calon klien.

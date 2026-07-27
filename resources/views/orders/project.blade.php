@@ -344,7 +344,7 @@
                                         $content = preg_replace('/<ol(?![^>]*class)/', '<ol class="numbered-list"', $content);
                                         $content = preg_replace('/<ul(?![^>]*class)/', '<ul class="bulleted-list"', $content);
                                     @endphp
-                                    {!! $content !!}
+                                    {!! \App\Support\SafeHtml::fromRichText($content) !!}
                                 </div>
                             </div>
                             @endif

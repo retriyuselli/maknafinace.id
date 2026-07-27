@@ -803,7 +803,7 @@
                             $descriptionFormatted = str_replace($labels, $replacements, $descriptionNormalized);
                         @endphp
                         <div class="item-desc" style="margin-top: 8px;">
-                            {!! $descriptionFormatted !!}
+                            {!! \App\Support\SafeHtml::fromRichText($descriptionFormatted) !!}
                         </div>
                     @else
                         <ol class="list-alpha">
@@ -824,7 +824,7 @@
                                     $descriptionFormatted = str_replace($labels, $replacements, $descriptionNormalized);
                                 @endphp
                                 <li style="font-size: 11px; margin-top: 5px; margin-bottom: 5px;">
-                                    {!! $descriptionFormatted !!}
+                                    {!! \App\Support\SafeHtml::fromRichText($descriptionFormatted) !!}
                                 </li>
                             @endforeach
                         </ol>
@@ -866,7 +866,7 @@
                                         $descFormatted = str_replace($labels, $replacements, $item->description);
                                     @endphp
                                     <div class="item-desc">
-                                        {!! $descFormatted !!}
+                                        {!! \App\Support\SafeHtml::fromRichText($descFormatted) !!}
                                     </div>
                                 @endif
                             </div>
@@ -903,7 +903,7 @@
                                         $notesFormatted = str_replace($labels, $replacements, $item->notes);
                                     @endphp
                                     <div class="item-notes">
-                                        {!! $notesFormatted !!}
+                                        {!! \App\Support\SafeHtml::fromRichText($notesFormatted) !!}
                                     </div>
                                 @endif
                             </div>
@@ -922,7 +922,7 @@
     @if ($freePenguranganText !== '')
         <div class="section-title">FREE</div>
         <div class="facility-list">
-            {!! $record->product->free_pengurangan !!}
+            {!! \App\Support\SafeHtml::fromRichText($record->product->free_pengurangan) !!}
         </div>
     @endif
 

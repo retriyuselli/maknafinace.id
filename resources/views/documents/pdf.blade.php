@@ -290,7 +290,7 @@
 
     <div class="content">
         @if (!empty($record->content) && $record->content !== '<p></p>')
-            {!! $record->content !!}
+            {!! \App\Support\SafeHtml::fromRichText($record->content) !!}
         @else
             <p><em>Tidak ada konten detail.</em></p>
         @endif

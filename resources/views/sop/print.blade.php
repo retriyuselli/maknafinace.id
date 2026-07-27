@@ -274,7 +274,7 @@
                                     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                         <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ $step['title'] }}</h3>
                                         <div class="text-gray-700 text-sm leading-relaxed step-description mb-3">
-                                            {!! strip_tags($step['description'], '<p><br><b><strong><em><i><ul><ol><li><span><a>') !!}
+                                            {!! \App\Support\SafeHtml::fromRichText($step['description']) !!}
                                         </div>
                                         
                                         @if(!empty($step['notes']))
@@ -284,7 +284,7 @@
                                                     <div class="flex-1">
                                                         <p class="text-sm font-medium text-yellow-800 mb-2">Catatan Penting:</p>
                                                         <div class="text-sm leading-relaxed notes-content">
-                                                            {!! strip_tags($step['notes'], '<p><br><b><strong><em><i><ul><ol><li><span><a>') !!}
+                                                            {!! \App\Support\SafeHtml::fromRichText($step['notes']) !!}
                                                         </div>
                                                     </div>
                                                 </div>

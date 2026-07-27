@@ -16,6 +16,10 @@
                                 class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('profile') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 Dashboard
                             </a>
+                            <a href="{{ route('profile.absensi') }}"
+                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('profile.absensi*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                Absensi
+                            </a>
                             <a href="{{ route('dashboard') }}"
                                 class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 Admin
@@ -119,6 +123,14 @@
                                     </svg>
                                     Dashboard
                                 </a>
+                                <a href="{{ route('profile.absensi') }}"
+                                    class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <svg class="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V9m-6-4h2m-2 0v2m0-2a2 2 0 00-2 2v0m2-2a2 2 0 012 2v0m-6 7h6"></path>
+                                    </svg>
+                                    Absensi
+                                </a>
                                 <hr class="my-1">
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
@@ -176,6 +188,8 @@
                             @auth
                                 <a href="{{ route('profile') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('profile') ? 'bg-blue-50 text-blue-600' : '' }}">Dashboard</a>
+                                <a href="{{ route('profile.absensi') }}"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('profile.absensi*') ? 'bg-blue-50 text-blue-600' : '' }}">Absensi</a>
                                 <a href="{{ route('dashboard') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600' : '' }}">Admin Panel</a>
                             @endauth

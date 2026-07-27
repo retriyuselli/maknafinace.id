@@ -4,11 +4,15 @@ namespace App\Filament\Resources\Payrolls\Schemas;
 
 use App\Models\Payroll;
 use App\Models\User;
+use App\Services\AbsensiLaporanService;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions as SchemaActions;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -19,6 +23,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 class PayrollForm
 {
@@ -158,6 +163,131 @@ class PayrollForm
 
                                                 return $info;
                                             })
+                                            ->visible(fn (Get $get): bool => (bool) $get('user_id')),
+
+                                        Placeholder::make('absensi_summary')
+                                            ->label('Ringkasan Absensi Periode')
+                                            ->content(function (Get $get): HtmlString|string {
+                                                $userId = $get('user_id');
+                                                $month = self::resolveMonth($get('period_month'));
+                                                $year = self::resolveYear($get('period_year'));
+
+                                                if (! $userId || ! $month || ! $year) {
+                                                    return 'Pilih karyawan dan periode untuk melihat ringkasan absensi.';
+                                                }
+
+                                                $s = app(AbsensiLaporanService::class)->ringkasanBulanan((int) $userId, $month, $year);
+                                                $pengurangan = number_format($s['usulan_pengurangan'], 0, ',', '.');
+                                                $bonus = number_format($s['usulan_bonus'], 0, ',', '.');
+
+                                                return new HtmlString(nl2br(e(
+                                                    "Hadir {$s['hadir']} · Terlambat {$s['terlambat']} ({$s['total_menit_terlambat']} mnt) · Alfa {$s['alfa']}\n".
+                                                    "Cuti {$s['cuti']} · Libur {$s['libur']} · Lembur disetujui {$s['total_menit_lembur']} mnt\n".
+                                                    "Usulan pengurangan: Rp {$pengurangan}\n".
+                                                    "Usulan bonus lembur: Rp {$bonus}"
+                                                )));
+                                            })
+                                            ->visible(fn (Get $get): bool => (bool) $get('user_id')),
+
+                                        SchemaActions::make([
+                                            Action::make('apply_absensi_notes')
+                                                ->label('Salin Ringkasan ke Catatan')
+                                                ->icon('heroicon-o-clipboard-document')
+                                                ->color('gray')
+                                                ->action(function (Get $get, Set $set): void {
+                                                    $userId = $get('user_id');
+                                                    $month = self::resolveMonth($get('period_month'));
+                                                    $year = self::resolveYear($get('period_year'));
+
+                                                    if (! $userId || ! $month || ! $year) {
+                                                        Notification::make()->title('Pilih karyawan dan periode dulu')->warning()->send();
+
+                                                        return;
+                                                    }
+
+                                                    $s = app(AbsensiLaporanService::class)->ringkasanBulanan((int) $userId, $month, $year);
+                                                    $existing = trim((string) ($get('notes') ?? ''));
+                                                    $set('notes', $existing === '' ? $s['catatan'] : $existing."\n".$s['catatan']);
+
+                                                    Notification::make()->title('Ringkasan absensi disalin ke catatan')->success()->send();
+                                                }),
+                                            Action::make('apply_absensi_pengurangan')
+                                                ->label('Terapkan Usulan Pengurangan')
+                                                ->icon('heroicon-o-minus-circle')
+                                                ->color('warning')
+                                                ->requiresConfirmation()
+                                                ->modalHeading('Terapkan usulan pengurangan dari keterlambatan?')
+                                                ->modalDescription('Nilai pengurangan diganti dengan usulan dari menit terlambat × tarif di Pengaturan Absensi.')
+                                                ->action(function (Get $get, Set $set): void {
+                                                    $userId = $get('user_id');
+                                                    $month = self::resolveMonth($get('period_month'));
+                                                    $year = self::resolveYear($get('period_year'));
+
+                                                    if (! $userId || ! $month || ! $year) {
+                                                        Notification::make()->title('Pilih karyawan dan periode dulu')->warning()->send();
+
+                                                        return;
+                                                    }
+
+                                                    $s = app(AbsensiLaporanService::class)->ringkasanBulanan((int) $userId, $month, $year);
+                                                    if ($s['usulan_pengurangan'] <= 0) {
+                                                        Notification::make()
+                                                            ->title('Tidak ada usulan pengurangan')
+                                                            ->body('Isi denda terlambat/menit di Pengaturan Absensi, atau pastikan ada menit terlambat di periode ini.')
+                                                            ->warning()
+                                                            ->send();
+
+                                                        return;
+                                                    }
+
+                                                    $set('pengurangan', number_format($s['usulan_pengurangan'], 0, '.', ','));
+                                                    self::recalculatePayrollTotals($get, $set);
+
+                                                    Notification::make()
+                                                        ->title('Pengurangan diterapkan')
+                                                        ->body('Rp '.number_format($s['usulan_pengurangan'], 0, ',', '.'))
+                                                        ->success()
+                                                        ->send();
+                                                }),
+                                            Action::make('apply_absensi_bonus')
+                                                ->label('Terapkan Usulan Bonus Lembur')
+                                                ->icon('heroicon-o-gift')
+                                                ->color('success')
+                                                ->requiresConfirmation()
+                                                ->modalHeading('Terapkan usulan bonus dari lembur disetujui?')
+                                                ->modalDescription('Nilai bonus diganti dengan usulan dari menit lembur × tarif di Pengaturan Absensi.')
+                                                ->action(function (Get $get, Set $set): void {
+                                                    $userId = $get('user_id');
+                                                    $month = self::resolveMonth($get('period_month'));
+                                                    $year = self::resolveYear($get('period_year'));
+
+                                                    if (! $userId || ! $month || ! $year) {
+                                                        Notification::make()->title('Pilih karyawan dan periode dulu')->warning()->send();
+
+                                                        return;
+                                                    }
+
+                                                    $s = app(AbsensiLaporanService::class)->ringkasanBulanan((int) $userId, $month, $year);
+                                                    if ($s['usulan_bonus'] <= 0) {
+                                                        Notification::make()
+                                                            ->title('Tidak ada usulan bonus')
+                                                            ->body('Isi tarif lembur/menit di Pengaturan Absensi, atau pastikan ada lembur disetujui di periode ini.')
+                                                            ->warning()
+                                                            ->send();
+
+                                                        return;
+                                                    }
+
+                                                    $set('bonus', number_format($s['usulan_bonus'], 0, '.', ','));
+                                                    self::recalculatePayrollTotals($get, $set);
+
+                                                    Notification::make()
+                                                        ->title('Bonus lembur diterapkan')
+                                                        ->body('Rp '.number_format($s['usulan_bonus'], 0, ',', '.'))
+                                                        ->success()
+                                                        ->send();
+                                                }),
+                                        ])
                                             ->visible(fn (Get $get): bool => (bool) $get('user_id')),
                                     ])->columns(1),
                             ]),
@@ -372,4 +502,43 @@ TextInput::make('bonus')
             ]);
     }
 
+    protected static function resolveMonth(mixed $value): int
+    {
+        if ($value instanceof \Carbon\CarbonInterface) {
+            return (int) $value->month;
+        }
+
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+
+        return (int) preg_replace('/[^\d]/', '', (string) $value);
+    }
+
+    protected static function resolveYear(mixed $value): int
+    {
+        if ($value instanceof \Carbon\CarbonInterface) {
+            return (int) $value->year;
+        }
+
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+
+        return (int) preg_replace('/[^\d]/', '', (string) $value);
+    }
+
+    protected static function recalculatePayrollTotals(Get $get, Set $set): void
+    {
+        $monthlySalary = Payroll::computeMonthly(
+            $get('gaji_pokok'),
+            $get('tunjangan'),
+            $get('bonus'),
+            $get('pengurangan'),
+        );
+
+        $set('monthly_salary', (string) $monthlySalary);
+        $set('annual_salary', (string) Payroll::computeAnnualBase($get('gaji_pokok'), $get('tunjangan')));
+        $set('total_compensation', (string) Payroll::computeTotalCompensationBase($get('gaji_pokok'), $get('tunjangan'), $get('pengurangan')));
+    }
 }

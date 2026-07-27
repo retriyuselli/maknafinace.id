@@ -539,7 +539,7 @@
                                     </div>
                                     @if ($itemPengurangan->notes)
                                         <div class="ml-7 text-gray-600 dark:text-white">
-                                            {!! strip_tags($itemPengurangan->notes, '<li><strong><em><ul><br><span><div>') !!}
+                                            {!! \App\Support\SafeHtml::fromRichText($itemPengurangan->notes) !!}
                                         </div>
                                     @endif
                                 </td>

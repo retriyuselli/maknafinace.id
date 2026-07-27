@@ -656,7 +656,7 @@
                                 {{ $itemPenambahan->vendor->name ?? 'N/A' }}
                                 @if ($itemPenambahan->description)
                                     <div class="notes-content" style="font-size: 12px; margin-left: 15px; color: #000000;">
-                                        {!! strip_tags($itemPenambahan->description, '<li><strong><ul><li><br><span><div>') !!}
+                                        {!! \App\Support\SafeHtml::fromRichText($itemPenambahan->description) !!}
                                     </div>
                                 @endif
                             </td>
@@ -691,7 +691,7 @@
                                 {{ $itemPengurangan->description ?? 'N/A' }}
                                 @if ($itemPengurangan->notes)
                                     <div class="notes-content" style="font-size: 12px; margin-left: 15px; color: #030303;">
-                                        {!! strip_tags($itemPengurangan->notes, '<li><strong><ul><li><br><span><div><p>') !!}
+                                        {!! \App\Support\SafeHtml::fromRichText($itemPengurangan->notes) !!}
                                     </div>
                                 @endif
                             </td>

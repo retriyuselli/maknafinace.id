@@ -134,7 +134,7 @@
                                     <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 group-hover:bg-gray-100 dark:group-hover:bg-gray-600 transition-colors">
                                         <h3 class="font-semibold text-gray-900 dark:text-white mb-2 text-base">{{ $step['title'] }}</h3>
                                         <div class="text-gray-700 text-sm dark:text-gray-300 mb-3 leading-relaxed step-description">
-                                            {!! $step['description'] !!}
+                                            {!! \App\Support\SafeHtml::fromRichText($step['description']) !!}
                                         </div>
                                         
                                         @if(!empty($step['notes']))
@@ -144,7 +144,7 @@
                                                     <div>
                                                         <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">Catatan Penting:</p>
                                                         <div class="text-sm dark:text-yellow-300 notes-content">
-                                                            {!! $step['notes'] !!}
+                                                            {!! \App\Support\SafeHtml::fromRichText($step['notes']) !!}
                                                         </div>
                                                     </div>
                                                 </div>

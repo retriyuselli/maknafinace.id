@@ -425,6 +425,31 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         return $this->hasMany(LeaveBalance::class);
     }
 
+    public function absensis(): HasMany
+    {
+        return $this->hasMany(Absensi::class);
+    }
+
+    public function logAbsensis(): HasMany
+    {
+        return $this->hasMany(LogAbsensi::class);
+    }
+
+    public function penugasanJadwals(): HasMany
+    {
+        return $this->hasMany(PenugasanJadwal::class);
+    }
+
+    public function koreksiAbsensis(): HasMany
+    {
+        return $this->hasMany(KoreksiAbsensi::class);
+    }
+
+    public function pengajuanLemburs(): HasMany
+    {
+        return $this->hasMany(PengajuanLembur::class);
+    }
+
     /**
      * Get the employee ID attribute
      * Format: EMP-0001, EMP-0002, etc.

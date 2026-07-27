@@ -296,7 +296,7 @@
                             <strong>{{ $item->vendor->name ?? ($item->vendor_id ? 'Vendor ID: ' . $item->vendor_id : 'N/A') }}</strong>
                         </div>
                         @if (!empty($item->description))
-                            <div class="item-desc">{!! strtolower($item->description) !!}</div>
+                            <div class="item-desc">{!! \App\Support\SafeHtml::fromRichText(strtolower($item->description)) !!}</div>
                         @endif
                     </td>
                 </tr>
@@ -323,7 +323,7 @@
                         <td>
                             <div><strong>{{ $penambahan_item->vendor->name ?? 'Penambahan Tanpa Nama' }}</strong></div>
                             @if (!empty($penambahan_item->description))
-                                <div class="item-desc">{!! $penambahan_item->description !!}</div>
+                                <div class="item-desc">{!! \App\Support\SafeHtml::fromRichText($penambahan_item->description) !!}</div>
                             @endif
                         </td>
                         <td class="amount addition-amount">{{ number_format($penambahan_item->harga_publish ?? 0, 0, ',', '.') }}</td>
@@ -348,7 +348,7 @@
                         <td>
                             <div><strong>{{ $pengurangan_item->description ?? ($pengurangan_item->name ?? 'Pengurangan Tanpa Nama') }}</strong></div>
                             @if (!empty($pengurangan_item->notes))
-                                <div class="item-desc">{!! $pengurangan_item->notes !!}</div>
+                                <div class="item-desc">{!! \App\Support\SafeHtml::fromRichText($pengurangan_item->notes) !!}</div>
                             @endif
                         </td>
                         <td class="amount">{{ number_format($pengurangan_item->amount ?? 0, 0, ',', '.') }}</td>
@@ -364,7 +364,7 @@
                 <tr>
                     <td>
                         <b>Notes (Jika ada) :</b>
-                        <div>{!! $simulasi->notes !!}</div>
+                        <div>{!! \App\Support\SafeHtml::fromRichText($simulasi->notes) !!}</div>
                     </td>
                 </tr>
             </tbody>

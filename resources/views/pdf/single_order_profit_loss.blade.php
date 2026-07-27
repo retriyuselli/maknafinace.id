@@ -593,7 +593,7 @@
                                 {{ $itemPengurangan->description ?? 'N/A' }}
                                 @if ($itemPengurangan->notes)
                                     <div style="margin-left: 30px; color: #555; margin-top: 5px;">
-                                        <i>{!! strip_tags($itemPengurangan->notes, '<li><strong><em><ul><li><br><span><div>') !!}</i>
+                                        <i>{!! \App\Support\SafeHtml::fromRichText($itemPengurangan->notes) !!}</i>
                                     </div>
                                 @endif
                             </td>

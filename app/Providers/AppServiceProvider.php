@@ -21,9 +21,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -158,6 +161,16 @@ class AppServiceProvider extends ServiceProvider
         }));
         
         FilamentClearCache::addCommand('optimize:clear');
+
+        RateLimiter::for('absensi-submit', function (Request $request): array {
+            $userKey = $request->user()?->getAuthIdentifier() ?? 'guest';
+            $ip = $request->ip() ?? 'unknown-ip';
+
+            return [
+                Limit::perMinute(10)->by("absensi-submit:user:{$userKey}"),
+                Limit::perMinute(30)->by("absensi-submit:ip:{$ip}"),
+            ];
+        });
 
         // Log Viewer — hanya bisa diakses oleh super_admin
         Gate::define('viewLogViewer', function (?User $user): bool {

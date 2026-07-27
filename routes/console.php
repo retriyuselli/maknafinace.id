@@ -21,3 +21,9 @@ Schedule::command('targets:generate --update')
 Schedule::command('activitylog:clean')
     ->monthly()
     ->description('Clean old activity logs');
+
+// Rekap absensi otomatis untuk kemarin (cuti / libur / alfa)
+Schedule::command('absensi:rekap-harian')
+    ->dailyAt('01:15')
+    ->timezone('Asia/Jakarta')
+    ->description('Rekap absensi harian otomatis');

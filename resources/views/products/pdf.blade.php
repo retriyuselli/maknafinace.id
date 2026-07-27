@@ -350,7 +350,7 @@
                                 </div>
                                 @if ($detailsNotes !== '')
                                     <div class="description-html-content" style="margin-left: 8px;">
-                                        {!! $detailsNotes !!}
+                                        {!! \App\Support\SafeHtml::fromRichText($detailsNotes) !!}
                                     </div>
                                 @endif
                             </td>
@@ -397,7 +397,7 @@
                                     </div>
                                     @if ($detailsNotes !== '')
                                         <div class="description-html-content" style="margin-left: 8px;">
-                                            {!! $detailsNotes !!}
+                                            {!! \App\Support\SafeHtml::fromRichText($detailsNotes) !!}
                                         </div>
                                     @endif
                                 </td>
@@ -439,7 +439,7 @@
                                     </div>
                                     @if ($detailsNotes !== '')
                                         <div class="description-html-content" style="margin-left: 8px;">
-                                            {!! $detailsNotes !!}
+                                            {!! \App\Support\SafeHtml::fromRichText($detailsNotes) !!}
                                         </div>
                                     @endif
                                 </td>

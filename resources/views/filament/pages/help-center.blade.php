@@ -173,7 +173,7 @@
                     </style>
 
                     <div class="docs-content prose prose-sm dark:prose-invert max-w-none text-black dark:text-gray-300">
-                        {!! $currentArticle->content !!}
+                        {!! \App\Support\SafeHtml::fromRichText($currentArticle->content) !!}
                     </div>
 
                     @if($currentArticle->related_resource)

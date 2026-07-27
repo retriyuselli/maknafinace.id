@@ -157,7 +157,7 @@
 
                         <div class="p-8 md:p-12">
                             <div class="prose max-w-none text-gray-700">
-                                {!! strip_tags($blog->content, '<p><br><b><strong><em><i><ul><ol><li><span><a><h1><h2><h3><h4><h5><h6><table><thead><tbody><tr><td><th><blockquote><code><pre><img>') !!}
+                                {!! \App\Support\SafeHtml::fromRichText($blog->content) !!}
                             </div>
                     </article>
 

@@ -344,7 +344,7 @@
                                 <div class="font-bold uppercase text-[13px]">
                                     {{ $item->vendor->name ?? 'Vendor Tidak Diketahui' }}</div>
                                 @if ($item->description)
-                                    <div class="details-notes text-sm text-black ml-4">{!! \App\Support\ProductNotesFormatter::forPreview($item->description) !!}</div>
+                                    <div class="details-notes text-sm text-black ml-4">{!! \App\Support\SafeHtml::fromRichText(\App\Support\ProductNotesFormatter::forPreview($item->description)) !!}</div>
                                 @endif
                             </td>
                             <td class="border border-slate-300 px-4 text-[13px] py-3 text-right align-top">
@@ -397,7 +397,7 @@
                                             $detailsNotes = preg_replace('/(^|<br\\s*\\/?>)\\s*\\d+\\.\\s*/i', '$1- ', $detailsNotes);
                                             $detailsNotes = preg_replace('/<p([^>]*)>\\s*\\d+\\.\\s*/i', '<p$1>- ', $detailsNotes);
                                         @endphp
-                                        <div class="details-notes text-sm text-black ml-4">{!! $detailsNotes !!}</div>
+                                        <div class="details-notes text-sm text-black ml-4">{!! \App\Support\SafeHtml::fromRichText($detailsNotes) !!}</div>
                                     @endif
                                 </td>
                                 <td class="border border-slate-300 px-4 py-3 text-right align-top text-[13px]"
@@ -446,7 +446,7 @@
                                             $detailsNotes = preg_replace('/(^|<br\\s*\\/?>)\\s*\\d+\\.\\s*/i', '$1- ', $detailsNotes);
                                             $detailsNotes = preg_replace('/<p([^>]*)>\\s*\\d+\\.\\s*/i', '<p$1>- ', $detailsNotes);
                                         @endphp
-                                        <div class="details-notes text-sm text-black ml-4">{!! $detailsNotes !!}</div>
+                                        <div class="details-notes text-sm text-black ml-4">{!! \App\Support\SafeHtml::fromRichText($detailsNotes) !!}</div>
                                     @endif
                                 </td>
                                 <td class="border border-slate-300 px-4 py-3 text-right align-top text-[13px]"
