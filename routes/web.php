@@ -207,11 +207,13 @@ Route::middleware($authNoStore)->group(function () {
     Route::get('/absensi/laporan/pdf', [AbsensiLaporanController::class, 'pdf'])
         ->name('absensi.laporan.pdf')
         ->middleware('throttle:30,1');
-
-    Route::get('/absensi/logs/{logAbsensi}/foto', [AbsensiPhotoController::class, 'show'])
-        ->name('absensi.logs.foto')
-        ->middleware(['signed', 'throttle:60,1']);
 });
+
+// Foto absensi: private disk via temporary signed URL (tanpa session —
+// <img> Filament tidak selalu mengirim cookie auth dengan andal).
+Route::get('/absensi/logs/{logAbsensi}/foto', [AbsensiPhotoController::class, 'show'])
+    ->name('absensi.logs.foto')
+    ->middleware(['signed', 'throttle:60,1']);
 
 // WIDGET ROUTE
 // Widget yang langsung link ke processing

@@ -55,13 +55,14 @@ class LogAbsensisTable
                     ->placeholder('-'),
                 ImageColumn::make('path_foto')
                     ->label('Foto')
-                    ->getStateUsing(fn (LogAbsensi $record): ?string => $record->temporaryFotoUrl())
+                    ->getStateUsing(fn (LogAbsensi $record): ?string => $record->temporaryFotoUrl(now()->addHour()))
+                    ->checkFileExistence(false)
                     ->square()
                     ->toggleable(),
                 TextColumn::make('foto_link')
                     ->label('File')
                     ->state(fn (LogAbsensi $record): string => $record->path_foto ? 'Buka Foto' : '-')
-                    ->url(fn (LogAbsensi $record): ?string => $record->temporaryFotoUrl())
+                    ->url(fn (LogAbsensi $record): ?string => $record->temporaryFotoUrl(now()->addHour()))
                     ->openUrlInNewTab()
                     ->icon('heroicon-m-arrow-top-right-on-square')
                     ->iconPosition(IconPosition::After)

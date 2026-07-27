@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\LogAbsensi;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AbsensiPhotoController extends Controller
 {
-    public function show(LogAbsensi $logAbsensi): Response
+    public function show(LogAbsensi $logAbsensi): StreamedResponse
     {
         abort_unless($logAbsensi->path_foto, 404);
 

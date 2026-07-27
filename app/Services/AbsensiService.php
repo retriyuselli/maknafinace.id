@@ -18,6 +18,8 @@ use Illuminate\Validation\ValidationException;
 
 class AbsensiService
 {
+    public function __construct(private AbsensiFotoCompressor $fotoCompressor) {}
+
     public function pengaturanAktif(): PengaturanAbsensi
     {
         $pengaturan = PengaturanAbsensi::aktifSekarang();
@@ -163,7 +165,11 @@ class AbsensiService
 
             $pathFoto = null;
             if ($foto) {
-                $pathFoto = $foto->store("absensi/{$user->id}/{$tanggal}", 'private');
+                $pathFoto = $this->fotoCompressor->store(
+                    $foto,
+                    "absensi/{$user->id}/{$tanggal}",
+                    'private'
+                );
             }
 
             /** @var LokasiAbsensi|null $lokasi */

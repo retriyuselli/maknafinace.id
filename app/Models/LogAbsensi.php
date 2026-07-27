@@ -70,7 +70,7 @@ class LogAbsensi extends Model
 
         return URL::temporarySignedRoute(
             'absensi.logs.foto',
-            now()->addMinutes(5),
+            now()->addMinutes(60),
             ['logAbsensi' => $this->getKey()]
         );
     }
@@ -83,7 +83,7 @@ class LogAbsensi extends Model
 
         return URL::temporarySignedRoute(
             'absensi.logs.foto',
-            $expiresAt ?? now()->addMinutes(5),
+            $expiresAt ?? now()->addMinutes(60),
             ['logAbsensi' => $this->getKey()]
         );
     }
