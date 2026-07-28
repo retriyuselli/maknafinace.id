@@ -134,6 +134,7 @@ class ReconciliationController extends Controller
             'payment_method_id' => 'required|integer',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
+            'threshold' => 'nullable|integer|in:85,90,95,100',
         ]);
 
         try {
@@ -146,10 +147,11 @@ class ReconciliationController extends Controller
                 $request->end_date
             );
 
+            $threshold = (int) ($request->input('threshold') ?? 90);
             $matchedCount = 0;
 
             foreach ($results['matched'] as $match) {
-                if ($match['confidence'] >= ReconciliationService::HIGH_CONFIDENCE) {
+                if ($match['confidence'] >= $threshold) {
                     $this->reconciliationService->saveMatch(
                         $match['app_transaction'],
                         $match['bank_item'],
@@ -163,7 +165,8 @@ class ReconciliationController extends Controller
             return response()->json([
                 'success' => true,
                 'matched_count' => $matchedCount,
-                'message' => "$matchedCount transaksi berhasil di-match otomatis",
+                'threshold' => $threshold,
+                'message' => "$matchedCount transaksi berhasil di-match otomatis (threshold {$threshold}%+)",
             ]);
 
         } catch (Exception $e) {

@@ -1,5 +1,18 @@
 <x-filament-panels::page>
     <div class="space-y-6">
+        @php
+            $autoMatchThresholdOptions = [85, 90, 95, 100];
+            $defaultAutoMatchThreshold = 90;
+            $autoMatchCandidates = [];
+            $matchedForAutoMatch = $reconciliationResults['matched'] ?? [];
+
+            foreach ($autoMatchThresholdOptions as $threshold) {
+                $autoMatchCandidates[$threshold] = collect($matchedForAutoMatch)
+                    ->filter(fn ($match) => ((int) ($match['confidence'] ?? 0)) >= $threshold)
+                    ->count();
+            }
+        @endphp
+
         {{-- Header Actions --}}
         <div class="flex flex-wrap gap-2 sm:gap-3 justify-end">
             <a href="{{ url('/admin/bank-statements/' . $record->id) }}" class="bg-gray-500 hover:bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium">← Kembali</a>
@@ -7,7 +20,16 @@
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd"></path></svg>
                 <span>Download PDF</span>
             </a>
-            <button onclick="autoMatchHighConfidence()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium">⚡ Auto Match (85%+)</button>
+            @if((($statistics['unmatched_app_count'] ?? 0) > 0) || (($statistics['unmatched_bank_count'] ?? 0) > 0))
+                <div class="flex items-center gap-2">
+                    <select id="autoMatchThreshold" class="border border-blue-300 rounded-lg px-2 py-2 text-xs sm:text-sm bg-white text-blue-900">
+                        @foreach($autoMatchThresholdOptions as $threshold)
+                            <option value="{{ $threshold }}" {{ $threshold === $defaultAutoMatchThreshold ? 'selected' : '' }}>{{ $threshold }}%+</option>
+                        @endforeach
+                    </select>
+                    <button id="autoMatchButton" onclick="autoMatchWithThreshold()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium">⚡ Auto Match ({{ $defaultAutoMatchThreshold }}%+)</button>
+                </div>
+            @endif
         </div>
 
         {{-- Filter Section --}}
@@ -188,7 +210,7 @@
                     <div class="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs sm:text-sm text-blue-900">
                         <span class="font-semibold">Standarisasi Confidence:</span>
                         <span class="ml-1">90–100% = Sangat Tinggi, 75–89% = Tinggi, 50–74% = Menengah.</span>
-                        <span class="ml-1">Auto Match hanya menyimpan transaksi dengan confidence minimal 85%.</span>
+                        <span class="ml-1">Auto Match default 90% (opsional: 85/95/100) dan menampilkan estimasi jumlah sebelum disimpan.</span>
                     </div>
                 </div>
             </div>
@@ -503,12 +525,36 @@
     </div>
 
     <script>
-    function autoMatchHighConfidence() {
-        if (!confirm('Apakah Anda yakin ingin menandai semua kecocokan dengan confidence 85%+ sebagai cocok?')) { return; }
+    const autoMatchCandidateCounts = @json($autoMatchCandidates);
+
+    function updateAutoMatchButtonLabel() {
+        const thresholdSelect = document.getElementById('autoMatchThreshold');
+        const autoMatchButton = document.getElementById('autoMatchButton');
+
+        if (!thresholdSelect || !autoMatchButton) {
+            return;
+        }
+
+        const threshold = parseInt(thresholdSelect.value || '{{ $defaultAutoMatchThreshold }}', 10);
+        autoMatchButton.textContent = `⚡ Auto Match (${threshold}%+)`;
+    }
+
+    function autoMatchWithThreshold() {
+        const thresholdSelect = document.getElementById('autoMatchThreshold');
+        const threshold = parseInt(thresholdSelect?.value || '{{ $defaultAutoMatchThreshold }}', 10);
+        const estimatedCount = autoMatchCandidateCounts[threshold] ?? 0;
+
+        if (!confirm(`Akan melakukan Auto Match untuk confidence ${threshold}%+.\nEstimasi transaksi yang akan tersimpan: ${estimatedCount}.\nLanjutkan?`)) { return; }
+
         fetch('/admin/reconciliation/auto-match', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json','X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: JSON.stringify({ payment_method_id: {{ $record->payment_method_id }}, start_date: '{{ $record->period_start->format('Y-m-d') }}', end_date: '{{ $record->period_end->format('Y-m-d') }}' })
+            body: JSON.stringify({
+                payment_method_id: {{ $record->payment_method_id }},
+                start_date: '{{ $record->period_start->format('Y-m-d') }}',
+                end_date: '{{ $record->period_end->format('Y-m-d') }}',
+                threshold: threshold
+            })
         })
         .then(res => res.json())
         .then(data => { if(data.success) { alert(data.message); window.location.reload(); } else { alert('Gagal: ' + data.message); } })
@@ -530,6 +576,12 @@
     function findManualMatch(sourceId, sourceTable) {
         alert('Fitur Manual Match untuk ID ' + sourceId + ' (' + sourceTable + ') sedang dikembangkan.');
     }
+
+    const autoMatchThresholdSelect = document.getElementById('autoMatchThreshold');
+    if (autoMatchThresholdSelect) {
+        autoMatchThresholdSelect.addEventListener('change', updateAutoMatchButtonLabel);
+    }
+    updateAutoMatchButtonLabel();
 
     function findManualMatchBank(bankItemId) {
         alert('Fitur Manual Match untuk Bank Item ID ' + bankItemId + ' sedang dikembangkan.');
