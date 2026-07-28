@@ -428,6 +428,10 @@ Route::post('/admin/reconciliation/auto-match', [ReconciliationController::class
     ->name('reconciliation.auto-match')
     ->middleware($authNoStoreThrottle);
 
+Route::post('/admin/reconciliation/mark-matched', [ReconciliationController::class, 'markMatched'])
+    ->name('reconciliation.mark-matched')
+    ->middleware($authNoStoreThrottle);
+
 Route::post('/admin/reconciliation/unmark', [ReconciliationController::class, 'unmarkMatched'])
     ->name('reconciliation.unmark')
     ->middleware($authNoStoreThrottle);

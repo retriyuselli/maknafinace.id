@@ -5,6 +5,26 @@
             $defaultAutoMatchThreshold = 90;
             $autoMatchCandidates = [];
             $matchedForAutoMatch = $reconciliationResults['matched'] ?? [];
+            $manualUnmatchedAppItems = collect($reconciliationResults['unmatched_app'] ?? [])->map(function ($t) {
+                return [
+                    'source_id' => (int) ($t->source_id ?? 0),
+                    'source_table' => (string) ($t->source_table ?? ''),
+                    'transaction_date' => $t->transaction_date ? \Carbon\Carbon::parse($t->transaction_date)->format('Y-m-d') : null,
+                    'description' => (string) ($t->description ?? ''),
+                    'debit_amount' => (float) ($t->debit_amount ?? 0),
+                    'credit_amount' => (float) ($t->credit_amount ?? 0),
+                ];
+            })->values()->all();
+
+            $manualUnmatchedBankItems = collect($reconciliationResults['unmatched_bank'] ?? [])->map(function ($b) {
+                return [
+                    'id' => (int) ($b->id ?? 0),
+                    'date' => $b->date ? \Carbon\Carbon::parse($b->date)->format('Y-m-d') : null,
+                    'description' => (string) ($b->description ?? ''),
+                    'debit' => (float) ($b->debit ?? 0),
+                    'credit' => (float) ($b->credit ?? 0),
+                ];
+            })->values()->all();
 
             foreach ($autoMatchThresholdOptions as $threshold) {
                 $autoMatchCandidates[$threshold] = collect($matchedForAutoMatch)
@@ -524,8 +544,70 @@
         @endif
     </div>
 
+    <div id="manualMatchModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40" onclick="closeManualMatchModal()"></div>
+        <div class="relative mx-auto mt-24 w-[95%] max-w-2xl rounded-lg bg-white shadow-xl">
+            <div class="border-b px-4 py-3">
+                <h3 id="manualMatchModalTitle" class="text-base font-semibold text-gray-900">Manual Match</h3>
+                <p id="manualMatchModalSourceInfo" class="mt-1 text-xs text-gray-600"></p>
+            </div>
+            <div class="px-4 py-4">
+                <label for="manualMatchSearch" class="mb-2 block text-sm font-medium text-gray-700">Cari kandidat (tanggal/nominal/keterangan)</label>
+                <input id="manualMatchSearch" type="text" class="mb-3 w-full rounded border border-gray-300 px-3 py-2 text-sm" placeholder="Contoh: 20/04/2026, 3000000, KUA" />
+                <label for="manualMatchCandidateSelect" class="mb-2 block text-sm font-medium text-gray-700">Pilih pasangan transaksi</label>
+                <select id="manualMatchCandidateSelect" class="w-full rounded border border-gray-300 px-3 py-2 text-sm">
+                    <option value="">-- Pilih data --</option>
+                </select>
+                <p id="manualMatchResultCount" class="mt-2 text-xs text-gray-500"></p>
+                <p id="manualMatchModalHint" class="mt-1 text-xs text-gray-500"></p>
+            </div>
+            <div class="flex justify-end gap-2 border-t px-4 py-3">
+                <button type="button" onclick="closeManualMatchModal()" class="rounded bg-gray-100 px-3 py-2 text-sm text-gray-700 hover:bg-gray-200">Batal</button>
+                <button type="button" onclick="confirmManualMatch()" class="rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">Simpan Match</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     const autoMatchCandidateCounts = @json($autoMatchCandidates);
+    const unmatchedAppItems = @json($manualUnmatchedAppItems);
+    const unmatchedBankItems = @json($manualUnmatchedBankItems);
+
+    function getSignedAmount(item, debitKey, creditKey) {
+        const debit = Number(item?.[debitKey] ?? 0);
+        const credit = Number(item?.[creditKey] ?? 0);
+        const isDebit = debit > 0;
+        return {
+            value: isDebit ? debit : credit,
+            isDebit: isDebit,
+        };
+    }
+
+    function submitManualMatch(sourceId, sourceTable, bankItemId, confidence = 100) {
+        fetch('/admin/reconciliation/mark-matched', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            body: JSON.stringify({
+                source_id: Number(sourceId),
+                source_table: sourceTable,
+                bank_item_id: Number(bankItemId),
+                confidence: Number(confidence),
+            }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.reload();
+            } else {
+                alert('Gagal: ' + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Terjadi kesalahan koneksi');
+        });
+    }
 
     function updateAutoMatchButtonLabel() {
         const thresholdSelect = document.getElementById('autoMatchThreshold');
@@ -573,8 +655,132 @@
         .catch(err => { console.error(err); alert('Terjadi kesalahan koneksi'); });
     }
 
+    const manualMatchState = {
+        mode: null,
+        sourceId: null,
+        sourceTable: null,
+        bankItemId: null,
+        options: [],
+        filteredOptions: [],
+    };
+
+    function formatCurrency(value) {
+        return Number(value || 0).toLocaleString('id-ID');
+    }
+
+    function closeManualMatchModal() {
+        const modal = document.getElementById('manualMatchModal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        manualMatchState.mode = null;
+        manualMatchState.sourceId = null;
+        manualMatchState.sourceTable = null;
+        manualMatchState.bankItemId = null;
+        manualMatchState.options = [];
+        manualMatchState.filteredOptions = [];
+
+        const searchEl = document.getElementById('manualMatchSearch');
+        if (searchEl) {
+            searchEl.value = '';
+        }
+    }
+
+    function renderManualMatchOptions(options) {
+        const selectEl = document.getElementById('manualMatchCandidateSelect');
+        const countEl = document.getElementById('manualMatchResultCount');
+        if (!selectEl) return;
+
+        selectEl.innerHTML = '<option value="">-- Pilih data --</option>';
+        options.forEach((option) => {
+            const el = document.createElement('option');
+            el.value = option.value;
+            el.textContent = option.label;
+            selectEl.appendChild(el);
+        });
+
+        if (countEl) {
+            countEl.textContent = `Menampilkan ${options.length} kandidat.`;
+        }
+    }
+
+    function filterManualMatchOptions() {
+        const searchEl = document.getElementById('manualMatchSearch');
+        const keyword = (searchEl?.value || '').trim().toLowerCase();
+
+        if (!keyword) {
+            manualMatchState.filteredOptions = [...manualMatchState.options];
+        } else {
+            manualMatchState.filteredOptions = manualMatchState.options.filter((option) =>
+                String(option.label || '').toLowerCase().includes(keyword)
+            );
+        }
+
+        renderManualMatchOptions(manualMatchState.filteredOptions);
+    }
+
+    function openManualMatchModal(title, sourceInfo, hint, options) {
+        const modal = document.getElementById('manualMatchModal');
+        const titleEl = document.getElementById('manualMatchModalTitle');
+        const sourceEl = document.getElementById('manualMatchModalSourceInfo');
+        const hintEl = document.getElementById('manualMatchModalHint');
+        const searchEl = document.getElementById('manualMatchSearch');
+
+        if (!modal || !titleEl || !sourceEl || !hintEl) return;
+
+        titleEl.textContent = title;
+        sourceEl.textContent = sourceInfo;
+        hintEl.textContent = hint;
+        manualMatchState.options = options;
+        manualMatchState.filteredOptions = [...options];
+
+        if (searchEl) {
+            searchEl.value = '';
+        }
+        renderManualMatchOptions(manualMatchState.filteredOptions);
+
+        modal.classList.remove('hidden');
+        if (searchEl) {
+            searchEl.focus();
+        }
+    }
+
     function findManualMatch(sourceId, sourceTable) {
-        alert('Fitur Manual Match untuk ID ' + sourceId + ' (' + sourceTable + ') sedang dikembangkan.');
+        const appTx = unmatchedAppItems.find((item) =>
+            Number(item.source_id) === Number(sourceId) && item.source_table === sourceTable
+        );
+
+        if (!appTx) {
+            alert('Data transaksi aplikasi tidak ditemukan.');
+            return;
+        }
+
+        const appAmount = getSignedAmount(appTx, 'debit_amount', 'credit_amount');
+        const candidateBanks = unmatchedBankItems
+            .filter((item) => getSignedAmount(item, 'debit', 'credit').isDebit === appAmount.isDebit)
+            .slice(0, 30);
+
+        if (!candidateBanks.length) {
+            alert('Tidak ada kandidat bank dengan tipe debit/kredit yang sama.');
+            return;
+        }
+
+        manualMatchState.mode = 'from_app';
+        manualMatchState.sourceId = Number(sourceId);
+        manualMatchState.sourceTable = sourceTable;
+        const options = candidateBanks.map((item) => {
+            const signed = getSignedAmount(item, 'debit', 'credit');
+            return {
+                value: String(item.id),
+                label: `#${item.id} | ${item.date} | Rp ${formatCurrency(signed.value)} | ${item.description}`,
+            };
+        });
+
+        openManualMatchModal(
+            'Manual Match dari Aplikasi',
+            `${sourceTable} #${sourceId} | ${appTx.transaction_date} | Rp ${formatCurrency(appAmount.value)}`,
+            'Pilih bank item yang akan dipasangkan.',
+            options
+        );
     }
 
     const autoMatchThresholdSelect = document.getElementById('autoMatchThreshold');
@@ -583,8 +789,77 @@
     }
     updateAutoMatchButtonLabel();
 
+    const manualMatchSearchInput = document.getElementById('manualMatchSearch');
+    if (manualMatchSearchInput) {
+        manualMatchSearchInput.addEventListener('input', filterManualMatchOptions);
+    }
+
     function findManualMatchBank(bankItemId) {
-        alert('Fitur Manual Match untuk Bank Item ID ' + bankItemId + ' sedang dikembangkan.');
+        const bankItem = unmatchedBankItems.find((item) => Number(item.id) === Number(bankItemId));
+        if (!bankItem) {
+            alert('Data bank item tidak ditemukan.');
+            return;
+        }
+
+        const bankAmount = getSignedAmount(bankItem, 'debit', 'credit');
+        const candidateApps = unmatchedAppItems
+            .filter((item) => getSignedAmount(item, 'debit_amount', 'credit_amount').isDebit === bankAmount.isDebit)
+            .slice(0, 30);
+
+        if (!candidateApps.length) {
+            alert('Tidak ada kandidat transaksi app dengan tipe debit/kredit yang sama.');
+            return;
+        }
+
+        manualMatchState.mode = 'from_bank';
+        manualMatchState.bankItemId = Number(bankItemId);
+        const options = candidateApps.map((item) => {
+            const signed = getSignedAmount(item, 'debit_amount', 'credit_amount');
+            return {
+                value: `${item.source_table}#${item.source_id}`,
+                label: `${item.source_table} #${item.source_id} | ${item.transaction_date} | Rp ${formatCurrency(signed.value)} | ${item.description}`,
+            };
+        });
+
+        openManualMatchModal(
+            'Manual Match dari Bank',
+            `Bank Item #${bankItemId} | ${bankItem.date} | Rp ${formatCurrency(bankAmount.value)}`,
+            'Pilih transaksi aplikasi yang akan dipasangkan.',
+            options
+        );
+    }
+
+    function confirmManualMatch() {
+        const selectEl = document.getElementById('manualMatchCandidateSelect');
+        if (!selectEl || !selectEl.value) {
+            alert('Pilih salah satu data terlebih dahulu.');
+            return;
+        }
+
+        if (manualMatchState.mode === 'from_app') {
+            const selectedBankId = Number(selectEl.value);
+            if (!selectedBankId || !manualMatchState.sourceId || !manualMatchState.sourceTable) {
+                alert('Data manual match tidak valid.');
+                return;
+            }
+            submitManualMatch(manualMatchState.sourceId, manualMatchState.sourceTable, selectedBankId, 100);
+            closeManualMatchModal();
+            return;
+        }
+
+        if (manualMatchState.mode === 'from_bank') {
+            const [sourceTable, sourceIdRaw] = String(selectEl.value).split('#');
+            const sourceId = Number(sourceIdRaw);
+            if (!sourceTable || !sourceId || !manualMatchState.bankItemId) {
+                alert('Data manual match tidak valid.');
+                return;
+            }
+            submitManualMatch(sourceId, sourceTable, manualMatchState.bankItemId, 100);
+            closeManualMatchModal();
+            return;
+        }
+
+        alert('Mode manual match tidak dikenali.');
     }
     </script>
 </x-filament-panels::page>
