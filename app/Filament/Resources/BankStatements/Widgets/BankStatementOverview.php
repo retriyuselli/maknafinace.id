@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\BankStatements\Widgets;
 
 use App\Models\BankStatement;
-use App\Models\PaymentMethod;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -28,7 +27,6 @@ class BankStatementOverview extends BaseWidget
         $previousMonthStatements = BankStatement::whereBetween('period_start', [$startOfPreviousMonth, $endOfPreviousMonth])->get();
 
         // Hitung total
-        $totalStatements = BankStatement::count();
         $totalCurrentCredit = $currentMonthStatements->sum('tot_credit') ?? 0;
         $totalCurrentDebit = $currentMonthStatements->sum('tot_debit') ?? 0;
         $totalPreviousCredit = $previousMonthStatements->sum('tot_credit') ?? 0;
@@ -51,20 +49,6 @@ class BankStatementOverview extends BaseWidget
             ? (($currentNetFlow - $previousNetFlow) / abs($previousNetFlow)) * 100
             : ($currentNetFlow > 0 ? 100 : ($currentNetFlow < 0 ? -100 : 0));
 
-        // Distribusi status
-        $statusCounts = BankStatement::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
-
-        $parsedCount = $statusCounts['parsed'] ?? 0;
-        $totalCount = array_sum($statusCounts);
-        $parsedPercentage = $totalCount > 0 ? ($parsedCount / $totalCount) * 100 : 0;
-
-        // Perhitungan rata-rata saldo
-        $latestStatements = BankStatement::latest('period_end')->take(5)->get();
-        $avgClosingBalance = $latestStatements->avg('closing_balance') ?? 0;
-
         return [
             // Total Credit (Uang Masuk)
             Stat::make('Total Uang Masuk', 'Rp '.Number::format($totalCurrentCredit, 0))
@@ -86,24 +70,6 @@ class BankStatementOverview extends BaseWidget
                 ->descriptionIcon($netFlowChange >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
                 ->color($currentNetFlow >= 0 ? 'success' : 'danger')
                 ->chart($this->getNetFlowTrendData()),
-
-            // Rata-rata Saldo
-            Stat::make('Rata-rata Saldo', 'Rp '.Number::format($avgClosingBalance, 0))
-                ->description('Berdasarkan 5 rekening koran terakhir')
-                ->descriptionIcon('heroicon-m-banknotes')
-                ->color('info'),
-
-            // Total Rekening Koran
-            Stat::make('Total Rekening Koran', Number::format($totalStatements, 0))
-                ->description($parsedPercentage > 0 ? number_format($parsedPercentage, 1).'% telah diproses' : 'Belum ada yang diproses')
-                ->descriptionIcon('heroicon-m-document-text')
-                ->color('primary'),
-
-            // Rekening Aktif
-            Stat::make('Rekening Aktif', Number::format(PaymentMethod::count(), 0))
-                ->description('Total metode pembayaran terdaftar')
-                ->descriptionIcon('heroicon-m-credit-card')
-                ->color('gray'),
         ];
     }
 

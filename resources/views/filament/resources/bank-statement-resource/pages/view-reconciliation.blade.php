@@ -75,8 +75,6 @@
         </div>
 
         @php
-            $matchRateApp = $statistics['total_app_transactions'] > 0 ? round(($statistics['matched_count'] / $statistics['total_app_transactions']) * 100, 1) : 0;
-            $matchRateBank = $statistics['total_bank_items'] > 0 ? round(($statistics['matched_count'] / $statistics['total_bank_items']) * 100, 1) : 0;
             $globalPerPage = (int) request()->query('per_page', 10);
             $filterStart = request()->query('filter_start');
             $filterEnd = request()->query('filter_end');
@@ -85,38 +83,6 @@
             $feC = $filterEnd ? \Carbon\Carbon::parse($filterEnd) : null;
             $filterType = in_array($filterType, ['debit','credit']) ? $filterType : 'all';
         @endphp
-
-        {{-- Statistik --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <div class="bg-success-50 border border-success-200 rounded p-3 min-w-[180px]">
-                <div class="text-center">
-                    <div class="text-2xl sm:text-3xl font-bold text-green-600">{{ $statistics['matched_count'] }}</div>
-                    <div class="text-xs sm:text-sm text-gray-500 mt-1">Transaksi Cocok</div>
-                    <div class="text-[10px] sm:text-xs text-gray-400 mt-2">{{ $statistics['matched_count'] > 0 ? round(($statistics['matched_count'] / max($statistics['total_app_transactions'], 1)) * 100, 1) : 0 }}% dari total app</div>
-                </div>
-            </div>
-            <div class="bg-info-50 border border-info-200 rounded p-3 min-w-[180px]">
-                <div class="text-center">
-                    <div class="text-2xl sm:text-3xl font-bold text-orange-600">{{ $statistics['unmatched_app_count'] }}</div>
-                    <div class="text-xs sm:text-sm text-gray-500 mt-1">Transaksi App Belum Cocok</div>
-                    <div class="text-[10px] sm:text-xs text-gray-400 mt-2">Dari {{ $statistics['total_app_transactions'] }} total transaksi</div>
-                </div>
-            </div>
-            <div class="bg-warning-50 border border-warning-200 rounded p-3 min-w-[180px]">
-                <div class="text-center">
-                    <div class="text-2xl sm:text-3xl font-bold text-red-600">{{ $statistics['unmatched_bank_count'] }}</div>
-                    <div class="text-xs sm:text-sm text-gray-500 mt-1">Mutasi Bank Belum Cocok</div>
-                    <div class="text-[10px] sm:text-xs text-gray-400 mt-2">Dari {{ $statistics['total_bank_items'] }} total mutasi</div>
-                </div>
-            </div>
-            <div class="bg-success-50 border border-success-200 rounded p-3 min-w-[180px]">
-                <div class="text-center">
-                    <div class="text-xl sm:text-xl font-bold text-blue-600">App {{ $matchRateApp }}% • Bank {{ $matchRateBank }}%</div>
-                    <div class="text-xs sm:text-sm text-gray-500 mt-1">Tingkat Kecocokan</div>
-                    <div class="text-[10px] sm:text-xs text-gray-400 mt-2">Per App • Per Bank</div>
-                </div>
-            </div>
-        </div>
 
         {{-- Bank Statement Table --}}
         <div class="bg-white shadow rounded-lg border border-gray-200">
