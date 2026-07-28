@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\BankStatements;
 
 use App\Filament\Resources\BankStatements\Pages\CreateBankStatement;
+use App\Filament\Resources\BankStatements\Pages\CashflowDetail;
+use App\Filament\Resources\BankStatements\Pages\CashflowSourceDetail;
 use App\Filament\Resources\BankStatements\Pages\EditBankStatement;
 use App\Filament\Resources\BankStatements\Pages\ListBankStatements;
 use App\Filament\Resources\BankStatements\Pages\ViewReconciliation;
@@ -59,6 +61,8 @@ class BankStatementResource extends Resource
     {
         return [
             'reconciliation' => ViewReconciliation::route('/{record}/reconciliation'),
+            'cashflow-detail' => CashflowDetail::route('/cashflow-detail'),
+            'cashflow-source-detail' => CashflowSourceDetail::route('/cashflow-source-detail'),
             'index' => ListBankStatements::route('/'),
             'create' => CreateBankStatement::route('/create'),
             'view' => ViewBankStatement::route('/{record}'),

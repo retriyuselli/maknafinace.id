@@ -2,7 +2,10 @@
 
 namespace App\Filament\Resources\BankStatements\Widgets;
 
-use App\Models\BankStatement;
+use App\Models\DataPembayaran;
+use App\Models\Expense;
+use App\Models\ExpenseOps;
+use App\Models\PengeluaranLain;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -12,127 +15,124 @@ class BankStatementOverview extends BaseWidget
 {
     protected function getStats(): array
     {
-        // Ambil data bulan berjalan
         $currentMonth = Carbon::now();
         $startOfMonth = $currentMonth->copy()->startOfMonth();
         $endOfMonth = $currentMonth->copy()->endOfMonth();
 
-        // Ambil bulan sebelumnya untuk perbandingan
         $previousMonth = $currentMonth->copy()->subMonth();
         $startOfPreviousMonth = $previousMonth->copy()->startOfMonth();
         $endOfPreviousMonth = $previousMonth->copy()->endOfMonth();
 
-        // Statistik bulan berjalan
-        $currentMonthStatements = BankStatement::whereBetween('period_start', [$startOfMonth, $endOfMonth])->get();
-        $previousMonthStatements = BankStatement::whereBetween('period_start', [$startOfPreviousMonth, $endOfPreviousMonth])->get();
+        $totalCurrentCredit = (int) DataPembayaran::query()
+            ->whereBetween('tgl_bayar', [$startOfMonth, $endOfMonth])
+            ->sum('nominal');
+        $totalPreviousCredit = (int) DataPembayaran::query()
+            ->whereBetween('tgl_bayar', [$startOfPreviousMonth, $endOfPreviousMonth])
+            ->sum('nominal');
 
-        // Hitung total
-        $totalCurrentCredit = $currentMonthStatements->sum('tot_credit') ?? 0;
-        $totalCurrentDebit = $currentMonthStatements->sum('tot_debit') ?? 0;
-        $totalPreviousCredit = $previousMonthStatements->sum('tot_credit') ?? 0;
-        $totalPreviousDebit = $previousMonthStatements->sum('tot_debit') ?? 0;
+        $totalCurrentDebit = $this->sumExpensesBetween($startOfMonth, $endOfMonth);
+        $totalPreviousDebit = $this->sumExpensesBetween($startOfPreviousMonth, $endOfPreviousMonth);
 
-        // Perhitungan arus kas bersih
-        $currentNetFlow = $totalCurrentCredit - $totalCurrentDebit;
-        $previousNetFlow = $totalPreviousCredit - $totalPreviousDebit;
-
-        // Hitung perubahan
-        $creditChange = $totalPreviousCredit > 0
-            ? (($totalCurrentCredit - $totalPreviousCredit) / $totalPreviousCredit) * 100
-            : ($totalCurrentCredit > 0 ? 100 : 0);
-
-        $debitChange = $totalPreviousDebit > 0
-            ? (($totalCurrentDebit - $totalPreviousDebit) / $totalPreviousDebit) * 100
-            : ($totalCurrentDebit > 0 ? 100 : 0);
-
-        $netFlowChange = $previousNetFlow != 0
-            ? (($currentNetFlow - $previousNetFlow) / abs($previousNetFlow)) * 100
-            : ($currentNetFlow > 0 ? 100 : ($currentNetFlow < 0 ? -100 : 0));
+        $currentMonthLabel = $currentMonth->translatedFormat('F Y');
+        $previousMonthLabel = $previousMonth->translatedFormat('F Y');
 
         return [
-            // Total Credit (Uang Masuk)
-            Stat::make('Total Uang Masuk', 'Rp '.Number::format($totalCurrentCredit, 0))
-                ->description($this->getChangeDescription($creditChange, 'dibanding bulan lalu'))
-                ->descriptionIcon($creditChange >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
-                ->color($creditChange >= 0 ? 'success' : 'danger')
-                ->chart($this->getMonthlyTrendData($currentMonthStatements, 'tot_credit')),
+            Stat::make('Uang Masuk (Bulan Berjalan)', 'Rp '.Number::format($totalCurrentCredit, 0))
+                ->description($currentMonthLabel)
+                ->color('success')
+                ->url($this->getDetailUrl('income', 'current'))
+                ->chart($this->getIncomeTrendData()),
 
-            // Total Debit (Uang Keluar)
-            Stat::make('Total Uang Keluar', 'Rp '.Number::format($totalCurrentDebit, 0))
-                ->description($this->getChangeDescription($debitChange, 'dibanding bulan lalu'))
-                ->descriptionIcon($debitChange <= 0 ? 'heroicon-m-arrow-trending-down' : 'heroicon-m-arrow-trending-up')
-                ->color($debitChange <= 0 ? 'success' : 'warning')
-                ->chart($this->getMonthlyTrendData($currentMonthStatements, 'tot_debit')),
+            Stat::make('Uang Masuk (Bulan Lalu)', 'Rp '.Number::format($totalPreviousCredit, 0))
+                ->description($previousMonthLabel)
+                ->color('info')
+                ->url($this->getDetailUrl('income', 'previous')),
 
-            // Arus Kas Bersih
-            Stat::make('Arus Kas Bersih', 'Rp '.Number::format($currentNetFlow, 0))
-                ->description($this->getChangeDescription($netFlowChange, 'dibanding bulan lalu'))
-                ->descriptionIcon($netFlowChange >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
-                ->color($currentNetFlow >= 0 ? 'success' : 'danger')
-                ->chart($this->getNetFlowTrendData()),
+            Stat::make('Uang Keluar (Bulan Berjalan)', 'Rp '.Number::format($totalCurrentDebit, 0))
+                ->description($currentMonthLabel)
+                ->color('warning')
+                ->url($this->getDetailUrl('expense', 'current'))
+                ->chart($this->getExpenseTrendData()),
+
+            Stat::make('Uang Keluar (Bulan Lalu)', 'Rp '.Number::format($totalPreviousDebit, 0))
+                ->description($previousMonthLabel)
+                ->color('gray')
+                ->url($this->getDetailUrl('expense', 'previous')),
         ];
     }
 
-    private function getChangeDescription(float $percentage, string $suffix): string
+    private function getIncomeTrendData(): array
     {
-        $absPercentage = abs($percentage);
-        $direction = $percentage >= 0 ? '+' : '';
+        $payments = DataPembayaran::query()
+            ->where('tgl_bayar', '>=', Carbon::now()->subDays(7))
+            ->orderBy('tgl_bayar')
+            ->get(['tgl_bayar', 'nominal']);
 
-        if ($absPercentage < 0.1) {
-            return 'Tidak ada perubahan '.$suffix;
-        }
-
-        return $direction.number_format($percentage, 1).'% '.$suffix;
+        return $this->aggregateDailyTrend($payments, 'tgl_bayar', 'nominal');
     }
 
-    private function getMonthlyTrendData($statements, string $field): array
+    private function getExpenseTrendData(): array
     {
-        if ($statements->isEmpty()) {
-            return [0, 0, 0, 0, 0, 0, 0];
-        }
+        $expenses = Expense::query()
+            ->where('date_expense', '>=', Carbon::now()->subDays(7))
+            ->orderBy('date_expense')
+            ->get(['date_expense', 'amount']);
+        $expenseOps = ExpenseOps::query()
+            ->where('date_expense', '>=', Carbon::now()->subDays(7))
+            ->orderBy('date_expense')
+            ->get(['date_expense', 'amount']);
+        $pengeluaranLain = PengeluaranLain::query()
+            ->where('date_expense', '>=', Carbon::now()->subDays(7))
+            ->orderBy('date_expense')
+            ->get(['date_expense', 'amount']);
 
-        // Kelompokkan berdasarkan minggu dalam bulan berjalan
-        $weeklyData = [];
-        $statements->each(function ($statement) use (&$weeklyData, $field) {
-            $week = Carbon::parse($statement->period_start)->week;
-            $weeklyData[$week] = ($weeklyData[$week] ?? 0) + ($statement->$field ?? 0);
-        });
-
-        // Konversi ke array 7 titik data untuk grafik
-        $chartData = array_values($weeklyData);
-
-        // Tambahkan atau potong hingga 7 titik
-        while (count($chartData) < 7) {
-            $chartData[] = end($chartData) ?: 0;
-        }
-
-        return array_slice($chartData, 0, 7);
-    }
-
-    private function getNetFlowTrendData(): array
-    {
-        // Ambil data 7 hari terakhir untuk tren arus kas bersih
-        $statements = BankStatement::where('period_start', '>=', Carbon::now()->subDays(7))
-            ->orderBy('period_start')
-            ->get();
+        $expenseTrend = $this->aggregateDailyTrend($expenses, 'date_expense', 'amount');
+        $expenseOpsTrend = $this->aggregateDailyTrend($expenseOps, 'date_expense', 'amount');
+        $pengeluaranTrend = $this->aggregateDailyTrend($pengeluaranLain, 'date_expense', 'amount');
 
         $trendData = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i);
-            $dayStatements = $statements->filter(function ($statement) use ($date) {
-                return Carbon::parse($statement->period_start)->isSameDay($date);
-            });
-
-            $netFlow = $dayStatements->sum('tot_credit') - $dayStatements->sum('tot_debit');
-            $trendData[] = $netFlow;
+        for ($i = 0; $i < 7; $i++) {
+            $trendData[] = ($expenseTrend[$i] ?? 0) + ($expenseOpsTrend[$i] ?? 0) + ($pengeluaranTrend[$i] ?? 0);
         }
 
         return $trendData;
     }
 
+    private function aggregateDailyTrend($rows, string $dateField, string $amountField): array
+    {
+        $trendData = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $dayRows = $rows->filter(function ($row) use ($date, $dateField) {
+                return Carbon::parse($row->{$dateField})->isSameDay($date);
+            });
+
+            $trendData[] = (float) $dayRows->sum($amountField);
+        }
+
+        return $trendData;
+    }
+
+    private function sumExpensesBetween(Carbon $startDate, Carbon $endDate): int
+    {
+        $expense = (int) Expense::query()->whereBetween('date_expense', [$startDate, $endDate])->sum('amount');
+        $expenseOps = (int) ExpenseOps::query()->whereBetween('date_expense', [$startDate, $endDate])->sum('amount');
+        $pengeluaranLain = (int) PengeluaranLain::query()->whereBetween('date_expense', [$startDate, $endDate])->sum('amount');
+
+        return $expense + $expenseOps + $pengeluaranLain;
+    }
+
+    private function getDetailUrl(string $metric, string $period): string
+    {
+        return route('filament.admin.resources.bank-statements.cashflow-detail', [
+            'metric' => $metric,
+            'period' => $period,
+        ]);
+    }
+
     protected function getColumns(): int
     {
-        return 3; // Tampilkan statistik dalam 3 kolom untuk tata letak yang lebih baik
+        return 2;
     }
 
     public function getDisplayName(): string
