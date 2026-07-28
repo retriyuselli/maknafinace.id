@@ -58,7 +58,7 @@ class ReconciliationController extends Controller
                 'statistics' => $statistics,
                 'timestamp' => now()->format('d F Y H:i:s'),
                 'user' => \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::user()->name : 'System',
-            ])->setPaper('a4', 'landscape');
+            ])->setPaper('a4', 'portrait');
 
             $filename = 'Reconciliation_Report_' . str_replace([' ', '/'], '_', $paymentMethod->no_rekening) . '_' . $request->start_date . '.pdf';
 

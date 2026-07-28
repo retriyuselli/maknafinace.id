@@ -24,7 +24,7 @@ class HrDashboard extends Page
     protected function getHeaderWidgets(): array
     {
         return [
-            AccountWidget::class,
+            // AccountWidget::class,
             LeaveUsageChartWidget::class,
             RecentLeaveRequestsWidget::class,
         ];

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\CheckUserExpirationOnLogin;
+use App\Models\BankReconciliationItem;
 use App\Models\BankStatement;
 use App\Models\Company;
 use App\Models\Document;
@@ -10,6 +11,7 @@ use App\Models\LeaveRequest;
 use App\Models\Order;
 use App\Models\User;
 use App\Observers\BankStatementObserver;
+use App\Policies\BankReconciliationItemPolicy;
 use App\Observers\DocumentObserver;
 use App\Observers\LeaveRequestObserver;
 use App\Observers\OrderObserver;
@@ -68,6 +70,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Register BankStatement Observer for tracking last edited by
         BankStatement::observe(BankStatementObserver::class);
+
+        Gate::policy(BankReconciliationItem::class, BankReconciliationItemPolicy::class);
 
         // Register Document Observer for auto-numbering
         Document::observe(DocumentObserver::class);

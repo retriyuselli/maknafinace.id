@@ -4,6 +4,8 @@ namespace App\Filament\Resources\BankStatements\Pages;
 
 use App\Filament\Resources\BankStatements\BankStatementResource;
 use App\Imports\BankReconciliationImport;
+use App\Imports\BankStatementImport;
+use App\Models\BankStatement;
 use Exception;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -29,10 +31,12 @@ class CreateBankStatement extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Handle reconciliation file — jadwalkan import via session
-        // 'reconciliation_original_filename' sudah diisi oleh storeFileNamesIn() di form (tidak perlu basename manual)
         if (! empty($data['reconciliation_file'])) {
             session(['pending_reconciliation_file' => $data['reconciliation_file']]);
+        }
+
+        if (! empty($data['file_path']) && ($data['source_type'] ?? 'upload') !== 'manual_input') {
+            session(['pending_statement_file' => $data['file_path']]);
         }
 
         return $data;
@@ -42,70 +46,114 @@ class CreateBankStatement extends CreateRecord
     {
         $record = $this->record;
 
-        // Check if there's a pending reconciliation file from session
-        $reconciliationFile = session('pending_reconciliation_file');
+        if ($statementFile = session('pending_statement_file')) {
+            $this->processStatementImport($record, $statementFile);
+        }
 
-        if ($reconciliationFile) {
-            // Check if file is Excel format
-            $fileExtension = strtolower(pathinfo($reconciliationFile, PATHINFO_EXTENSION));
-            if (! in_array($fileExtension, ['xlsx', 'xls', 'csv'])) {
-                Notification::make()
-                    ->title('Format File Tidak Didukung')
-                    ->body('Hanya file Excel (.xlsx, .xls) atau CSV yang dapat diimpor untuk rekonsiliasi.')
-                    ->warning()
-                    ->send();
+        if ($reconciliationFile = session('pending_reconciliation_file')) {
+            $this->processReconciliationImport($record, $reconciliationFile);
+        }
+    }
 
-                session()->forget('pending_reconciliation_file');
+    protected function processStatementImport(BankStatement $record, string $filePath): void
+    {
+        $fileExtension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        if (! in_array($fileExtension, ['xlsx', 'xls', 'csv'])) {
+            Notification::make()
+                ->title('Format File Tidak Didukung')
+                ->body('Hanya file Excel (.xlsx, .xls) atau CSV yang dapat diimpor sebagai statement.')
+                ->warning()
+                ->send();
 
-                return;
-            }
+            session()->forget('pending_statement_file');
 
-            try {
-                $record->update(['reconciliation_status' => 'processing']);
+            return;
+        }
 
-                // Use BankStatement as bank reconciliation for the import
-                $import = new BankReconciliationImport($record);
-                $disk = Storage::disk('private')->exists($reconciliationFile) ? 'private' : 'public';
-                Excel::import($import, Storage::disk($disk)->path($reconciliationFile));
+        try {
+            $record->update(['status' => 'processing']);
 
-                // Check for errors from the import
-                $errors = $import->getErrors();
-                $importedCount = $import->getImportedCount();
+            $import = new BankStatementImport($record);
+            $disk = Storage::disk('private')->exists($filePath) ? 'private' : 'public';
+            Excel::import($import, Storage::disk($disk)->path($filePath));
 
-                if (! empty($errors)) {
-                    $record->update(['reconciliation_status' => 'failed']);
+            $record->update(['status' => 'parsed']);
 
-                    $errorMessage = "Berhasil mengimpor {$importedCount} transaksi, tetapi ada ".count($errors)." error:\n";
-                    $errorMessage .= implode("\n", array_slice($errors, 0, 5)); // Show first 5 errors
-                    if (count($errors) > 5) {
-                        $errorMessage .= "\n... dan ".(count($errors) - 5).' error lainnya';
-                    }
+            Notification::make()
+                ->title('Import Statement Berhasil!')
+                ->body('File statement berhasil diimpor.')
+                ->success()
+                ->send();
+        } catch (Exception $e) {
+            $record->update(['status' => 'failed']);
 
-                    Notification::make()
-                        ->title('Import Rekonsiliasi Selesai dengan Error')
-                        ->body($errorMessage)
-                        ->warning()
-                        ->send();
-                } else {
-                    Notification::make()
-                        ->title('Import Rekonsiliasi Berhasil!')
-                        ->body("Berhasil mengimpor {$importedCount} transaksi rekonsiliasi.")
-                        ->success()
-                        ->send();
-                }
+            Notification::make()
+                ->title('Import Statement Gagal')
+                ->body('Error: '.$e->getMessage())
+                ->danger()
+                ->send();
+        }
 
-            } catch (Exception $e) {
+        session()->forget('pending_statement_file');
+    }
+
+    protected function processReconciliationImport(BankStatement $record, string $filePath): void
+    {
+        $fileExtension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        if (! in_array($fileExtension, ['xlsx', 'xls', 'csv'])) {
+            Notification::make()
+                ->title('Format File Tidak Didukung')
+                ->body('Hanya file Excel (.xlsx, .xls) atau CSV yang dapat diimpor untuk rekonsiliasi.')
+                ->warning()
+                ->send();
+
+            session()->forget('pending_reconciliation_file');
+
+            return;
+        }
+
+        try {
+            $record->update(['reconciliation_status' => 'processing']);
+
+            $import = new BankReconciliationImport($record);
+            $disk = Storage::disk('private')->exists($filePath) ? 'private' : 'public';
+            Excel::import($import, Storage::disk($disk)->path($filePath));
+
+            $errors = $import->getErrors();
+            $importedCount = $import->getImportedCount();
+
+            if (! empty($errors)) {
                 $record->update(['reconciliation_status' => 'failed']);
 
+                $errorMessage = "Berhasil mengimpor {$importedCount} transaksi, tetapi ada ".count($errors)." error:\n";
+                $errorMessage .= implode("\n", array_slice($errors, 0, 5));
+                if (count($errors) > 5) {
+                    $errorMessage .= "\n... dan ".(count($errors) - 5).' error lainnya';
+                }
+
                 Notification::make()
-                    ->title('Import Rekonsiliasi Gagal')
-                    ->body('Error: '.$e->getMessage())
-                    ->danger()
+                    ->title('Import Rekonsiliasi Selesai dengan Error')
+                    ->body($errorMessage)
+                    ->warning()
+                    ->send();
+            } else {
+                Notification::make()
+                    ->title('Import Rekonsiliasi Berhasil!')
+                    ->body("Berhasil mengimpor {$importedCount} transaksi rekonsiliasi.")
+                    ->success()
                     ->send();
             }
 
-            // Clear the session after processing
-            session()->forget('pending_reconciliation_file');
+        } catch (Exception $e) {
+            $record->update(['reconciliation_status' => 'failed']);
+
+            Notification::make()
+                ->title('Import Rekonsiliasi Gagal')
+                ->body('Error: '.$e->getMessage())
+                ->danger()
+                ->send();
         }
+
+        session()->forget('pending_reconciliation_file');
     }
 }

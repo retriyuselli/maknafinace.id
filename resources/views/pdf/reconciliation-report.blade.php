@@ -4,7 +4,32 @@
     <meta charset="utf-8">
     <title>Reconciliation Report</title>
     <style>
-        body { font-family: sans-serif; font-size: 10px; }
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 400;
+            src: url('{{ storage_path('fonts/Poppins-Regular.ttf') }}') format('truetype');
+        }
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 700;
+            src: url('{{ storage_path('fonts/Poppins-Bold.ttf') }}') format('truetype');
+        }
+        @font-face {
+            font-family: 'Poppins';
+            font-style: italic;
+            font-weight: 400;
+            src: url('{{ storage_path('fonts/Poppins-Italic.ttf') }}') format('truetype');
+        }
+        @font-face {
+            font-family: 'Poppins';
+            font-style: italic;
+            font-weight: 700;
+            src: url('{{ storage_path('fonts/Poppins-BoldItalic.ttf') }}') format('truetype');
+        }
+
+        body { font-family: 'Poppins', sans-serif; font-size: 10px; }
         .header { margin-bottom: 20px; }
         .header h1 { margin: 0; color: #1a56db; font-size: 18px; }
         .header p { margin: 2px 0; color: #555; }
@@ -24,6 +49,7 @@
         .section-title { font-size: 12px; font-weight: bold; margin: 15px 0 5px 0; border-bottom: 2px solid #eee; padding-bottom: 3px; }
         .page-break { page-break-after: always; }
         .footer { position: fixed; bottom: 0; left: 0; right: 0; font-size: 8px; color: #888; border-top: 1px solid #eee; padding-top: 5px; }
+        .confidence-note { border: 1px solid #bfdbfe; background: #eff6ff; color: #1e3a8a; padding: 8px; font-size: 9px; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -66,20 +92,31 @@
     <table>
         <thead>
             <tr>
-                <th width="12%">Tanggal</th>
-                <th width="30%">Keterangan App</th>
-                <th width="30%">Keterangan Bank</th>
-                <th width="18%" class="text-right">Nominal</th>
-                <th width="10%" class="text-center">Confidence</th>
+                <th width="10%">Tanggal</th>
+                <th width="24%">Keterangan App</th>
+                <th width="24%">Keterangan Bank</th>
+                <th width="14%" class="text-right">Nominal App</th>
+                <th width="14%" class="text-right">Nominal Bank</th>
+                <th width="8%" class="text-right">Selisih</th>
+                <th width="6%" class="text-center">Confidence</th>
             </tr>
         </thead>
         <tbody>
             @foreach($matched as $match)
-                @php 
+                @php
                     $app = $match['app_transaction'];
                     $bank = $match['bank_item'];
-                    $amount = $app->debit_amount ?: $app->credit_amount;
-                    $isDebit = (bool) $app->debit_amount;
+                    $appDebitAmount = (float) ($app->debit_amount ?? 0);
+                    $appCreditAmount = (float) ($app->credit_amount ?? 0);
+                    $appIsDebit = $appDebitAmount > 0;
+                    $appAmount = $appIsDebit ? $appDebitAmount : $appCreditAmount;
+
+                    $bankDebitAmount = (float) ($bank->debit ?? 0);
+                    $bankCreditAmount = (float) ($bank->credit ?? 0);
+                    $bankIsDebit = $bankDebitAmount > 0;
+                    $bankAmount = $bankIsDebit ? $bankDebitAmount : $bankCreditAmount;
+
+                    $difference = abs($appAmount - $bankAmount);
                 @endphp
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($app->transaction_date)->format('d/m/Y') }}</td>
@@ -88,14 +125,25 @@
                         <div style="font-size: 8px; color: #666;">Ref: {{ $app->source_table }} #{{ $app->source_id }}</div>
                     </td>
                     <td>{{ \Illuminate\Support\Str::limit($bank->description, 40) }}</td>
-                    <td class="text-right {{ $isDebit ? 'text-red' : 'text-green' }}">
-                        {{ $isDebit ? '-' : '+' }}Rp {{ number_format($amount, 0, ',', '.') }}
+                    <td class="text-right {{ $appIsDebit ? 'text-red' : 'text-green' }}">
+                         {{ number_format($appAmount, 0, ',', '.') }}
+                    </td>
+                    <td class="text-right {{ $bankIsDebit ? 'text-red' : 'text-green' }}">
+                         {{ number_format($bankAmount, 0, ',', '.') }}
+                    </td>
+                    <td class="text-right {{ $difference > 0 ? 'text-red' : 'text-green' }}">
+                         {{ number_format($difference, 0, ',', '.') }}
                     </td>
                     <td class="text-center">{{ $match['confidence'] }}%</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
+    <div class="confidence-note">
+        <strong>Standarisasi Confidence:</strong>
+        90–100% = Sangat Tinggi, 75–89% = Tinggi, 50–74% = Menengah.
+        Auto Match hanya menyimpan transaksi dengan confidence minimal 85%.
+    </div>
     @endif
 
     @if(count($unmatchedApp) > 0)
@@ -112,15 +160,17 @@
         </thead>
         <tbody>
             @foreach($unmatchedApp as $item)
-                @php 
-                    $amount = $item->debit_amount ?: $item->credit_amount;
-                    $isDebit = (bool) $item->debit_amount;
+                @php
+                    $debitAmount = (float) ($item->debit_amount ?? 0);
+                    $creditAmount = (float) ($item->credit_amount ?? 0);
+                    $isDebit = $debitAmount > 0;
+                    $amount = $isDebit ? $debitAmount : $creditAmount;
                 @endphp
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($item->transaction_date)->format('d/m/Y') }}</td>
                     <td>{{ $item->description }}</td>
                     <td class="text-right {{ $isDebit ? 'text-red' : 'text-green' }}">
-                        {{ $isDebit ? '-' : '+' }}Rp {{ number_format($amount, 0, ',', '.') }}
+                         {{ number_format($amount, 0, ',', '.') }}
                     </td>
                     <td>{{ $item->source_table }}</td>
                 </tr>
@@ -141,15 +191,17 @@
         </thead>
         <tbody>
             @foreach($unmatchedBank as $item)
-                @php 
-                    $amount = $item->debit ?: $item->credit;
-                    $isDebit = (bool) $item->debit;
+                @php
+                    $debitAmount = (float) ($item->debit ?? 0);
+                    $creditAmount = (float) ($item->credit ?? 0);
+                    $isDebit = $debitAmount > 0;
+                    $amount = $isDebit ? $debitAmount : $creditAmount;
                 @endphp
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($item->date)->format('d/m/Y') }}</td>
                     <td>{{ $item->description }}</td>
                     <td class="text-right {{ $isDebit ? 'text-red' : 'text-green' }}">
-                        {{ $isDebit ? '-' : '+' }}Rp {{ number_format($amount, 0, ',', '.') }}
+                        Rp {{ number_format($amount, 0, ',', '.') }}
                     </td>
                 </tr>
             @endforeach

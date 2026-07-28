@@ -24,30 +24,11 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            AccountWidget::class,
-            DocumentsPendingApprovalWidget::class,
-            ChartCombinedFinancialWidget::class,
+            // AccountWidget::class,
             EventManager::class,
             AccountManagerWidget::class,
+            DocumentsPendingApprovalWidget::class,
+            ChartCombinedFinancialWidget::class,
         ];
     }
-
-    // public function filtersForm(Schema $schema): Schema
-    // {
-    //     return $schema
-    //         ->components([
-    //             Section::make()
-    //                 ->schema([
-    //                     DatePicker::make('startDate')
-    //                         ->default(now()->startOfMonth()->toDateString())
-    //                         ->maxDate(fn (Get $get) => $get('endDate') ?: now()),
-    //                     DatePicker::make('endDate')
-    //                         ->default(now()->endOfMonth()->toDateString())
-    //                         ->minDate(fn (Get $get) => $get('startDate') ?: now())
-    //                         ->maxDate(now()),
-    //                 ])
-    //                 ->columns(2)
-    //                 ->columnSpanFull(),
-    //         ]);
-    // }
 }

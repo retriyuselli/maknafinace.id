@@ -185,6 +185,11 @@
                             </tr>
                         </tfoot>
                     </table>
+                    <div class="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs sm:text-sm text-blue-900">
+                        <span class="font-semibold">Standarisasi Confidence:</span>
+                        <span class="ml-1">90–100% = Sangat Tinggi, 75–89% = Tinggi, 50–74% = Menengah.</span>
+                        <span class="ml-1">Auto Match hanya menyimpan transaksi dengan confidence minimal 85%.</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -354,7 +359,12 @@
                             $uaTotalPages = max(1, (int) ceil($uaTotal / $uaPerPage));
                         @endphp
                         @foreach($uaSlice as $transaction)
-                            @php $amount = $transaction->debit_amount ?: $transaction->credit_amount; $isDebit = (bool) $transaction->debit_amount; @endphp
+                            @php
+                                $debitAmount = (float) ($transaction->debit_amount ?? 0);
+                                $creditAmount = (float) ($transaction->credit_amount ?? 0);
+                                $isDebit = $debitAmount > 0;
+                                $amount = $isDebit ? $debitAmount : $creditAmount;
+                            @endphp
                             <tr class="hover:bg-gray-50">
                                 <td class="px-3 py-2 sm:px-6 sm:py-4 text-gray-900">{{ \Carbon\Carbon::parse($transaction->transaction_date)->format('d M Y') }}</td>
                                 <td class="px-3 py-2 sm:px-6 sm:py-4 text-gray-900 max-w-md"><div class="truncate" title="{{ $transaction->description }}">{{ Str::limit($transaction->description, 80) }}</div></td>
@@ -369,7 +379,14 @@
                             <tr>
                                 <td class="px-3 py-2 sm:px-6 sm:py-3 text-left font-semibold text-gray-900" colspan="2">Total</td>
                                 <td class="px-3 py-2 sm:px-6 sm:py-3 text-right font-semibold text-gray-900">
-                                    @php $totalUnmatchedApp = 0; foreach($ua as $t) { $totalUnmatchedApp += ($t->debit_amount ?: $t->credit_amount); } @endphp
+                                    @php
+                                        $totalUnmatchedApp = 0;
+                                        foreach ($ua as $t) {
+                                            $debitAmount = (float) ($t->debit_amount ?? 0);
+                                            $creditAmount = (float) ($t->credit_amount ?? 0);
+                                            $totalUnmatchedApp += $debitAmount > 0 ? $debitAmount : $creditAmount;
+                                        }
+                                    @endphp
                                     <span class="text-orange-600">Rp {{ number_format($totalUnmatchedApp, 0, ',', '.') }}</span>
                                 </td>
                                 <td class="px-3 py-2 sm:px-6 sm:py-3" colspan="2">
@@ -435,7 +452,12 @@
                             $ubTotalPages = max(1, (int) ceil($ubTotal / $ubPerPage));
                         @endphp
                         @foreach($ubSlice as $item)
-                            @php $amount = $item->debit ?: $item->credit; $isDebit = (bool) $item->debit; @endphp
+                            @php
+                                $debitAmount = (float) ($item->debit ?? 0);
+                                $creditAmount = (float) ($item->credit ?? 0);
+                                $isDebit = $debitAmount > 0;
+                                $amount = $isDebit ? $debitAmount : $creditAmount;
+                            @endphp
                             <tr class="hover:bg-gray-50">
                                 <td class="px-3 py-2 sm:px-6 sm:py-4 text-gray-900">{{ \Carbon\Carbon::parse($item->date)->format('d M Y') }}</td>
                                 <td class="px-3 py-2 sm:px-6 sm:py-4 text-gray-900 max-w-md"><div class="truncate" title="{{ $item->description }}">{{ Str::limit($item->description, 80) }}</div></td>
@@ -449,7 +471,14 @@
                             <tr>
                                 <td class="px-3 py-2 sm:px-6 sm:py-3 text-left font-semibold text-gray-900" colspan="2">Total</td>
                                 <td class="px-3 py-2 sm:px-6 sm:py-3 text-right font-semibold text-gray-900">
-                                    @php $totalUnmatchedBank = 0; foreach($ub as $i) { $totalUnmatchedBank += ($i->debit ?: $i->credit); } @endphp
+                                    @php
+                                        $totalUnmatchedBank = 0;
+                                        foreach ($ub as $i) {
+                                            $debitAmount = (float) ($i->debit ?? 0);
+                                            $creditAmount = (float) ($i->credit ?? 0);
+                                            $totalUnmatchedBank += $debitAmount > 0 ? $debitAmount : $creditAmount;
+                                        }
+                                    @endphp
                                     <span class="text-red-600">Rp {{ number_format($totalUnmatchedBank, 0, ',', '.') }}</span>
                                 </td>
                                 <td class="px-3 py-2 sm:px-6 sm:py-3">

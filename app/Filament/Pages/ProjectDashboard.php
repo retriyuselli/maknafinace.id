@@ -53,14 +53,14 @@ class ProjectDashboard extends Page
     protected function getHeaderWidgets(): array
     {
         return [
-            AccountWidget::class,
+            // AccountWidget::class,
+            ComingSoonAkadWidget::class,
+            ComingSoonResepsiWidget::class,
             DocumentInboxWidget::class,
             DashboardKeuangan::class,
             StatsOverviewWidget::class,
-            EventManager::class,
-            AccountManagerWidget::class,
-            ComingSoonAkadWidget::class,
-            ComingSoonResepsiWidget::class,
+            // EventManager::class,
+            // AccountManagerWidget::class,
         ];
     }
 }
