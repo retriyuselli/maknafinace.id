@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Statuses;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\Statuses\Pages\CreateStatus;
 use App\Filament\Resources\Statuses\Pages\EditStatus;
 use App\Filament\Resources\Statuses\Pages\ListStatuses;
@@ -14,6 +16,8 @@ use Filament\Tables\Table;
 
 class StatusResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = Status::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'SDM';
@@ -46,10 +50,5 @@ class StatusResource extends Resource
             'create' => CreateStatus::route('/create'),
             'edit' => EditStatus::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
     }
 }

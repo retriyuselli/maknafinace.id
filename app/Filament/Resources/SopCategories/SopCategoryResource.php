@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\SopCategories;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\SopCategories\Pages\CreateSopCategory;
 use App\Filament\Resources\SopCategories\Pages\EditSopCategory;
 use App\Filament\Resources\SopCategories\Pages\ListSopCategories;
@@ -16,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SopCategoryResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = SopCategory::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-folder';
@@ -62,11 +66,6 @@ class SopCategoryResource extends Resource
             'create' => CreateSopCategory::route('/create'),
             'edit' => EditSopCategory::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

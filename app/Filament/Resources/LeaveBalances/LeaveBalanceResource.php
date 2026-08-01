@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\LeaveBalances;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\LeaveBalanceResource\Pages;
 use App\Filament\Resources\LeaveBalances\Pages\EditLeaveBalance;
 use App\Filament\Resources\LeaveBalances\Pages\ListLeaveBalances;
@@ -14,6 +16,8 @@ use Filament\Tables\Table;
 
 class LeaveBalanceResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = LeaveBalance::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-scale';
@@ -50,11 +54,6 @@ class LeaveBalanceResource extends Resource
             // 'create' => Pages\CreateLeaveBalance::route('/create'), // Dihilangkan karena otomatis
             'edit' => EditLeaveBalance::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

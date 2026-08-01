@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\SimulasiProduks;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\SimulasiProduks\Pages\CreateSimulasiProduk;
 use App\Filament\Resources\SimulasiProduks\Pages\EditSimulasiProduk;
 use App\Filament\Resources\SimulasiProduks\Pages\ListSimulasiProduks;
@@ -19,6 +21,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class SimulasiProdukResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = SimulasiProduk::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-beaker';
@@ -87,10 +91,5 @@ class SimulasiProdukResource extends Resource
     public static function getNavigationBadgeTooltip(): ?string
     {
         return 'Total simulasi yang sedang diproses';
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
     }
 }

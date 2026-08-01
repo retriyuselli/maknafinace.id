@@ -124,7 +124,15 @@ class AbsensiRekapService
             ->whereDate('tanggal', $tanggal)
             ->first();
 
-        if ($existing && ($existing->jam_masuk || in_array($existing->status, $this->statusFinalKehadiran, true))) {
+        if ($existing && $existing->jam_masuk) {
+            if ($this->tandaiTidakAbsenPulang($existing, $tanggal, $pengaturan)) {
+                return 'updated';
+            }
+
+            return 'skipped';
+        }
+
+        if ($existing && in_array($existing->status, $this->statusFinalKehadiran, true)) {
             return 'skipped';
         }
 
@@ -246,6 +254,42 @@ class AbsensiRekapService
         $libur = HariLibur::untukTanggal($tanggal);
 
         return $libur?->adalahLiburEfektif() ?? false;
+    }
+
+    /**
+     * Jika wajib_pulang aktif dan karyawan sudah masuk tapi belum pulang
+     * pada tanggal sebelum hari ini, tandai sebagai setengah hari.
+     */
+    protected function tandaiTidakAbsenPulang(
+        Absensi $absensi,
+        string $tanggal,
+        ?PengaturanAbsensi $pengaturan,
+    ): bool {
+        if (! $pengaturan?->wajib_pulang || $absensi->jam_pulang) {
+            return false;
+        }
+
+        if (! in_array($absensi->status, [
+            Absensi::STATUS_HADIR,
+            Absensi::STATUS_TERLAMBAT,
+        ], true)) {
+            return false;
+        }
+
+        $tz = $this->timezone($pengaturan);
+        $hariIni = Carbon::now($tz)->toDateString();
+
+        if ($tanggal >= $hariIni) {
+            return false;
+        }
+
+        $catatan = 'Tidak absen pulang (wajib_pulang)';
+        $absensi->status = Absensi::STATUS_SETENGAH_HARI;
+        $absensi->catatan = trim(($absensi->catatan ? $absensi->catatan."\n" : '').$catatan);
+        $absensi->sumber = $absensi->sumber ?: 'sistem';
+        $absensi->save();
+
+        return true;
     }
 
     /**

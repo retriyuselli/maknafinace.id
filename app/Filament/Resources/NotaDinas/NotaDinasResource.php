@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\NotaDinas;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\NotaDinas\Pages\CreateNotaDinas;
 use App\Filament\Resources\NotaDinas\Pages\EditNotaDinas;
 use App\Filament\Resources\NotaDinas\Pages\ListNotaDinas;
@@ -17,6 +19,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class NotaDinasResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = NotaDinas::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
@@ -68,11 +72,6 @@ class NotaDinasResource extends Resource
             'edit' => EditNotaDinas::route('/{record}/edit'),
             'view-nd' => ViewNd::route('/{record}/view-nd'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\AccountManagerTargets;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\AccountManagerTargets\Pages\CreateAccountManagerTarget;
 use App\Filament\Resources\AccountManagerTargets\Pages\ListAccountManagerTargets;
 use App\Filament\Resources\AccountManagerTargets\Schemas\AccountManagerTargetForm;
@@ -20,6 +22,8 @@ use Illuminate\Support\Facades\Auth;
 
 class AccountManagerTargetResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = AccountManagerTarget::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-flag';
@@ -173,10 +177,5 @@ class AccountManagerTargetResource extends Resource
             AmPerformanceChart::class,
             TopPerformersWidget::class,
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
     }
 }

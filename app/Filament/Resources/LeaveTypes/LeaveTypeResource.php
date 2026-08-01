@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\LeaveTypes;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\LeaveTypes\Pages\CreateLeaveType;
 use App\Filament\Resources\LeaveTypes\Pages\EditLeaveType;
 use App\Filament\Resources\LeaveTypes\Pages\ListLeaveTypes;
@@ -16,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class LeaveTypeResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = LeaveType::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
@@ -60,11 +64,6 @@ class LeaveTypeResource extends Resource
             'create' => CreateLeaveType::route('/create'),
             'edit' => EditLeaveType::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

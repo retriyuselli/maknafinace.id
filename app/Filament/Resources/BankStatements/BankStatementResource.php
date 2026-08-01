@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\BankStatements;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\BankStatements\Pages\CreateBankStatement;
 use App\Filament\Resources\BankStatements\Pages\CashflowDetail;
 use App\Filament\Resources\BankStatements\Pages\CashflowSourceDetail;
@@ -23,6 +25,8 @@ use Illuminate\Support\Facades\Gate;
 
 class BankStatementResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = BankStatement::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-currency-dollar';
@@ -68,12 +72,6 @@ class BankStatementResource extends Resource
             'view' => ViewBankStatement::route('/{record}'),
             'edit' => EditBankStatement::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        // Menampilkan jumlah total rekening koran sebagai badge
-        return static::getModel()::count();
     }
 
     public static function getNavigationBadgeColor(): string|array|null

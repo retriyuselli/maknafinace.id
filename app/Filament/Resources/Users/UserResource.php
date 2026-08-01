@@ -14,6 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class UserResource extends Resource
 {
@@ -27,12 +28,9 @@ class UserResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    /**
-     * Check if current user is super admin
-     */
     public static function isSuperAdmin(): bool
     {
-        /** @var User $user */
+        /** @var User|null $user */
         $user = Auth::user();
         if (! $user) {
             return false;
@@ -41,9 +39,6 @@ class UserResource extends Resource
         return $user->hasRole('super_admin');
     }
 
-    /**
-     * Check if target user is super admin
-     */
     public static function isTargetUserSuperAdmin($record): bool
     {
         if (! $record) {
@@ -53,37 +48,13 @@ class UserResource extends Resource
         return $record->hasRole('super_admin');
     }
 
-    /**
-     * Apply query restrictions based on user role
-     */
     public static function getEloquentQuery(): Builder
     {
-        $currentYear = (int) date('Y');
-
+        // Query ringan untuk list: tanpa withSum cuti / withCount / payroll.
+        // Kolom sekunder di tabel disembunyikan by default.
         $query = parent::getEloquentQuery()
-            // Payrolls diload sekali untuk semua baris — gunakan $record->payrolls->first() di Table
-            ->with(['payrolls' => fn ($q) => $q->latest()])
-            ->with('statuses')
-            ->with('roles')
-            ->withCount('roles')
-            // Pre-compute leave aggregates — hindari N+1 di kolom cuti
-            ->withSum([
-                'leaveRequests as leave_approved_days' => fn ($q) => $q
-                    ->where('status', 'approved')
-                    ->whereYear('start_date', $currentYear),
-            ], 'total_days')
-            ->withSum([
-                'leaveRequests as leave_pending_days' => fn ($q) => $q
-                    ->where('status', 'pending')
-                    ->whereYear('start_date', $currentYear),
-            ], 'total_days')
-            ->withSum([
-                'leaveRequests as leave_rejected_days' => fn ($q) => $q
-                    ->where('status', 'rejected')
-                    ->whereYear('start_date', $currentYear),
-            ], 'total_days');
+            ->with(['statuses', 'roles']);
 
-        // If current user is not super_admin, only show their own data
         if (! static::isSuperAdmin()) {
             $user = Auth::user();
             if ($user) {
@@ -106,16 +77,12 @@ class UserResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getWidgets(): array
     {
-        return [
-            // AccountManagerStats::class,
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -140,6 +107,10 @@ class UserResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return (string) Cache::remember(
+            'nav:users:count',
+            60,
+            fn (): int => (int) static::getModel()::query()->count()
+        );
     }
 }

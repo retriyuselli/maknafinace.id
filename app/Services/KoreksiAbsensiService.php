@@ -81,9 +81,15 @@ class KoreksiAbsensiService
             }
 
             if ($absensi->jam_masuk && $absensi->jam_pulang) {
-                $absensi->menit_kerja = max(0, $absensi->jam_masuk->diffInMinutes($absensi->jam_pulang));
+                $absensiService = app(AbsensiService::class);
+                $absensi->menit_kerja = $absensiService->hitungMenitKerjaPublik(
+                    Carbon::parse($absensi->jam_masuk),
+                    Carbon::parse($absensi->jam_pulang),
+                    $absensi->user_id,
+                    $absensi->tanggal->toDateString(),
+                );
                 if ($pengaturan) {
-                    $absensi->menit_pulang_cepat = app(AbsensiService::class)
+                    $absensi->menit_pulang_cepat = $absensiService
                         ->hitungMenitPulangCepatPublik($pengaturan, Carbon::parse($absensi->jam_pulang), $absensi->user_id, $absensi->tanggal->toDateString());
                 }
             }

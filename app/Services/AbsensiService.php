@@ -204,7 +204,12 @@ class AbsensiService
                 $absensi->jam_pulang = $now;
                 $absensi->menit_pulang_cepat = $this->hitungMenitPulangCepat($pengaturan, $now, $user->id, $tanggal);
                 if ($absensi->jam_masuk) {
-                    $absensi->menit_kerja = max(0, $absensi->jam_masuk->diffInMinutes($now));
+                    $absensi->menit_kerja = $this->hitungMenitKerja(
+                        $absensi->jam_masuk,
+                        $now,
+                        $user->id,
+                        $tanggal,
+                    );
                 }
             }
 
@@ -335,6 +340,41 @@ class AbsensiService
         ?string $tanggal = null,
     ): int {
         return $this->hitungMenitPulangCepat($pengaturan, $now, $userId, $tanggal);
+    }
+
+    public function hitungMenitKerjaPublik(
+        Carbon $jamMasuk,
+        Carbon $jamPulang,
+        ?int $userId = null,
+        ?string $tanggal = null,
+    ): int {
+        return $this->hitungMenitKerja($jamMasuk, $jamPulang, $userId, $tanggal);
+    }
+
+    /**
+     * Durasi kerja bersih: selisih masuk–pulang dikurangi menit istirahat jadwal (jika ada).
+     */
+    protected function hitungMenitKerja(
+        Carbon $jamMasuk,
+        Carbon $jamPulang,
+        ?int $userId = null,
+        ?string $tanggal = null,
+    ): int {
+        $gross = max(0, $jamMasuk->diffInMinutes($jamPulang));
+        $istirahat = $this->menitIstirahatEfektif($userId, $tanggal ?? $jamMasuk->toDateString());
+
+        return max(0, $gross - $istirahat);
+    }
+
+    protected function menitIstirahatEfektif(?int $userId, string $tanggal): int
+    {
+        $hari = $this->hariJadwalUntuk($userId, $tanggal);
+
+        if (! $hari?->hari_kerja) {
+            return 0;
+        }
+
+        return max(0, (int) ($hari->menit_istirahat ?? 0));
     }
 
     protected function hitungMenitTerlambat(

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Products;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
@@ -16,6 +18,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ProductResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = Product::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shopping-bag';
@@ -31,11 +35,6 @@ class ProductResource extends Resource
     protected static ?string $modelLabel = 'Produk';
 
     protected static ?int $navigationSort = 2;
-
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
-    }
 
     public static function form(Schema $schema): Schema
     {

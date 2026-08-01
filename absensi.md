@@ -628,6 +628,8 @@ Menu konfigurasi dikunci lewat `RestrictsToSuperAdmin` (navigasi + URL langsung)
 
 ### Catatan
 
-- Seed lokasi masih placeholder Jakarta — **wajib diganti**.
+- Seed lokasi default: Palembang (Jl. Sintraman) — **verifikasi pin di peta** sebelum produksi.
 - Scheduler: `absensi:rekap-harian` tiap hari 01:15 Asia/Jakarta (butuh cron `schedule:run`).
 - Absensi via app mobile tetap di **Wofins** saja.
+- `wajib_pulang`: rekap harian menandai `setengah_hari` jika masuk tanpa pulang (tanggal kemarin ke bawah).
+- `menit_kerja`: dikurangi `menit_istirahat` dari jadwal kerja efektif.

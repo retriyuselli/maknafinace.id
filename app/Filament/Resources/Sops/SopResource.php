@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Sops;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\Sops\Pages\CreateSop;
 use App\Filament\Resources\Sops\Pages\EditSop;
 use App\Filament\Resources\Sops\Pages\ListSops;
@@ -17,6 +19,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SopResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = Sop::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
@@ -65,11 +69,6 @@ class SopResource extends Resource
             'edit' => EditSop::route('/{record}/edit'),
             'view' => ViewSop::route('/{record}'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

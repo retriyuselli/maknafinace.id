@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\ProspectApps;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\ProspectApps\Pages\CreateProspectApp;
 use App\Filament\Resources\ProspectApps\Pages\EditProspectApp;
 use App\Filament\Resources\ProspectApps\Pages\ListProspectApps;
@@ -17,6 +19,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProspectAppResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = ProspectApp::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document';
@@ -67,11 +71,6 @@ class ProspectAppResource extends Resource
             'view' => ViewProspectApp::route('/{record}'),
             'edit' => EditProspectApp::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Industries;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\Industries\Pages\CreateIndustry;
 use App\Filament\Resources\Industries\Pages\EditIndustry;
 use App\Filament\Resources\Industries\Pages\ListIndustries;
@@ -14,6 +16,8 @@ use Filament\Tables\Table;
 
 class IndustryResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = Industry::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-briefcase';
@@ -46,11 +50,6 @@ class IndustryResource extends Resource
             'create' => CreateIndustry::route('/create'),
             'edit' => EditIndustry::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

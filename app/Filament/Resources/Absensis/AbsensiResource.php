@@ -11,6 +11,7 @@ use App\Models\Absensi;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class AbsensiResource extends Resource
 {
@@ -27,6 +28,13 @@ class AbsensiResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Absensi';
 
     protected static ?int $navigationSort = 1;
+
+    public static function getEloquentQuery(): Builder
+    {
+        // Hanya karyawan Office (Radio Office -> Office di UserForm)
+        return parent::getEloquentQuery()
+            ->whereHas('user', fn (Builder $query) => $query->where('work_type', 'office'));
+    }
 
     public static function form(Schema $schema): Schema
     {

@@ -1,6 +1,6 @@
 @php
-    $initialLat = (float) ($get('lintang') ?: -6.2000000);
-    $initialLng = (float) ($get('bujur') ?: 106.8166660);
+    $initialLat = (float) ($get('lintang') ?: -2.9909340);
+    $initialLng = (float) ($get('bujur') ?: 104.7565540);
     $initialRadius = (int) ($get('radius_meter') ?: 150);
 @endphp
 

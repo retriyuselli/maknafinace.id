@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\ChartOfAccounts;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\ChartOfAccounts\Pages\CreateChartOfAccount;
 use App\Filament\Resources\ChartOfAccounts\Pages\EditChartOfAccount;
 use App\Filament\Resources\ChartOfAccounts\Pages\ListChartOfAccounts;
@@ -16,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ChartOfAccountResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = ChartOfAccount::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-folder-open';
@@ -59,11 +63,6 @@ class ChartOfAccountResource extends Resource
             'create' => CreateChartOfAccount::route('/create'),
             'edit' => EditChartOfAccount::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

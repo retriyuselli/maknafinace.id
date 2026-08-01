@@ -21,10 +21,15 @@ class AbsensiForm
                     ->schema([
                         Select::make('user_id')
                             ->label('Karyawan')
-                            ->relationship('user', 'name')
+                            ->relationship(
+                                'user',
+                                'name',
+                                fn ($query) => $query->where('work_type', 'office')->orderBy('name'),
+                            )
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->helperText('Hanya karyawan dengan tipe kerja Office.'),
                         DatePicker::make('tanggal')
                             ->label('Tanggal')
                             ->required()

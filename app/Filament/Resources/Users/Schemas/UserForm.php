@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Users\Schemas;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -137,6 +138,18 @@ class UserForm
                                                     ->required(),
                                             ]),
 
+                                        Radio::make('work_type')
+                                            ->label('Office')
+                                            ->options([
+                                                'office' => 'Office',
+                                                'remote' => 'Remote',
+                                            ])
+                                            ->default('office')
+                                            ->inline()
+                                            ->required()
+                                            ->helperText('Pilih tipe kerja karyawan: Office atau Remote.')
+                                            ->columnSpanFull(),
+
                                         Textarea::make('address')
                                             ->label('Alamat')
                                             ->maxLength(500)
@@ -167,6 +180,22 @@ class UserForm
                                                     ->minValue(0)
                                                     ->maxValue(365)
                                                     ->helperText('Jumlah hari cuti yang diberikan per tahun (default: 12 hari)'),
+
+                                                TextInput::make('gaji_pokok_base')
+                                                    ->label('Gaji Pokok Base')
+                                                    ->numeric()
+                                                    ->prefix('Rp')
+                                                    ->default(0)
+                                                    ->minValue(0)
+                                                    ->helperText('Nilai dasar gaji pokok untuk usulan payroll'),
+
+                                                TextInput::make('tunjangan_base')
+                                                    ->label('Tunjangan Base')
+                                                    ->numeric()
+                                                    ->prefix('Rp')
+                                                    ->default(0)
+                                                    ->minValue(0)
+                                                    ->helperText('Nilai dasar tunjangan untuk usulan payroll'),
                                             ]),
                                     ]),
 

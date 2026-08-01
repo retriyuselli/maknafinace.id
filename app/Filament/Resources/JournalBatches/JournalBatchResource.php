@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\JournalBatches;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\JournalBatches\Pages\CreateJournalBatch;
 use App\Filament\Resources\JournalBatches\Pages\EditJournalBatch;
 use App\Filament\Resources\JournalBatches\Pages\ListJournalBatches;
@@ -17,6 +19,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class JournalBatchResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = JournalBatch::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard';
@@ -64,11 +68,6 @@ class JournalBatchResource extends Resource
             'create' => CreateJournalBatch::route('/create'),
             'edit' => EditJournalBatch::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

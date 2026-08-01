@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\CompanyLogos;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\CompanyLogos\Pages\CreateCompanyLogo;
 use App\Filament\Resources\CompanyLogos\Pages\EditCompanyLogo;
 use App\Filament\Resources\CompanyLogos\Pages\ListCompanyLogos;
@@ -14,6 +16,8 @@ use Filament\Tables\Table;
 
 class CompanyLogoResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = CompanyLogo::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office';
@@ -48,10 +52,5 @@ class CompanyLogoResource extends Resource
             'create' => CreateCompanyLogo::route('/create'),
             'edit' => EditCompanyLogo::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
     }
 }

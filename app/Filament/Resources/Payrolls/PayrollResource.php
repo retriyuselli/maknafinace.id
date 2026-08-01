@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Payrolls;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\Payrolls\Pages\CreatePayroll;
 use App\Filament\Resources\Payrolls\Pages\EditPayroll;
 use App\Filament\Resources\Payrolls\Pages\ListPayrolls;
@@ -17,6 +19,8 @@ use Filament\Tables\Table;
 
 class PayrollResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = Payroll::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
@@ -56,11 +60,6 @@ class PayrollResource extends Resource
     public static function getNavigationBadgeTooltip(): ?string
     {
         return 'Total payroll records';
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
     }
 
     protected static string|\UnitEnum|null $navigationGroup = 'SDM';

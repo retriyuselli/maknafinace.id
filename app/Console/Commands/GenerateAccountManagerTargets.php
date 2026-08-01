@@ -18,6 +18,7 @@ class GenerateAccountManagerTargets extends Command
     protected $signature = 'targets:generate 
                             {--update : Update existing targets with latest achieved amounts}
                             {--year= : Generate targets for specific year (default: current year)}
+                            {--user-id= : Limit generation to a specific Account Manager user ID}
                             {--auto-12-months : Generate targets for all 12 months of the year}';
 
     /**
@@ -39,10 +40,15 @@ class GenerateAccountManagerTargets extends Command
             return $this->generateTwelveMonthsTargets();
         }
 
-        // Get all Account Managers who have orders
+        $userId = $this->option('user-id') ? (int) $this->option('user-id') : null;
+
+        // Get Account Managers who have orders (optionally scoped to one user)
         $accountManagers = User::whereHas('roles', function ($query) {
             $query->where('name', 'Account Manager');
-        })->whereHas('orders')->get();
+        })
+            ->whereHas('orders')
+            ->when($userId, fn ($q) => $q->whereKey($userId))
+            ->get();
 
         $this->info("Found {$accountManagers->count()} Account Managers with orders");
 
@@ -55,6 +61,7 @@ class GenerateAccountManagerTargets extends Command
             ->whereHas('user.roles', function ($query) {
                 $query->where('name', 'Account Manager');
             })
+            ->when($userId, fn ($q) => $q->where('user_id', $userId))
             ->groupBy('year', 'month', 'user_id')
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
@@ -173,18 +180,24 @@ class GenerateAccountManagerTargets extends Command
         $year = $this->option('year') ?? date('Y');
         $this->info("📅 Generating targets for all 12 months of year {$year}...");
 
-        // Get all Account Managers
+        $userId = $this->option('user-id') ? (int) $this->option('user-id') : null;
+
+        // Get Account Managers (optionally scoped to one user)
         $accountManagers = User::whereHas('roles', function ($query) {
             $query->where('name', 'Account Manager');
-        })->get();
+        })
+            ->when($userId, fn ($q) => $q->whereKey($userId))
+            ->get();
 
         if ($accountManagers->isEmpty()) {
-            $this->warn('⚠️  No Account Managers found!');
+            $this->warn($userId
+                ? "⚠️  User #{$userId} bukan Account Manager / tidak ditemukan."
+                : '⚠️  No Account Managers found!');
 
             return Command::FAILURE;
         }
 
-        $this->info("Found {$accountManagers->count()} Account Managers");
+        $this->info("Found {$accountManagers->count()} Account Managers".($userId ? " (user #{$userId})" : ''));
 
         $created = 0;
         $updated = 0;

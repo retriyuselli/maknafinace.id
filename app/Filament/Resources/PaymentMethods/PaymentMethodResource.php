@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\PaymentMethods;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\PaymentMethods\Pages\CreatePaymentMethod;
 use App\Filament\Resources\PaymentMethods\Pages\EditPaymentMethod;
 use App\Filament\Resources\PaymentMethods\Pages\ListPaymentMethods;
@@ -17,6 +19,8 @@ use Illuminate\Support\Facades\Gate;
 
 class PaymentMethodResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = PaymentMethod::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-credit-card';
@@ -68,11 +72,6 @@ class PaymentMethodResource extends Resource
         }
 
         return Gate::allows('ViewAny:PaymentMethod');
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

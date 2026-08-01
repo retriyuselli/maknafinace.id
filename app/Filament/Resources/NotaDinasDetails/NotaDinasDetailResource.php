@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\NotaDinasDetails;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\NotaDinasDetails\Pages\CreateNotaDinasDetail;
 use App\Filament\Resources\NotaDinasDetails\Pages\EditNotaDinasDetail;
 use App\Filament\Resources\NotaDinasDetails\Pages\ListNotaDinasDetails;
@@ -16,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class NotaDinasDetailResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = NotaDinasDetail::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-list-bullet';
@@ -69,11 +73,6 @@ class NotaDinasDetailResource extends Resource
             'edit' => EditNotaDinasDetail::route('/{record}/edit'),
             'current-month' => Pages\CurrentMonthReport::route('/current-month'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

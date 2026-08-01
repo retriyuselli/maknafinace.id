@@ -37,11 +37,12 @@ class AbsensiSeeder extends Seeder
         LokasiAbsensi::query()->updateOrCreate(
             ['nama' => 'Kantor HQ'],
             [
-                'lintang' => -6.2000000,
-                'bujur' => 106.8166660,
+                // Default map Palembang (Jl. Sintraman). Verifikasi di peta Filament sebelum produksi.
+                'lintang' => -2.9909340,
+                'bujur' => 104.7565540,
                 'radius_meter' => 150,
                 'aktif' => true,
-                'alamat' => 'Ganti dengan alamat kantor sebenarnya',
+                'alamat' => 'Jl. Sintraman Jaya I No. 2148, 20 Ilir D II, Kec. Kemuning, Kota Palembang, Sumatera Selatan 30137',
                 'urutan' => 1,
             ]
         );

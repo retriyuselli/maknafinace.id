@@ -91,6 +91,12 @@
             </div>
         @endif
 
+        @if ($pengaturan?->wajib_pulang && $canPulang)
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Anda sudah absen masuk tapi belum absen pulang. Absen pulang wajib sebelum hari kerja berakhir.
+            </div>
+        @endif
+
         @if ($errors->any())
             <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                 <div class="font-semibold">Absensi belum berhasil diproses:</div>

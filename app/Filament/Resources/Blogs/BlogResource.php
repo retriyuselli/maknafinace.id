@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Blogs;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\Blogs\Pages\CreateBlog;
 use App\Filament\Resources\Blogs\Pages\EditBlog;
 use App\Filament\Resources\Blogs\Pages\ListBlogs;
@@ -17,6 +19,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class BlogResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = Blog::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-newspaper';
@@ -62,11 +66,6 @@ class BlogResource extends Resource
             'create' => CreateBlog::route('/create'),
             'edit' => EditBlog::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
     }
 
     public static function getNavigationBadgeColor(): string|array|null

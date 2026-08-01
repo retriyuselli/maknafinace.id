@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\DataPribadis;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\DataPribadis\Pages\CreateDataPribadi;
 use App\Filament\Resources\DataPribadis\Pages\EditDataPribadi;
 use App\Filament\Resources\DataPribadis\Pages\ListDataPribadis;
@@ -16,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class DataPribadiResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = DataPribadi::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-identification';
@@ -60,11 +64,6 @@ class DataPribadiResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
     }
 
     public static function getNavigationBadgeColor(): string|array|null

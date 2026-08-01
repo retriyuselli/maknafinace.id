@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\FixedAssets;
 
+use App\Filament\Resources\Concerns\CachesNavigationBadge;
+
 use App\Filament\Resources\FixedAssets\Pages\CreateFixedAsset;
 use App\Filament\Resources\FixedAssets\Pages\DepreciationHistory;
 use App\Filament\Resources\FixedAssets\Pages\EditFixedAsset;
@@ -16,6 +18,8 @@ use Filament\Tables\Table;
 
 class FixedAssetResource extends Resource
 {
+    use CachesNavigationBadge;
+
     protected static ?string $model = FixedAsset::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
@@ -52,11 +56,6 @@ class FixedAssetResource extends Resource
             'edit' => EditFixedAsset::route('/{record}/edit'),
             'depreciation-history' => DepreciationHistory::route('/{record}/depreciation-history'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
     }
 
     public static function getNavigationBadgeTooltip(): ?string

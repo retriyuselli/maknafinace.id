@@ -50,6 +50,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         'last_working_date',
         'expire_date',
         'department',
+        'work_type',
         'annual_leave_quota',
         'status',
         'gaji_pokok_base',
@@ -413,6 +414,11 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     public function payrolls(): HasMany
     {
         return $this->hasMany(Payroll::class);
+    }
+
+    public function latestPayroll(): HasOne
+    {
+        return $this->hasOne(Payroll::class)->latestOfMany();
     }
 
     public function leaveRequests(): HasMany
