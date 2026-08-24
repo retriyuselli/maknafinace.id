@@ -70,6 +70,7 @@
                 Download Invoice
             </a>
 
+            @if ($order->status === \App\Enums\OrderStatus::Done)
             <a href="{{ route('orders.profit_loss.preview', $order) }}" target="_blank"
                 class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 border border-transparent rounded-md font-semibold text-sm text-white hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -79,6 +80,7 @@
                 </svg>
                 Laporan L/R
             </a>
+            @endif
         </div>
 
         @php

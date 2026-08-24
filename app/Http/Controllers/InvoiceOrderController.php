@@ -196,6 +196,7 @@ class InvoiceOrderController extends Controller
     public function previewProfitLoss(Order $order)
     {
         Gate::authorize('view', $order);
+        abort_unless($order->status === \App\Enums\OrderStatus::Done, 403, 'Laporan L/R hanya tersedia untuk pesanan Done.');
 
         return view('orders.profit_loss_stream', [
             'order' => $order,
@@ -225,6 +226,7 @@ class InvoiceOrderController extends Controller
     protected function makeProfitLossPdf(Order $order)
     {
         Gate::authorize('view', $order);
+        abort_unless($order->status === \App\Enums\OrderStatus::Done, 403, 'Laporan L/R hanya tersedia untuk pesanan Done.');
 
         @ini_set('max_execution_time', '300');
         @ini_set('memory_limit', '512M');
