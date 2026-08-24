@@ -37,6 +37,7 @@
         border: 0;
         border-radius: 14px;
         padding: 14px;
+        font-family: 'Poppins', system-ui, sans-serif;
         font-weight: 700;
         color: #fff;
         margin-top: 12px;
@@ -44,6 +45,11 @@
     .clock-btn.is-in { background: #059669; }
     .clock-btn.is-out { background: #2563eb; }
     .clock-btn:disabled { background: #d1d5db; color: #6b7280; }
+    .clock-ghost,
+    .clock-panel input,
+    .clock-panel button {
+        font-family: 'Poppins', system-ui, sans-serif;
+    }
     .clock-ghost {
         width: 100%;
         margin-top: 8px;
@@ -91,6 +97,7 @@
         class="clock-panel"
         data-absensi-form
         data-wajib-lokasi="{{ $wajibLokasi ? '1' : '0' }}"
+        data-wajib-foto="{{ $wajibFoto ? '1' : '0' }}"
         data-foto-max-kb="{{ $maxFotoKb }}">
         @csrf
         <input type="hidden" name="redirect_to" value="absen.home">
@@ -111,10 +118,8 @@
                 <button type="button" id="camera-capture-button" class="clock-ghost hidden">Ambil Selfie</button>
                 <button type="button" id="camera-retake-button" class="clock-ghost hidden">Ambil Ulang</button>
             </div>
-            <p id="camera-status" style="font-size:12px;color:#6b7280;margin:8px 0 0;">Aktifkan kamera atau unggah foto.</p>
-            <input id="foto" name="foto" type="file" accept="image/jpeg,image/jpg,image/png,image/webp" capture="user"
-                style="margin-top:10px;width:100%;font-size:13px;"
-                @if ($wajibFoto) required @endif>
+            <p id="camera-status" style="font-size:12px;color:#6b7280;margin:8px 0 0;">Aktifkan kamera, lalu ambil selfie.</p>
+            <input id="foto" name="foto" type="file" accept="image/jpeg,image/jpg,image/png,image/webp" class="hidden">
         </div>
 
         <button type="submit" class="clock-btn {{ $aksi === 'masuk' ? 'is-in' : 'is-out' }}">
@@ -136,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusElement = document.getElementById('absensi-location-status');
     const refreshButton = document.getElementById('absensi-refresh-location');
     const wajibLokasi = form.dataset.wajibLokasi === '1';
+    const wajibFoto = form.dataset.wajibFoto === '1';
     const fotoInput = document.getElementById('foto');
     const cameraStatus = document.getElementById('camera-status');
     const videoElement = document.getElementById('camera-stream');
@@ -250,17 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     };
 
-    fotoInput.addEventListener('change', () => {
-        const file = fotoInput.files?.[0];
-        if (file && validateImageFile(file)) {
-            revokePreviewUrl();
-            currentPreviewUrl = URL.createObjectURL(file);
-            imagePreviewElement.src = currentPreviewUrl;
-            imagePreviewElement.classList.remove('hidden');
-            setCameraStatus('File foto dipilih.', 'success');
-            stopCamera();
-        }
-    });
     startCameraButton.addEventListener('click', startCamera);
     captureCameraButton.addEventListener('click', capturePhoto);
     retakeCameraButton.addEventListener('click', async () => {
@@ -274,6 +269,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (wajibLokasi && (!lintangInput.value || !bujurInput.value)) {
             event.preventDefault();
             setStatus('Lokasi wajib diambil sebelum absensi diproses.', 'error');
+            return;
+        }
+        if (wajibFoto && (!fotoInput.files || !fotoInput.files.length)) {
+            event.preventDefault();
+            setCameraStatus('Ambil selfie terlebih dahulu sebelum mengirim absensi.', 'error');
         }
     });
     window.addEventListener('beforeunload', () => {

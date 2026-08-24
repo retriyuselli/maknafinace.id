@@ -23,8 +23,10 @@
 
         * { box-sizing: border-box; }
         html, body { margin: 0; min-height: 100%; }
+        html, body, button, input, select, textarea {
+            font-family: 'Poppins', system-ui, sans-serif;
+        }
         body {
-            font-family: Poppins, system-ui, sans-serif;
             background: var(--absen-bg);
             color: var(--absen-ink);
         }
