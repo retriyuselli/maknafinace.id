@@ -3,19 +3,6 @@
 @section('title', 'Lainnya')
 
 @section('content')
-    <header class="absen-top">
-        <a href="{{ route('absen.home') }}" class="absen-brand">
-            <img src="{{ route('brand.logo') }}" alt="Makna">
-            <div>
-                <div class="absen-brand-name">MAKNA</div>
-                <div class="absen-brand-sub">WEDDING &amp; EVENT PLANNER</div>
-            </div>
-        </a>
-        <a href="{{ route('profile') }}" class="absen-avatar" aria-label="Profil">
-            <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12zm0 2c-4.2 0-8 2.1-8 4.7V21h16v-2.3c0-2.6-3.8-4.7-8-4.7z"/></svg>
-        </a>
-    </header>
-
     <div class="absen-hello">
         <h1>More</h1>
         <p>{{ $user->name }}</p>

@@ -72,20 +72,21 @@
             letter-spacing: -0.04em;
         }
 
-        .absen-brand-name {
-            font-size: 18px;
+        .absen-wofins {
+            font-size: 22px;
             font-weight: 800;
-            letter-spacing: 0.04em;
+            letter-spacing: -0.04em;
             line-height: 1;
-            color: #111827;
+            color: #0b1f3a;
+            text-transform: lowercase;
         }
 
-        .absen-brand-sub {
-            margin-top: 4px;
-            font-size: 8px;
-            letter-spacing: 0.08em;
-            color: #6b7280;
-            font-weight: 600;
+        .absen-logo-fallback {
+            display: none;
+            height: 28px;
+            width: auto;
+            max-width: 140px;
+            object-fit: contain;
         }
 
         .absen-avatar {
@@ -93,10 +94,17 @@
             height: 40px;
             border-radius: 999px;
             background: #e5e7eb;
-            color: #9ca3af;
+            overflow: hidden;
             display: grid;
             place-items: center;
             text-decoration: none;
+        }
+
+        .absen-avatar img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            display: block;
         }
 
         .absen-hello {
@@ -198,11 +206,72 @@
             border-radius: 999px;
             z-index: 20;
         }
+
+        .absen-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            z-index: 40;
+        }
+
+        .absen-modal {
+            width: min(340px, 100%);
+            background: #fff;
+            border-radius: 18px;
+            padding: 22px 18px 16px;
+            text-align: center;
+            font-family: 'Poppins', system-ui, sans-serif;
+        }
+
+        .absen-modal p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #9f1239;
+            font-weight: 500;
+        }
+
+        .absen-modal button {
+            margin-top: 16px;
+            width: 100%;
+            border: 0;
+            border-radius: 12px;
+            padding: 12px;
+            background: #0b1f3a;
+            color: #fff;
+            font-family: inherit;
+            font-weight: 700;
+        }
     </style>
     @yield('styles')
 </head>
 <body>
-    <div class="absen-app" x-data="{ toast: '' }">
+    @php
+        $absenUser = auth()->user();
+        $absenAvatar = $absenUser?->avatar_url
+            ? \Illuminate\Support\Facades\Storage::url($absenUser->avatar_url)
+            : 'https://ui-avatars.com/api/?name='.urlencode($absenUser->name ?? 'User').'&background=9aa7e6&color=fff&size=128';
+        $absenAvatarFallback = 'https://ui-avatars.com/api/?name='.urlencode($absenUser->name ?? 'User').'&background=9aa7e6&color=fff&size=128';
+    @endphp
+    <div class="absen-app" x-data="{
+        toast: '',
+        alertOpen: {{ ($errors->any() || session('error')) ? 'true' : 'false' }},
+        alertText: {{ \Illuminate\Support\Js::from($errors->any() ? $errors->first() : (session('error') ?? '')) }}
+    }">
+        <header class="absen-top">
+            <a href="{{ route('absen.home') }}" class="absen-brand" aria-label="wofins">
+                <span class="absen-wofins">wofins</span>
+                <img src="{{ route('brand.logo') }}" alt="wofins" class="absen-logo-fallback">
+            </a>
+            <a href="{{ route('profile') }}" class="absen-avatar" aria-label="Profil">
+                <img src="{{ $absenAvatar }}" alt="{{ $absenUser->name ?? 'User' }}"
+                    onerror="this.onerror=null;this.src='{{ $absenAvatarFallback }}';">
+            </a>
+        </header>
+
         @yield('content')
 
         <nav class="absen-nav">
@@ -218,7 +287,26 @@
         </nav>
 
         <div class="absen-toast" x-show="toast" x-cloak x-text="toast" x-transition></div>
+
+        <div class="absen-modal-backdrop" x-show="alertOpen && alertText" x-cloak @click.self="alertOpen = false">
+            <div class="absen-modal">
+                <p x-text="alertText"></p>
+                <button type="button" @click="alertOpen = false">OK</button>
+            </div>
+        </div>
     </div>
     @stack('scripts')
+    <script>
+        document.fonts.ready.then(function () {
+            var wordmark = document.querySelector('.absen-wofins');
+            var logo = document.querySelector('.absen-logo-fallback');
+            if (!wordmark || !logo) return;
+            var ok = document.fonts.check('800 22px Poppins') || document.fonts.check('800 22px "Poppins"');
+            if (!ok) {
+                wordmark.style.display = 'none';
+                logo.style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>

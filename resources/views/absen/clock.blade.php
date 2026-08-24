@@ -64,26 +64,12 @@
 @endsection
 
 @section('content')
-    <header class="absen-top">
-        <a href="{{ route('absen.home') }}" class="absen-brand">
-            <img src="{{ route('brand.logo') }}" alt="Makna">
-            <div>
-                <div class="absen-brand-name">{{ $aksi === 'masuk' ? 'CLOCK IN' : 'CLOCK OUT' }}</div>
-                <div class="absen-brand-sub">ABSEN {{ $aksi === 'masuk' ? 'MASUK' : 'PULANG' }}</div>
-            </div>
-        </a>
-        <a href="{{ route('absen.home') }}" class="absen-avatar" aria-label="Kembali">←</a>
-    </header>
+    <p style="margin:12px 0 8px;font-size:13px;font-weight:700;color:#0b1f3a;">
+        {{ $aksi === 'masuk' ? 'Clock In · Absen Masuk' : 'Clock Out · Absen Pulang' }}
+    </p>
 
     @if (session('success'))
         <div class="clock-panel" style="margin-bottom:12px;color:#047857;">{{ session('success') }}</div>
-    @endif
-    @if ($errors->any())
-        <div class="clock-panel" style="margin-bottom:12px;color:#be123c;">
-            @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
-        </div>
     @endif
 
     <div class="clock-meta">
