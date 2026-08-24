@@ -26,6 +26,7 @@ use App\Http\Controllers\LaporanKeuanganController;
 use App\Http\Controllers\NotaDinasPdfController;
 use App\Http\Controllers\PayrollSlipController;
 use App\Http\Controllers\ProductDisplayController;
+use App\Http\Controllers\Absen\HomeController as AbsenHomeController;
 use App\Http\Controllers\Profile\AbsensiController as ProfileAbsensiController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Profile\AdminToolsController;
@@ -367,6 +368,9 @@ Route::middleware($authNoStore)->group(function () {
     Route::get('/profile/absensi/laporan/pdf', [ProfileAbsensiController::class, 'laporanPdf'])
         ->name('profile.absensi.laporan.pdf')
         ->middleware('throttle:20,1');
+
+    Route::get('/absen', [AbsenHomeController::class, 'home'])->name('absen.home');
+    Route::get('/absen/lainnya', [AbsenHomeController::class, 'more'])->name('absen.more');
     Route::get('/profile/compensation', [ProfileController::class, 'compensation'])->name('profile.compensation');
     Route::get('/profile/schedule', [ProfileController::class, 'schedule'])->name('profile.schedule');
     Route::get('/profile/laporan-keuangan', [ProfileController::class, 'financialReport'])
