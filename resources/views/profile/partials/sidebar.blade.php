@@ -3,24 +3,24 @@
     $isSuperAdmin = $profileUser?->hasRole('super_admin') ?? false;
 @endphp
 
-<div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden lg:sticky lg:top-24">
-    <div class="px-5 py-4 bg-indigo-700 bg-linear-to-r from-blue-600 to-indigo-700">
+<div class="bg-white rounded-xl shadow-lg border overflow-hidden lg:sticky lg:top-24" style="border-color:#e6e2d9;">
+    <div class="px-5 py-4" style="background: linear-gradient(135deg, #0b1f3a 0%, #14335a 100%);">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-white/20 overflow-hidden flex items-center justify-center">
                 @if($profileUser?->avatar_url)
                     <img class="w-10 h-10 object-cover"
                         src="{{ Storage::url($profileUser->avatar_url) }}"
                         alt="Profile {{ $profileUser->name }}"
-                        onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($profileUser->name) }}&color=ffffff&background=1e40af&size=128&font-size=0.4'">
+                        onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($profileUser->name) }}&color=ffffff&background=0b1f3a&size=128&font-size=0.4'">
                 @else
                     <img class="w-10 h-10 object-cover"
-                        src="https://ui-avatars.com/api/?name={{ urlencode($profileUser->name) }}&color=ffffff&background=1e40af&size=128&font-size=0.4"
+                        src="https://ui-avatars.com/api/?name={{ urlencode($profileUser->name) }}&color=ffffff&background=0b1f3a&size=128&font-size=0.4"
                         alt="Profile {{ $profileUser->name }}">
                 @endif
             </div>
             <div class="min-w-0">
                 <div class="text-sm font-semibold text-white truncate">{{ $profileUser->name }}</div>
-                <div class="text-xs text-blue-100 truncate">{{ $profileUser->email }}</div>
+                <div class="text-xs truncate" style="color:#e8d48b;">{{ $profileUser->email }}</div>
             </div>
         </div>
     </div>
@@ -35,7 +35,7 @@
         @endphp
 
         <a href="{{ route('profile') }}"
-            class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $overviewActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+            class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $overviewActive ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6h18M3 14h18M3 18h18" />
             </svg>
@@ -43,7 +43,7 @@
         </a>
 
         <a href="{{ route('absen.home') }}"
-            class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $absensiActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+            class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $absensiActive ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -51,7 +51,7 @@
         </a>
 
         <a href="{{ route('profile.compensation') }}"
-            class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $compensationActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+            class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $compensationActive ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l-2 1m12 12V6l-2 1M5 6h14" />
             </svg>
@@ -59,7 +59,7 @@
         </a>
 
         <a href="{{ route('profile.schedule') }}"
-            class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $scheduleActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+            class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $scheduleActive ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -68,7 +68,7 @@
 
         @if($isSuperAdmin)
             <a href="{{ route('profile.financial-report') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $financialReportActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $financialReportActive ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-10V6m0 12v-2M4 6h16M4 18h16" />
                 </svg>
@@ -127,7 +127,7 @@
 
             <div class="space-y-1">
                 <a href="{{ route('profile.admin-tools') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminTools ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminTools ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                     </svg>
@@ -135,7 +135,7 @@
                 </a>
 
                 <a href="{{ route('profile.admin-tools.users') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminUsers ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminUsers ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-4-4h-1m-4 6H2v-2a4 4 0 014-4h1m6-4a4 4 0 11-8 0 4 4 0 018 0zm8 4a4 4 0 10-4-4 4 4 0 004 4z" />
                     </svg>
@@ -143,7 +143,7 @@
                 </a>
 
                 <a href="{{ route('profile.admin-tools.roles') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminRoles ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminRoles ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5s-3 1.343-3 3 1.343 3 3 3zm0 0v3m0 3h.01M6.938 6.938l1.414 1.414M15.648 15.648l1.414 1.414M5 12h2M17 12h2M6.938 17.062l1.414-1.414M15.648 8.352l1.414-1.414" />
                     </svg>
@@ -151,7 +151,7 @@
                 </a>
 
                 <a href="{{ route('profile.admin-tools.company') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminCompany ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminCompany ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M4 21V7a2 2 0 012-2h3V3h6v2h3a2 2 0 012 2v14M9 21v-6h6v6" />
                     </svg>
@@ -159,7 +159,7 @@
                 </a>
 
                 <a href="{{ route('profile.admin-tools.branding') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminBranding ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminBranding ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4-4a3 3 0 014 0l1 1a3 3 0 004 0l3-3M4 6h16v12H4V6z" />
                     </svg>
@@ -167,7 +167,7 @@
                 </a>
 
                 <a href="{{ route('profile.admin-tools.sops') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminSops ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminSops ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m2 8H7a2 2 0 01-2-2V6a2 2 0 012-2h6l4 4v12a2 2 0 01-2 2z" />
                     </svg>
@@ -175,7 +175,7 @@
                 </a>
 
                 <a href="{{ route('profile.admin-tools.projects') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminProjects ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminProjects ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
@@ -183,7 +183,7 @@
                 </a>
 
                 <a href="{{ route('profile.admin-tools.nota-dinas') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminNotaDinas ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminNotaDinas ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10M7 11h10M7 15h6M5 3h10l4 4v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
                     </svg>
@@ -191,7 +191,7 @@
                 </a>
 
                 <a href="{{ route('profile.admin-tools.bank-statements') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminBankStatements ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminBankStatements ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H7a2 2 0 00-2 2v2m12 0H5m12 0a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-8a2 2 0 012-2" />
                     </svg>
@@ -199,7 +199,7 @@
                 </a>
 
                 <a href="{{ route('profile.admin-tools.documentations') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminDocumentations ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminDocumentations ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10M7 11h10M7 15h6M5 3h10l4 4v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
                     </svg>
@@ -207,7 +207,7 @@
                 </a>
 
                 <a href="{{ route('profile.admin-tools.document-categories') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminDocumentCategories ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminDocumentCategories ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h10" />
                     </svg>
@@ -215,7 +215,7 @@
                 </a>
 
                 <a href="{{ route('profile.admin-tools.help-center') }}"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminHelpCenter ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $isAdminHelpCenter ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
                     <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10a4 4 0 118 0c0 2-2 3-2 3m-2 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
                     </svg>

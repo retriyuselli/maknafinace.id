@@ -9,7 +9,7 @@
     $profileUser = $user ?? Auth::user();
 @endphp
 
-<div class="min-h-screen bg-gray-50 py-8" x-data="{ sidebarOpen: false }">
+<div class="min-h-screen py-8" x-data="{ sidebarOpen: false }" style="background:#f7f4ee; font-family:'Poppins',sans-serif;">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @if(session('success'))
             <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
@@ -18,8 +18,8 @@
         @endif
 
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">@yield('profile-page-title', 'Dashboard Profil')</h1>
-            <p class="text-gray-600 mt-2">@yield('profile-page-subtitle', 'Kelola informasi akun dan data HR Anda')</p>
+            <h1 class="text-3xl font-bold" style="color:#0b1f3a;">@yield('profile-page-title', 'Dashboard Profil')</h1>
+            <p class="mt-2" style="color:#5c6675;">@yield('profile-page-subtitle', 'Kelola informasi akun dan data HR Anda')</p>
         </div>
 
         <div class="lg:hidden mb-6">

@@ -4,7 +4,7 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('home') }}" class="flex items-center space-x-2">
-                        <img class="h-4 md:h-6 w-auto" src="{{ route('brand.logo') }}" alt="Logo">
+                        <span class="text-xl font-extrabold tracking-tight" style="font-family:'Poppins',sans-serif;color:#0b1f3a;">wofins</span>
                     </a>
                 </div>
 
@@ -13,15 +13,17 @@
                     <div class="ml-2 flex items-center space-x-4">
                         @auth
                             <a href="{{ route('profile') }}"
-                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('profile') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                class="px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('profile') || request()->routeIs('profile.*') && !request()->routeIs('profile.absensi*') ? 'text-[#0b1f3a] font-semibold' : 'text-gray-700 hover:text-[#0b1f3a]' }}"
+                                style="{{ request()->routeIs('profile') ? 'background:rgba(201,162,39,0.16)' : '' }}">
                                 Dashboard
                             </a>
                             <a href="{{ route('absen.home') }}"
-                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('absen.*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                class="px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('absen.*') ? 'text-[#0b1f3a] font-semibold' : 'text-gray-700 hover:text-[#0b1f3a]' }}"
+                                style="{{ request()->routeIs('absen.*') ? 'background:rgba(201,162,39,0.16)' : '' }}">
                                 Absensi
                             </a>
                             <a href="{{ route('dashboard') }}"
-                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('dashboard') ? 'text-blue-600 bg-blue-50' : '' }}">
+                                class="px-3 py-2 rounded-md text-sm font-medium transition duration-300 text-gray-700 hover:text-[#0b1f3a]">
                                 Admin
                             </a>
                         @endauth
@@ -79,12 +81,12 @@
                         <!-- Dashboard Dropdown -->
                         <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
                             <button @click="open = !open"
-                                class="flex items-center space-x-2 text-gray-700 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full">
+                                class="flex items-center space-x-2 text-gray-700 hover:text-[#0b1f3a] focus:outline-none focus:ring-2 focus:ring-[#c9a227] focus:ring-offset-2 rounded-full">
                                 <div class="relative">
-                                    <img class="h-8 w-8 rounded-full object-cover border-2 border-gray-300 shadow-sm hover:border-blue-400 transition-all duration-200"
-                                        src="{{ Auth::user()->avatar_url ? Storage::url(Auth::user()->avatar_url) : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) . '&color=ffffff&background=1e40af&size=128' }}"
+                                    <img class="h-8 w-8 rounded-full object-cover border-2 border-gray-300 shadow-sm hover:border-[#c9a227] transition-all duration-200"
+                                        src="{{ Auth::user()->avatar_url ? Storage::url(Auth::user()->avatar_url) : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) . '&color=ffffff&background=0b1f3a&size=128' }}"
                                         alt="Dashboard {{ Auth::user()->name }}"
-                                        onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&color=ffffff&background=1e40af&size=128'">
+                                        onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&color=ffffff&background=0b1f3a&size=128'">
                                     <div
                                         class="absolute bottom-0 right-0 h-3 w-3 bg-green-400 border-2 border-white rounded-full">
                                     </div>
@@ -187,11 +189,13 @@
                             <!-- Fitur Dropdown for Mobile -->
                             @auth
                                 <a href="{{ route('profile') }}"
-                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('profile') ? 'bg-blue-50 text-blue-600' : '' }}">Dashboard</a>
+                                    class="block px-4 py-2 text-gray-700 hover:bg-[#f7f4ee] {{ request()->routeIs('profile') ? 'font-semibold text-[#0b1f3a]' : '' }}"
+                                    style="{{ request()->routeIs('profile') ? 'background:rgba(201,162,39,0.16)' : '' }}">Dashboard</a>
                                 <a href="{{ route('absen.home') }}"
-                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('absen.*') ? 'bg-blue-50 text-blue-600' : '' }}">Absensi</a>
+                                    class="block px-4 py-2 text-gray-700 hover:bg-[#f7f4ee] {{ request()->routeIs('absen.*') ? 'font-semibold text-[#0b1f3a]' : '' }}"
+                                    style="{{ request()->routeIs('absen.*') ? 'background:rgba(201,162,39,0.16)' : '' }}">Absensi</a>
                                 <a href="{{ route('dashboard') }}"
-                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600' : '' }}">Admin Panel</a>
+                                    class="block px-4 py-2 text-gray-700 hover:bg-[#f7f4ee]">Admin Panel</a>
                             @endauth
 
                             @guest

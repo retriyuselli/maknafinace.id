@@ -50,7 +50,7 @@
                         </p>
                     </div>
                     <div class="text-center">
-                        <div class="text-3xl font-bold text-blue-600">{{ $daysUntilNextLeave }}</div>
+                        <div class="text-3xl font-bold text-[#c9a227]">{{ $daysUntilNextLeave }}</div>
                         <div class="text-xs font-medium text-blue-700">
                             {{ $daysUntilNextLeave }} hari tersisa
                         </div>
@@ -112,7 +112,7 @@
                                         <span class="text-[10px] font-medium text-gray-700">
                                             {{ (int) $leave->total_days }} hari
                                         </span>
-                                        <span class="text-[10px] text-right text-blue-600 bg-blue-50 px-2 py-1">
+                                        <span class="text-[10px] text-right text-[#0b1f3a] bg-[rgba(201,162,39,0.16)] px-2 py-1">
                                             dalam {{ $daysFromNow }} hari
                                         </span>
                                     </div>
@@ -230,7 +230,7 @@
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
             <h3 class="text-lg font-semibold text-blue-800 mb-4 flex items-center">
                 <div class="bg-blue-100 p-2  mr-3">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-[#c9a227]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>

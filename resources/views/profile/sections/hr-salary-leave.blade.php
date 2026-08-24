@@ -29,7 +29,7 @@
 <div class="mt-4 bg-white rounded-xl shadow-lg overflow-hidden" style="font-family: 'Poppins', sans-serif;">
     <div class="px-6 py-4 border-b border-gray-200">
         <h3 class="text-lg font-semibold text-gray-900 flex items-center" style="font-family: 'Poppins', sans-serif; font-weight: 600;">
-            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 mr-2 text-[#c9a227]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2V7a2 2 0 012-2h2a2 2 0 002 2v2a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 00-2 2h-2a2 2 0 00-2 2v6a2 2 0 01-2 2H9z"></path>
             </svg>
                 Kompensasi Karyawan & Manajemen Cuti {{ $currentYear }}
@@ -83,10 +83,10 @@
                                         <p class="text-2xl font-bold text-blue-800">
                                             {{ $latestPayroll->formatted_calculated_annual_salary_with_prefix }}
                                         </p>
-                                        <p class="text-xs text-blue-600 mt-1">Gaji Pokok + Tunjangan × 12</p>
+                                        <p class="text-xs text-[#c9a227] mt-1">Gaji Pokok + Tunjangan × 12</p>
                                     </div>
                                     <div class="p-3 bg-blue-100 rounded-full">
-                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-6 h-6 text-[#c9a227]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                                         </svg>
                                     </div>
