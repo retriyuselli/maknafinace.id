@@ -28,6 +28,7 @@
 
 <body class="font-sans bg-white transition-colors duration-300" style="font-family: 'Poppins', sans-serif;">
     @yield('content')
+    @stack('scripts')
 </body>
 
 </html>

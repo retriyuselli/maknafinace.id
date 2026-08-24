@@ -4,14 +4,11 @@
             <div class="lg:col-span-2">
                 <p class="text-2xl font-bold text-white tracking-wide">WOFINS</p>
                 <p class="mt-3 text-sm leading-relaxed text-white/65 max-w-xs">
-                    Wedding Organizer Financial Information System — kelola proyek, keuangan, HRIS, dan operasional dalam satu platform.
+                    Wedding Organizer Financial Information System — kelola proyek, keuangan, payroll, dan operasional dalam satu platform.
                 </p>
                 <div class="mt-5 flex items-center gap-3">
                     @foreach ([
                         ['fab fa-instagram', '#'],
-                        ['fab fa-facebook-f', '#'],
-                        ['fab fa-youtube', '#'],
-                        ['fab fa-linkedin-in', '#'],
                     ] as $social)
                         <a href="{{ $social[1] }}" class="w-9 h-9 rounded-full border border-white/25 inline-flex items-center justify-center text-white/80 hover:bg-white/10 hover:text-white">
                             <i class="{{ $social[0] }} text-sm"></i>
@@ -26,24 +23,24 @@
                     <li><a href="{{ route('fitur') }}" class="hover:text-white">Fitur</a></li>
                     <li><a href="{{ route('harga') }}" class="hover:text-white">Harga</a></li>
                     <li><a href="{{ route('docs.index') }}" class="hover:text-white">Docs</a></li>
-                    <li><a href="{{ route('home') }}#testimoni" class="hover:text-white">Keamanan</a></li>
+                    <li><a href="{{ route('keamanan') }}" class="hover:text-white">Keamanan</a></li>
                 </ul>
             </div>
 
             <div>
                 <p class="font-bold text-white mb-3">Solusi</p>
                 <ul class="space-y-2 text-sm">
-                    <li><a href="{{ route('home') }}#keunggulan" class="hover:text-white">Untuk Owner</a></li>
-                    <li><a href="{{ route('fitur') }}" class="hover:text-white">Untuk Finance</a></li>
-                    <li><a href="{{ route('fitur') }}" class="hover:text-white">Untuk HRD</a></li>
-                    <li><a href="{{ route('fitur') }}" class="hover:text-white">Untuk Tim Operasional</a></li>
+                    <li><a href="{{ route('solusi.show', 'owner') }}" class="hover:text-white">Untuk Owner</a></li>
+                    <li><a href="{{ route('solusi.show', 'finance') }}" class="hover:text-white">Untuk Finance</a></li>
+                    <li><a href="{{ route('solusi.show', 'hrd') }}" class="hover:text-white">Untuk HRD</a></li>
+                    <li><a href="{{ route('solusi.show', 'operasional') }}" class="hover:text-white">Untuk Tim Operasional</a></li>
                 </ul>
             </div>
 
             <div>
                 <p class="font-bold text-white mb-3">Perusahaan</p>
                 <ul class="space-y-2 text-sm">
-                    <li><a href="{{ route('home') }}" class="hover:text-white">Tentang Kami</a></li>
+                    <li><a href="{{ route('tentang') }}" class="hover:text-white">Tentang Kami</a></li>
                     <li><a href="{{ route('kontak') }}" class="hover:text-white">Kontak Kami</a></li>
                     <li><a href="{{ route('docs.index') }}" class="hover:text-white">Dokumentasi</a></li>
                 </ul>

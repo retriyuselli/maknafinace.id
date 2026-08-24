@@ -18,6 +18,7 @@
         padding: 0.5rem 0.75rem;
         border-radius: 0.5rem;
         color: var(--wf-muted);
+        font-weight: 600;
         transition: color .2s ease;
     }
 
@@ -124,21 +125,16 @@
         mobileFiturOpen: {{ $isFitur ? 'true' : 'false' }},
         activeNav: @js($initialNav),
         isHome: @js($isHome),
-        setActive(key) {
-            this.activeNav = key;
-            this.mobileOpen = false;
-            this.fiturOpen = false;
-        }
     }"
     @keydown.escape.window="fiturOpen = false"
 >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between gap-4">
-            <a href="{{ route('home') }}" class="flex items-center gap-2 shrink-0" @click="if (isHome) activeNav = ''">
+            <a href="{{ route('home') }}" class="flex items-center gap-2 shrink-0">
                 <span class="text-2xl font-bold text-[var(--wf-navy)] tracking-wide">WOFINS</span>
             </a>
 
-            <nav class="hidden lg:flex items-center gap-1 text-sm font-semibold">
+            <nav class="hidden lg:flex items-center gap-1 text-sm font-semibold" aria-label="Menu utama">
                 <div
                     class="relative"
                     @mouseenter="fiturOpen = true"
@@ -146,10 +142,11 @@
                 >
                     <button
                         type="button"
-                        class="wf-nav-link"
-                        :class="activeNav === 'fitur' && 'is-active'"
+                        class="wf-nav-link {{ $isFitur ? 'is-active' : '' }}"
+                        :class="{ 'is-active': activeNav === 'fitur' }"
                         @click="fiturOpen = !fiturOpen"
                         :aria-expanded="fiturOpen.toString()"
+                        @if ($isFitur) aria-current="page" @endif
                     >
                         Fitur
                         <i class="fa-solid fa-chevron-down text-[0.65rem] transition-transform" :class="fiturOpen && 'rotate-180'"></i>
@@ -166,7 +163,7 @@
                         x-transition:leave-end="opacity-0 translate-y-1"
                         class="wf-nav-dropdown"
                     >
-                        <a href="{{ route('fitur') }}" class="{{ request()->routeIs('fitur') && !request()->routeIs('fitur.show') ? 'is-active' : '' }}">
+                        <a href="{{ route('fitur') }}" class="{{ request()->routeIs('fitur') && ! request()->routeIs('fitur.show') ? 'is-active' : '' }}">
                             <span class="dd-icon bg-[rgba(201,162,39,0.14)] text-[var(--wf-gold)]">
                                 <i class="fa-solid fa-layer-group"></i>
                             </span>
@@ -190,9 +187,24 @@
                     </div>
                 </div>
 
-                <a href="{{ route('harga') }}" class="wf-nav-link" :class="activeNav === 'harga' && 'is-active'">Harga</a>
-                <a href="{{ route('docs.index') }}" class="wf-nav-link" :class="activeNav === 'docs' && 'is-active'">Docs</a>
-                <a href="{{ route('kontak') }}" class="wf-nav-link" :class="activeNav === 'kontak' && 'is-active'">Kontak</a>
+                <a
+                    href="{{ route('harga') }}"
+                    class="wf-nav-link {{ $isHarga ? 'is-active' : '' }}"
+                    :class="{ 'is-active': activeNav === 'harga' }"
+                    @if ($isHarga) aria-current="page" @endif
+                >Harga</a>
+                <a
+                    href="{{ route('docs.index') }}"
+                    class="wf-nav-link {{ $isDocs ? 'is-active' : '' }}"
+                    :class="{ 'is-active': activeNav === 'docs' }"
+                    @if ($isDocs) aria-current="page" @endif
+                >Docs</a>
+                <a
+                    href="{{ route('kontak') }}"
+                    class="wf-nav-link {{ $isKontak ? 'is-active' : '' }}"
+                    :class="{ 'is-active': activeNav === 'kontak' }"
+                    @if ($isKontak) aria-current="page" @endif
+                >Kontak</a>
             </nav>
 
             <div class="hidden lg:flex items-center gap-3">
@@ -215,8 +227,8 @@
         <div x-show="mobileOpen" x-cloak class="lg:hidden pb-4 border-t border-[var(--wf-line)] pt-3 space-y-1">
             <button
                 type="button"
-                class="wf-nav-link-mobile w-full flex items-center justify-between"
-                :class="activeNav === 'fitur' && 'is-active'"
+                class="wf-nav-link-mobile w-full flex items-center justify-between {{ $isFitur ? 'is-active' : '' }}"
+                :class="{ 'is-active': activeNav === 'fitur' }"
                 @click="mobileFiturOpen = !mobileFiturOpen"
             >
                 <span>Fitur</span>
@@ -224,7 +236,7 @@
             </button>
 
             <div x-show="mobileFiturOpen" x-cloak class="wf-nav-mobile-sub space-y-0.5 pb-1">
-                <a href="{{ route('fitur') }}" class="{{ request()->routeIs('fitur') && !request()->routeIs('fitur.show') ? 'is-active' : '' }}">
+                <a href="{{ route('fitur') }}" class="{{ request()->routeIs('fitur') && ! request()->routeIs('fitur.show') ? 'is-active' : '' }}">
                     Semua Fitur
                 </a>
                 @foreach ($fiturMenus as $item)
@@ -238,9 +250,9 @@
                 @endforeach
             </div>
 
-            <a href="{{ route('harga') }}" class="wf-nav-link-mobile" :class="activeNav === 'harga' && 'is-active'">Harga</a>
-            <a href="{{ route('docs.index') }}" class="wf-nav-link-mobile" :class="activeNav === 'docs' && 'is-active'">Docs</a>
-            <a href="{{ route('kontak') }}" class="wf-nav-link-mobile" :class="activeNav === 'kontak' && 'is-active'">Kontak</a>
+            <a href="{{ route('harga') }}" class="wf-nav-link-mobile {{ $isHarga ? 'is-active' : '' }}" :class="{ 'is-active': activeNav === 'harga' }">Harga</a>
+            <a href="{{ route('docs.index') }}" class="wf-nav-link-mobile {{ $isDocs ? 'is-active' : '' }}" :class="{ 'is-active': activeNav === 'docs' }">Docs</a>
+            <a href="{{ route('kontak') }}" class="wf-nav-link-mobile {{ $isKontak ? 'is-active' : '' }}" :class="{ 'is-active': activeNav === 'kontak' }">Kontak</a>
             <div class="flex flex-col gap-2 pt-2">
                 @auth
                     <a href="{{ route('profile') }}" class="wf-btn-ghost px-4 py-2.5 text-center text-sm">Portal</a>

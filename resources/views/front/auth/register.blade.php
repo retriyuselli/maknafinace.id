@@ -3,28 +3,26 @@
 @section('title', 'Daftar — WOFINS')
 
 @push('styles')
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --wf-navy: #0b1f3a;
-            --wf-navy-deep: #071526;
-            --wf-gold: #c9a227;
-            --wf-cream: #f7f4ee;
-            --wf-ink: #1a2332;
-            --wf-muted: #5c6675;
-            --wf-line: #e6e2d9;
-        }
-
+@include('front.partials.wf-front-base-styles')
+<style>
         .wf-auth {
             font-family: 'Poppins', system-ui, sans-serif;
             color: var(--wf-ink);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            position: relative;
+            overflow: hidden;
             background:
                 radial-gradient(ellipse 80% 50% at 10% 20%, rgba(201, 162, 39, 0.12), transparent 55%),
                 radial-gradient(ellipse 60% 40% at 90% 80%, rgba(11, 31, 58, 0.08), transparent 50%),
                 linear-gradient(180deg, #fff 0%, var(--wf-cream) 100%);
+        }
+
+        .wf-auth > header,
+        .wf-auth > .wf-auth-main {
+            position: relative;
+            z-index: 1;
         }
 
         .wf-auth-main {
@@ -42,6 +40,30 @@
             }
         }
 
+        .wf-auth-panel {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wf-auth-panel .wf-deco__blob--a {
+            opacity: 0.55;
+            background: radial-gradient(circle at 30% 30%, rgba(201, 162, 39, 0.5), transparent 70%);
+        }
+
+        .wf-auth-panel .wf-deco__ring--a,
+        .wf-auth-panel .wf-deco__ring--b {
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .wf-auth-panel .wf-deco__sq--a {
+            border-color: rgba(201, 162, 39, 0.45);
+        }
+
+        .wf-auth-panel .wf-deco__dot--a {
+            background: var(--wf-gold-soft);
+            opacity: 0.7;
+        }
+
         .wf-auth-input {
             width: 100%;
             border: 1px solid var(--wf-line);
@@ -57,32 +79,6 @@
         .wf-auth-input:focus {
             border-color: rgba(201, 162, 39, 0.7);
             box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
-        }
-
-        .wf-btn-navy {
-            background: var(--wf-navy);
-            color: #fff;
-            border-radius: 999px;
-            font-weight: 700;
-            transition: background .2s ease, transform .2s ease;
-        }
-
-        .wf-btn-navy:hover {
-            background: var(--wf-navy-deep);
-            transform: translateY(-1px);
-        }
-
-        .wf-btn-ghost {
-            border: 1.5px solid var(--wf-navy);
-            color: var(--wf-navy);
-            border-radius: 999px;
-            font-weight: 700;
-            background: #fff;
-            transition: background .2s ease;
-        }
-
-        .wf-btn-ghost:hover {
-            background: var(--wf-cream);
         }
 
         .wf-btn-google {
@@ -118,13 +114,13 @@
             height: 1px;
             background: var(--wf-line);
         }
-
-        [x-cloak] { display: none !important; }
     </style>
 @endpush
 
 @section('content')
     <div class="wf-auth">
+        @include('front.partials.wf-deco-shapes')
+
         <header class="shrink-0 border-b border-[var(--wf-line)]/70 bg-white/70 backdrop-blur-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
                 <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-2xl font-bold text-[var(--wf-navy)] tracking-wide">
@@ -136,10 +132,9 @@
         <div class="wf-auth-main">
         <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid lg:grid-cols-2 rounded-3xl overflow-hidden border border-[var(--wf-line)] bg-white shadow-[0_24px_60px_-28px_rgba(11,31,58,0.35)]">
-                <div class="relative min-h-[220px] lg:min-h-[620px] text-white overflow-hidden order-1 lg:order-none"
+                <div class="wf-auth-panel relative min-h-[220px] lg:min-h-[620px] text-white order-1 lg:order-none"
                      style="background: linear-gradient(145deg, #071526 0%, #0b1f3a 55%, #14335a 100%);">
-                    <span class="absolute w-40 h-40 rounded-full -right-10 -top-12 bg-[rgba(201,162,39,0.18)]" aria-hidden="true"></span>
-                    <span class="absolute w-24 h-24 rounded-full left-10 bottom-24 bg-[rgba(201,162,39,0.12)]" aria-hidden="true"></span>
+                    @include('front.partials.wf-deco-shapes')
                     <div class="relative z-10 h-full flex flex-col justify-end p-8 sm:p-10">
                         <p class="text-xs font-bold tracking-[0.2em] uppercase text-[var(--wf-gold)]">Mulai gratis</p>
                         <h2 class="mt-3 text-2xl sm:text-3xl font-bold leading-tight">
@@ -174,17 +169,39 @@
                             </div>
                         @endif
 
+                        @php
+                            $googleEnabled = filled(config('services.google.client_id'))
+                                && filled(config('services.google.client_secret'));
+                        @endphp
+
                         <div class="mt-8 space-y-4">
-                            <a href="{{ route('auth.google') }}"
-                               class="wf-btn-google w-full inline-flex items-center justify-center gap-3 px-5 py-3.5 text-sm">
-                                <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-                                    <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.227 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-                                    <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 18.961 13 24 13c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
-                                    <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
-                                    <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.084 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-                                </svg>
-                                Daftar dengan Google
-                            </a>
+                            @if ($googleEnabled)
+                                <a href="{{ route('auth.google') }}"
+                                   class="wf-btn-google w-full inline-flex items-center justify-center gap-3 px-5 py-3.5 text-sm">
+                                    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                                        <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.227 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+                                        <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 18.961 13 24 13c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+                                        <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+                                        <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.084 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+                                    </svg>
+                                    Daftar dengan Google
+                                </a>
+                            @else
+                                <button type="button" disabled
+                                    class="wf-btn-google w-full inline-flex items-center justify-center gap-3 px-5 py-3.5 text-sm opacity-50 cursor-not-allowed"
+                                    title="Isi GOOGLE_CLIENT_ID dan GOOGLE_CLIENT_SECRET di .env">
+                                    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                                        <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.227 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+                                        <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 18.961 13 24 13c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+                                        <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+                                        <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.084 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+                                    </svg>
+                                    Daftar dengan Google
+                                </button>
+                                <p class="text-xs text-center text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                                    Login Google belum aktif — isi <code class="font-semibold">GOOGLE_CLIENT_ID</code> &amp; <code class="font-semibold">GOOGLE_CLIENT_SECRET</code> di <code>.env</code>.
+                                </p>
+                            @endif
                             <div class="wf-auth-divider">atau email</div>
                         </div>
 

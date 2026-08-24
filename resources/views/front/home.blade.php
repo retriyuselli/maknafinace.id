@@ -3,10 +3,7 @@
 @section('title', 'WOFINS — Wedding Organizer Financial Information System')
 
 @push('styles')
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
+<style>
         :root {
             --wf-navy: #0b1f3a;
             --wf-navy-deep: #071526;
@@ -117,50 +114,216 @@
 
         .wf-hero-visual {
             position: relative;
-            min-height: 360px;
+            min-height: 400px;
             isolation: isolate;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .wf-hero-laptop {
+        /* Hero constellation — beda dari cards Empat Langkah */
+        .wf-hero-constellation {
             position: relative;
-            z-index: 1;
-            border-radius: 1rem;
-            box-shadow: 0 30px 60px -20px rgba(11, 31, 58, 0.35);
-            border: 1px solid var(--wf-line);
-            background: #fff;
-            overflow: hidden;
-            animation: wf-hero-fade 0.8s ease-out both, wf-hero-float 5.5s ease-in-out 0.8s infinite;
-        }
-
-        .wf-hero-laptop img {
-            display: block;
             width: 100%;
-            height: auto;
+            aspect-ratio: 1 / 1;
+            max-width: 480px;
+            margin-inline: auto;
+            animation: wf-hero-fade 0.85s ease-out both;
         }
 
-        /* Satu frame ponsel saja — tanpa border putih + navy yang bikin tampak dobel */
-        .wf-hero-phone {
+        .wf-hero-constellation svg.wf-hero-svg {
             position: absolute;
-            z-index: 2;
-            right: 2%;
-            bottom: -4%;
-            width: min(34%, 168px);
-            aspect-ratio: 9 / 19.5;
-            border-radius: 1.35rem;
-            overflow: hidden;
-            background: #0b1220;
-            box-shadow:
-                0 0 0 2px #0b1220,
-                0 18px 36px -14px rgba(11, 31, 58, 0.55);
-            animation: wf-hero-fade 0.9s ease-out 0.15s both, wf-hero-float-alt 4.8s ease-in-out 1s infinite;
-        }
-
-        .wf-hero-phone img {
-            display: block;
+            inset: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            object-position: top center;
+            overflow: visible;
+        }
+
+        .wf-hero-constellation .wf-arc {
+            fill: none;
+            stroke: rgba(11, 31, 58, 0.12);
+            stroke-width: 1.5;
+        }
+
+        .wf-hero-constellation .wf-arc-gold {
+            stroke: rgba(201, 162, 39, 0.55);
+            stroke-dasharray: 12 18;
+            animation: wf-dash-orbit 14s linear infinite;
+        }
+
+        .wf-hero-constellation .wf-arc-navy {
+            stroke: rgba(11, 31, 58, 0.28);
+            stroke-dasharray: 8 14;
+            animation: wf-dash-orbit 20s linear infinite reverse;
+        }
+
+        .wf-hero-constellation .wf-link {
+            fill: none;
+            stroke: rgba(11, 31, 58, 0.22);
+            stroke-width: 1.5;
+            stroke-dasharray: 6 8;
+            animation: wf-dash-flow 3.5s linear infinite;
+        }
+
+        .wf-hero-constellation .wf-link-gold {
+            stroke: rgba(201, 162, 39, 0.65);
+            stroke-dasharray: 4 10;
+            animation: wf-dash-flow 2.8s linear infinite reverse;
+        }
+
+        .wf-hero-constellation .wf-wave {
+            fill: none;
+            stroke: var(--wf-navy);
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 280;
+            stroke-dashoffset: 280;
+            animation: wf-draw-wave 4.5s ease-in-out infinite;
+        }
+
+        .wf-hero-constellation .wf-wave-soft {
+            fill: none;
+            stroke: rgba(201, 162, 39, 0.45);
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-dasharray: 260;
+            stroke-dashoffset: 260;
+            animation: wf-draw-wave 4.5s ease-in-out 0.4s infinite;
+        }
+
+        .wf-hero-node {
+            position: absolute;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            transform: translate(-50%, -50%);
+        }
+
+        .wf-hero-node .n-core {
+            width: 3.25rem;
+            height: 3.25rem;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: #fff;
+            background: var(--wf-navy);
+            box-shadow: 0 12px 24px -10px rgba(11, 31, 58, 0.45);
+            animation: wf-node-breathe 3.8s ease-in-out infinite;
+        }
+
+        .wf-hero-node.is-gold .n-core {
+            background: var(--wf-gold);
+            color: var(--wf-navy-deep);
+            animation-delay: 0.6s;
+        }
+
+        .wf-hero-node.is-outline .n-core {
+            background: #fff;
+            color: var(--wf-navy);
+            border: 1.5px solid var(--wf-navy);
+            animation-delay: 1.1s;
+        }
+
+        .wf-hero-node .n-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--wf-muted);
+            white-space: nowrap;
+        }
+
+        .wf-hero-node.n-center {
+            left: 50%;
+            top: 50%;
+        }
+
+        .wf-hero-node.n-center .n-core {
+            width: 4.25rem;
+            height: 4.25rem;
+            border-radius: 1.25rem;
+            font-size: 1.15rem;
+            background: linear-gradient(145deg, var(--wf-navy) 0%, #14335a 100%);
+            animation: wf-node-breathe 4.2s ease-in-out infinite;
+        }
+
+        .wf-hero-node.n-tl { left: 18%; top: 22%; animation: wf-orbit-nudge 7s ease-in-out infinite; }
+        .wf-hero-node.n-tr { left: 82%; top: 24%; animation: wf-orbit-nudge 6.2s ease-in-out 0.5s infinite; }
+        .wf-hero-node.n-bl { left: 22%; top: 78%; animation: wf-orbit-nudge 6.8s ease-in-out 1s infinite; }
+        .wf-hero-node.n-br { left: 78%; top: 76%; animation: wf-orbit-nudge 7.4s ease-in-out 1.4s infinite; }
+
+        .wf-hero-pulse {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 4.5rem;
+            height: 4.5rem;
+            margin: -2.25rem 0 0 -2.25rem;
+            border-radius: 1.35rem;
+            border: 1.5px solid rgba(201, 162, 39, 0.55);
+            animation: wf-pulse-ring 3s ease-out infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .wf-hero-pulse.p2 {
+            animation-delay: 1.5s;
+            border-color: rgba(11, 31, 58, 0.25);
+        }
+
+        .wf-hero-spark {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            background: var(--wf-gold);
+            opacity: 0.7;
+            animation: wf-spark-drift 9s linear infinite;
+        }
+
+        .wf-hero-spark.s1 { left: 12%; top: 48%; animation-duration: 8s; }
+        .wf-hero-spark.s2 { left: 88%; top: 52%; background: var(--wf-navy); animation-duration: 10s; animation-delay: -3s; }
+        .wf-hero-spark.s3 { left: 50%; top: 10%; width: 6px; height: 6px; animation-duration: 11s; animation-delay: -5s; }
+
+        @keyframes wf-dash-orbit {
+            to { stroke-dashoffset: -120; }
+        }
+
+        @keyframes wf-dash-flow {
+            to { stroke-dashoffset: -80; }
+        }
+
+        @keyframes wf-draw-wave {
+            0% { stroke-dashoffset: 280; opacity: 0.35; }
+            35%, 65% { stroke-dashoffset: 0; opacity: 1; }
+            100% { stroke-dashoffset: -280; opacity: 0.35; }
+        }
+
+        @keyframes wf-node-breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+
+        @keyframes wf-orbit-nudge {
+            0%, 100% { transform: translate(-50%, -50%) translate(0, 0); }
+            50% { transform: translate(-50%, -50%) translate(0, -7px); }
+        }
+
+        @keyframes wf-pulse-ring {
+            0% { transform: scale(0.85); opacity: 0.7; }
+            100% { transform: scale(2.4); opacity: 0; }
+        }
+
+        @keyframes wf-spark-drift {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+            15% { opacity: 0.8; }
+            50% { transform: translate(18px, -28px) rotate(120deg); opacity: 0.55; }
+            100% { transform: translate(-12px, 20px) rotate(280deg); opacity: 0; }
         }
 
         .wf-anim {
@@ -209,12 +372,266 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .wf-hero-laptop,
-            .wf-hero-phone,
+            .wf-hero-constellation,
+            .wf-hero-constellation *,
+            .wf-hero-node,
+            .wf-hero-node .n-core,
+            .wf-hero-pulse,
+            .wf-hero-spark,
             .wf-anim,
-            .wf-hero-list li {
+            .wf-hero-list li,
+            .wf-steps-visual *,
+            .wf-steps-visual .wf-shape {
                 animation: none !important;
             }
+
+            .wf-hero-constellation .wf-wave,
+            .wf-hero-constellation .wf-wave-soft {
+                stroke-dashoffset: 0;
+                opacity: 1;
+            }
+        }
+
+        /* Empat Langkah — animated shapes */
+        .wf-steps-visual {
+            position: relative;
+            min-height: 320px;
+            height: 100%;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            border: 1px solid var(--wf-line);
+            background:
+                radial-gradient(ellipse 70% 55% at 85% 15%, rgba(201, 162, 39, 0.14), transparent 50%),
+                radial-gradient(ellipse 55% 45% at 10% 90%, rgba(11, 31, 58, 0.06), transparent 55%),
+                linear-gradient(145deg, #ffffff 0%, var(--wf-cream) 100%);
+            box-shadow: 0 22px 48px -28px rgba(11, 31, 58, 0.35);
+        }
+
+        .wf-steps-visual .wf-shape {
+            position: absolute;
+            will-change: transform, opacity;
+        }
+
+        .wf-steps-visual .s-ring {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 2px solid rgba(11, 31, 58, 0.12);
+            top: 12%;
+            right: 10%;
+            animation: wf-shape-spin 18s linear infinite;
+        }
+
+        .wf-steps-visual .s-ring::after {
+            content: '';
+            position: absolute;
+            inset: 18px;
+            border-radius: 50%;
+            border: 2px dashed rgba(201, 162, 39, 0.45);
+            animation: wf-shape-spin 12s linear infinite reverse;
+        }
+
+        .wf-steps-visual .s-orb {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, var(--wf-navy) 0%, #14335a 100%);
+            top: 18%;
+            right: 18%;
+            box-shadow: 0 14px 28px -12px rgba(11, 31, 58, 0.45);
+            animation: wf-shape-float 5s ease-in-out infinite;
+        }
+
+        .wf-steps-visual .s-orb span {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.35rem;
+        }
+
+        .wf-steps-visual .s-card {
+            width: 42%;
+            min-width: 140px;
+            border-radius: 1rem;
+            background: #fff;
+            border: 1px solid var(--wf-line);
+            box-shadow: 0 12px 28px -16px rgba(11, 31, 58, 0.3);
+            padding: 0.9rem 1rem;
+        }
+
+        .wf-steps-visual .s-card-a {
+            left: 8%;
+            top: 16%;
+            animation: wf-shape-float 6s ease-in-out 0.2s infinite;
+        }
+
+        .wf-steps-visual .s-card-b {
+            left: 18%;
+            bottom: 14%;
+            animation: wf-shape-float-alt 5.5s ease-in-out 0.5s infinite;
+        }
+
+        .wf-steps-visual .s-card-c {
+            right: 8%;
+            bottom: 18%;
+            width: 38%;
+            animation: wf-shape-float 6.5s ease-in-out 0.8s infinite;
+        }
+
+        .wf-steps-visual .s-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 56px;
+            margin-top: 0.55rem;
+        }
+
+        .wf-steps-visual .s-bars i {
+            display: block;
+            width: 12px;
+            border-radius: 4px 4px 2px 2px;
+            background: var(--wf-navy);
+            transform-origin: bottom;
+            animation: wf-bar-grow 2.8s ease-in-out infinite;
+        }
+
+        .wf-steps-visual .s-bars i:nth-child(1) { height: 28%; background: rgba(11, 31, 58, 0.35); animation-delay: 0s; }
+        .wf-steps-visual .s-bars i:nth-child(2) { height: 52%; background: rgba(11, 31, 58, 0.55); animation-delay: 0.15s; }
+        .wf-steps-visual .s-bars i:nth-child(3) { height: 78%; background: var(--wf-gold); animation-delay: 0.3s; }
+        .wf-steps-visual .s-bars i:nth-child(4) { height: 44%; background: rgba(11, 31, 58, 0.45); animation-delay: 0.45s; }
+        .wf-steps-visual .s-bars i:nth-child(5) { height: 64%; background: var(--wf-navy); animation-delay: 0.6s; }
+
+        .wf-steps-visual .s-line {
+            height: 3px;
+            width: 100%;
+            border-radius: 999px;
+            background: rgba(11, 31, 58, 0.08);
+            overflow: hidden;
+            margin-top: 0.45rem;
+        }
+
+        .wf-steps-visual .s-line span {
+            display: block;
+            height: 100%;
+            width: 42%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--wf-gold), var(--wf-navy));
+            animation: wf-line-slide 3.2s ease-in-out infinite;
+        }
+
+        .wf-steps-visual .s-dots {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.65rem;
+        }
+
+        .wf-steps-visual .s-dots b {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--wf-navy);
+            animation: wf-dot-pulse 1.8s ease-in-out infinite;
+        }
+
+        .wf-steps-visual .s-dots b:nth-child(1) { animation-delay: 0s; background: var(--wf-navy); }
+        .wf-steps-visual .s-dots b:nth-child(2) { animation-delay: 0.2s; background: var(--wf-gold); }
+        .wf-steps-visual .s-dots b:nth-child(3) { animation-delay: 0.4s; background: rgba(11, 31, 58, 0.35); }
+
+        .wf-steps-visual .s-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--wf-navy);
+            letter-spacing: 0.02em;
+        }
+
+        .wf-steps-visual .s-chip em {
+            width: 1.35rem;
+            height: 1.35rem;
+            border-radius: 0.4rem;
+            background: rgba(11, 31, 58, 0.08);
+            color: var(--wf-navy);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-style: normal;
+            font-size: 0.65rem;
+            font-weight: 800;
+        }
+
+        .wf-steps-visual .s-blob {
+            width: 90px;
+            height: 90px;
+            border-radius: 36% 64% 58% 42% / 42% 38% 62% 58%;
+            background: rgba(201, 162, 39, 0.18);
+            left: 42%;
+            top: 38%;
+            animation: wf-blob-morph 8s ease-in-out infinite;
+        }
+
+        .wf-steps-visual .s-sq {
+            width: 28px;
+            height: 28px;
+            border-radius: 0.45rem;
+            background: var(--wf-gold);
+            left: 48%;
+            top: 22%;
+            animation: wf-shape-spin 10s linear infinite, wf-shape-float 4s ease-in-out infinite;
+            opacity: 0.85;
+        }
+
+        .wf-steps-visual .s-tri {
+            width: 0;
+            height: 0;
+            border-left: 16px solid transparent;
+            border-right: 16px solid transparent;
+            border-bottom: 28px solid rgba(11, 31, 58, 0.18);
+            left: 58%;
+            bottom: 42%;
+            animation: wf-shape-float-alt 4.5s ease-in-out 0.3s infinite;
+        }
+
+        @keyframes wf-shape-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes wf-shape-float-alt {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-8px) translateX(4px); }
+        }
+
+        @keyframes wf-shape-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes wf-bar-grow {
+            0%, 100% { transform: scaleY(0.55); opacity: 0.7; }
+            50% { transform: scaleY(1); opacity: 1; }
+        }
+
+        @keyframes wf-line-slide {
+            0% { transform: translateX(-40%); }
+            50% { transform: translateX(120%); }
+            100% { transform: translateX(-40%); }
+        }
+
+        @keyframes wf-dot-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.55; }
+            50% { transform: scale(1.25); opacity: 1; }
+        }
+
+        @keyframes wf-blob-morph {
+            0%, 100% { border-radius: 36% 64% 58% 42% / 42% 38% 62% 58%; transform: translate(0, 0) rotate(0deg); }
+            33% { border-radius: 58% 42% 36% 64% / 55% 48% 52% 45%; transform: translate(8px, -6px) rotate(8deg); }
+            66% { border-radius: 42% 58% 64% 36% / 48% 62% 38% 52%; transform: translate(-6px, 8px) rotate(-6deg); }
         }
 
         .wf-card {
@@ -328,7 +745,7 @@
                             <span class="text-[var(--wf-gold)]">Satu Platform</span>
                         </h1>
                         <p class="wf-anim wf-anim-d3 mt-5 text-base sm:text-lg text-[var(--wf-muted)] leading-relaxed max-w-xl">
-                            WOFINS membantu Wedding Organizer mengelola proyek, vendor, keuangan, HRIS, hingga operasional harian dalam satu sistem terintegrasi.
+                            WOFINS membantu Wedding Organizer mengelola proyek, vendor, keuangan, payroll, hingga operasional harian dalam satu sistem terintegrasi.
                         </p>
 
                         <ul class="wf-hero-list mt-7 space-y-3 text-sm sm:text-base text-[var(--wf-ink)]">
@@ -358,12 +775,50 @@
                         </div>
                     </div>
 
-                    <div class="wf-hero-visual">
-                        <div class="wf-hero-laptop">
-                            <img src="{{ asset('images/laporan/laporan1.png') }}" alt="Dashboard keuangan WOFINS">
-                        </div>
-                        <div class="wf-hero-phone" aria-hidden="true">
-                            <img src="{{ asset('images/aset_tetap/mobile.png') }}" alt="">
+                    <div class="wf-hero-visual" aria-hidden="true">
+                        <div class="wf-hero-constellation">
+                            <span class="wf-hero-pulse"></span>
+                            <span class="wf-hero-pulse p2"></span>
+                            <span class="wf-hero-spark s1"></span>
+                            <span class="wf-hero-spark s2"></span>
+                            <span class="wf-hero-spark s3"></span>
+
+                            <svg class="wf-hero-svg" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle class="wf-arc" cx="200" cy="200" r="148" />
+                                <circle class="wf-arc wf-arc-gold" cx="200" cy="200" r="118" />
+                                <circle class="wf-arc wf-arc-navy" cx="200" cy="200" r="88" />
+
+                                {{-- Connection lines: center hub to modules --}}
+                                <line class="wf-link" x1="200" y1="200" x2="72" y2="88" />
+                                <line class="wf-link-gold" x1="200" y1="200" x2="328" y2="96" />
+                                <line class="wf-link" x1="200" y1="200" x2="88" y2="312" />
+                                <line class="wf-link-gold" x1="200" y1="200" x2="312" y2="304" />
+
+                                {{-- Cashflow wave --}}
+                                <path class="wf-wave-soft" d="M48 250 C 100 210, 140 290, 200 240 S 300 180, 352 210" />
+                                <path class="wf-wave" d="M48 260 C 110 220, 150 300, 205 250 S 305 190, 352 220" />
+                            </svg>
+
+                            <div class="wf-hero-node n-center">
+                                <div class="n-core"><i class="fa-solid fa-layer-group"></i></div>
+                                <span class="n-label">WOFINS</span>
+                            </div>
+                            <div class="wf-hero-node n-tl is-gold">
+                                <div class="n-core"><i class="fa-solid fa-ring"></i></div>
+                                <span class="n-label">Proyek</span>
+                            </div>
+                            <div class="wf-hero-node n-tr">
+                                <div class="n-core"><i class="fa-solid fa-chart-line"></i></div>
+                                <span class="n-label">Keuangan</span>
+                            </div>
+                            <div class="wf-hero-node n-bl is-outline">
+                                <div class="n-core"><i class="fa-solid fa-user-check"></i></div>
+                                <span class="n-label">Payroll</span>
+                            </div>
+                            <div class="wf-hero-node n-br is-gold">
+                                <div class="n-core"><i class="fa-solid fa-building-columns"></i></div>
+                                <span class="n-label">Bank</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -375,7 +830,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center max-w-3xl mx-auto mb-12">
                     <h2 class="text-3xl sm:text-4xl font-bold text-[var(--wf-navy)]">Fitur Lengkap untuk Operasional Wedding Organizer</h2>
-                    <p class="mt-3 text-[var(--wf-muted)]">Dari proyek dan keuangan hingga HRIS — semuanya terhubung dalam satu alur kerja.</p>
+                    <p class="mt-3 text-[var(--wf-muted)]">Dari proyek dan keuangan hingga payroll — semuanya terhubung dalam satu alur kerja.</p>
                 </div>
 
                 <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -385,7 +840,7 @@
                             ['icon' => 'fa-chart-line', 'color' => 'bg-sky-50 text-sky-700', 'title' => 'Keuangan', 'desc' => 'Pantau pendapatan klien, pengeluaran proyek, dan laporan laba rugi secara real-time.'],
                             ['icon' => 'fa-building-columns', 'color' => 'bg-emerald-50 text-emerald-700', 'title' => 'Rekonsiliasi Rekening Koran', 'desc' => 'Cocokkan transaksi bank dengan sistem lebih cepat dan akurat.'],
                             ['icon' => 'fa-file-lines', 'color' => 'bg-violet-50 text-violet-700', 'title' => 'Nota Dinas Digital', 'desc' => 'Ajukan, setujui, dan arsipkan nota dinas beserta lampiran PDF.'],
-                            ['icon' => 'fa-user-check', 'color' => 'bg-rose-50 text-rose-700', 'title' => 'HRIS', 'desc' => 'Absensi GPS geofence, foto kamera, jadwal kerja, koreksi, dan lembur.'],
+                            ['icon' => 'fa-user-check', 'color' => 'bg-rose-50 text-rose-700', 'title' => 'Payroll', 'desc' => 'Master karyawan, perhitungan gaji, slip digital, dan PPh 21.'],
                             ['icon' => 'fa-wallet', 'color' => 'bg-indigo-50 text-indigo-700', 'title' => 'Payroll & Portal Karyawan', 'desc' => 'Kelola gaji, cuti, dan akses portal untuk karyawan tanpa masuk admin penuh.'],
                             ['icon' => 'fa-folder-open', 'color' => 'bg-teal-50 text-teal-700', 'title' => 'Dokumen & SOP', 'desc' => 'Simpan dokumen resmi, SOP, dan knowledge base perusahaan.'],
                             ['icon' => 'fa-shield-halved', 'color' => 'bg-slate-100 text-slate-700', 'title' => 'Hak Akses Berdasarkan Jabatan', 'desc' => 'Role & permission untuk owner, finance, HRD, AM, dan staff.'],
@@ -415,7 +870,7 @@
                             @foreach ([
                                 ['Buat perusahaan & pengguna', 'Setup profil perusahaan, role, dan akun tim Anda.'],
                                 ['Input proyek & keuangan', 'Masukkan order, vendor, pendapatan, dan pengeluaran.'],
-                                ['Aktifkan absensi & cuti', 'Atur lokasi kantor, jadwal, dan kuota cuti karyawan.'],
+                                ['Aktifkan payroll', 'Siapkan master karyawan dan komponen gaji tim.'],
                                 ['Pantau laporan real-time', 'Ambil keputusan dari dashboard, cash flow, dan rekonsiliasi.'],
                             ] as $i => $step)
                                 <div class="flex gap-4">
@@ -428,8 +883,30 @@
                             @endforeach
                         </div>
                     </div>
-                    <div class="rounded-2xl overflow-hidden border border-[var(--wf-line)] shadow-xl bg-white">
-                        <img src="{{ asset('images/excited-asian-colleagues-looking-laptop-screen-together-office.png') }}" alt="Tim menggunakan WOFINS" class="w-full h-full object-cover min-h-[280px]">
+                    <div class="wf-steps-visual" aria-hidden="true">
+                        <div class="wf-shape s-blob"></div>
+                        <div class="wf-shape s-ring"></div>
+                        <div class="wf-shape s-orb"><span>4</span></div>
+                        <div class="wf-shape s-sq"></div>
+                        <div class="wf-shape s-tri"></div>
+
+                        <div class="wf-shape s-card s-card-a">
+                            <div class="s-chip"><em>1</em> Perusahaan</div>
+                            <div class="s-dots" aria-hidden="true"><b></b><b></b><b></b></div>
+                            <div class="s-line"><span></span></div>
+                        </div>
+
+                        <div class="wf-shape s-card s-card-b">
+                            <div class="s-chip"><em>2</em> Keuangan</div>
+                            <div class="s-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+                        </div>
+
+                        <div class="wf-shape s-card s-card-c">
+                            <div class="s-chip"><em>3</em> Absensi</div>
+                            <div class="s-line" style="margin-top:0.75rem"><span style="width:58%;animation-duration:2.6s"></span></div>
+                            <div class="s-dots" style="margin-top:0.75rem" aria-hidden="true"><b></b><b></b><b></b></div>
+                            <p class="mt-3 text-[10px] font-bold tracking-wide text-[var(--wf-muted)] uppercase">Langkah 4 · Laporan</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -445,7 +922,7 @@
                             @foreach ([
                                 ['Dibangun khusus untuk WO', 'Bukan ERP generik — alur kerjanya cocok dengan operasional wedding organizer.'],
                                 ['Data terpusat', 'Proyek, keuangan, HR, dan dokumen tidak lagi tercecer di spreadsheet.'],
-                                ['Kurangi kerja manual', 'Approval, absensi, dan rekonsiliasi lebih cepat.'],
+                                ['Kurangi kerja manual', 'Approval, payroll, dan rekonsiliasi lebih cepat.'],
                                 ['Monitoring real-time', 'Owner melihat kas, proyek, dan kehadiran tanpa menunggu laporan akhir bulan.'],
                                 ['Siap berkembang', 'Skalakan dari tim kecil hingga multi-role dengan permission yang jelas.'],
                             ] as $item)
@@ -469,8 +946,8 @@
                                 ['Owner', 'Pantau kinerja perusahaan, kas, dan kepatuhan operasional.'],
                                 ['Account Manager', 'Kelola prospek, proyek, target, dan simulasi paket.'],
                                 ['Finance', 'Kelola transaksi, piutang, dan rekonsiliasi rekening koran.'],
-                                ['Event Manager & Staff', 'Jalankan operasional harian dan absensi di lokasi.'],
-                                ['HRD', 'Kelola absensi office, cuti, dan payroll.'],
+                                ['Event Manager & Staff', 'Jalankan operasional harian dan koordinasi proyek.'],
+                                ['Finance', 'Kelola kas, rekonsiliasi, dan payroll.'],
                             ] as $role)
                                 <div class="flex gap-3 items-start bg-white/80 rounded-xl p-4 border border-white">
                                     <div class="w-10 h-10 rounded-full bg-[var(--wf-navy)] text-white flex items-center justify-center text-sm font-bold shrink-0">
@@ -497,10 +974,10 @@
                             “Dengan WOFINS, proyek dan keuangan kami jauh lebih rapi. Absensi dan payroll juga tidak lagi dikelola terpisah-pisah.”
                         </p>
                         <footer class="mt-6 flex items-center gap-3">
-                            <img src="{{ asset('images/placeholder_avatar.png') }}" alt="Nila Anggraini" class="w-12 h-12 rounded-full object-cover border-2 border-[var(--wf-gold)]">
+                            <img src="{{ asset('images/placeholder_avatar.png') }}" alt="Rama Dhona Utama" class="w-12 h-12 rounded-full object-cover border-2 border-[var(--wf-gold)]" width="48" height="48" loading="lazy" decoding="async">
                             <div>
-                                <p class="font-bold text-white">Nila Anggraini</p>
-                                <p class="text-sm text-white/70">Owner Wedding Organizer</p>
+                                <p class="font-bold text-white">Rama Dhona Utama</p>
+                                <p class="text-sm text-white/70">Makna Wedding & Event Planner</p>
                             </div>
                         </footer>
                     </blockquote>
@@ -533,7 +1010,7 @@
                 <div class="space-y-3" x-data="{ open: 0 }">
                     @foreach ([
                         ['Apakah WOFINS khusus untuk wedding organizer?', 'Ya. Alur proyek, vendor, nota dinas, dan keuangan dirancang untuk operasional WO / EO, bukan ERP generik.'],
-                        ['Apakah ada portal untuk karyawan?', 'Ada. Karyawan bisa absensi (GPS + foto), ajukan cuti/koreksi/lembur, dan melihat kompensasi lewat /profile.'],
+                        ['Apakah ada modul gaji?', 'Ada. Professional+ mencakup payroll dan master karyawan (Employee). Slip gaji digital siap dibagikan ke tim.'],
                         ['Bisakah rekonsiliasi rekening koran?', 'Bisa. Unggah rekening koran, cocokkan transaksi, dan unduh hasil rekonsiliasi.'],
                         ['Apakah bisa dibatasi per jabatan?', 'Bisa. Role & permission mengatur akses owner, finance, HRD, account manager, dan staff.'],
                         ['Bagaimana cara mencoba?', 'Jadwalkan demo gratis melalui halaman Kontak, atau masuk jika sudah memiliki akun.'],
@@ -578,7 +1055,7 @@
                 <div class="wf-cta-panel p-8 sm:p-10 text-white">
                     <h2 class="text-3xl sm:text-4xl font-bold leading-tight">Saatnya Mengelola Wedding Organizer dengan Lebih Profesional</h2>
                     <p class="mt-4 text-white/80 max-w-xl">
-                        Satukan proyek, keuangan, absensi, dan dokumen dalam satu platform. Ambil keputusan lebih cepat dengan data yang rapi.
+                        Satukan proyek, keuangan, payroll, dan dokumen dalam satu platform. Ambil keputusan lebih cepat dengan data yang rapi.
                     </p>
                     <div class="mt-8 flex flex-col sm:flex-row gap-3">
                         <a href="{{ route('kontak') }}" class="wf-btn-gold inline-flex items-center justify-center px-6 py-3.5 text-sm">
@@ -593,18 +1070,8 @@
             </div>
         </section>
 
-        {{-- Footer --}}
-        <footer class="bg-white border-t border-[var(--wf-line)] py-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <span class="wf-display text-xl font-bold text-[var(--wf-navy)]">WOFINS</span>
-                    <span class="text-xs text-[var(--wf-muted)] border-l border-[var(--wf-line)] pl-3">by Makna Finance</span>
-                </div>
-                <p class="text-xs text-[var(--wf-muted)]">
-                    © {{ now()->year }} Makna Kreatif Indonesia. All rights reserved.
-                </p>
-            </div>
-        </footer>
+        {{-- Footer — sama dengan halaman front lain --}}
+        @include('front.partials.wf-footer')
 
         {{-- WhatsApp --}}
         <div class="fixed bottom-6 right-6 z-50">

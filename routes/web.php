@@ -163,8 +163,13 @@ Route::get('/features/payroll', [PayrollFeatureController::class, 'index'])->nam
 Route::view('/fitur', 'front.fitur')->name('fitur');
 Route::get('/fitur/{slug}', [FiturDetailController::class, 'show'])
     ->name('fitur.show')
-    ->where('slug', 'proyek-wedding|keuangan|rekonsiliasi|nota-dinas|absensi|cuti-payroll|portal-karyawan|dokumen-sop|hak-akses');
+    ->where('slug', 'proyek-wedding|keuangan|rekonsiliasi|nota-dinas|payroll|dokumen-sop|hak-akses');
 Route::view('/harga', 'front.harga')->name('harga');
+Route::view('/keamanan', 'front.keamanan')->name('keamanan');
+Route::view('/tentang-kami', 'front.tentang')->name('tentang');
+Route::get('/solusi/{slug}', [\App\Http\Controllers\Front\SolusiController::class, 'show'])
+    ->name('solusi.show')
+    ->where('slug', 'owner|finance|hrd|operasional');
 
 Route::get('/product', [ProductCatalogController::class, 'index'])->name('product');
 
