@@ -16,8 +16,8 @@
                                 class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('profile') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 Dashboard
                             </a>
-                            <a href="{{ route('profile.absensi') }}"
-                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('profile.absensi*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                            <a href="{{ route('absen.home') }}"
+                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('absen.*') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 Absensi
                             </a>
                             <a href="{{ route('dashboard') }}"
@@ -123,7 +123,7 @@
                                     </svg>
                                     Dashboard
                                 </a>
-                                <a href="{{ route('profile.absensi') }}"
+                                <a href="{{ route('absen.home') }}"
                                     class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <svg class="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -188,8 +188,8 @@
                             @auth
                                 <a href="{{ route('profile') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('profile') ? 'bg-blue-50 text-blue-600' : '' }}">Dashboard</a>
-                                <a href="{{ route('profile.absensi') }}"
-                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('profile.absensi*') ? 'bg-blue-50 text-blue-600' : '' }}">Absensi</a>
+                                <a href="{{ route('absen.home') }}"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('absen.*') ? 'bg-blue-50 text-blue-600' : '' }}">Absensi</a>
                                 <a href="{{ route('dashboard') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-gray-100 {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600' : '' }}">Admin Panel</a>
                             @endauth

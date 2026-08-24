@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="{{ route('brand.favicon') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js" defer></script>
     <style>
         :root {
@@ -24,7 +24,7 @@
         * { box-sizing: border-box; }
         html, body { margin: 0; min-height: 100%; }
         body {
-            font-family: Inter, system-ui, sans-serif;
+            font-family: Poppins, system-ui, sans-serif;
             background: var(--absen-bg);
             color: var(--absen-ink);
         }
@@ -182,7 +182,7 @@
             color: #6b7280;
         }
 
-        [x-cloak] { display: none !important; }
+        [x-cloak], .hidden { display: none !important; }
 
         .absen-toast {
             position: fixed;
@@ -217,5 +217,6 @@
 
         <div class="absen-toast" x-show="toast" x-cloak x-text="toast" x-transition></div>
     </div>
+    @stack('scripts')
 </body>
 </html>

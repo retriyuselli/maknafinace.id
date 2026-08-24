@@ -19,18 +19,39 @@
     <div class="absen-hello">
         <h1>{{ $greeting }}</h1>
         <p>Stay safe by following health protocols</p>
+        @if (session('success'))
+            <p style="color:#047857;margin-top:8px;">{{ session('success') }}</p>
+        @endif
+        @if (session('error'))
+            <p style="color:#be123c;margin-top:8px;">{{ session('error') }}</p>
+        @endif
+        <p style="margin-top:8px;font-size:12px;color:#6b7280;">Masuk {{ $jamMasuk }} · Pulang {{ $jamPulang }}</p>
     </div>
 
     <div class="absen-grid">
-        <a class="absen-card" href="{{ route('profile.absensi') }}">
-            <svg viewBox="0 0 48 48"><rect x="10" y="8" width="20" height="28" rx="3"/><path d="M14 14h12M14 19h12M14 24h8"/><path d="M30 20h8v16a3 3 0 0 1-3 3H18"/><circle cx="34" cy="32" r="5"/><path d="M34 30v3h2"/></svg>
-            <span>Clock In</span>
-        </a>
+        @if ($canMasuk)
+            <a class="absen-card" href="{{ route('absen.clock', 'masuk') }}">
+                <svg viewBox="0 0 48 48"><rect x="10" y="8" width="20" height="28" rx="3"/><path d="M14 14h12M14 19h12M14 24h8"/><path d="M30 20h8v16a3 3 0 0 1-3 3H18"/><circle cx="34" cy="32" r="5"/><path d="M34 30v3h2"/></svg>
+                <span>Clock In</span>
+            </a>
+        @else
+            <button type="button" class="absen-card" @click="toast = 'Clock In sudah tercatat atau belum tersedia'; setTimeout(() => toast = '', 2200)">
+                <svg viewBox="0 0 48 48"><rect x="10" y="8" width="20" height="28" rx="3"/><path d="M14 14h12M14 19h12M14 24h8"/><path d="M30 20h8v16a3 3 0 0 1-3 3H18"/><circle cx="34" cy="32" r="5"/><path d="M34 30v3h2"/></svg>
+                <span>Clock In</span>
+            </button>
+        @endif
 
-        <a class="absen-card" href="{{ route('profile.absensi') }}">
-            <svg viewBox="0 0 48 48"><rect x="10" y="8" width="20" height="28" rx="3"/><path d="M14 14h12M14 19h12M14 24h8"/><path d="M18 39h16a3 3 0 0 0 3-3V20"/><circle cx="34" cy="32" r="5"/><path d="M34 34v-3h2"/></svg>
-            <span>Clock Out</span>
-        </a>
+        @if ($canPulang)
+            <a class="absen-card" href="{{ route('absen.clock', 'pulang') }}">
+                <svg viewBox="0 0 48 48"><rect x="10" y="8" width="20" height="28" rx="3"/><path d="M14 14h12M14 19h12M14 24h8"/><path d="M18 39h16a3 3 0 0 0 3-3V20"/><circle cx="34" cy="32" r="5"/><path d="M34 34v-3h2"/></svg>
+                <span>Clock Out</span>
+            </a>
+        @else
+            <button type="button" class="absen-card" @click="toast = '{{ $canMasuk ? 'Clock Out setelah Clock In' : 'Clock Out sudah tercatat atau belum tersedia' }}'; setTimeout(() => toast = '', 2200)">
+                <svg viewBox="0 0 48 48"><rect x="10" y="8" width="20" height="28" rx="3"/><path d="M14 14h12M14 19h12M14 24h8"/><path d="M18 39h16a3 3 0 0 0 3-3V20"/><circle cx="34" cy="32" r="5"/><path d="M34 34v-3h2"/></svg>
+                <span>Clock Out</span>
+            </button>
+        @endif
 
         <button type="button" class="absen-card" @click="toast = 'Fitur Break segera hadir'; setTimeout(() => toast = '', 2200)">
             <svg viewBox="0 0 48 48"><path d="M16 20c4 6 12 6 16 0"/><path d="M18 20V14h4v8M26 20V14h4v8"/><path d="M12 32h24v4H16a4 4 0 0 1-4-4z"/></svg>

@@ -28,7 +28,7 @@
     <nav class="p-3 space-y-1">
         @php
             $overviewActive = request()->routeIs('profile') || request()->routeIs('profile.show') || request()->routeIs('profile.overview');
-            $absensiActive = request()->routeIs('profile.absensi*');
+            $absensiActive = request()->routeIs('absen.*') || request()->routeIs('profile.absensi*');
             $compensationActive = request()->routeIs('profile.compensation');
             $scheduleActive = request()->routeIs('profile.schedule');
             $financialReportActive = request()->routeIs('profile.financial-report');
@@ -42,7 +42,7 @@
             <span>Ringkasan</span>
         </a>
 
-        <a href="{{ route('profile.absensi') }}"
+        <a href="{{ route('absen.home') }}"
             class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $absensiActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

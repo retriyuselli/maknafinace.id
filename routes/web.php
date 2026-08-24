@@ -371,6 +371,9 @@ Route::middleware($authNoStore)->group(function () {
 
     Route::get('/absen', [AbsenHomeController::class, 'home'])->name('absen.home');
     Route::get('/absen/lainnya', [AbsenHomeController::class, 'more'])->name('absen.more');
+    Route::get('/absen/{aksi}', [AbsenHomeController::class, 'clock'])
+        ->name('absen.clock')
+        ->where('aksi', 'masuk|pulang');
     Route::get('/profile/compensation', [ProfileController::class, 'compensation'])->name('profile.compensation');
     Route::get('/profile/schedule', [ProfileController::class, 'schedule'])->name('profile.schedule');
     Route::get('/profile/laporan-keuangan', [ProfileController::class, 'financialReport'])

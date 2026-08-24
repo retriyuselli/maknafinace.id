@@ -235,8 +235,12 @@ class AbsensiController extends Controller
             $this->absensiService->absenPulang($user, $payload, $foto);
         }
 
+        $target = $request->input('redirect_to') === 'absen.home'
+            ? route('absen.home')
+            : route('profile.absensi');
+
         return redirect()
-            ->route('profile.absensi')
+            ->to($target)
             ->with('success', $jenis === 'masuk' ? 'Absen masuk berhasil dicatat.' : 'Absen pulang berhasil dicatat.');
     }
 }
