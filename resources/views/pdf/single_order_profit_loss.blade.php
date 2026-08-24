@@ -481,12 +481,16 @@
 </head>
 
 <body>
+    @php
+        $company = $company ?? \App\Models\Company::query()->first();
+        $companyName = $company?->company_name ?? config('app.name', 'Your Company');
+    @endphp
     <!-- Header (berulang di setiap halaman) -->
     <header>
     <table class="header" style="width: 100%;">
         <tr>
             <td style="width: 60%; text-align: left; vertical-align: top;">
-                <h2>{{ config('app.name', 'Your Company') }}</h2>
+                <h2>{{ $companyName }}</h2>
                 <p>{{ config('invoice.address', 'Your Company Address') }}</p>
                 <p>Phone : {{ config('invoice.phone', '+123456789') }}</p>
                 <p>Email : {{ config('invoice.email', 'info@yourcompany.com') }}</p>
