@@ -309,7 +309,11 @@ class AbsensiService
 
         $hasil = $this->cekLokasi((float) $lintang, (float) $bujur);
 
-        if ($pengaturan->tolak_jika_di_luar_radius && ! $hasil['dalam_radius']) {
+        if (
+            $pengaturan->tolak_jika_di_luar_radius
+            && ! $hasil['dalam_radius']
+            && ! config('absensi.skip_geofence')
+        ) {
             $jarak = $hasil['jarak_meter'] ?? 0;
             $radius = $hasil['lokasi']?->radius_meter ?? 0;
             $nama = $hasil['lokasi']?->nama ?? 'kantor';
