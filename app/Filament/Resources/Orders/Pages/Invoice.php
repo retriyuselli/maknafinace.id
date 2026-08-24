@@ -43,6 +43,30 @@ class Invoice extends Page
 
     public function getTitle(): string|Htmlable
     {
-        return 'Invoice '.$this->order->prospect->name_event;
+        return 'Invoice '.$this->orderName();
+    }
+
+    public function getBreadcrumb(): string
+    {
+        return 'Invoice';
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        $resource = static::getResource();
+
+        return [
+            $resource::getUrl() => $resource::getBreadcrumb(),
+            $resource::getUrl('view', ['record' => $this->order]) => $this->orderName(),
+            $this->getBreadcrumb(),
+        ];
+    }
+
+    protected function orderName(): string
+    {
+        return $this->order->name
+            ?: $this->order->prospect?->name_event
+            ?: $this->order->number
+            ?: '#'.$this->order->id;
     }
 }
