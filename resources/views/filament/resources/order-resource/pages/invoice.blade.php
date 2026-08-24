@@ -31,7 +31,7 @@
         </div>
 
         <!-- Download Buttons -->
-        <div class="mt-6 flex justify-end gap-3">
+        <div class="mt-6 flex flex-wrap justify-end gap-3">
             @php
                 $phone = $order->prospect->phone ?? '';
                 $whatsappUrl = '#';
@@ -68,6 +68,16 @@
                         d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
                 Download Invoice
+            </a>
+
+            <a href="{{ route('orders.profit_loss.preview', $order) }}" target="_blank"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 border border-transparent rounded-md font-semibold text-sm text-white hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 7.5h18M3 12h18M3 16.5h12" />
+                </svg>
+                Laporan L/R
             </a>
         </div>
 

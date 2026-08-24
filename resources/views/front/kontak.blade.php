@@ -1,544 +1,300 @@
-<!DOCTYPE html>
-<html lang="id" class="scroll-smooth">
+@extends('layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kontak Perusahaan - {{ $companyName ?? config('app.name') }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+@section('title', 'Kontak — WOFINS')
+
+@push('styles')
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
+        :root {
+            --wf-navy: #0b1f3a;
+            --wf-navy-deep: #071526;
+            --wf-gold: #c9a227;
+            --wf-gold-soft: #e8d48b;
+            --wf-cream: #f7f4ee;
+            --wf-ink: #1a2332;
+            --wf-muted: #5c6675;
+            --wf-line: #e6e2d9;
         }
 
-        .gradient-bg {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        .wf-page {
+            font-family: 'Poppins', system-ui, sans-serif;
+            color: var(--wf-ink);
+            background: #fff;
         }
 
-        .card-hover {
-            transition: all 0.3s ease;
+        .wf-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--wf-line);
         }
 
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        .wf-btn-navy {
+            background: var(--wf-navy);
+            color: #fff;
+            border-radius: 999px;
+            font-weight: 700;
+            transition: background .2s ease, transform .2s ease;
         }
 
-        .text-gradient {
-            background: linear-gradient(135deg, #3b82f6, #fbbf24);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .wf-btn-navy:hover {
+            background: var(--wf-navy-deep);
+            transform: translateY(-1px);
         }
 
-        .contact-form {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(251, 191, 36, 0.05) 100%);
+        .wf-btn-ghost {
+            border: 1.5px solid var(--wf-navy);
+            color: var(--wf-navy);
+            border-radius: 999px;
+            font-weight: 700;
+            background: #fff;
         }
+
+        .wf-btn-gold {
+            background: var(--wf-gold);
+            color: var(--wf-navy-deep);
+            border-radius: 999px;
+            font-weight: 800;
+        }
+
+        .wf-contact-card {
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid var(--wf-line);
+            border-radius: 1.25rem;
+            padding: 1.35rem;
+            height: 100%;
+        }
+
+        .wf-contact-card .ornament {
+            position: absolute;
+            border-radius: 999px;
+            pointer-events: none;
+            background: rgba(201, 162, 39, 0.12);
+        }
+
+        .wf-input {
+            width: 100%;
+            border: 1px solid var(--wf-line);
+            border-radius: 0.85rem;
+            padding: 0.8rem 1rem;
+            font-size: 0.9rem;
+            background: #fff;
+            color: var(--wf-ink);
+            outline: none;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .wf-input:focus {
+            border-color: rgba(201, 162, 39, 0.7);
+            box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
+        }
+
+        [x-cloak] { display: none !important; }
     </style>
-</head>
+@endpush
 
-<body class="bg-white text-gray-800">
-    <!-- Header Navigation -->
-    @include('front.header')
+@section('content')
+@php
+    $paket = request('paket');
+    $paketLabel = match ($paket) {
+        'starter' => 'Paket Starter',
+        'professional' => 'Paket Professional',
+        'business' => 'Paket Business',
+        'enterprise' => 'Paket Enterprise',
+        default => null,
+    };
+@endphp
 
-    <!-- Hero Section -->
-    <section class="gradient-bg text-white py-20">
-        <div class="container mx-auto px-6">
-            <div class="text-center max-w-4xl mx-auto">
-                <h1 class="text-5xl md:text-6xl font-bold mb-6">
-                    <span class="text-gradient">Hubungi</span> Kami
+    <div class="wf-page">
+        @include('front.partials.wf-nav')
+
+        <section class="pt-12 pb-8 bg-gradient-to-b from-white to-[var(--wf-cream)]">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <p class="text-xs font-bold tracking-[0.2em] uppercase text-[var(--wf-gold)] mb-3">Kontak</p>
+                <h1 class="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-[var(--wf-navy)] leading-tight">
+                    Mari Diskusikan Kebutuhan Wedding Organizer Anda
                 </h1>
-                <p class="text-xl md:text-2xl text-gray-300 mb-8">
-                    Tim profesional kami siap membantu kebutuhan internal perusahaan Anda
+                <p class="mt-4 text-[var(--wf-muted)] max-w-2xl mx-auto">
+                    Jadwalkan demo gratis atau konsultasikan paket yang paling sesuai. Tim WOFINS siap membantu.
                 </p>
-                <div class="flex flex-wrap justify-center gap-4 text-sm">
-                    <div class="bg-blue-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-blue-400/30">
-                        <i class="fas fa-clock mr-2"></i>24/7 Support
-                    </div>
-                    <div class="bg-yellow-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-yellow-400/30">
-                        <i class="fas fa-headset mr-2"></i>Tim Responsif
-                    </div>
-                    <div class="bg-blue-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-blue-400/30">
-                        <i class="fas fa-shield-alt mr-2"></i>Keamanan Terjamin
-                    </div>
-                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Quick Contact Stats -->
-    <section class="py-16 bg-gray-50">
-        <div class="container mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div class="text-center">
-                    <div
-                        class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-phone text-2xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Telepon</h3>
-                    <p class="text-gray-600">+62 21 1234 5678</p>
-                    <p class="text-gray-600">+62 812 3456 7890</p>
-                </div>
-                <div class="text-center">
-                    <div
-                        class="bg-yellow-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-envelope text-2xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Email</h3>
-                    <p class="text-gray-600">info@maknakreatif.com</p>
-                    <p class="text-gray-600">admin@maknawedding.com</p>
-                </div>
-                <div class="text-center">
-                    <div
-                        class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-map-marker-alt text-2xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Alamat</h3>
-                    <p class="text-gray-600">Jl. Sudirman No. 123</p>
-                    <p class="text-gray-600">Jakarta Pusat, 10220</p>
-                </div>
-                <div class="text-center">
-                    <div
-                        class="bg-yellow-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-clock text-2xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Jam Kerja</h3>
-                    <p class="text-gray-600">Senin - Jumat: 08:00 - 17:00</p>
-                    <p class="text-gray-600">Sabtu: 08:00 - 14:00</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact Form & Information -->
-    <section class="py-16 bg-white">
-        <div class="container mx-auto px-6">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <!-- Contact Form -->
-                <div class="contact-form p-8 rounded-2xl">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Kirim Pesan Internal</h2>
-                    <p class="text-gray-600 mb-8">Gunakan form ini untuk komunikasi internal antar departemen atau tim
-                    </p>
-
-                    <form class="space-y-6" x-data="contactForm()">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Lengkap *</label>
-                                <input type="text" x-model="form.name"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="Masukkan nama lengkap">
+        <section class="py-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+                    @foreach ([
+                        ['fa-brands fa-whatsapp', 'WhatsApp', '+62 813-7318-3794', 'https://wa.me/6281373183794'],
+                        ['fa-solid fa-envelope', 'Email', 'support@wofins.id', 'mailto:support@wofins.id'],
+                        ['fa-solid fa-globe', 'Website', 'wofins.id', 'https://wofins.id'],
+                        ['fa-solid fa-location-dot', 'Lokasi', 'Palembang, Indonesia', null],
+                    ] as $item)
+                        <div class="wf-contact-card">
+                            <span class="ornament w-16 h-16 -right-4 -top-4" aria-hidden="true"></span>
+                            <div class="relative z-10">
+                                <div class="w-10 h-10 rounded-xl bg-[rgba(201,162,39,0.12)] text-[var(--wf-gold)] inline-flex items-center justify-center mb-3">
+                                    <i class="{{ $item[0] }}"></i>
+                                </div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-[var(--wf-muted)]">{{ $item[1] }}</p>
+                                @if ($item[3])
+                                    <a href="{{ $item[3] }}" class="mt-1 block font-bold text-[var(--wf-navy)] hover:text-[var(--wf-gold)]">{{ $item[2] }}</a>
+                                @else
+                                    <p class="mt-1 font-bold text-[var(--wf-navy)]">{{ $item[2] }}</p>
+                                @endif
                             </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="grid lg:grid-cols-5 gap-8 items-start">
+                    <div class="lg:col-span-3 rounded-2xl border border-[var(--wf-line)] bg-white p-6 sm:p-8"
+                         x-data="wfContactForm(@js($paketLabel))">
+                        <h2 class="text-2xl font-bold text-[var(--wf-navy)]">Kirim pesan / jadwalkan demo</h2>
+                        <p class="mt-2 text-sm text-[var(--wf-muted)]">
+                            Isi formulir — pesan akan dibuka di WhatsApp agar kami bisa merespons lebih cepat.
+                        </p>
+
+                        @if ($paketLabel)
+                            <div class="mt-4 inline-flex items-center gap-2 rounded-full bg-[rgba(201,162,39,0.12)] px-3 py-1.5 text-xs font-bold text-[#9a7a12]">
+                                <i class="fa-solid fa-tag"></i>
+                                Tertarik: {{ $paketLabel }}
+                            </div>
+                        @endif
+
+                        <form class="mt-6 space-y-4" @submit.prevent="submit()">
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-[var(--wf-navy)] mb-1.5">Nama lengkap *</label>
+                                    <input type="text" class="wf-input" x-model="form.name" placeholder="Nama Anda" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-[var(--wf-navy)] mb-1.5">Nama WO / perusahaan</label>
+                                    <input type="text" class="wf-input" x-model="form.company" placeholder="Nama wedding organizer">
+                                </div>
+                            </div>
+
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-[var(--wf-navy)] mb-1.5">Email *</label>
+                                    <input type="email" class="wf-input" x-model="form.email" placeholder="email@domain.com" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-[var(--wf-navy)] mb-1.5">WhatsApp *</label>
+                                    <input type="tel" class="wf-input" x-model="form.phone" placeholder="08xxxxxxxxxx" required>
+                                </div>
+                            </div>
+
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Departemen *</label>
-                                <select x-model="form.department"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option value="">Pilih Departemen</option>
-                                    <option value="management">Management</option>
-                                    <option value="wedding_planning">Wedding Planning</option>
-                                    <option value="event_coordination">Event Coordination</option>
-                                    <option value="marketing">Marketing</option>
-                                    <option value="finance">Finance</option>
-                                    <option value="hr">Human Resources</option>
-                                    <option value="it">IT Support</option>
+                                <label class="block text-sm font-semibold text-[var(--wf-navy)] mb-1.5">Kebutuhan *</label>
+                                <select class="wf-input" x-model="form.need" required>
+                                    <option value="">Pilih kebutuhan</option>
+                                    <option value="Demo gratis">Jadwalkan demo gratis</option>
+                                    <option value="Konsultasi paket">Konsultasi paket harga</option>
+                                    <option value="Pertanyaan fitur">Pertanyaan fitur</option>
+                                    <option value="Onboarding">Onboarding / migrasi</option>
+                                    <option value="Lainnya">Lainnya</option>
                                 </select>
                             </div>
-                        </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
-                                <input type="email" x-model="form.email"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="nama@maknakreatif.com">
+                                <label class="block text-sm font-semibold text-[var(--wf-navy)] mb-1.5">Pesan *</label>
+                                <textarea class="wf-input" rows="5" x-model="form.message" placeholder="Ceritakan singkat kebutuhan WO Anda..." required></textarea>
                             </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Nomor Telepon</label>
-                                <input type="tel" x-model="form.phone"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="+62 812 3456 7890">
-                            </div>
-                        </div>
 
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Kategori Pesan *</label>
-                            <select x-model="form.category"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option value="">Pilih Kategori</option>
-                                <option value="project_inquiry">Pertanyaan Proyek</option>
-                                <option value="technical_support">Dukungan Teknis</option>
-                                <option value="hr_matter">Masalah HR</option>
-                                <option value="finance_inquiry">Pertanyaan Keuangan</option>
-                                <option value="general_inquiry">Pertanyaan Umum</option>
-                                <option value="urgent_matter">Masalah Mendesak</option>
-                            </select>
-                        </div>
+                            <p x-show="error" x-cloak class="text-sm text-red-600" x-text="error"></p>
 
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Prioritas</label>
-                            <div class="flex space-x-4">
-                                <label class="flex items-center">
-                                    <input type="radio" x-model="form.priority" value="low"
-                                        class="mr-2 text-blue-600">
-                                    <span class="text-green-600">Rendah</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" x-model="form.priority" value="medium"
-                                        class="mr-2 text-blue-600">
-                                    <span class="text-yellow-600">Sedang</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" x-model="form.priority" value="high"
-                                        class="mr-2 text-blue-600">
-                                    <span class="text-red-600">Tinggi</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Pesan *</label>
-                            <textarea x-model="form.message" rows="6"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="Tuliskan pesan atau pertanyaan Anda di sini..."></textarea>
-                        </div>
-
-                        <div>
-                            <label class="flex items-center">
-                                <input type="checkbox" x-model="form.urgent" class="mr-3 text-blue-600">
-                                <span class="text-sm text-gray-700">Tandai sebagai pesan mendesak</span>
-                            </label>
-                        </div>
-
-                        <button type="submit" @click.prevent="submitForm()"
-                            class="w-full bg-blue-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg">
-                            <i class="fas fa-paper-plane mr-2"></i>
-                            Kirim Pesan
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Company Information -->
-                <div class="space-y-8">
-                    <!-- Company Profile -->
-                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-2xl">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                            <i class="fas fa-building text-blue-600 mr-3"></i>
-                            Profil Perusahaan
-                        </h3>
-                        <div class="space-y-4">
-                            <div>
-                                <h4 class="font-semibold text-gray-800 mb-2">{{ $companyName ?? config('app.name') }}</h4>
-                                <p class="text-gray-600">Perusahaan yang bergerak di bidang wedding organizer dan event
-                                    planner dengan pengalaman lebih dari 10 tahun dalam industri ini.</p>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-800 mb-2">Visi</h4>
-                                <p class="text-gray-600">Menjadi wedding organizer terdepan yang menciptakan momen tak
-                                    terlupakan dengan pelayanan berkualitas tinggi.</p>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-800 mb-2">Misi</h4>
-                                <ul class="text-gray-600 space-y-1">
-                                    <li>• Memberikan pelayanan wedding organizer terbaik</li>
-                                    <li>• Menciptakan tim profesional yang berdedikasi</li>
-                                    <li>• Mengutamakan kepuasan klien dalam setiap proyek</li>
-                                </ul>
-                            </div>
-                        </div>
+                            <button type="submit" class="wf-btn-navy w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm">
+                                <i class="fa-brands fa-whatsapp text-lg"></i>
+                                Kirim via WhatsApp
+                            </button>
+                        </form>
                     </div>
 
-                    <!-- Department Contacts -->
-                    <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-8 rounded-2xl">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                            <i class="fas fa-users text-yellow-600 mr-3"></i>
-                            Kontak Departemen
-                        </h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center bg-white p-4 rounded-lg">
-                                <div>
-                                    <h4 class="font-semibold text-gray-800">Management</h4>
-                                    <p class="text-sm text-gray-600">Direktur & Manajer</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-blue-600 font-semibold">Ext. 101</p>
-                                    <p class="text-sm text-gray-600">management@maknakreatif.com</p>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-between items-center bg-white p-4 rounded-lg">
-                                <div>
-                                    <h4 class="font-semibold text-gray-800">Wedding Planning</h4>
-                                    <p class="text-sm text-gray-600">Tim Perencana Wedding</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-blue-600 font-semibold">Ext. 102</p>
-                                    <p class="text-sm text-gray-600">wedding@maknakreatif.com</p>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-between items-center bg-white p-4 rounded-lg">
-                                <div>
-                                    <h4 class="font-semibold text-gray-800">Event Coordination</h4>
-                                    <p class="text-sm text-gray-600">Koordinator Acara</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-blue-600 font-semibold">Ext. 103</p>
-                                    <p class="text-sm text-gray-600">event@maknakreatif.com</p>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-between items-center bg-white p-4 rounded-lg">
-                                <div>
-                                    <h4 class="font-semibold text-gray-800">Finance</h4>
-                                    <p class="text-sm text-gray-600">Keuangan & Akuntansi</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-blue-600 font-semibold">Ext. 104</p>
-                                    <p class="text-sm text-gray-600">finance@maknakreatif.com</p>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-between items-center bg-white p-4 rounded-lg">
-                                <div>
-                                    <h4 class="font-semibold text-gray-800">IT Support</h4>
-                                    <p class="text-sm text-gray-600">Dukungan Teknologi</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-blue-600 font-semibold">Ext. 105</p>
-                                    <p class="text-sm text-gray-600">it@maknakreatif.com</p>
-                                </div>
-                            </div>
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="rounded-2xl border border-[var(--wf-line)] bg-[var(--wf-cream)] p-6">
+                            <h3 class="text-lg font-bold text-[var(--wf-navy)] mb-3">Jam respons</h3>
+                            <ul class="space-y-2 text-sm text-[var(--wf-muted)]">
+                                <li class="flex gap-2"><i class="fa-solid fa-clock mt-0.5 text-[var(--wf-gold)]"></i> Senin–Jumat · 09:00–17:00 WIB</li>
+                                <li class="flex gap-2"><i class="fa-solid fa-bolt mt-0.5 text-[var(--wf-gold)]"></i> Demo biasanya bisa dijadwalkan dalam 1–2 hari kerja</li>
+                            </ul>
                         </div>
-                    </div>
 
-                    <!-- Emergency Contacts -->
-                    <div class="bg-gradient-to-br from-red-50 to-red-100 p-8 rounded-2xl">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                            <i class="fas fa-exclamation-triangle text-red-600 mr-3"></i>
-                            Kontak Darurat
-                        </h3>
-                        <div class="space-y-4">
-                            <div class="bg-white p-4 rounded-lg border-l-4 border-red-500">
-                                <h4 class="font-semibold text-gray-800 mb-2">Emergency Hotline</h4>
-                                <p class="text-red-600 font-bold text-xl">+62 811 9999 0000</p>
-                                <p class="text-sm text-gray-600">24/7 untuk masalah mendesak</p>
-                            </div>
+                        <div class="rounded-2xl border border-[var(--wf-line)] bg-white p-6">
+                            <h3 class="text-lg font-bold text-[var(--wf-navy)] mb-3">Yang bisa kami bantu</h3>
+                            <ul class="space-y-2.5 text-sm text-[var(--wf-ink)]">
+                                @foreach ([
+                                    'Demo walkthrough modul WOFINS',
+                                    'Rekomendasi paket sesuai ukuran tim',
+                                    'Diskusi onboarding & migrasi data',
+                                    'Pertanyaan fitur absensi, keuangan, rekonsiliasi',
+                                ] as $help)
+                                    <li class="flex items-start gap-2.5">
+                                        <span class="mt-0.5 w-5 h-5 rounded-full bg-[rgba(201,162,39,0.15)] text-[var(--wf-gold)] inline-flex items-center justify-center text-[0.6rem] shrink-0">
+                                            <i class="fa-solid fa-check"></i>
+                                        </span>
+                                        {{ $help }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
 
-                            <div class="bg-white p-4 rounded-lg border-l-4 border-yellow-500">
-                                <h4 class="font-semibold text-gray-800 mb-2">Security Office</h4>
-                                <p class="text-yellow-600 font-bold text-xl">+62 811 8888 0000</p>
-                                <p class="text-sm text-gray-600">Keamanan kantor</p>
+                        <div class="rounded-2xl overflow-hidden relative text-white p-6"
+                             style="background: linear-gradient(135deg, #071526 0%, #0b1f3a 60%, #14335a 100%);">
+                            <span class="absolute w-24 h-24 rounded-full -right-6 -top-8 bg-[rgba(201,162,39,0.16)]" aria-hidden="true"></span>
+                            <div class="relative z-10">
+                                <h3 class="text-lg font-bold">Lebih cepat via WhatsApp</h3>
+                                <p class="mt-2 text-sm text-white/75">Chat langsung dengan tim sales WOFINS.</p>
+                                <a href="https://wa.me/6281373183794?text={{ urlencode('Halo, saya ingin jadwalkan demo WOFINS.') }}"
+                                   class="wf-btn-gold inline-flex items-center justify-center gap-2 mt-5 px-5 py-3 text-sm">
+                                    <i class="fa-brands fa-whatsapp"></i>
+                                    Chat sekarang
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Office Location & Map -->
-    <section class="py-16 bg-gray-50">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-800 mb-4">Lokasi Kantor</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">Kunjungi kantor pusat kami untuk meeting atau konsultasi
-                    langsung</p>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <!-- Map Placeholder -->
-                <div class="bg-gray-300 h-96 rounded-2xl flex items-center justify-center">
-                    <div class="text-center">
-                        <i class="fas fa-map-marked-alt text-6xl text-gray-500 mb-4"></i>
-                        <p class="text-gray-600 font-semibold">Google Maps Integration</p>
-                        <p class="text-sm text-gray-500">Jl. Sudirman No. 123, Jakarta Pusat</p>
-                    </div>
-                </div>
-
-                <!-- Location Details -->
-                <div class="space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-building text-blue-600 mr-3"></i>
-                            Alamat Lengkap
-                        </h3>
-                        <div class="space-y-3">
-                            <p class="text-gray-700">
-                                <strong>{{ $companyName ?? config('app.name') }}</strong><br>
-                                Jl. Sudirman No. 123, Lantai 15<br>
-                                Gedung Makna Tower<br>
-                                Jakarta Pusat, DKI Jakarta 10220
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-route text-yellow-500 mr-3"></i>
-                            Akses Transportasi
-                        </h3>
-                        <div class="space-y-3">
-                            <div class="flex items-center">
-                                <i class="fas fa-subway w-6 text-blue-600 mr-3"></i>
-                                <span class="text-gray-700">MRT Bundaran HI (5 menit jalan kaki)</span>
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fas fa-bus w-6 text-green-600 mr-3"></i>
-                                <span class="text-gray-700">Halte TransJakarta Bundaran HI</span>
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fas fa-car w-6 text-yellow-600 mr-3"></i>
-                                <span class="text-gray-700">Parkir tersedia di basement</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-info-circle text-blue-600 mr-3"></i>
-                            Informasi Kunjungan
-                        </h3>
-                        <div class="space-y-3">
-                            <p class="text-gray-700">
-                                <i class="fas fa-clock text-blue-600 mr-2"></i>
-                                <strong>Jam Operasional:</strong><br>
-                                Senin - Jumat: 08:00 - 17:00 WIB<br>
-                                Sabtu: 08:00 - 14:00 WIB
-                            </p>
-                            <p class="text-gray-700">
-                                <i class="fas fa-calendar-check text-green-600 mr-2"></i>
-                                <strong>Appointment:</strong> Disarankan membuat janji terlebih dahulu
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Quick Actions -->
-    <section class="py-16 bg-white">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-800 mb-4">Aksi Cepat</h2>
-                <p class="text-gray-600">Akses cepat untuk kebutuhan internal perusahaan</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <a href="#"
-                    class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl card-hover text-center group">
-                    <div
-                        class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-headset text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">IT Support</h3>
-                    <p class="text-gray-600 text-sm">Bantuan teknis sistem</p>
-                </a>
-
-                <a href="#"
-                    class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl card-hover text-center group">
-                    <div
-                        class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-yellow-600 transition-colors">
-                        <i class="fas fa-user-tie text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">HR Department</h3>
-                    <p class="text-gray-600 text-sm">Masalah kepegawaian</p>
-                </a>
-
-                <a href="#"
-                    class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl card-hover text-center group">
-                    <div
-                        class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-calculator text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Finance</h3>
-                    <p class="text-gray-600 text-sm">Pertanyaan keuangan</p>
-                </a>
-
-                <a href="#"
-                    class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl card-hover text-center group">
-                    <div
-                        class="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-yellow-600 transition-colors">
-                        <i class="fas fa-exclamation-triangle text-white text-2xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Emergency</h3>
-                    <p class="text-gray-600 text-sm">Kontak darurat</p>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    @include('front.footer')
+        @include('front.partials.wf-footer')
+    </div>
 
     <script>
-        function contactForm() {
+        function wfContactForm(paketLabel) {
             return {
+                error: '',
                 form: {
                     name: '',
-                    department: '',
+                    company: '',
                     email: '',
                     phone: '',
-                    category: '',
-                    priority: 'medium',
-                    message: '',
-                    urgent: false
+                    need: paketLabel ? 'Konsultasi paket' : '',
+                    message: paketLabel ? `Saya tertarik dengan ${paketLabel} dan ingin konsultasi lebih lanjut.` : '',
                 },
-
-                submitForm() {
-                    // Validate required fields
-                    if (!this.form.name || !this.form.department || !this.form.email || !this.form.category || !this.form
-                        .message) {
-                        alert('Mohon lengkapi semua field yang wajib diisi');
+                submit() {
+                    this.error = '';
+                    const f = this.form;
+                    if (!f.name || !f.email || !f.phone || !f.need || !f.message) {
+                        this.error = 'Mohon lengkapi semua field yang wajib diisi.';
                         return;
                     }
 
-                    // Here you would typically send the form data to your backend
-                    console.log('Form submitted:', this.form);
-                    alert('Pesan berhasil dikirim! Tim kami akan segera merespons.');
+                    let text = `Halo, saya ingin menghubungi tim WOFINS.\n\n`;
+                    text += `Nama: ${f.name}\n`;
+                    if (f.company) text += `WO/Perusahaan: ${f.company}\n`;
+                    text += `Email: ${f.email}\n`;
+                    text += `WhatsApp: ${f.phone}\n`;
+                    text += `Kebutuhan: ${f.need}\n`;
+                    if (paketLabel) text += `Paket: ${paketLabel}\n`;
+                    text += `\nPesan:\n${f.message}`;
 
-                    // Reset form
-                    this.form = {
-                        name: '',
-                        department: '',
-                        email: '',
-                        phone: '',
-                        category: '',
-                        priority: 'medium',
-                        message: '',
-                        urgent: false
-                    };
+                    window.open(`https://wa.me/6281373183794?text=${encodeURIComponent(text)}`, '_blank');
                 }
             }
         }
-
-        // Add smooth scrolling and interactive features
-        document.addEventListener('DOMContentLoaded', function() {
-            // Animate cards on scroll
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-
-            const observer = new IntersectionObserver(function(entries) {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }
-                });
-            }, observerOptions);
-
-            // Observe all cards
-            document.querySelectorAll('.card-hover').forEach(card => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                observer.observe(card);
-            });
-        });
     </script>
-</body>
-
-</html>
+@endsection

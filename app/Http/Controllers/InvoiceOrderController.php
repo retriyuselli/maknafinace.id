@@ -191,6 +191,92 @@ class InvoiceOrderController extends Controller
     }
 
     /**
+     * Preview the profit/loss PDF in the browser, with a download button.
+     */
+    public function previewProfitLoss(Order $order)
+    {
+        Gate::authorize('view', $order);
+
+        return view('orders.profit_loss_stream', [
+            'order' => $order,
+        ]);
+    }
+
+    /**
+     * Stream the profit/loss PDF in the browser.
+     */
+    public function streamProfitLoss(Order $order)
+    {
+        $pdf = $this->makeProfitLossPdf($order);
+
+        return $pdf->stream($this->profitLossFilename($order));
+    }
+
+    /**
+     * Download the profit/loss PDF.
+     */
+    public function downloadProfitLoss(Order $order)
+    {
+        $pdf = $this->makeProfitLossPdf($order);
+
+        return $pdf->download($this->profitLossFilename($order));
+    }
+
+    protected function makeProfitLossPdf(Order $order)
+    {
+        Gate::authorize('view', $order);
+
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(300);
+
+        $order = Order::with([
+            'items.product.pengurangans',
+            'prospect',
+            'employee',
+            'dataPembayaran.paymentMethod',
+            'expenses.vendor',
+        ])->findOrFail($order->id);
+
+        $pdf = Pdf::loadView('pdf.single_order_profit_loss', [
+            'order' => $order,
+            'generatedDate' => now()->format('d F Y H:i'),
+        ]);
+
+        $pdf->setPaper('a4', 'portrait');
+        $pdf->setOptions([
+            'dpi' => 96,
+            'defaultFont' => 'DejaVu Sans',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'isPhpEnabled' => false,
+            'isFontSubsettingEnabled' => true,
+        ]);
+
+        $pdf->render();
+
+        $dompdf = $pdf->getDomPDF();
+        $canvas = $dompdf->getCanvas();
+        $fontMetrics = $dompdf->getFontMetrics();
+        $font = $fontMetrics->getFont('DejaVu Sans');
+        $size = 9;
+        $sample = 'Halaman 1 Dari 2';
+        $x = ($canvas->get_width() - $fontMetrics->getTextWidth($sample, $font, $size)) / 2;
+        $y = $canvas->get_height() - 28;
+
+        $canvas->page_text($x, $y, 'Halaman {PAGE_NUM} Dari {PAGE_COUNT}', $font, $size, [0.33, 0.33, 0.33]);
+
+        return $pdf;
+    }
+
+    protected function profitLossFilename(Order $order): string
+    {
+        $eventName = $order->prospect->name_event ?? $order->number ?? $order->id;
+
+        return "Laporan-LR-{$eventName}.pdf";
+    }
+
+    /**
      * Generate PDF for simulation package.
      *
      * @return Response

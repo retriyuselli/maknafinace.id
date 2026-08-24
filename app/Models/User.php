@@ -39,6 +39,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         // Basic Info - Safe for mass assignment
         'name',
         'email',
+        'google_id',
+        'email_verified_at',
         'password', // Required field, tapi akan di-hash otomatis
 
         // Personal Info - Perlu validation ketat

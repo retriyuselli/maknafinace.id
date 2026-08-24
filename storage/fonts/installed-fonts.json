@@ -1,8 +1,8 @@
 {
     "poppins": {
-        "normal": "\/Applications\/MAMP\/htdocs\/maknafinace.id\/storage\/fonts\/poppins_normal_ce466b5afab55323ee1e9739a503e97b",
-        "bold": "\/Applications\/MAMP\/htdocs\/maknafinace.id\/storage\/fonts\/poppins_bold_79cb37070f4d7a189f4c7cfcf1adbc0f",
-        "italic": "\/Applications\/MAMP\/htdocs\/maknafinace.id\/storage\/fonts\/poppins_italic_532b4d49db5512203f0997fde688e410",
+        "normal": "poppins_normal_ce466b5afab55323ee1e9739a503e97b",
+        "bold": "poppins_bold_79cb37070f4d7a189f4c7cfcf1adbc0f",
+        "italic": "poppins_italic_532b4d49db5512203f0997fde688e410",
         "bold_italic": "poppins_bold_italic_cd73548ae4e91ad95c412a44466451eb"
     }
 }

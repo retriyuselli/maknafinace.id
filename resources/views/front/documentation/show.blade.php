@@ -1,136 +1,158 @@
 @extends('layouts.app')
 
-@section('title', $currentArticle->title)
+@section('title', $currentArticle->title.' — Dokumentasi WOFINS')
 
-@section('content')
+@push('styles')
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Custom Styles for Documentation Content */
+        :root {
+            --wf-navy: #0b1f3a;
+            --wf-navy-deep: #071526;
+            --wf-gold: #c9a227;
+            --wf-gold-soft: #e8d48b;
+            --wf-cream: #f7f4ee;
+            --wf-ink: #1a2332;
+            --wf-muted: #5c6675;
+            --wf-line: #e6e2d9;
+        }
+
+        .wf-page {
+            font-family: 'Poppins', system-ui, sans-serif;
+            color: var(--wf-ink);
+            background: #fff;
+        }
+
+        .wf-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--wf-line);
+        }
+
+        .wf-btn-navy {
+            background: var(--wf-navy);
+            color: #fff;
+            border-radius: 999px;
+            font-weight: 700;
+        }
+
+        .wf-btn-ghost {
+            border: 1.5px solid var(--wf-navy);
+            color: var(--wf-navy);
+            border-radius: 999px;
+            font-weight: 700;
+            background: #fff;
+        }
+
         .documentation-content h2 {
             font-size: 1.25rem;
             font-weight: 700;
             margin-top: 1.5rem;
             margin-bottom: 0.75rem;
-            color: #1f2937;
+            color: var(--wf-navy);
         }
         .documentation-content h3 {
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 600;
             margin-top: 1.25rem;
             margin-bottom: 0.5rem;
-            color: #374151;
+            color: var(--wf-ink);
         }
         .documentation-content p {
-            font-size: 0.9rem;
-            margin-bottom: 0.75rem;
-            line-height: 1.5;
-            color: #4b5563;
+            font-size: 0.95rem;
+            margin-bottom: 0.85rem;
+            line-height: 1.7;
+            color: var(--wf-muted);
         }
         .documentation-content ul {
-            font-size: 0.9rem;
             list-style-type: disc;
             padding-left: 1.25rem;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.85rem;
         }
         .documentation-content ol {
-            font-size: 0.9rem;
             list-style-type: decimal;
             padding-left: 1.25rem;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.85rem;
         }
         .documentation-content li {
-            margin-bottom: 0.25rem;
-            color: #4b5563;
+            margin-bottom: 0.35rem;
+            color: var(--wf-muted);
+            font-size: 0.95rem;
         }
         .documentation-content pre {
             background-color: #f3f4f6;
-            padding: 0.75rem;
-            border-radius: 0.375rem;
+            padding: 0.85rem;
+            border-radius: 0.5rem;
             overflow-x: auto;
-            margin-bottom: 0.75rem;
-            font-family: monospace;
+            margin-bottom: 0.85rem;
             font-size: 0.8rem;
         }
         .documentation-content blockquote {
-            font-size: 0.9rem;
-            border-left: 3px solid #3b82f6;
-            padding-left: 0.75rem;
-            margin-left: 0;
-            margin-bottom: 0.75rem;
+            border-left: 3px solid var(--wf-gold);
+            padding-left: 0.85rem;
+            margin: 0 0 0.85rem;
             font-style: italic;
-            color: #4b5563;
+            color: var(--wf-muted);
         }
-        .documentation-content hr {
-            margin-top: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-color: #e5e7eb;
+        .documentation-content a {
+            color: var(--wf-navy);
+            font-weight: 600;
+            text-decoration: underline;
+            text-underline-offset: 2px;
         }
         .documentation-content strong {
             font-weight: 600;
-            color: #111827;
+            color: var(--wf-ink);
         }
-        /* Style untuk Callout/Alert boxes yang dibuat di RichEditor */
-        .documentation-content .bg-blue-50 {
-            font-size: 0.9rem;
-            background-color: #eff6ff;
-            border: 1px solid #dbeafe;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            margin-bottom: 0.75rem;
-        }
-        .documentation-content .bg-yellow-50 {
-            font-size: 0.9rem;
-            background-color: #fefce8;
-            border: 1px solid #fef9c3;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            margin-bottom: 0.75rem;
-        }
-    </style>
 
-    <div class="min-h-screen bg-gray-50">
-        <!-- Navigation Header -->
-        @include('front.header')
+        [x-cloak] { display: none !important; }
+    </style>
+@endpush
+
+@section('content')
+    <div class="wf-page">
+        @include('front.partials.wf-nav')
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <nav class="text-sm text-[var(--wf-muted)] mb-6">
+                <a href="{{ route('home') }}" class="hover:text-[var(--wf-navy)]">Beranda</a>
+                <span class="mx-2">/</span>
+                <a href="{{ route('docs.index') }}" class="hover:text-[var(--wf-navy)]">Docs</a>
+                <span class="mx-2">/</span>
+                <span class="text-[var(--wf-navy)] font-semibold">{{ $currentArticle->title }}</span>
+            </nav>
+
             <div class="flex flex-col lg:flex-row gap-8">
-                <!-- Sidebar Navigasi -->
-                <div class="w-full lg:w-1/4 flex-shrink-0">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sticky top-24">
-                        <a href="{{ route('docs.index') }}" class="flex items-center text-sm text-gray-500 hover:text-blue-600 mb-6 transition-colors group">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                            </svg>
-                            Kembali ke Menu Utama
+                <aside class="w-full lg:w-1/4 shrink-0">
+                    <div class="bg-white rounded-2xl border border-[var(--wf-line)] p-4 sticky top-24">
+                        <a href="{{ route('docs.index') }}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--wf-muted)] hover:text-[var(--wf-navy)] mb-5">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                            Semua dokumentasi
                         </a>
 
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4 px-2">Daftar Isi</h3>
-                        
-                        <nav class="space-y-4">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-[var(--wf-navy)] mb-3 px-2">Daftar isi</h3>
+
+                        <nav class="space-y-3">
                             @foreach ($categories as $category)
-                                @if($category->id == $currentArticle->documentation_category_id && $category->documentations->count() > 0)
-                                    <div x-data="{ expanded: true }">
-                                        <button 
-                                            @click="expanded = !expanded" 
-                                            class="flex items-center justify-between w-full text-left font-medium text-gray-900 hover:text-blue-600 px-2 py-1 rounded-md hover:bg-gray-50 transition-colors"
+                                @if ($category->documentations->count() > 0)
+                                    <div x-data="{ expanded: {{ $category->id == $currentArticle->documentation_category_id ? 'true' : 'false' }} }">
+                                        <button
+                                            type="button"
+                                            @click="expanded = !expanded"
+                                            class="flex items-center justify-between w-full text-left font-semibold text-[var(--wf-navy)] px-2 py-1.5 rounded-lg hover:bg-[var(--wf-cream)]"
                                         >
-                                            <span class="flex items-center gap-2">
-                                                {{ $category->name }}
-                                            </span>
-                                            <svg 
-                                                class="h-4 w-4 text-gray-400 transition-transform duration-200"
-                                                :class="expanded ? 'rotate-0' : '-rotate-90'"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                                            >
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                            </svg>
+                                            <span class="text-sm">{{ $category->name }}</span>
+                                            <i class="fa-solid fa-chevron-down text-[0.65rem] text-[var(--wf-muted)] transition-transform" :class="expanded && 'rotate-180'"></i>
                                         </button>
 
-                                        <ul x-show="expanded" x-collapse class="space-y-1 ml-2 border-l border-gray-200 pl-3 mt-1">
+                                        <ul x-show="expanded" x-cloak class="mt-1 ml-2 border-l border-[var(--wf-line)] pl-3 space-y-1">
                                             @foreach ($category->documentations as $doc)
                                                 <li>
-                                                    <a 
+                                                    <a
                                                         href="{{ route('docs.show', $doc->slug) }}"
-                                                        class="block py-1 text-sm transition-colors duration-200 {{ isset($currentArticle) && $currentArticle->id === $doc->id ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-900' }}"
+                                                        class="block py-1.5 text-sm transition-colors {{ $currentArticle->id === $doc->id ? 'text-[var(--wf-gold)] font-bold' : 'text-[var(--wf-muted)] hover:text-[var(--wf-navy)]' }}"
                                                     >
                                                         {{ $doc->title }}
                                                     </a>
@@ -142,22 +164,21 @@
                             @endforeach
                         </nav>
                     </div>
-                </div>
+                </aside>
 
-                <!-- Konten Utama -->
-                <div class="w-full lg:w-3/4">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-10">
-                        <header class="mb-8 border-b border-gray-200 pb-6">
-                            <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-2">
-                                <span>{{ $currentArticle->category->name }}</span>
-                            </div>
-                            <h1 class="text-xl font-bold text-gray-900 mb-2">
+                <main class="w-full lg:w-3/4">
+                    <article class="bg-white rounded-2xl border border-[var(--wf-line)] p-6 lg:p-10">
+                        <header class="mb-8 border-b border-[var(--wf-line)] pb-6">
+                            <p class="text-xs font-bold tracking-[0.16em] uppercase text-[var(--wf-gold)] mb-2">
+                                {{ $currentArticle->category->name }}
+                            </p>
+                            <h1 class="text-2xl sm:text-3xl font-bold text-[var(--wf-navy)] leading-tight">
                                 {{ $currentArticle->title }}
                             </h1>
-                            @if($currentArticle->keywords)
-                                <div class="flex flex-wrap gap-2">
-                                    @foreach(explode(',', $currentArticle->keywords) as $keyword)
-                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600">
+                            @if ($currentArticle->keywords)
+                                <div class="flex flex-wrap gap-2 mt-4">
+                                    @foreach (explode(',', $currentArticle->keywords) as $keyword)
+                                        <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-[var(--wf-cream)] text-[var(--wf-muted)]">
                                             {{ trim($keyword) }}
                                         </span>
                                     @endforeach
@@ -165,24 +186,23 @@
                             @endif
                         </header>
 
-                        <!-- Menggunakan custom class documentation-content untuk styling -->
-                        <div class="documentation-content text-sm">
+                        <div class="documentation-content">
                             {!! \App\Support\SafeHtml::fromRichText($currentArticle->content) !!}
                         </div>
 
-                        @if($currentArticle->related_resource)
-                            <div class="mt-10 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                                <h3 class="text-base font-semibold text-blue-900 mb-2">Resource Terkait</h3>
-                                <p class="text-blue-700 text-sm mb-2  ">
-                                    Artikel ini berkaitan dengan fitur <strong>{{ $currentArticle->related_resource }}</strong>.
+                        @if ($currentArticle->related_resource)
+                            <div class="mt-10 p-4 rounded-xl border border-[rgba(201,162,39,0.25)] bg-[rgba(201,162,39,0.08)]">
+                                <h3 class="text-base font-bold text-[var(--wf-navy)] mb-1">Resource terkait</h3>
+                                <p class="text-sm text-[var(--wf-muted)]">
+                                    Artikel ini berkaitan dengan fitur <strong class="text-[var(--wf-navy)]">{{ $currentArticle->related_resource }}</strong>.
                                 </p>
                             </div>
                         @endif
-                    </div>
-                </div>
+                    </article>
+                </main>
             </div>
         </div>
 
-        @include('front.footer')
+        @include('front.partials.wf-footer')
     </div>
 @endsection

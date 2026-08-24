@@ -5,67 +5,95 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Laba Rugi #{{ $order->prospect->name_event }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         @page {
             size: a4 portrait;
-            margin: 1cm 1.5cm 3cm 2cm;
+            margin: 110px 1.5cm 2.2cm 2cm;
             /* top, right, bottom, left */
         }
 
         body {
             color: #000000;
-            font-family: 'Poppins', Arial, sans-serif;
-            font-size: 18px;
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 11px;
             font-weight: 400;
-            line-height: 1;
             margin: 0;
-            font-smoothing: antialiased;
             padding: 0;
-            line-height: 1.4;
-            /* atau pertimbangkan 1.5 */
+            line-height: 1.2;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             max-width: 100%;
         }
 
-        /* Header */
-        .header {
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            text-align: center;
+        /* Header — tampil di setiap halaman */
+        header {
+            position: fixed;
+            top: -95px;
+            left: 0;
+            right: 0;
         }
 
-        .header img {
-            max-height: 50px;
+        table.header {
+            border-bottom: 1px solid #ddd;
+            margin: 0;
+            padding-bottom: 4px;
+            border-collapse: collapse;
+        }
+
+        table.header td {
+            padding: 0;
+            line-height: 1.15;
+            vertical-align: middle;
+        }
+
+        table.header img {
+            max-height: 42px;
+            max-width: 200px;
             width: auto;
             vertical-align: middle;
         }
 
-        .header h2 {
-            font-size: 16px;
+        table.header h2 {
+            font-size: 14px;
             font-weight: bold;
-            margin: 1px 0;
+            margin: 0 0 1px 0;
+            padding: 0;
+            line-height: 1.15;
         }
 
-        .header p {
-            font-size: 16px;
-            margin: 1px 0;
+        table.header p {
+            font-size: 11px;
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
+        }
+
+        .page-footer {
+            position: fixed;
+            bottom: -45px;
+            left: 0;
+            right: 0;
+            height: 22px;
+            border-top: 1px solid #ddd;
         }
 
         /* Table Base */
         table {
             border-collapse: collapse;
-            margin-bottom: 5px;
+            margin-bottom: 0;
             width: 100%;
+        }
+
+        table.bordered {
+            margin-bottom: 0;
         }
 
         th,
         td {
-            padding: 8px;
+            padding: 2px 5px;
             text-align: left;
             vertical-align: top;
+            line-height: 1.15;
         }
 
         th {
@@ -76,12 +104,32 @@
         table.bordered th,
         table.bordered td {
             border: 1px solid #ddd;
+            padding: 2px 5px;
+            font-size: 11px;
+            line-height: 1.15;
+        }
+
+        table.bordered p,
+        table.bordered div,
+        table.bordered ul,
+        table.bordered li {
+            margin: 0;
+            padding: 0;
+            line-height: 1.15;
+        }
+
+        .cell-note {
+            color: #555;
+            font-size: 10px;
+            line-height: 1.15;
+            margin: 0;
+            padding: 0;
         }
 
         /* Profit Loss Specific Styles */
         .profit-row {
-            background-color: #d4edda;
-            border: 2px solid #28a745;
+            background-color: #e3f2fd;
+            border: none;
         }
 
         .loss-row {
@@ -90,7 +138,7 @@
         }
 
         .profit-text {
-            color: #155724;
+            color: #0d47a1;
             font-weight: bold;
         }
 
@@ -99,33 +147,43 @@
             font-weight: bold;
         }
 
+        .received-row {
+            background-color: #e3f2fd;
+        }
+
         .analysis-box {
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            border: 2px solid #ddd;
+            padding: 8px 10px;
+            margin: 16px 0 8px 0;
+            border: none;
         }
 
         .analysis-box.profit {
-            background-color: #f8fff9;
-            border-color: #28a745;
+            background-color: #e3f2fd;
+        }
+
+        .analysis-box.profit .profit-text {
+            color: #0d47a1;
+        }
+
+        .analysis-box.profit .profit-row {
+            background-color: #e3f2fd;
+            border: none;
         }
 
         .analysis-box.loss {
             background-color: #fff8f8;
-            border-color: #dc3545;
         }
 
         /* Section Styling */
         .section-container {
-            margin: 20px 0;
+            margin: 16px 0 0 0;
         }
 
         .sub-section-title {
-            font-size: 1.1em;
-            margin-bottom: 10px;
+            font-size: 12px;
+            margin: 0 0 4px 0;
             border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
+            padding-bottom: 2px;
             font-weight: bold;
         }
 
@@ -137,39 +195,55 @@
 
         /* Font Size Controls */
         .bordered {
-            font-size: 16px;
+            font-size: 11px;
         }
 
         /* Invoice Title */
         .invoice-title {
-            margin: 10px 0;
+            margin: 4px 0 2px 0;
             text-align: center;
         }
 
         .invoice-title h1 {
-            font-size: 25px;
-            margin-bottom: 0;
-            text-transform: uppercase;
+            font-size: 20px;
+            margin: 0;
+            padding: 0;
+            line-height: 1.15;
         }
 
         .invoice-title h4 {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: normal;
-            margin-top: 1px;
+            margin: 1px 0 0 0;
+            padding: 0;
+            line-height: 1.15;
         }
 
         /* Invoice Details */
+        table.invoice-details {
+            margin: 0 0 6px 0;
+        }
+
         .invoice-details td {
             border: none;
-            padding: 20px 0;
+            padding: 2px 0 0 0;
             vertical-align: top;
             width: 50%;
+            line-height: 1.2;
+        }
+
+        .invoice-details .bold {
+            margin: 0 0 2px 0;
+            font-size: 12px;
+            line-height: 1.2;
         }
 
         .invoice-details address {
-            font-size: 16px;
+            font-size: 11px;
             font-style: normal;
-            line-height: 1;
+            line-height: 1.25;
+            margin: 0;
+            padding: 0;
         }
 
         /* Items Table */
@@ -198,15 +272,14 @@
             /* Dark grey-blue text */
             font-weight: bold;
             /* Poppins Semibold */
-            padding: 5px 5px;
+            padding: 3px 5px;
             text-align: left;
             /* Header cells have a stronger bottom border and a right border */
             border-bottom: 1px solid #90a4ae;
             /* Darker separator for header */
             border-right: 1px solid #cfd8dc;
             /* Light vertical separator */
-            text-transform: uppercase;
-            font-size: 16px;
+            font-size: 11px;
             letter-spacing: 0.5px;
             vertical-align: middle;
         }
@@ -217,14 +290,14 @@
         }
 
         .items-table tbody td {
-            padding: 10px 10px;
+            padding: 3px 6px;
             /* Body cells have a lighter bottom border and a right border */
             border-bottom: 1px solid #cfd8dc;
             /* Light horizontal separator for rows */
             border-right: 1px solid #cfd8dc;
             /* Light vertical separator */
             vertical-align: top;
-            font-size: 16px;
+            font-size: 11px;
             color: #000000;
             /* Slightly softer text color */
         }
@@ -249,14 +322,14 @@
 
         /* Vendor Items Table */
         .vendor-item {
-            font-size: 16px;
-            margin-bottom: 5px;
+            font-size: 11px;
+            margin-bottom: 3px;
         }
 
         /* Totals Table */
         .total-table {
             margin-left: 50%;
-            margin-top: 20px;
+            margin-top: 8px;
             width: 50%;
         }
 
@@ -270,7 +343,12 @@
 
         /* Payment History */
         .payment-history {
-            margin-top: 20px;
+            margin-top: 16px;
+        }
+
+        .payment-history h3 {
+            font-size: 12px;
+            margin: 0 0 4px 0;
         }
 
         /* Warning Box */
@@ -279,16 +357,16 @@
             border: 1px solid #f5c6cb;
             border-radius: 4px;
             color: #721c24;
-            margin: 20px 0;
-            padding: 15px;
+            margin: 8px 0;
+            padding: 8px;
         }
 
         /* Footer */
         .footer {
             border-top: 1px solid #ddd;
-            font-size: 16px;
-            margin-top: 10px;
-            padding-top: 20px;
+            font-size: 10px;
+            margin-top: 16px;
+            padding-top: 8px;
             page-break-inside: auto;
         }
 
@@ -316,7 +394,22 @@
         }
 
         .small {
-            font-size: 14px;
+            font-size: 10px;
+        }
+
+        .footer ul {
+            margin: 2px 0 0 16px;
+            padding: 0;
+        }
+
+        .footer li {
+            margin: 0;
+            line-height: 1.25;
+        }
+
+        .footer p {
+            margin: 0;
+            line-height: 1.2;
         }
 
         .info-description {
@@ -364,30 +457,6 @@
             color: #212529;
         }
 
-        /* Watermark */
-        .watermark {
-            color: rgba(0, 0, 0, 0.1);
-            font-size: 150px;
-            font-weight: bold;
-            left: 50%;
-            letter-spacing: 5px;
-            pointer-events: none;
-            position: fixed;
-            text-transform: uppercase;
-            top: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            white-space: nowrap;
-            z-index: -1000;
-        }
-
-        .watermark.paid {
-            color: rgba(40, 167, 69, 0.15);
-        }
-
-        .watermark.pending {
-            color: rgba(255, 193, 7, 0.15);
-        }
-
         @media print {
             .items-table {
                 page-break-inside: auto;
@@ -412,17 +481,8 @@
 </head>
 
 <body>
-    <!-- Watermark -->
-    @php
-        $profitLoss = $order->laba_kotor ?? 0;
-    @endphp
-    @if ($profitLoss >= 0)
-        <div class="watermark paid">Profit</div>
-    @else
-        <div class="watermark pending">Loss</div>
-    @endif
-
-    <!-- Header -->
+    <!-- Header (berulang di setiap halaman) -->
+    <header>
     <table class="header" style="width: 100%;">
         <tr>
             <td style="width: 60%; text-align: left; vertical-align: top;">
@@ -452,11 +512,14 @@
             </td>
         </tr>
     </table>
+    </header>
+
+    <div class="page-footer"></div>
 
     <!-- Invoice Title -->
     <div class="invoice-title">
-        <h1>LAPORAN LABA RUGI</h1>
-        <h4>#{{ $order->prospect->name_event }}</h4>
+        <h1>Laporan Laba Rugi</h1>
+        <h4>#{{ \Illuminate\Support\Str::title($order->prospect->name_event) }}</h4>
     </div>
 
     <!-- Invoice Details -->
@@ -465,12 +528,24 @@
             <td>
                 <div class="bold">Billed To :</div>
                 <address>
-                    Event : {{ $order->prospect->name_event }}<br>
-                    Nama : {{ $order->prospect->name_cpp }} & {{ $order->prospect->name_cpw }}<br>
-                    Alamat : {{ $order->prospect->address }}<br>
-                    No. Tlp : {{ $order->prospect->phone ? '+62' . $order->prospect->phone : 'N/A' }}<br>
-                    Venue : {{ $order->prospect->venue ?? 'N/A' }} / {{ $order->pax ?? 'N/A' }} Pax<br>
-                    Account Manager : {{ $order->employee->name ?? 'N/A' }}<br>
+                    @if (filled($order->prospect->name_event))
+                        Event : {{ \Illuminate\Support\Str::title($order->prospect->name_event) }}<br>
+                    @endif
+                    @if (filled($order->prospect->name_cpp) || filled($order->prospect->name_cpw))
+                        Nama : {{ collect([\Illuminate\Support\Str::title($order->prospect->name_cpp), \Illuminate\Support\Str::title($order->prospect->name_cpw)])->filter()->implode(' & ') }}<br>
+                    @endif
+                    @if (filled($order->prospect->address))
+                        Alamat : {{ \Illuminate\Support\Str::title($order->prospect->address) }}<br>
+                    @endif
+                    @if (filled($order->prospect->phone))
+                        No. Tlp : +62{{ $order->prospect->phone }}<br>
+                    @endif
+                    @if (filled($order->prospect->venue) || filled($order->pax))
+                        Venue : {{ collect([\Illuminate\Support\Str::title($order->prospect->venue), filled($order->pax) ? $order->pax.' Pax' : null])->filter()->implode(' / ') }}<br>
+                    @endif
+                    @if (filled($order->employee?->name))
+                        Account Manager : {{ \Illuminate\Support\Str::title($order->employee->name) }}<br>
+                    @endif
                 </address>
             </td>
             <td class="text-right">
@@ -478,23 +553,26 @@
                 <address>
                     Tanggal Laporan : {{ $generatedDate ?? now()->format('d F Y H:i') }}<br>
                     Status Pembayaran : @if ($order->is_paid) <span style="color: #28a745; font-weight: bold;">Lunas</span> @else <span style="color: #dc3545; font-weight: bold;">Belum Lunas</span> @endif<br>
-                    Tgl Lamaran :
-                    {{ $order->prospect->date_lamaran ? \Carbon\Carbon::parse($order->prospect->date_lamaran)->format('d F Y') : '-' }}<br>
-                    Tgl Akad :
-                    {{ $order->prospect->date_akad ? \Carbon\Carbon::parse($order->prospect->date_akad)->format('d F Y') : '-' }}<br>
-                    Tgl Resepsi:
-                    {{ $order->prospect->date_resepsi ? \Carbon\Carbon::parse($order->prospect->date_resepsi)->format('d F Y') : '-' }}<br>
+                    @if (filled($order->prospect->date_lamaran))
+                        Tgl Lamaran : {{ \Carbon\Carbon::parse($order->prospect->date_lamaran)->format('d F Y') }}<br>
+                    @endif
+                    @if (filled($order->prospect->date_akad))
+                        Tgl Akad : {{ \Carbon\Carbon::parse($order->prospect->date_akad)->format('d F Y') }}<br>
+                    @endif
+                    @if (filled($order->prospect->date_resepsi))
+                        Tgl Resepsi : {{ \Carbon\Carbon::parse($order->prospect->date_resepsi)->format('d F Y') }}<br>
+                    @endif
                 </address>
             </td>
         </tr>
     </table>
 
     <!-- Financial Summary Table -->
-    <div class="billing-summary" style="margin-top: 30px;">
+    <div class="billing-summary" style="margin-top: 24px;">
         <table class="bordered">
             <thead>
                 <tr>
-                    <th colspan="2">RINGKASAN KEUANGAN</th>
+                    <th colspan="2">Ringkasan Keuangan</th>
                 </tr>
             </thead>
             <tbody>
@@ -546,7 +624,7 @@
                 </tr>
                 <tr class="{{ $profitLoss >= 0 ? 'profit-row' : 'loss-row' }}">
                     <td class="bold {{ $profitLoss >= 0 ? 'profit-text' : 'loss-text' }}">
-                        {{ $profitLoss >= 0 ? 'LABA KOTOR' : 'RUGI KOTOR' }}
+                        {{ $profitLoss >= 0 ? 'Laba Kotor' : 'Rugi Kotor' }}
                     </td>
                     <td class="text-right bold {{ $profitLoss >= 0 ? 'profit-text' : 'loss-text' }}">
                         <strong>Rp {{ number_format($profitLoss, 0, ',', '.') }}</strong>
@@ -573,10 +651,8 @@
     @endphp
 
     @if ($allProductPengurangans->isNotEmpty())
-        <div class="section-container" style="margin-top: 20px;">
-            <h3 class="sub-section-title"
-                style="font-size: 1.1em; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
-                Rincian Item Pengurangan Produk</h3>
+        <div class="section-container">
+            <h3 class="sub-section-title">Rincian Item Pengurangan Produk</h3>
             <table class="bordered">
                 <thead>
                     <tr>
@@ -590,12 +666,7 @@
                         <tr>
                             <td class="text-center">{{ $index + 1 }}</td>
                             <td>
-                                {{ $itemPengurangan->description ?? 'N/A' }}
-                                @if ($itemPengurangan->notes)
-                                    <div style="margin-left: 30px; color: #555; margin-top: 5px;">
-                                        <i>{!! \App\Support\SafeHtml::fromRichText($itemPengurangan->notes) !!}</i>
-                                    </div>
-                                @endif
+                                {{ \Illuminate\Support\Str::title($itemPengurangan->description ?? 'N/A') }}
                             </td>
                             <td class="text-right">Rp {{ number_format($itemPengurangan->amount ?? 0, 0, ',', '.') }}</td>
                         </tr>
@@ -606,19 +677,22 @@
     @endif
 
     <!-- Pengeluaran Vendor -->
-    <div class="section-container" style="margin-top: 20px;">
-        <h3 class="sub-section-title" style="font-size: 1.1em; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
-            Rincian Pengeluaran Vendor
-        </h3>
+    @php
+        $hasExpenseNotes = $order->expenses->contains(fn ($expense) => filled($expense->note));
+    @endphp
+    <div class="section-container">
+        <h3 class="sub-section-title">Rincian Pengeluaran Vendor</h3>
         <table class="bordered">
             <thead>
                 <tr>
                     <th class="text-center" style="width: 5%;">No</th>
                     <th style="width: 15%;">Tanggal</th>
-                    <th style="width: 25%;">Vendor</th>
+                    <th>Vendor</th>
                     <th style="width: 15%;">No ND</th>
                     <th class="text-right" style="width: 20%;">Jumlah</th>
-                    <th>Keterangan</th>
+                    @if ($hasExpenseNotes)
+                        <th>Keterangan</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -626,23 +700,27 @@
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
                         <td>{{ $expense->date_expense ? \Carbon\Carbon::parse($expense->date_expense)->format('d M Y') : '-' }}</td>
-                        <td>{{ $expense->vendor->name ?? 'N/A' }}</td>
+                        <td>{{ \Illuminate\Support\Str::title($expense->vendor->name ?? 'N/A') }}</td>
                         <td>{{ $expense->no_nd ? 'ND-0' . $expense->no_nd : '-' }}</td>
                         <td class="text-right">Rp {{ number_format($expense->amount ?? 0, 0, ',', '.') }}</td>
-                        <td>{{ $expense->description ?? '-' }}</td>
+                        @if ($hasExpenseNotes)
+                            <td>{{ filled($expense->note) ? \Illuminate\Support\Str::title($expense->note) : '' }}</td>
+                        @endif
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center" style="font-style: italic; color: #666;">
-                            Tidak ada data pengeluaran vendor.
+                        <td colspan="{{ $hasExpenseNotes ? 6 : 5 }}" class="text-center" style="font-style: italic; color: #666;">
+                            Tidak Ada Data Pengeluaran Vendor.
                         </td>
                     </tr>
                 @endforelse
                 @if($order->expenses->count() > 0)
                     <tr style="background-color: #f8f9fa;">
-                        <td colspan="4" class="text-right bold">TOTAL PENGELUARAN:</td>
+                        <td colspan="4" class="text-right bold">Total Pengeluaran:</td>
                         <td class="text-right bold">Rp {{ number_format($order->expenses->sum('amount'), 0, ',', '.') }}</td>
-                        <td></td>
+                        @if ($hasExpenseNotes)
+                            <td></td>
+                        @endif
                     </tr>
                 @endif
             </tbody>
@@ -667,12 +745,12 @@
                         <tr>
                             <td>{{ \Carbon\Carbon::parse($payment->tgl_bayar)->format('d F Y') }}</td>
                             <td class="text-right">Rp {{ number_format($payment->nominal, 0, ',', '.') }}</td>
-                            <td>{{ $payment->paymentMethod->name ?? 'N/A' }}</td>
-                            <td>{{ $payment->keterangan }}</td>
+                            <td>{{ \Illuminate\Support\Str::title($payment->paymentMethod->name ?? 'N/A') }}</td>
+                            <td>{{ \Illuminate\Support\Str::title($payment->keterangan) }}</td>
                         </tr>
                     @endforeach
-                    <tr style="background-color: #e3f2fd;">
-                        <td class="bold text-right">TOTAL DITERIMA:</td>
+                    <tr class="received-row">
+                        <td class="bold text-right">Total Diterima:</td>
                         <td class="text-right bold">Rp {{ number_format($order->dataPembayaran->sum('nominal'), 0, ',', '.') }}</td>
                         <td colspan="2"></td>
                     </tr>
@@ -680,7 +758,7 @@
             </table>
         </div>
     @else
-        <p style="margin-top: 20px; font-style: italic;">Belum ada pembayaran yang diterima.</p>
+        <p style="margin-top: 8px; font-style: italic; font-size: 11px;">Belum Ada Pembayaran Yang Diterima.</p>
     @endif
 
     <!-- Analisis Laba Rugi -->
@@ -691,8 +769,8 @@
         $profitMargin = $totalRevenue > 0 ? ($profitLoss / $totalRevenue) * 100 : 0;
     @endphp
     <div class="analysis-box {{ $profitLoss >= 0 ? 'profit' : 'loss' }}">
-        <h3 class="{{ $profitLoss >= 0 ? 'profit-text' : 'loss-text' }}" style="text-align: center; margin-bottom: 15px;">
-            ANALISIS LABA RUGI
+        <h3 class="{{ $profitLoss >= 0 ? 'profit-text' : 'loss-text' }}" style="text-align: center; margin: 0 0 4px 0; font-size: 12px;">
+            Analisis Laba Rugi
         </h3>
         <table class="bordered">
             <tr>
@@ -704,7 +782,7 @@
                 <td class="text-right"><strong>Rp {{ number_format($totalExpenses, 0, ',', '.') }}</strong></td>
             </tr>
             <tr class="{{ $profitLoss >= 0 ? 'profit-row' : 'loss-row' }}">
-                <td class="{{ $profitLoss >= 0 ? 'profit-text' : 'loss-text' }}"><strong>{{ $profitLoss >= 0 ? 'LABA BERSIH' : 'RUGI BERSIH' }}:</strong></td>
+                <td class="{{ $profitLoss >= 0 ? 'profit-text' : 'loss-text' }}"><strong>{{ $profitLoss >= 0 ? 'Laba Bersih' : 'Rugi Bersih' }}:</strong></td>
                 <td class="text-right {{ $profitLoss >= 0 ? 'profit-text' : 'loss-text' }}"><strong>Rp {{ number_format($profitLoss, 0, ',', '.') }}</strong></td>
             </tr>
             <tr>
@@ -713,11 +791,11 @@
             </tr>
         </table>
         
-        <div style="text-align: center; margin-top: 15px;">
+        <div style="text-align: center; margin-top: 6px; font-size: 11px;">
             @if($profitLoss >= 0)
-                <p class="profit-text">✓ Proyek ini menghasilkan keuntungan</p>
+                <p class="profit-text">✓ Proyek Ini Menghasilkan Keuntungan</p>
             @else
-                <p class="loss-text">⚠ Proyek ini mengalami kerugian</p>
+                <p class="loss-text">⚠ Proyek Ini Mengalami Kerugian</p>
             @endif
         </div>
     </div>
@@ -728,22 +806,22 @@
             <td style="width: 65%; vertical-align: top;">
                 <div class="bold">Catatan Laporan</div>
                 <ul>
-                    <li>Laporan ini menampilkan analisis laba rugi berdasarkan data transaksi yang tercatat dalam sistem.</li>
-                    <li>Total pendapatan dihitung dari grand total paket yang telah disepakati dengan klien.</li>
-                    <li>Total pengeluaran mencakup semua pembayaran yang dilakukan kepada vendor terkait.</li>
-                    <li>Margin laba/rugi dihitung berdasarkan persentase dari total pendapatan.</li>
-                    <li>Untuk pertanyaan lebih lanjut, hubungi bagian keuangan.</li>
+                    <li>Laporan Ini Menampilkan Analisis Laba Rugi Berdasarkan Data Transaksi Yang Tercatat Dalam Sistem.</li>
+                    <li>Total Pendapatan Dihitung Dari Grand Total Paket Yang Telah Disepakati Dengan Klien.</li>
+                    <li>Total Pengeluaran Mencakup Semua Pembayaran Yang Dilakukan Kepada Vendor Terkait.</li>
+                    <li>Margin Laba/Rugi Dihitung Berdasarkan Persentase Dari Total Pendapatan.</li>
+                    <li>Untuk Pertanyaan Lebih Lanjut, Hubungi Bagian Keuangan.</li>
                 </ul>
             </td>
             <td style="width: 35%; text-align: right; vertical-align: top;">
-                <p style="margin-bottom: 10px;">Laporan digenerate pada:</p>
+                <p style="margin-bottom: 10px;">Laporan Digenerate Pada:</p>
                 <p style="font-weight: bold;">{{ $generatedDate ?? now()->format('d F Y H:i') }}</p>
-                <p style="margin-top: 20px;">Disetujui oleh:</p>
+                <p style="margin-top: 20px;">Disetujui Oleh:</p>
                 <p style="margin-top: 60px;">____________________</p>
                 @php
                     // Mengambil karyawan dengan posisi 'Finance'.
                     $financeApprover = \App\Models\Employee::where('position', 'Finance')->orderBy('name')->first();
-                    $approverName = $financeApprover ? $financeApprover->name : 'Finance Department';
+                    $approverName = $financeApprover ? \Illuminate\Support\Str::title($financeApprover->name) : 'Finance Department';
                 @endphp
                 <p>{{ $approverName }}</p>
             </td>

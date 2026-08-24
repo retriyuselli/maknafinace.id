@@ -12,6 +12,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\Front\AsetFeatureController;
 use App\Http\Controllers\Front\AuthController;
 use App\Http\Controllers\Front\BiayaFeatureController;
+use App\Http\Controllers\Front\FiturDetailController;
 use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\InvoiceController as FrontInvoiceController;
 use App\Http\Controllers\Front\LaporanFeatureController;
@@ -158,7 +159,11 @@ Route::get('/features/aset', [AsetFeatureController::class, 'index'])->name('fro
 // Route::get('/features/hris', [HrisFeatureController::class, 'index'])->name('front.hris_feature');
 Route::get('/features/payroll', [PayrollFeatureController::class, 'index'])->name('front.payroll_feature');
 
-// PRICING
+// FEATURES & PRICING
+Route::view('/fitur', 'front.fitur')->name('fitur');
+Route::get('/fitur/{slug}', [FiturDetailController::class, 'show'])
+    ->name('fitur.show')
+    ->where('slug', 'proyek-wedding|keuangan|rekonsiliasi|nota-dinas|absensi|cuti-payroll|portal-karyawan|dokumen-sop|hak-akses');
 Route::view('/harga', 'front.harga')->name('harga');
 
 Route::get('/product', [ProductCatalogController::class, 'index'])->name('product');
@@ -180,6 +185,14 @@ Route::middleware($authNoStore)->group(function () {
         ->name('invoice.show');
     Route::get('/invoice/{order}/download', [InvoiceOrderController::class, 'download'])
         ->name('invoice.download')
+        ->middleware('throttle:60,1');
+    Route::get('/orders/{order}/profit-loss', [InvoiceOrderController::class, 'previewProfitLoss'])
+        ->name('orders.profit_loss.preview');
+    Route::get('/orders/{order}/profit-loss/stream', [InvoiceOrderController::class, 'streamProfitLoss'])
+        ->name('orders.profit_loss.stream')
+        ->middleware('throttle:60,1');
+    Route::get('/orders/{order}/profit-loss/download', [InvoiceOrderController::class, 'downloadProfitLoss'])
+        ->name('orders.profit_loss.download')
         ->middleware('throttle:60,1');
     Route::get('/invoice/{order}/print', [InvoiceOrderController::class, 'print'])
         ->name('invoice.print')
@@ -306,6 +319,10 @@ Route::middleware(['guest', 'no-store'])->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('front.login.submit')->middleware('throttle:10,1');
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('front.register');
     Route::post('/register', [AuthController::class, 'register'])->name('front.register.submit')->middleware('throttle:10,1');
+
+    // Google OAuth (login + register)
+    Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 
     // Forgot & Reset Password
     Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('front.password.request');
