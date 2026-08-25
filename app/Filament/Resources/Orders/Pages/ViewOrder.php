@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Orders\Pages;
 use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,18 @@ class ViewOrder extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('Invoice')
+                ->label('Detail')
+                ->color('success')
+                ->icon('heroicon-o-eye')
+                ->url(fn ($record) => OrderResource::getUrl('invoice', ['record' => $record->id]))
+                ->openUrlInNewTab()
+                ->visible(function (): bool {
+                    /** @var User|null $user */
+                    $user = Auth::user();
+
+                    return $user && $user->hasRole(['super_admin', 'Finance', 'finance']);
+                }),
             EditAction::make()
                 ->visible(function (): bool {
                     $record = $this->getRecord();
