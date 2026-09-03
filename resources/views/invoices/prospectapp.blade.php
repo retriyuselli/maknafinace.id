@@ -9,7 +9,13 @@
     <style>
         @page {
             size: a4 portrait;
-            margin: 1cm 1cm 1cm 2cm;
+            /* Halaman 2+: ruang header + jarak sedang ke konten */
+            margin: 255px 1cm 1.8cm 2cm;
+        }
+
+        @page :first {
+            /* Halaman 1: margin semula, header ada di alur dokumen */
+            margin: 1.2cm 1cm 1.8cm 2cm;
         }
 
         body {
@@ -17,7 +23,7 @@
             font-family: 'Poppins', Arial, sans-serif;
             font-size: 18px;
             font-weight: 400;
-            line-height: 1;
+            line-height: 1.35;
             margin: 0;
             padding: 0;
             -webkit-font-smoothing: antialiased;
@@ -25,30 +31,32 @@
             max-width: 100%;
         }
 
-        /* Header — fixed agar muncul di setiap halaman */
-        .header {
+        /* Header halaman 2+ (tersembunyi di halaman 1 karena :first margin kecil) */
+        .header-repeat {
             position: fixed;
-            top: 0;
+            top: -240px;
             left: 0;
             right: 0;
+            height: 145px;
             border-bottom: 2px solid #2c3e50;
-            padding-bottom: 8px;
+            padding: 0;
             background-color: #ffffff;
         }
 
-        /* Dorong konten utama ke bawah agar tidak tertimpa header */
+        /* Header halaman 1 — di dalam alur, jarak ke judul seperti semula */
+        .header-first {
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
         .content {
-            margin-top: 120px;
+            margin-top: 0;
         }
 
         .header-table {
             width: 100%;
             border-collapse: collapse;
-        }
-
-        .header-table td {
-            padding: 0;
-            vertical-align: middle;
         }
 
         .header-info {
@@ -57,30 +65,33 @@
 
         .header-logo {
             text-align: right;
-            width: 250px;
+            width: 220px;
         }
 
         .header-logo img {
-            max-height: 250px;
-            max-width: 250px;
+            max-height: 48px;
+            max-width: 220px;
             width: auto;
         }
 
-        .header h2 {
+        .header-repeat h2,
+        .header-first h2 {
             font-size: 14px;
             font-weight: normal;
             margin: 2px 0;
             color: #555;
         }
 
-        .header p {
+        .header-repeat p,
+        .header-first p {
             font-size: 13px;
             margin: 2px 0;
             line-height: 1.3;
             color: #555;
         }
 
-        .header h1 {
+        .header-repeat h1,
+        .header-first h1 {
             font-size: 22px;
             margin: 0 0 4px 0;
             font-weight: bold;
@@ -101,6 +112,11 @@
             vertical-align: top;
         }
 
+        .header-table td {
+            padding: 0;
+            vertical-align: middle;
+        }
+
         th {
             background-color: #f8f9fa;
             font-weight: bold;
@@ -113,20 +129,20 @@
 
         /* Document Title */
         .document-title {
-            margin: 10px 0;
+            margin: 10px 0 16px 0;
             text-align: center;
         }
 
         .document-title h1 {
             font-size: 25px;
-            margin-bottom: 0;
+            margin: 0 0 4px 0;
             text-transform: uppercase;
         }
 
         .document-title h4 {
             font-size: 16px;
             font-weight: normal;
-            margin-top: 1px;
+            margin: 1px 0 0 0;
         }
 
         /* Document Details */
@@ -140,7 +156,7 @@
         .document-details address {
             font-size: 16px;
             font-style: normal;
-            line-height: 1;
+            line-height: 1.7;
         }
 
         /* Info Table */
@@ -192,11 +208,34 @@
             margin-bottom: 20px;
         }
 
+        .keep-together {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .callout {
+            padding: 18px 15px 15px 15px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .callout ol {
+            margin: 0;
+            padding-left: 22px;
+        }
+
+        .callout li {
+            margin-bottom: 8px;
+            page-break-inside: avoid;
+        }
+
         .section-title {
             background-color: #2c3e50;
             color: white;
             padding: 8px 12px;
-            margin: 20px 0 10px 0;
+            margin: 8px 0 12px 0;
             font-size: 16px;
             font-weight: bold;
             text-transform: uppercase;
@@ -218,8 +257,7 @@
         .info-description {
             color: #000000;
             font-size: 16px;
-            line-height: 1;
-            /* margin-top: 2px; */
+            line-height: 1.45;
             white-space: normal;
         }
 
@@ -324,9 +362,27 @@
             ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
             : null;
     @endphp
+    <!-- Header halaman 2+ -->
+    <div class="header-repeat">
+        <table class="header-table">
+            <tr>
+                <td class="header-info">
+                    <h1>{{ $companyName ?? config('app.name') }}</h1>
+                    <h2>Wedding Organizer Financial System - {{ config('app.name', 'WOFINS') }}</h2>
+                    <h2>Jl. Sintraman Jaya I No.2148, 20 Ilir D II, Kec. Kemuning, Kota Palembang, Sumatera Selatan 30137</h2>
+                    <p>Email: office@wofins.id | Phone: +62 813 7318 3794</p>
+                </td>
+                @if ($logoBase64)
+                    <td class="header-logo">
+                        <img src="{{ $logoBase64 }}" alt="Logo">
+                    </td>
+                @endif
+            </tr>
+        </table>
+    </div>
 
-    <!-- Header -->
-    <div class="header">
+    <!-- Header halaman 1 -->
+    <div class="header-first">
         <table class="header-table">
             <tr>
                 <td class="header-info">
@@ -521,10 +577,10 @@
     </div>
 
     <!-- Next Steps Section -->
-    <div class="section">
+    <div class="section keep-together">
         <div class="section-title">Langkah Selanjutnya</div>
-        <div style="padding: 15px; border: 1px solid #ddd; background-color: #f9f9f9;">
-            <ol style="margin: 0; padding-left: 20px;">
+        <div class="callout">
+            <ol>
                 <li><strong>Konsultasi Gratis:</strong> Tim kami akan menghubungi Anda dalam 24 jam untuk diskusi lebih
                     lanjut</li>
                 <li><strong>Analisis Kebutuhan:</strong> Evaluasi mendalam terhadap kebutuhan spesifik perusahaan Anda
