@@ -184,6 +184,48 @@ class EventManagerDetail extends Page implements HasTable
         ]);
     }
 
+    /**
+     * @return array<int, array{label: string, value: string, helper: string, valueClass: string}>
+     */
+    public function getStatCards(): array
+    {
+        $totalEvents = $this->getTotalEvents();
+        $totalValue = $this->getTotalValue();
+        $totalPaid = $this->getTotalPaid();
+        $outstanding = $this->getOutstanding();
+
+        return [
+            [
+                'label' => 'Total Event',
+                'value' => number_format($totalEvents, 0, ',', '.'),
+                'helper' => 'Jumlah proyek wedding yang ditangani',
+                'valueClass' => 'text-gray-950 dark:text-white',
+            ],
+            [
+                'label' => 'Nilai Proyek',
+                'value' => 'Rp '.number_format($totalValue, 0, ',', '.'),
+                'helper' => 'Total grand total seluruh proyek',
+                'valueClass' => 'text-gray-950 dark:text-white',
+            ],
+            [
+                'label' => 'Terbayar',
+                'value' => 'Rp '.number_format($totalPaid, 0, ',', '.'),
+                'helper' => 'Akumulasi pembayaran klien yang sudah diterima',
+                'valueClass' => 'text-emerald-600 dark:text-emerald-400',
+            ],
+            [
+                'label' => 'Sisa Tagihan',
+                'value' => 'Rp '.number_format($outstanding, 0, ',', '.'),
+                'helper' => $outstanding > 0
+                    ? 'Nilai proyek dikurangi pembayaran yang diterima'
+                    : ($totalPaid > $totalValue
+                        ? 'Pembayaran sudah menutup nilai proyek'
+                        : 'Tidak ada sisa tagihan'),
+                'valueClass' => 'text-amber-600 dark:text-amber-400',
+            ],
+        ];
+    }
+
     public function getTotalEvents(): int
     {
         return (int) ($this->getEmployee()?->orders_count ?? 0);
