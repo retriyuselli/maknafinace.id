@@ -19,6 +19,8 @@ class StatsOverviewWidget extends BaseWidget
 {
     use HasWidgetShield;
 
+    protected static bool $isLazy = false;
+
     protected static ?int $sort = 12;
 
     use InteractsWithPageFilters;

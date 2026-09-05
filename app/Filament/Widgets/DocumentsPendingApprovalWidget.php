@@ -17,6 +17,8 @@ class DocumentsPendingApprovalWidget extends BaseWidget
         canView as canViewShield;
     }
 
+    protected static bool $isLazy = false;
+
     protected int|string|array $columnSpan = 'full';
 
     protected static ?string $heading = 'Dokumen Menunggu Persetujuan';

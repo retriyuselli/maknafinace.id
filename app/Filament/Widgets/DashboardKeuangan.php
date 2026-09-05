@@ -16,6 +16,8 @@ class DashboardKeuangan extends BaseWidget
     use HasWidgetShield;
     use InteractsWithPageFilters;
 
+    protected static bool $isLazy = false;
+
     protected static ?int $sort = 11;
 
     public function getHeading(): ?string

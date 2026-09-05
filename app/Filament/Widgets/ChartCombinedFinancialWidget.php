@@ -20,6 +20,8 @@ class ChartCombinedFinancialWidget extends ChartWidget
 {
     use HasWidgetShield;
 
+    protected static bool $isLazy = false;
+
     protected ?string $heading = 'Combined Financial Overview';
 
     protected int|string|array $columnSpan = 'full';

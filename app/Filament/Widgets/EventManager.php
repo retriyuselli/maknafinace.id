@@ -21,6 +21,8 @@ class EventManager extends BaseWidget
         canView as canViewShield;
     }
 
+    protected static bool $isLazy = false;
+
     protected static ?string $heading = 'Event Manager Performance Dashboard';
 
     protected static ?int $sort = 13;

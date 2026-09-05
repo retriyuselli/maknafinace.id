@@ -21,6 +21,8 @@ class AccountManagerWidget extends BaseWidget
         canView as canViewShield;
     }
 
+    protected static bool $isLazy = false;
+
     protected static ?string $heading = 'Account Manager Performance Dashboard';
 
     protected static ?int $sort = 14;  // Controls widget position in the dashboard

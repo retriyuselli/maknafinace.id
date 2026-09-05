@@ -16,6 +16,8 @@ class ComingSoonResepsiWidget extends BaseWidget
 {
     use HasWidgetShield;
 
+    protected static bool $isLazy = false;
+
     protected static ?string $heading = 'Coming Soon Resepsi';
 
     protected static ?int $sort = 41;
