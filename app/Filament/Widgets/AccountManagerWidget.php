@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\AccountManagerDetail;
 use App\Models\User;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Facades\Filament;
@@ -88,8 +89,11 @@ class AccountManagerWidget extends BaseWidget
                 // Manager's name - the most important identifier
                 TextColumn::make('name')
                     ->label('Account Manager')
-                    ->sortable()    // Enables sorting by name
-                    ->weight(FontWeight::Bold),  // Makes names stand out
+                    ->sortable()
+                    ->weight(FontWeight::Bold)
+                    ->color('primary')
+                    ->url(fn (User $record): string => AccountManagerDetail::getUrl(['record' => $record]))
+                    ->extraAttributes(['class' => 'hover:underline']),
 
                 // Client count - key performance metric
                 TextColumn::make('amCount')
@@ -110,9 +114,8 @@ class AccountManagerWidget extends BaseWidget
                     ->date('d M Y'),
             ])
             // Default sorting by join date
-            ->defaultSort('am_count', 'desc') // Urutkan berdasarkan jumlah closing (am_count) terbanyak
-
-            // Define available actions
+            ->defaultSort('am_count', 'desc')
+            ->recordUrl(fn (User $record): string => AccountManagerDetail::getUrl(['record' => $record]))
             ->recordActions([
             ])
             // Bulk actions for operating on multiple records
