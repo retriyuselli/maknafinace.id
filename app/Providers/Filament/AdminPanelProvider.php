@@ -65,7 +65,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->font('Noto Sans')
             ->login()
-            // ->maxContentWidth(Width::Full)
+            ->maxContentWidth(Width::Full)
             ->brandLogo($brandLogo)
             ->brandLogoHeight('2rem')
             ->brandName('Makna Kreatif')
