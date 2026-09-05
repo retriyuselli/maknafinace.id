@@ -91,11 +91,6 @@ class AccountManagerWidget extends BaseWidget
                     ->sortable()    // Enables sorting by name
                     ->weight(FontWeight::Bold),  // Makes names stand out
 
-                // Email address - hidden by default to avoid clutter
-                TextColumn::make('email')
-                    ->label('Email')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
                 // Client count - key performance metric
                 TextColumn::make('amCount')
                     ->label('Total Clients')

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\EventManagerDetail;
 use App\Models\Employee;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Facades\Filament;
@@ -82,7 +83,10 @@ class EventManager extends BaseWidget
                 TextColumn::make('name')
                     ->label('Event Manager')
                     ->sortable()
-                    ->weight(FontWeight::Bold),
+                    ->weight(FontWeight::Bold)
+                    ->color('primary')
+                    ->url(fn (Employee $record): string => EventManagerDetail::getUrl(['record' => $record]))
+                    ->extraAttributes(['class' => 'hover:underline']),
 
                 TextColumn::make('events_count')
                     ->label('Total Events')
@@ -91,33 +95,13 @@ class EventManager extends BaseWidget
                     ->weight(FontWeight::Bold)
                     ->color('primary'),
 
-                TextColumn::make('email')
-                    ->toggleable(),
-
-                TextColumn::make('phone')
-                    ->toggleable(),
-
                 TextColumn::make('date_of_join')
                     ->label('Join Date')
                     ->date('d M Y')
                     ->sortable(),
-
-                TextColumn::make('salary')
-                    ->label('Salary')
-                    ->money('idr')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                // Tables\Columns\IconColumn::make('status')
-                //     ->label('Status')
-                //     ->boolean()
-                //     ->trueIcon('heroicon-o-check-circle')
-                //     ->falseIcon('heroicon-o-x-circle')
-                //     ->trueColor('success')
-                //     ->falseColor('danger')
-                //     ->getStateUsing(fn ($record): bool =>
-                //         !$record->date_of_out && $record->date_of_join),
             ])
 
+            ->recordUrl(fn (Employee $record): string => EventManagerDetail::getUrl(['record' => $record]))
             ->recordActions([
 
             ])
