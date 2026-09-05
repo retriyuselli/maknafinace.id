@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ProspectApps\Schemas;
 
 use App\Enums\ProspectAppStatus;
+use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\RichEditor;
@@ -17,6 +18,31 @@ use Filament\Support\RawJs;
 
 class ProspectAppForm
 {
+    private static function moneyInt(mixed $state): int
+    {
+        return (int) preg_replace('/[^\d]/', '', (string) $state);
+    }
+
+    private static function resolveHarga(Get $get): int
+    {
+        $mapping = [
+            'hastana' => 8500000,
+            'non_hastana' => 10000000,
+        ];
+
+        $service = $get('service');
+
+        return $mapping[$service] ?? self::moneyInt($get('harga'));
+    }
+
+    private static function recalcSisa(Get $get, Set $set): void
+    {
+        $set('sisa_bayar', max(
+            0,
+            self::resolveHarga($get) - self::moneyInt($get('potongan')) - self::moneyInt($get('bayar'))
+        ));
+    }
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -97,7 +123,8 @@ class ProspectAppForm
                             ->label('Alasan Ketertarikan')
                             ->rows(3)
                             ->maxLength(1000)
-                            ->placeholder('Jelaskan alasan Anda tertarik pada layanan kami'),
+                            ->placeholder('Jelaskan alasan Anda tertarik pada layanan kami')
+                            ->columnSpanFull(),
 
                         Select::make('status')
                             ->label('Status Aplikasi')
@@ -114,20 +141,41 @@ class ProspectAppForm
                             ])
                             ->reactive()
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (?string $state, Set $set) {
+                            ->afterStateUpdated(function (?string $state, Get $get, Set $set) {
                                 $mapping = [
                                     'hastana'     => 8500000,
                                     'non_hastana' => 10000000,
                                 ];
                                 $set('harga', $mapping[$state] ?? null);
-                                $set('sisa_bayar', $mapping[$state] ?? null);
                                 $set('bayar', null);
+                                $harga = $mapping[$state] ?? self::moneyInt($get('harga'));
+                                $set('sisa_bayar', max(0, $harga - self::moneyInt($get('potongan'))));
                             })
                             ->helperText(fn (Get $get): string => $get('service') === 'lain_lain'
                                 ? 'Paket custom — isi anggaran secara manual'
                                 : 'Pilih paket layanan untuk mengisi anggaran otomatis'),
+
+                        DatePicker::make('tgl_mulai')
+                            ->label('Tanggal Mulai Aplikasi')
+                            ->displayFormat('d M Y')
+                            ->native(false)
+                            ->live()
+                            ->afterStateUpdated(function ($state, Set $set) {
+                                if (! $state) {
+                                    return;
+                                }
+                                $set('tgl_berakhir', Carbon::parse($state)->addYears(2)->toDateString());
+                            })
+                            ->helperText('Periode paket standar adalah 2 tahun'),
+
+                        DatePicker::make('tgl_berakhir')
+                            ->label('Tanggal Berakhir Aplikasi')
+                            ->displayFormat('d M Y')
+                            ->native(false)
+                            ->minDate(fn (Get $get) => $get('tgl_mulai') ?: null)
+                            ->helperText('Otomatis terisi 2 tahun setelah tanggal mulai, bisa diubah'),
                     ])
-                    ->columns(1),
+                    ->columns(2),
 
                 Section::make('Pembayaran & Catatan')
                     ->schema([
@@ -136,19 +184,29 @@ class ProspectAppForm
                             ->prefix('Rp. ')
                             ->mask(RawJs::make('$money($input)'))
                             ->stripCharacters(',')
-                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                            ->dehydrateStateUsing(fn ($state) => self::moneyInt($state))
                             ->readOnly(fn (Get $get): bool => $get('service') !== 'lain_lain')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, $get, Set $set) {
+                            ->afterStateUpdated(function ($state, Get $get, Set $set) {
                                 if ($get('service') === 'lain_lain') {
-                                    $harga = (int) preg_replace('/[^\d]/', '', (string) $state);
-                                    $bayar = (int) preg_replace('/[^\d]/', '', (string) $get('bayar'));
-                                    $set('sisa_bayar', max(0, $harga - $bayar));
+                                    self::recalcSisa($get, $set);
                                 }
                             })
                             ->helperText(fn (Get $get): string => $get('service') === 'lain_lain'
                                 ? 'Masukkan anggaran secara manual'
                                 : 'Anggaran otomatis terisi saat memilih paket'),
+
+                        TextInput::make('potongan')
+                            ->label('Potongan Biaya')
+                            ->prefix('Rp. ')
+                            ->mask(RawJs::make('$money($input)'))
+                            ->stripCharacters(',')
+                            ->dehydrateStateUsing(fn ($state) => self::moneyInt($state))
+                            ->helperText('Potongan mengurangi anggaran. Sisa = Anggaran − Potongan − Jumlah Dibayar')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Get $get, Set $set) {
+                                self::recalcSisa($get, $set);
+                            }),
 
                         DatePicker::make('tgl_bayar')
                             ->label('Tanggal Pembayaran')
@@ -160,22 +218,11 @@ class ProspectAppForm
                             ->prefix('Rp. ')
                             ->mask(RawJs::make('$money($input)'))
                             ->stripCharacters(',')
-                            ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^\d]/', '', (string) $state))
+                            ->dehydrateStateUsing(fn ($state) => self::moneyInt($state))
                             ->helperText('Jika ada pembayaran, isi nominalnya')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, $get, $set) {
-                                // Get harga from service mapping first to ensure accuracy
-                                $service = $get('service');
-                                $mapping = [
-                                    'hastana' => 8500000,
-                                    'non_hastana' => 10000000,
-                                ];
-                                
-                                // Use mapped price if available, otherwise fallback to harga field
-                                $harga = $mapping[$service] ?? (int) preg_replace('/[^\d]/', '', (string) $get('harga'));
-                                $bayar = (int) preg_replace('/[^\d]/', '', (string) $state);
-                                
-                                $set('sisa_bayar', max(0, $harga - $bayar));
+                            ->afterStateUpdated(function ($state, Get $get, Set $set) {
+                                self::recalcSisa($get, $set);
                             }),
 
                         TextInput::make('sisa_bayar')
@@ -185,7 +232,8 @@ class ProspectAppForm
                             ->stripCharacters(',')
                             ->dehydrated(false)
                             ->readOnly()
-                            ->helperText('Otomatis: Anggaran - Jumlah Dibayar'),
+                            ->helperText('Otomatis: Anggaran − Potongan − Jumlah Dibayar')
+                            ->columnSpanFull(),
 
                         RichEditor::make('notes')
                             ->label('Catatan Internal')

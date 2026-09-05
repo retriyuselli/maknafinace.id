@@ -82,6 +82,12 @@ class ProspectAppsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('potongan')
+                    ->label('Potongan')
+                    ->money('IDR')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('bayar')
                     ->label('Jumlah Dibayar')
                     ->money('IDR')
@@ -93,6 +99,18 @@ class ProspectAppsTable
                     ->money('IDR')
                     ->sortable(false)
                     ->color(fn ($state): string => $state > 0 ? 'danger' : 'success')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('tgl_mulai')
+                    ->label('Mulai Aplikasi')
+                    ->date('d M Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('tgl_berakhir')
+                    ->label('Berakhir Aplikasi')
+                    ->date('d M Y')
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('tgl_bayar')

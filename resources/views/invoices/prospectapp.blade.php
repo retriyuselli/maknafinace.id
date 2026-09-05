@@ -350,7 +350,7 @@
 
 <body>
     @php
-        $isPaid = $prospectApp->harga > 0 && $prospectApp->harga == $prospectApp->bayar;
+        $isPaid = ($prospectApp->harga ?? 0) > 0 && $prospectApp->sisa_bayar === 0;
     @endphp
 
     <div class="watermark {{ $isPaid ? 'lunas' : 'belum-lunas' }}">
@@ -428,6 +428,12 @@
                     Tanggal Pengajuan:
                     {{ $prospectApp->submitted_at ? $prospectApp->submitted_at->format('d M Y') : $prospectApp->created_at->format('d M Y') }}<br>
                     Industri: {{ $prospectApp->industry->industry_name ?? 'Tidak Ditentukan' }}<br>
+                    @if ($prospectApp->tgl_mulai)
+                        Mulai Aplikasi: {{ $prospectApp->tgl_mulai->format('d M Y') }}<br>
+                    @endif
+                    @if ($prospectApp->tgl_berakhir)
+                        Berakhir Aplikasi: {{ $prospectApp->tgl_berakhir->format('d M Y') }}<br>
+                    @endif
                     @if ($prospectApp->user_size)
                         Ukuran Perusahaan: {{ $prospectApp->user_size }} karyawan<br>
                     @endif
@@ -467,6 +473,14 @@
                         <td>{{ $prospectApp->user_size }} karyawan</td>
                     </tr>
                 @endif
+                    <tr>
+                        <td><strong>Tanggal Mulai Aplikasi</strong></td>
+                        <td>{{ $prospectApp->tgl_mulai ? $prospectApp->tgl_mulai->format('d M Y') : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tanggal Berakhir Aplikasi</strong></td>
+                        <td>{{ $prospectApp->tgl_berakhir ? $prospectApp->tgl_berakhir->format('d M Y') : '-' }}</td>
+                    </tr>
             </tbody>
         </table>
     </div>
@@ -484,7 +498,15 @@
             <tbody>
                 <tr>
                     <td><strong>Total Paket Awal</strong></td>
-                    <td>Rp. {{ number_format($prospectApp->harga, 0, ',', '.') }}</td>
+                    <td>Rp. {{ number_format($prospectApp->harga ?? 0, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Potongan Biaya</strong></td>
+                    <td>Rp. {{ number_format($prospectApp->potongan ?? 0, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Anggaran Setelah Potongan</strong></td>
+                    <td>Rp. {{ number_format(max(0, ($prospectApp->harga ?? 0) - ($prospectApp->potongan ?? 0)), 0, ',', '.') }}</td>
                 </tr>
                 <tr>
                     <td><strong>Telah Dibayarkan</strong></td>
@@ -496,12 +518,12 @@
                 </tr>
                 <tr>
                     <td><strong>Sisa Pembayaran</strong></td>
-                    <td>Rp. {{ number_format($prospectApp->harga - $prospectApp->bayar, 0, ',', '.') }}</td>
+                    <td>Rp. {{ number_format($prospectApp->sisa_bayar, 0, ',', '.') }}</td>
                 </tr>
                 <tr>
                     <td><strong>Status Pembayaran</strong></td>
                     <td>
-                        @if ($prospectApp->harga > 0 && $prospectApp->harga == $prospectApp->bayar)
+                        @if (($prospectApp->harga ?? 0) > 0 && $prospectApp->sisa_bayar === 0)
                             <span class="badge bg-success">LUNAS</span>
                         @else
                             <span class="badge bg-warning">BELUM LUNAS</span>
@@ -537,26 +559,44 @@
             </thead>
             <tbody>
                 @if ($prospectApp->service)
+                    @php
+                        $serviceLabel = match ($prospectApp->service) {
+                            'hastana' => 'Paket Anggota Hastana',
+                            'non_hastana' => 'Paket Non Hastana',
+                            'lain_lain' => 'Lain-lain (Custom)',
+                            'wofins' => 'Wofins Planning',
+                            'eo_management' => 'EO Management',
+                            default => $prospectApp->service,
+                        };
+                        $periodeTeks = ($prospectApp->tgl_mulai && $prospectApp->tgl_berakhir)
+                            ? $prospectApp->tgl_mulai->format('d M Y') . ' s/d ' . $prospectApp->tgl_berakhir->format('d M Y')
+                            : null;
+                    @endphp
                     <tr>
+                        <td>{{ $serviceLabel }}</td>
                         <td>
-                            @if ($prospectApp->service === 'wofins')
-                                Wofins Planning
-                            @elseif($prospectApp->service === 'eo_management')
-                                EO Management
-                            @else
-                                {{ $prospectApp->service }}
-                            @endif
-                        </td>
-                        <td>
-                            @if ($prospectApp->service === 'wofins')
-                                - Sistem manajemen keuangan untuk wedding organizer<br>
-                                - Domain: {{ $prospectApp->name_of_website ?? 'Tidak Ditentukan' }} selama 2 tahun<br>
-                                - Mantenance dan support selama 2 tahun
-                                - Hosting dan domain gratis selama 2 tahun
+                            @if ($prospectApp->service === 'hastana')
+                                Paket anggota Hastana selama 2 tahun<br>
+                                Domain: {{ $prospectApp->name_of_website ?? 'Tidak Ditentukan' }} selama 2 tahun<br>
+                                Maintenance, hosting, dan support selama 2 tahun
+                            @elseif($prospectApp->service === 'non_hastana')
+                                Paket non Hastana selama 2 tahun<br>
+                                Domain: {{ $prospectApp->name_of_website ?? 'Tidak Ditentukan' }} selama 2 tahun<br>
+                                Maintenance, hosting, dan support selama 2 tahun
+                            @elseif($prospectApp->service === 'lain_lain')
+                                Paket custom sesuai kesepakatan
+                            @elseif($prospectApp->service === 'wofins')
+                                Sistem manajemen keuangan untuk wedding organizer<br>
+                                Domain: {{ $prospectApp->name_of_website ?? 'Tidak Ditentukan' }} selama 2 tahun<br>
+                                Maintenance dan support selama 2 tahun<br>
+                                Hosting dan domain gratis selama 2 tahun
                             @elseif($prospectApp->service === 'eo_management')
                                 Manajemen acara untuk event organizer
                             @else
                                 {{ $prospectApp->service }}
+                            @endif
+                            @if ($periodeTeks)
+                                <br><strong>Periode aplikasi:</strong> {{ $periodeTeks }}
                             @endif
                         </td>
                         <td class="text-right">

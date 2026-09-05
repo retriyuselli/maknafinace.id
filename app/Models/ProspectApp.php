@@ -26,17 +26,23 @@ class ProspectApp extends Model
         'notes',
         'user_size',
         'harga',
+        'potongan',
         'bayar',
         'tgl_bayar',
         'reason_for_interest',
         'status',
         'submitted_at',
+        'tgl_mulai',
+        'tgl_berakhir',
     ];
 
     protected $casts = [
         'submitted_at' => 'datetime',
         'tgl_bayar'    => 'date',
+        'tgl_mulai'    => 'date',
+        'tgl_berakhir' => 'date',
         'harga'        => 'integer',
+        'potongan'     => 'integer',
         'bayar'        => 'integer',
         'status'       => ProspectAppStatus::class,
     ];
@@ -54,6 +60,16 @@ class ProspectApp extends Model
     public function industry(): BelongsTo
     {
         return $this->belongsTo(Industry::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $model): void {
+            $model->attributes['sisa_bayar'] = max(
+                0,
+                ($model->harga ?? 0) - ($model->potongan ?? 0) - ($model->bayar ?? 0)
+            );
+        });
     }
 
     // Scopes
@@ -85,6 +101,6 @@ class ProspectApp extends Model
 
     public function getSisaBayarAttribute(): int
     {
-        return max(0, ($this->harga ?? 0) - ($this->bayar ?? 0));
+        return max(0, ($this->harga ?? 0) - ($this->potongan ?? 0) - ($this->bayar ?? 0));
     }
 }
