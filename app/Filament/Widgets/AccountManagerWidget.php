@@ -93,15 +93,8 @@ class AccountManagerWidget extends BaseWidget
                     ->weight(FontWeight::Bold)
                     ->color('primary')
                     ->url(fn (User $record): string => AccountManagerDetail::getUrl(['record' => $record]))
+                    ->description(fn (User $record): string => number_format((int) ($record->am_count ?? $record->amCount), 0, ',', '.').' clients')
                     ->extraAttributes(['class' => 'hover:underline']),
-
-                // Client count - key performance metric
-                TextColumn::make('amCount')
-                    ->label('Total Clients')
-                    ->numeric()
-                    ->alignCenter()
-                    ->weight(FontWeight::Bold)
-                    ->color('primary'),  // Uses theme color for consistency
 
                 TextColumn::make('closing')
                     ->numeric()

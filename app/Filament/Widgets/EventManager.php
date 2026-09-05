@@ -86,14 +86,8 @@ class EventManager extends BaseWidget
                     ->weight(FontWeight::Bold)
                     ->color('primary')
                     ->url(fn (Employee $record): string => EventManagerDetail::getUrl(['record' => $record]))
+                    ->description(fn (Employee $record): string => number_format((int) ($record->events_count ?? 0), 0, ',', '.').' events')
                     ->extraAttributes(['class' => 'hover:underline']),
-
-                TextColumn::make('events_count')
-                    ->label('Total Events')
-                    ->numeric()
-                    ->alignCenter()
-                    ->weight(FontWeight::Bold)
-                    ->color('primary'),
 
                 TextColumn::make('date_of_join')
                     ->label('Join Date')
