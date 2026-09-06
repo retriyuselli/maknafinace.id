@@ -17,11 +17,13 @@
                                 style="{{ request()->routeIs('profile') ? 'background:rgba(201,162,39,0.16)' : '' }}">
                                 Dashboard
                             </a>
+                            @absensiMenu
                             <a href="{{ route('absen.home') }}"
                                 class="px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('absen.*') ? 'text-[#0b1f3a] font-semibold' : 'text-gray-700 hover:text-[#0b1f3a]' }}"
                                 style="{{ request()->routeIs('absen.*') ? 'background:rgba(201,162,39,0.16)' : '' }}">
                                 Absensi
                             </a>
+                            @endabsensiMenu
                             <a href="{{ route('dashboard') }}"
                                 class="px-3 py-2 rounded-md text-sm font-medium transition duration-300 text-gray-700 hover:text-[#0b1f3a]">
                                 Admin
@@ -58,10 +60,6 @@
                             <a href="{{ route('harga') }}"
                                 class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('harga') ? 'text-blue-600 bg-blue-50' : '' }}">
                                 Harga
-                            </a>
-                            <a href="{{ route('blog') }}"
-                                class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->routeIs('blog*') ? 'text-blue-600 bg-blue-50' : '' }}">
-                                Blog
                             </a>
                             <a href="/docs"
                                 class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-300 {{ request()->is('docs*') ? 'text-blue-600 bg-blue-50' : '' }}">
@@ -125,6 +123,7 @@
                                     </svg>
                                     Dashboard
                                 </a>
+                                @absensiMenu
                                 <a href="{{ route('absen.home') }}"
                                     class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <svg class="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,6 +132,7 @@
                                     </svg>
                                     Absensi
                                 </a>
+                                @endabsensiMenu
                                 <hr class="my-1">
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
@@ -191,9 +191,11 @@
                                 <a href="{{ route('profile') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-[#f7f4ee] {{ request()->routeIs('profile') ? 'font-semibold text-[#0b1f3a]' : '' }}"
                                     style="{{ request()->routeIs('profile') ? 'background:rgba(201,162,39,0.16)' : '' }}">Dashboard</a>
+                                @absensiMenu
                                 <a href="{{ route('absen.home') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-[#f7f4ee] {{ request()->routeIs('absen.*') ? 'font-semibold text-[#0b1f3a]' : '' }}"
                                     style="{{ request()->routeIs('absen.*') ? 'background:rgba(201,162,39,0.16)' : '' }}">Absensi</a>
+                                @endabsensiMenu
                                 <a href="{{ route('dashboard') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-[#f7f4ee]">Admin Panel</a>
                             @endauth
@@ -225,8 +227,6 @@
 
                                 <a href="{{ route('harga') }}"
                                     class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Harga</a>
-                                <a href="{{ route('blog') }}"
-                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Blog</a>
                                 <a href="/docs"
                                     class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Docs</a>
                                 <hr class="my-2">

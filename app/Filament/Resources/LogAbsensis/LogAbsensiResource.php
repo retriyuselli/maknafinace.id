@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\LogAbsensis;
 
+use App\Filament\Resources\Concerns\VisibleOnMaknaFinance;
 use App\Filament\Resources\LogAbsensis\Pages\CreateLogAbsensi;
 use App\Filament\Resources\LogAbsensis\Pages\EditLogAbsensi;
 use App\Filament\Resources\LogAbsensis\Pages\ListLogAbsensis;
@@ -14,6 +15,8 @@ use Filament\Tables\Table;
 
 class LogAbsensiResource extends Resource
 {
+    use VisibleOnMaknaFinance;
+
     protected static ?string $model = LogAbsensi::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-queue-list';

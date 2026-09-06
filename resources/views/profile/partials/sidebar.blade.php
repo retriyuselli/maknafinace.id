@@ -42,6 +42,7 @@
             <span>Ringkasan</span>
         </a>
 
+        @absensiMenu
         <a href="{{ route('absen.home') }}"
             class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $absensiActive ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,6 +50,7 @@
             </svg>
             <span>Absensi</span>
         </a>
+        @endabsensiMenu
 
         <a href="{{ route('profile.compensation') }}"
             class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition {{ $compensationActive ? 'font-semibold text-[#0b1f3a] bg-[rgba(201,162,39,0.16)]' : 'text-gray-700 hover:bg-gray-50' }}">

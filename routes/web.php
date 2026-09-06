@@ -6,7 +6,6 @@ use App\Http\Controllers\AbsensiPhotoController;
 use App\Http\Controllers\BankReconciliationTemplateController;
 use App\Http\Controllers\BankStatementFileController;
 use App\Http\Controllers\NotaDinasInvoiceFileController;
-use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\Front\AsetFeatureController;
@@ -178,12 +177,6 @@ Route::get('/pendaftaran', [RegistrationController::class, 'pendaftaran'])->name
 
 // CONTACT
 Route::view('/kontak', 'front.kontak')->name('kontak');
-
-// BLOG
-Route::get('/blog', [BlogController::class, 'index'])->name('blog');
-Route::get('/blog/search', [BlogController::class, 'search'])->name('blog.search');
-Route::get('/blog/category/{category}', [BlogController::class, 'category'])->name('blog.category');
-Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.detail');
 
 // INVOICE
 Route::middleware($authNoStore)->group(function () {

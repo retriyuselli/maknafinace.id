@@ -9,7 +9,6 @@ enum ResourceEnum: string implements HasLabel
     case AccountManagerTargetResource = 'AccountManagerTargetResource';
     case BankReconciliationResource = 'BankReconciliationResource';
     case BankStatementResource = 'BankStatementResource';
-    case BlogResource = 'BlogResource';
     case CategoryResource = 'CategoryResource';
     case ChartOfAccountResource = 'ChartOfAccountResource';
     case CompanyResource = 'CompanyResource';
@@ -54,7 +53,6 @@ enum ResourceEnum: string implements HasLabel
             self::AccountManagerTargetResource => 'Account Manager Target',
             self::BankReconciliationResource => 'Bank Reconciliation',
             self::BankStatementResource => 'Bank Statement',
-            self::BlogResource => 'Blog',
             self::CategoryResource => 'Category',
             self::ChartOfAccountResource => 'Chart Of Account',
             self::CompanyResource => 'Company',

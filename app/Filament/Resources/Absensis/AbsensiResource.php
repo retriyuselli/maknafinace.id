@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Absensis;
 
+use App\Filament\Resources\Concerns\VisibleOnMaknaFinance;
 use App\Filament\Resources\Absensis\Pages\CreateAbsensi;
 use App\Filament\Resources\Absensis\Pages\EditAbsensi;
 use App\Filament\Resources\Absensis\Pages\ListAbsensis;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class AbsensiResource extends Resource
 {
+    use VisibleOnMaknaFinance;
+
     protected static ?string $model = Absensi::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';

@@ -39,7 +39,6 @@
                 <h3 class="font-semibold mb-4">Perusahaan</h3>
                 <ul class="space-y-2 text-sm text-gray-800">
                     <li><a href="#" class="hover:text-white transition-colors">Tentang Kami</a></li>
-                    <li><a href="{{ route('blog') }}" class="hover:text-white transition-colors">Blog</a></li>
                     <li><a href="#" class="hover:text-white transition-colors">Karir</a></li>
                     <li><a href="#" class="hover:text-white transition-colors">Privacy</a></li>
                 </ul>

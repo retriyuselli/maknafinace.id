@@ -75,7 +75,6 @@ class DatabaseSeeder extends Seeder
             PembayaranPiutangSeeder::class, // Pembayaran piutang.
 
             // 8. Data Tambahan
-            BlogSeeder::class,             // Artikel blog untuk konten marketing.
             DocumentationSeeder::class,    // Dokumentasi sistem (Help Center).
             SopSeeder::class,              // SOP (tergantung pada User, SopCategory).
             SopRevisionSeeder::class,      // Revisi SOP.

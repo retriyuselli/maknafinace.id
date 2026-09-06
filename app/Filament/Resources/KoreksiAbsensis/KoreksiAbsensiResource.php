@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\KoreksiAbsensis;
 
+use App\Filament\Resources\Concerns\VisibleOnMaknaFinance;
 use App\Filament\Resources\KoreksiAbsensis\Pages\CreateKoreksiAbsensi;
 use App\Filament\Resources\KoreksiAbsensis\Pages\EditKoreksiAbsensi;
 use App\Filament\Resources\KoreksiAbsensis\Pages\ListKoreksiAbsensis;
@@ -14,6 +15,8 @@ use Filament\Tables\Table;
 
 class KoreksiAbsensiResource extends Resource
 {
+    use VisibleOnMaknaFinance;
+
     protected static ?string $model = KoreksiAbsensi::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-pencil-square';

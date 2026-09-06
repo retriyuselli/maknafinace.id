@@ -980,7 +980,7 @@ class DocumentationSeeder extends Seeder
         );
 
         // ==========================================
-        // 10. UPDATE ADMINISTRASI: SURAT & BLOG
+        // 10. UPDATE ADMINISTRASI: SURAT
         // ==========================================
 
         Documentation::updateOrCreate(
@@ -1005,31 +1005,5 @@ class DocumentationSeeder extends Seeder
                 'order' => 5,
             ]
         );
-
-        Documentation::updateOrCreate(
-            ['slug' => 'manajemen-blog-artikel'],
-            [
-                'documentation_category_id' => $adminCategory->id,
-                'title' => 'Manajemen Blog Website',
-                'content' => '
-<h2>Publikasi Artikel & Berita</h2>
-<p>Menu <strong>Blogs</strong> digunakan untuk mengelola konten artikel yang akan tampil di halaman "Blog" pada website utama (frontend).</p>
-
-<h3>Tips Penulisan SEO:</h3>
-<ul>
-    <li>Gunakan Judul yang menarik.</li>
-    <li>Isi "Slug" dengan kata kunci yang relevan.</li>
-    <li>Upload "Featured Image" (Gambar Utama) dengan kualitas bagus.</li>
-    <li>Gunakan kategori dan tags untuk memudahkan pencarian.</li>
-</ul>
-                ',
-                'is_published' => true,
-                'keywords' => 'blog, artikel, berita, seo, konten',
-                'related_resource' => 'BlogResource',
-                'order' => 6,
-            ]
-        );
-
-
     }
 }

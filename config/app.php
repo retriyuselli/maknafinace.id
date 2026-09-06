@@ -55,6 +55,13 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
+    | Absensi menu (header + Filament) is only shown on maknafinance.id.
+    | Leave empty to auto-detect from APP_URL / request host.
+    | Set true/false to force.
+    */
+    'show_absensi_menu' => env('SHOW_ABSENSI_MENU'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

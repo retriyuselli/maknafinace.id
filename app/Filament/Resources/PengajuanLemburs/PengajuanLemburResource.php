@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PengajuanLemburs;
 
+use App\Filament\Resources\Concerns\VisibleOnMaknaFinance;
 use App\Filament\Resources\PengajuanLemburs\Pages\CreatePengajuanLembur;
 use App\Filament\Resources\PengajuanLemburs\Pages\EditPengajuanLembur;
 use App\Filament\Resources\PengajuanLemburs\Pages\ListPengajuanLemburs;
@@ -14,6 +15,8 @@ use Filament\Tables\Table;
 
 class PengajuanLemburResource extends Resource
 {
+    use VisibleOnMaknaFinance;
+
     protected static ?string $model = PengajuanLembur::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-moon';
