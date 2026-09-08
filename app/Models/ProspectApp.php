@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ItemPurchaseCodeStatus;
 use App\Enums\ProspectAppStatus;
 use App\Services\ItemPurchaseCodeService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
