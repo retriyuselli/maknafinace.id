@@ -50,7 +50,7 @@ class ProspectAppResource extends Resource
         return parent::getEloquentQuery()
             ->with([
                 'industry:id,industry_name',
-                'latestCode:id,prospect_app_id,code,status',
+                'latestCode',
             ])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
