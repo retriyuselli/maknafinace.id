@@ -79,7 +79,7 @@ class ProspectApp extends Model
     public function currentCode(): ?ItemPurchaseCode
     {
         return $this->itemPurchaseCodes()
-            ->whereIn('status', ['unused', 'active'])
+            ->where('status', '!=', ItemPurchaseCodeStatus::Revoked)
             ->latest('id')
             ->first();
     }

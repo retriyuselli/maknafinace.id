@@ -65,8 +65,14 @@ class ItemPurchaseCode extends Model
             return ItemPurchaseCodeStatus::Revoked;
         }
 
-        if (! $this->isWithinPeriod()) {
+        if ($this->ends_at->startOfDay()->lt(now()->startOfDay())) {
             return ItemPurchaseCodeStatus::Expired;
+        }
+
+        if ($this->status === ItemPurchaseCodeStatus::Expired) {
+            return $this->activated_at
+                ? ItemPurchaseCodeStatus::Active
+                : ItemPurchaseCodeStatus::Unused;
         }
 
         return $this->status;

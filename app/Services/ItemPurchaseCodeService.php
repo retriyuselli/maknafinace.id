@@ -35,12 +35,27 @@ class ItemPurchaseCodeService
         $existing = $app->currentCode();
 
         if ($existing && ! $forceNew) {
+            $starts = $app->tgl_mulai;
+            $ends = $app->tgl_berakhir ?: $starts?->copy()->addYears(2);
+            $status = $existing->status;
+
+            if (
+                $status === ItemPurchaseCodeStatus::Expired
+                && $ends
+                && $ends->copy()->startOfDay()->gte(now()->startOfDay())
+            ) {
+                $status = $existing->activated_at
+                    ? ItemPurchaseCodeStatus::Active
+                    : ItemPurchaseCodeStatus::Unused;
+            }
+
             $existing->forceFill([
                 'company_name' => $app->company_name,
                 'package' => $app->service,
                 'domain' => $existing->domain ?: static::normalizeDomain($app->name_of_website),
-                'starts_at' => $app->tgl_mulai,
-                'ends_at' => $app->tgl_berakhir ?: $app->tgl_mulai->copy()->addYears(2),
+                'starts_at' => $starts,
+                'ends_at' => $ends,
+                'status' => $status,
             ])->save();
 
             return $existing->refresh();
@@ -97,6 +112,10 @@ class ItemPurchaseCodeService
             }
 
             return $this->payload(false, ItemPurchaseCodeStatus::Expired->value, 'Masa berlangganan telah berakhir.', $record);
+        }
+
+        if ($record->status !== $status) {
+            $record->forceFill(['status' => $status])->saveQuietly();
         }
 
         $bound = static::normalizeDomain($record->activated_domain ?: $record->domain);
