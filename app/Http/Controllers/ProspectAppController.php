@@ -176,7 +176,7 @@ class ProspectAppController extends Controller
 
         try {
             // Load prospect app with industry relationship
-            $prospectApp->load('industry');
+            $prospectApp->load(['industry', 'latestCode', 'itemPurchaseCodes']);
 
             // Generate PDF
             $pdf = Pdf::loadView('invoices.prospectapp', compact('prospectApp'))

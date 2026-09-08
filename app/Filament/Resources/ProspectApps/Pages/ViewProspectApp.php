@@ -83,6 +83,22 @@ class ViewProspectApp extends ViewRecord
                             ->label('Application Status')
                             ->badge(),
 
+                        TextEntry::make('tgl_mulai')
+                            ->label('Tanggal mulai')
+                            ->date('d M Y')
+                            ->placeholder('-'),
+
+                        TextEntry::make('tgl_berakhir')
+                            ->label('Tanggal selesai')
+                            ->date('d M Y')
+                            ->placeholder('-'),
+
+                        TextEntry::make('latestCode.code')
+                            ->label('Item Purchase Code')
+                            ->copyable()
+                            ->placeholder('Belum terbit')
+                            ->columnSpanFull(),
+
                         TextEntry::make('submitted_at')
                             ->label('Submission Date')
                             ->dateTime('F j, Y \a\t g:i A'),

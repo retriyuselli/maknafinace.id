@@ -54,6 +54,7 @@ class DatabaseSeeder extends Seeder
             // 5. Data Bisnis (tergantung pada User, Industry, Product)
             ProspectSeeder::class,         // Calon klien.
             ProspectAppSeeder::class,      // Aplikasi dari calon klien.
+            ItemPurchaseCodeSeeder::class, // Kode aktivasi WOFINS setelah pembayaran.
             SimulasiProdukSeeder::class,   // Simulasi penawaran produk.
 
             // 6. Data Operasional (tergantung pada Prospect, User, Product, Vendor)

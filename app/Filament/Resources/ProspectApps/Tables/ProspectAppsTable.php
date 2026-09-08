@@ -113,6 +113,12 @@ class ProspectAppsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('latestCode.code')
+                    ->label('Item Purchase Code')
+                    ->copyable()
+                    ->placeholder('-')
+                    ->toggleable(),
+
                 TextColumn::make('tgl_bayar')
                     ->label('Tanggal Pembayaran')
                     ->date('d M Y')

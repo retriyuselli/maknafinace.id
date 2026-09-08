@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use App\Enums\ProspectAppStatus;
+use App\Services\ItemPurchaseCodeService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -62,6 +66,24 @@ class ProspectApp extends Model
         return $this->belongsTo(Industry::class);
     }
 
+    public function itemPurchaseCodes(): HasMany
+    {
+        return $this->hasMany(ItemPurchaseCode::class);
+    }
+
+    public function latestCode(): HasOne
+    {
+        return $this->hasOne(ItemPurchaseCode::class)->latestOfMany();
+    }
+
+    public function currentCode(): ?ItemPurchaseCode
+    {
+        return $this->itemPurchaseCodes()
+            ->whereIn('status', ['unused', 'active'])
+            ->latest('id')
+            ->first();
+    }
+
     protected static function booted(): void
     {
         static::saving(function (self $model): void {
@@ -69,6 +91,14 @@ class ProspectApp extends Model
                 0,
                 ($model->harga ?? 0) - ($model->potongan ?? 0) - ($model->bayar ?? 0)
             );
+        });
+
+        static::saved(function (self $model): void {
+            if (! Schema::hasTable('item_purchase_codes')) {
+                return;
+            }
+
+            app(ItemPurchaseCodeService::class)->syncFromProspectApp($model);
         });
     }
 

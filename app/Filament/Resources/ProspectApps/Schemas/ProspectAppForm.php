@@ -174,6 +174,18 @@ class ProspectAppForm
                             ->native(false)
                             ->minDate(fn (Get $get) => $get('tgl_mulai') ?: null)
                             ->helperText('Otomatis terisi 2 tahun setelah tanggal mulai, bisa diubah'),
+
+                        TextInput::make('item_purchase_code_display')
+                            ->label('Item Purchase Code')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->copyable()
+                            ->columnSpanFull()
+                            ->afterStateHydrated(function ($component, $state, ?\App\Models\ProspectApp $record): void {
+                                $code = $record?->currentCode()?->code;
+                                $component->state($code ?: 'Belum terbit');
+                            })
+                            ->helperText('Terbit otomatis setelah pembayaran lunas. Tempelkan kode ini di aplikasi WOFINS klien.'),
                     ])
                     ->columns(2),
 

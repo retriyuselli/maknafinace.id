@@ -434,6 +434,12 @@
                     @if ($prospectApp->tgl_berakhir)
                         Berakhir Aplikasi: {{ $prospectApp->tgl_berakhir->format('d M Y') }}<br>
                     @endif
+                    @php
+                        $purchaseCode = $prospectApp->currentCode()?->code ?? $prospectApp->latestCode?->code;
+                    @endphp
+                    @if ($purchaseCode)
+                        Item Purchase Code: {{ $purchaseCode }}<br>
+                    @endif
                     @if ($prospectApp->user_size)
                         Ukuran Perusahaan: {{ $prospectApp->user_size }} karyawan<br>
                     @endif
@@ -481,6 +487,15 @@
                         <td><strong>Tanggal Berakhir Aplikasi</strong></td>
                         <td>{{ $prospectApp->tgl_berakhir ? $prospectApp->tgl_berakhir->format('d M Y') : '-' }}</td>
                     </tr>
+                    @php
+                        $purchaseCode = $prospectApp->currentCode()?->code ?? $prospectApp->latestCode?->code;
+                    @endphp
+                    @if ($purchaseCode)
+                    <tr>
+                        <td><strong>Item Purchase Code</strong></td>
+                        <td>{{ $purchaseCode }}</td>
+                    </tr>
+                    @endif
             </tbody>
         </table>
     </div>

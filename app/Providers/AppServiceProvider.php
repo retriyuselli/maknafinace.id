@@ -169,13 +169,11 @@ class AppServiceProvider extends ServiceProvider
 
         FilamentClearCache::addCommand('optimize:clear');
 
-        RateLimiter::for('absensi-submit', function (Request $request): array {
-            $userKey = $request->user()?->getAuthIdentifier() ?? 'guest';
+        RateLimiter::for('item-purchase-code', function (Request $request): array {
             $ip = $request->ip() ?? 'unknown-ip';
 
             return [
-                Limit::perMinute(10)->by("absensi-submit:user:{$userKey}"),
-                Limit::perMinute(30)->by("absensi-submit:ip:{$ip}"),
+                Limit::perMinute(30)->by('item-purchase-code:ip:'.$ip),
             ];
         });
 
