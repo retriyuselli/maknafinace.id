@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ItemPurchaseCodeController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\FinanceController;
 use App\Http\Controllers\Api\V1\MeController;
+use App\Http\Controllers\Api\V1\MobileModuleController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:item-purchase-code')->group(function (): void {
@@ -27,6 +28,26 @@ Route::prefix('v1')->group(function () {
             ->middleware('throttle:5,1')
             ->name('api.v1.me.password');
         Route::get('/me/devices', [MeController::class, 'devices'])->name('api.v1.me.devices');
+
+        Route::prefix('modules')->group(function () {
+            Route::get('/', [MobileModuleController::class, 'index'])
+                ->name('api.v1.modules.index');
+            Route::get('/{key}/form', [MobileModuleController::class, 'form'])
+                ->name('api.v1.modules.form');
+            Route::get('/{key}', [MobileModuleController::class, 'show'])
+                ->name('api.v1.modules.show');
+            Route::post('/{key}', [MobileModuleController::class, 'store'])
+                ->name('api.v1.modules.store');
+            Route::get('/{key}/{id}', [MobileModuleController::class, 'detail'])
+                ->whereNumber('id')
+                ->name('api.v1.modules.detail');
+            Route::get('/{key}/{id}/pdf', [MobileModuleController::class, 'pdf'])
+                ->whereNumber('id')
+                ->name('api.v1.modules.pdf');
+            Route::patch('/{key}/{id}', [MobileModuleController::class, 'update'])
+                ->whereNumber('id')
+                ->name('api.v1.modules.update');
+        });
 
         Route::get('/finance/dashboard', [FinanceController::class, 'dashboard'])
             ->name('api.v1.finance.dashboard');
