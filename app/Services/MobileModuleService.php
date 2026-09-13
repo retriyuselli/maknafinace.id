@@ -1092,6 +1092,13 @@ class MobileModuleService
                     ->values()
                     ->all();
             }
+            if ($key === 'products' && $model instanceof Product) {
+                try {
+                    $payload['product'] = app(FinanceSummaryService::class)->serializeProductDetail($model);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
         }
 
         return $payload;
@@ -1271,8 +1278,50 @@ class MobileModuleService
                     ];
                 })->all()
                 : [],
+            'products' => $model instanceof Product
+                ? $this->productFacilityChildren($model)
+                : [],
             default => [],
         };
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function productFacilityChildren(Product $product): array
+    {
+        $product->loadMissing(['items.vendor']);
+
+        return $product->items->map(function ($item) {
+            $qty = max(1, (int) ($item->quantity ?? 1));
+            $hargaPublish = (int) ($item->harga_publish ?? 0);
+            $hargaVendor = (int) ($item->harga_vendor ?? 0);
+            $linePublic = (int) ($item->price_public ?: $hargaPublish * $qty);
+            $lineVendor = (int) ($item->total_price ?: $hargaVendor * $qty);
+            if ($hargaVendor > 0 && $hargaPublish !== $hargaVendor && $lineVendor === $linePublic) {
+                $lineVendor = $hargaVendor * $qty;
+            }
+
+            $fields = [];
+            if ($description = $this->plainText($item->description)) {
+                $fields[] = ['label' => 'Fasilitas', 'value' => $description];
+            }
+            if ($qty > 1) {
+                $fields[] = ['label' => 'Qty', 'value' => (string) $qty];
+            }
+            if ($lineVendor > 0) {
+                $fields[] = ['label' => 'Harga vendor', 'value' => $this->displayValue($lineVendor, 'money')];
+            }
+
+            return [
+                'id' => (int) $item->id,
+                'title' => $item->vendor?->name ?: 'Fasilitas',
+                'subtitle' => $qty > 1 ? $qty.'×' : null,
+                'amount' => $linePublic,
+                'vendor_id' => $item->vendor_id ? (int) $item->vendor_id : null,
+                'fields' => $fields,
+            ];
+        })->values()->all();
     }
 
     /**
@@ -1481,6 +1530,11 @@ class MobileModuleService
                 'status_attr' => 'is_active',
                 'search' => ['name', 'slug'],
                 'with' => ['category:id,name'],
+                'detail_with' => [
+                    'items.vendor.category:id,name',
+                    'pengurangans',
+                    'penambahanHarga.vendor.category:id,name',
+                ],
                 'fields' => [
                     ['name' => 'name', 'label' => 'Nama paket', 'type' => 'text', 'required' => true],
                     ['name' => 'category_id', 'label' => 'Kategori', 'type' => 'select', 'options' => 'categories', 'cast' => 'int'],
@@ -1494,6 +1548,7 @@ class MobileModuleService
                     ['label' => 'Harga', 'attr' => 'price', 'format' => 'money'],
                     ['label' => 'Harga vendor', 'attr' => 'product_price', 'format' => 'money'],
                     ['label' => 'Pax', 'attr' => 'pax'],
+                    ['label' => 'Akad (pax)', 'attr' => 'pax_akad'],
                     ['label' => 'Deskripsi', 'attr' => 'description'],
                 ],
             ],

@@ -730,37 +730,49 @@ class FinanceSummaryService
     {
         /** @var Product|null $product */
         $product = Product::query()
-            ->with([
-                'category:id,name',
-                'items.vendor:id,name,pic_name,phone,address,category_id',
-                'items.vendor.category:id,name',
-                'pengurangans',
-            ])
+            ->with($this->productDetailRelations())
             ->find($id);
 
-        if (! $product) {
-            return null;
-        }
+        return $product ? $this->serializeProductDetail($product) : null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function serializeProductDetail(Product $product): array
+    {
+        $product->unsetRelation('items');
+        $product->unsetRelation('penambahanHarga');
+        $product->unsetRelation('pengurangans');
+        $product->load($this->productDetailRelations());
 
         $pricing = ProductPricingCalculator::calculateForProduct($product);
-        $vendorLines = $product->items->map(fn ($item) => $this->productVendorLine($item))->values()->all();
+        $vendorLines = collect($product->items)->map(fn ($item) => $this->productVendorLine($item))->values()->all();
+        $additionLines = collect($product->penambahanHarga)->map(fn ($item) => $this->productAdditionLine($item))->values()->all();
 
         return [
             'id' => $product->id,
             'name' => $product->name,
             'slug' => $product->slug,
             'pax' => $product->pax,
+            'pax_akad' => $product->pax_akad ? (int) $product->pax_akad : null,
             'category' => $product->category?->name,
             'description' => $this->plainText($product->description),
+            'image_url' => $this->publicFileUrl($product->image),
+            'preview_url' => url('/products/'.$product->slug.'/details/preview'),
+            'free_pengurangan' => $this->plainText($product->free_pengurangan),
             'product_price' => (int) ($pricing['total_public_price'] ?? $product->product_price ?? 0),
             'vendor_price' => (int) ($pricing['total_vendor_price'] ?? 0),
             'pengurangan' => (int) ($pricing['total_discount_amount'] ?? $product->pengurangan ?? 0),
+            'penambahan_publish' => (int) ($pricing['total_addition_publish'] ?? 0),
+            'penambahan_vendor' => (int) ($pricing['total_addition_vendor'] ?? 0),
             'price' => (int) ($pricing['final_publish'] ?? $product->price ?? 0),
             'profit' => (int) ($pricing['profit_and_loss'] ?? 0),
             'is_active' => (bool) $product->is_active,
             'is_approved' => (bool) $product->is_approved,
             'vendors' => $vendorLines,
-            'discounts' => $product->pengurangans->map(function ($row) {
+            'additions' => $additionLines,
+            'discounts' => collect($product->pengurangans)->map(function ($row) {
                 return [
                     'id' => $row->id,
                     'description' => $row->description,
@@ -768,6 +780,31 @@ class FinanceSummaryService
                     'notes' => $this->plainText($row->notes),
                 ];
             })->values()->all(),
+            'pricing' => [
+                'harga_awal_publish' => (int) ($pricing['total_public_price'] ?? 0),
+                'harga_awal_vendor' => (int) ($pricing['total_vendor_price'] ?? 0),
+                'penambahan_publish' => (int) ($pricing['total_addition_publish'] ?? 0),
+                'penambahan_vendor' => (int) ($pricing['total_addition_vendor'] ?? 0),
+                'subtotal_publish' => (int) ($pricing['subtotal_publish'] ?? 0),
+                'subtotal_vendor' => (int) ($pricing['subtotal_vendor'] ?? 0),
+                'pengurangan' => (int) ($pricing['total_discount_amount'] ?? 0),
+                'total_publish' => (int) ($pricing['final_publish'] ?? 0),
+                'total_vendor' => (int) ($pricing['final_vendor'] ?? 0),
+                'profit' => (int) ($pricing['profit_and_loss'] ?? 0),
+            ],
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function productDetailRelations(): array
+    {
+        return [
+            'category:id,name',
+            'items.vendor.category:id,name',
+            'pengurangans',
+            'penambahanHarga.vendor.category:id,name',
         ];
     }
 
@@ -1089,12 +1126,65 @@ class FinanceSummaryService
 
     private function plainText(?string $html): ?string
     {
+        if ($html === null || trim($html) === '') {
+            return null;
+        }
+
+        $text = (string) preg_replace_callback(
+            '/<(ol|ul)\b[^>]*>(.*?)<\/\1>/is',
+            function (array $match): string {
+                $ordered = strtolower($match[1]) === 'ol';
+                $index = 0;
+                $inner = preg_replace_callback(
+                    '/<li\b[^>]*>(.*?)<\/li>/is',
+                    function (array $item) use ($ordered, &$index): string {
+                        $index++;
+                        $line = $this->plainLine($item[1]);
+                        if ($line === null) {
+                            return '';
+                        }
+
+                        return ($ordered ? $index.'. ' : '- ').$line."\n";
+                    },
+                    $match[2]
+                ) ?? $match[2];
+
+                return "\n".$inner;
+            },
+            $html
+        ) ?? $html;
+
+        $text = (string) preg_replace_callback(
+            '/<li\b[^>]*>(.*?)<\/li>/is',
+            function (array $item): string {
+                $line = $this->plainLine($item[1]);
+
+                return $line === null ? '' : '- '.$line."\n";
+            },
+            $text
+        );
+
+        $text = preg_replace('/<\s*br\s*\/?\s*>/i', "\n", $text) ?? $text;
+        $text = preg_replace('/<\/(p|div|h[1-6]|tr)>/i', "\n", $text) ?? $text;
+        $text = $this->plainLine($text, collapseNewlines: false);
+
+        return $text;
+    }
+
+    private function plainLine(?string $html, bool $collapseNewlines = true): ?string
+    {
         if ($html === null) {
             return null;
         }
 
         $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = trim((string) preg_replace('/\s+/u', ' ', $text));
+        $text = (string) preg_replace("/[ \t]+/u", ' ', $text);
+        if ($collapseNewlines) {
+            $text = (string) preg_replace('/\s+/u', ' ', $text);
+        } else {
+            $text = (string) preg_replace("/\n{3,}/", "\n\n", $text);
+        }
+        $text = trim($text);
 
         return $text === '' ? null : $text;
     }
@@ -1243,7 +1333,7 @@ class FinanceSummaryService
             'vendor_id' => $item->vendor_id,
             'name' => $vendor?->name,
             'pic_name' => $vendor?->pic_name,
-            'phone' => $vendor?->phone,
+            'phone' => $vendor?->phone !== null && $vendor->phone !== '' ? (string) $vendor->phone : null,
             'address' => $vendor?->address,
             'category' => $vendor?->category?->name,
             'quantity' => $qty,
@@ -1252,6 +1342,34 @@ class FinanceSummaryService
             'line_public' => $linePublic,
             'line_vendor' => $lineVendor,
             'line_total' => $linePublic,
+            'description' => $this->plainText($item->description),
+        ];
+    }
+
+    /**
+     * @param  \App\Models\ProductPenambahan  $item
+     * @return array<string, mixed>
+     */
+    private function productAdditionLine($item): array
+    {
+        $publish = (int) ($item->harga_publish ?? 0);
+        $vendorPrice = (int) ($item->harga_vendor ?? 0);
+        $vendor = $item->vendor;
+
+        return [
+            'id' => $item->id,
+            'vendor_id' => $item->vendor_id,
+            'name' => $vendor?->name,
+            'pic_name' => $vendor?->pic_name,
+            'phone' => $vendor?->phone !== null && $vendor->phone !== '' ? (string) $vendor->phone : null,
+            'address' => $vendor?->address,
+            'category' => $vendor?->category?->name,
+            'quantity' => 1,
+            'harga_publish' => $publish,
+            'harga_vendor' => $vendorPrice,
+            'line_public' => $publish,
+            'line_vendor' => $vendorPrice,
+            'line_total' => $publish,
             'description' => $this->plainText($item->description),
         ];
     }

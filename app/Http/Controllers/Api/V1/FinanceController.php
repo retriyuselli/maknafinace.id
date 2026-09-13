@@ -403,6 +403,23 @@ class FinanceController extends Controller
         ]);
     }
 
+    public function productPreview(int $id): \Symfony\Component\HttpFoundation\Response
+    {
+        $product = \App\Models\Product::query()->find($id);
+
+        if (! $product) {
+            return response()->json(['message' => 'Paket tidak ditemukan.'], 404);
+        }
+
+        try {
+            return app(\App\Http\Controllers\ProductDisplayController::class)->mobilePreview($product);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json(['message' => 'Preview paket gagal dibuka.'], 500);
+        }
+    }
+
     public function vendorShow(int $id): JsonResponse
     {
         $detail = $this->finance->vendorDetail($id);

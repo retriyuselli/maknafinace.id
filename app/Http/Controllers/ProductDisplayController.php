@@ -188,6 +188,33 @@ class ProductDisplayController extends Controller
         abort(404, 'Invalid action specified.');
     }
 
+    public function mobilePreview(Product $product): \Illuminate\Http\Response
+    {
+        $viewData = array_merge(
+            $this->productDisplayData($product, forPdf: false),
+            ['action' => 'preview']
+        );
+
+        return response(
+            view('products.details-preview', $viewData)->render(),
+            200,
+            [
+                'Content-Type' => 'text/html; charset=UTF-8',
+                'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
+            ]
+        );
+    }
+
+    public function streamPreview(Product $product)
+    {
+        Gate::authorize('view', $product);
+
+        $pdf = $this->buildProductPdf($product);
+        $fileName = 'product-'.$product->slug.'-'.now()->format('Ymd').'.pdf';
+
+        return $pdf->stream($fileName);
+    }
+
     public function downloadPdf(Product $product)
     {
         Gate::authorize('view', $product);
