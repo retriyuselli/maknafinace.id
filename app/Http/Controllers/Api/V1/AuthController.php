@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
+use App\Services\GoogleTokenVerifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -35,6 +36,56 @@ class AuthController extends Controller
         $this->assertUserCanLogin($user);
 
         return $this->tokenResponse($user, $credentials['device_name'] ?? 'ios-app');
+    }
+
+    /**
+     * Login dengan Google ID token. Tidak membuat akun baru.
+     */
+    public function google(Request $request, GoogleTokenVerifier $verifier): JsonResponse
+    {
+        $data = $request->validate([
+            'id_token' => ['required', 'string'],
+            'device_name' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $payload = $verifier->verify($data['id_token']);
+        $googleId = (string) ($payload['sub'] ?? '');
+        $email = trim((string) ($payload['email'] ?? ''));
+        $emailVerified = filter_var($payload['email_verified'] ?? false, FILTER_VALIDATE_BOOL);
+
+        if ($googleId === '' || $email === '') {
+            throw ValidationException::withMessages([
+                'id_token' => ['Akun Google tidak menyediakan email yang valid.'],
+            ]);
+        }
+
+        /** @var User|null $user */
+        $user = User::query()
+            ->where(function ($query) use ($googleId, $email) {
+                $query->where('google_id', $googleId)->orWhere('email', $email);
+            })
+            ->first();
+
+        if ($user) {
+            $this->assertUserCanLogin($user);
+
+            $updates = [];
+            if (! $user->google_id) {
+                $updates['google_id'] = $googleId;
+            }
+            if ($emailVerified && ! $user->email_verified_at) {
+                $updates['email_verified_at'] = now();
+            }
+            if ($updates !== []) {
+                $user->forceFill($updates)->save();
+            }
+        } else {
+            throw ValidationException::withMessages([
+                'id_token' => ['Akun Google belum terdaftar di Makna Finance. Hubungi administrator.'],
+            ]);
+        }
+
+        return $this->tokenResponse($user, $data['device_name'] ?? 'ios-wofins-google');
     }
 
     /**

@@ -2,6 +2,10 @@
 
 namespace App\Support;
 
+use App\Models\Company;
+use App\Models\User;
+use Illuminate\Support\Facades\Schema;
+
 class CompanySubscription
 {
     public const RESOURCE_USERS = 'users';
@@ -36,9 +40,23 @@ class CompanySubscription
 
     public const RESOURCE_PENGELUARAN_LAINS = 'pengeluaran_lains';
 
+    public static function company(?User $actor = null): ?Company
+    {
+        if (! Schema::hasTable('companies')) {
+            return null;
+        }
+
+        return Company::query()->orderBy('id')->first();
+    }
+
     public static function canCreate(string $resource): bool
     {
         return true;
+    }
+
+    public static function summary(string $resource): string
+    {
+        return 'Tak terbatas';
     }
 
     public static function fullMessage(string $resource): string

@@ -38,6 +38,14 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'ios_client_id' => env('GOOGLE_IOS_CLIENT_ID', '408651692876-ju4su29c4t3l08ee9kjajdmavkr0afj1.apps.googleusercontent.com'),
+        'ios_client_ids' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env(
+                'GOOGLE_IOS_CLIENT_IDS',
+                '408651692876-ju4su29c4t3l08ee9kjajdmavkr0afj1.apps.googleusercontent.com,408651692876-pp16jkl7kdtdjh9g2htnu89amv05kjmr.apps.googleusercontent.com'
+            ))
+        ))),
         'redirect' => env('GOOGLE_REDIRECT_URI', rtrim(env('APP_URL', 'http://127.0.0.1:8000'), '/').'/auth/google/callback'),
     ],
 

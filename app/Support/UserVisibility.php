@@ -22,4 +22,25 @@ class UserVisibility
     {
         return $query;
     }
+
+    public static function constrainCompanyQuery(Builder $query, string $column = 'company_id'): Builder
+    {
+        return $query;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function stampCompanyId(array $data, ?string $fromUserColumn = null): array
+    {
+        unset($data['company_id']);
+
+        return $data;
+    }
+
+    public static function isSingleSeatPlan(?User $actor = null): bool
+    {
+        return false;
+    }
 }

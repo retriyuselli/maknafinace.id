@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\Prospect;
 use App\Models\Vendor;
+use App\Support\CompanySubscription;
 use App\Support\Rupiah;
 use Exception;
 use Filament\Forms\Components\DatePicker;
@@ -40,6 +41,39 @@ use Illuminate\Support\Str;
 
 class OrderForm
 {
+    public static function orderNumberPrefix(): string
+    {
+        $raw = (string) (CompanySubscription::company()?->inisial_wo ?: 'MW');
+        $prefix = strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', $raw));
+
+        return $prefix !== '' ? $prefix : 'MW';
+    }
+
+    public static function defaultOrderNumber(): string
+    {
+        $prefix = static::orderNumberPrefix();
+
+        do {
+            $number = $prefix.'-'.random_int(100000, 999999);
+        } while (Order::query()->where('number', $number)->exists());
+
+        return $number;
+    }
+
+    public static function constrainTeamRoleQuery(Builder $query, string $preferredRole): Builder
+    {
+        try {
+            $preferred = (clone $query)->role($preferredRole);
+            if ($preferred->exists()) {
+                return $query->role($preferredRole);
+            }
+        } catch (\Throwable) {
+            // Role belum ada di instalasi ini — tampilkan semua user.
+        }
+
+        return $query;
+    }
+
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([

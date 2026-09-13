@@ -78,10 +78,19 @@ class InvoiceOrderController extends Controller
     {
         Gate::authorize('view', $order);
 
+        return $this->pdfResponse($order);
+    }
+
+    /**
+     * Generate the invoice PDF without repeating authorization.
+     * Used by the web download route and the authenticated mobile API.
+     */
+    public function pdfResponse(Order $order, bool $asDownload = true): Response
+    {
         @ini_set('max_execution_time', '300');
         @ini_set('memory_limit', '512M');
         @set_time_limit(300);
-        
+
         // Get order details with eager loading for improved performance
         $order = Order::with([
             'items.product.category',
@@ -186,8 +195,11 @@ class InvoiceOrderController extends Controller
             'margin_bottom' => 15,
         ]);
 
-        // return $pdf->stream("Invoice-{$order->prospect->name_event}.pdf");
-        return $pdf->download("Invoice-{$order->prospect->name_event}.pdf");
+        $filename = 'Invoice-'.($order->prospect->name_event ?? $order->number ?? 'proyek').'.pdf';
+
+        return $asDownload
+            ? $pdf->download($filename)
+            : $pdf->stream($filename);
     }
 
     /**

@@ -100,6 +100,17 @@ class MobileModuleController extends Controller
         return app(SimulasiDisplayController::class)->downloadPdf($simulasi);
     }
 
+    public function draftKontrak(Request $request, string $key, int $id): Response
+    {
+        $simulasi = $this->simulasiRecord($request, $key, $id);
+
+        if ($simulasi instanceof JsonResponse) {
+            return $simulasi;
+        }
+
+        return app(SimulasiDisplayController::class)->draftKontrakResponse($simulasi);
+    }
+
     private function simulasiRecord(Request $request, string $key, int $id): SimulasiProduk|JsonResponse
     {
         if ($key !== 'simulasi') {

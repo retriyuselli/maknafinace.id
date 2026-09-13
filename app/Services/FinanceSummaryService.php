@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\OrderStatus;
+use App\Enums\StatusPiutang;
 use App\Models\DataPembayaran;
 use App\Models\Expense;
 use App\Models\ExpenseOps;
@@ -10,8 +11,12 @@ use App\Models\Order;
 use App\Models\OrderProduct;
 use App\Models\PendapatanLain;
 use App\Models\PengeluaranLain;
+use App\Models\Piutang;
+use App\Models\Product;
 use App\Models\Prospect;
 use App\Models\User;
+use App\Models\Vendor;
+use App\Support\UserVisibility;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -115,7 +120,7 @@ class FinanceSummaryService
         ];
     }
 
-    public function scopedOrdersQuery(): Builder
+    public function scopedOrdersQuery(?User $user = null): Builder
     {
         return Order::query()->with([
             'prospect:id,name_event,name_cpp,name_cpw,venue,phone,address,date_lamaran,date_akad,date_resepsi',
@@ -205,6 +210,63 @@ class FinanceSummaryService
                 'with_order_count' => max(0, $allCount - $warmCount),
             ],
         ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function prospectDetail(int $id): ?array
+    {
+        /** @var Prospect|null $prospect */
+        $prospect = $this->scopedProspectsQuery()->find($id);
+
+        return $prospect ? $this->prospectSummary($prospect) : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public function storeProspect(User $user, array $data): array
+    {
+        $data['user_id'] = $user->id;
+        $data = UserVisibility::stampCompanyId($data, 'user_id');
+
+        $prospect = Prospect::query()->create($data);
+        $prospect->load(['user:id,name', 'latestOrder']);
+
+        return $this->prospectSummary($prospect);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>|null
+     */
+    public function updateProspect(int $id, array $data): ?array
+    {
+        /** @var Prospect|null $prospect */
+        $prospect = $this->scopedProspectsQuery()->find($id);
+
+        if (! $prospect) {
+            return null;
+        }
+
+        unset($data['user_id'], $data['company_id']);
+        $prospect->update($data);
+        $prospect->load(['user:id,name', 'latestOrder']);
+
+        return $this->prospectSummary($prospect);
+    }
+
+    public static function normalizeProspectPhone(string $phone): string
+    {
+        $digits = preg_replace('/\D+/', '', $phone) ?? '';
+
+        if (str_starts_with($digits, '62')) {
+            $digits = substr($digits, 2);
+        }
+
+        return ltrim($digits, '0');
     }
 
     /**
@@ -384,6 +446,35 @@ class FinanceSummaryService
     }
 
     /**
+     * @return array{absolute: string, name: string}|null
+     */
+    public function projectContractFile(?User $user, int $id): ?array
+    {
+        /** @var Order|null $order */
+        $order = $this->scopedOrdersQuery($user)->find($id);
+        $path = $this->firstStoredPath($order?->doc_kontrak);
+
+        if ($path === null) {
+            return null;
+        }
+
+        $absolute = Storage::disk('public')->path($path);
+        if (! is_file($absolute)) {
+            $publicPath = public_path('storage/'.$path);
+            $absolute = is_file($publicPath) ? $publicPath : null;
+        }
+
+        if ($absolute === null) {
+            return null;
+        }
+
+        return [
+            'absolute' => $absolute,
+            'name' => $this->publicFileName($order->doc_kontrak, 'Dokumen kontrak.pdf') ?? 'Dokumen kontrak.pdf',
+        ];
+    }
+
+    /**
      * @return array{data: list<array<string, mixed>>, meta: array<string, int>}
      */
     public function transactions(string $from, string $to, ?string $type = null, int $limit = 100, ?string $direction = null): array
@@ -497,6 +588,111 @@ class FinanceSummaryService
     }
 
     /**
+     * @return array{view: string, data: array<string, mixed>, filename: string}
+     */
+    public function reportPdfPayload(User $user, string $from, string $to, string $mode = 'cash'): array
+    {
+        \App\Support\CompanyBrand::remember($user);
+
+        if ($mode === 'profit_loss') {
+            return [
+                'view' => 'pdf.profit_loss_report',
+                'data' => $this->profitLossPdfData($from, $to),
+                'filename' => 'laporan-laba-rugi-'.$from.'-'.$to.'.pdf',
+            ];
+        }
+
+        $summary = $this->reportSummary($from, $to, 'cash');
+
+        return [
+            'view' => 'pdf.cash_flow_report',
+            'data' => [
+                'filterStartDate' => $from,
+                'filterEndDate' => $to,
+                'generatedDate' => now()->format('d M Y H:i'),
+                'companyLabel' => \App\Support\CompanyBrand::name(),
+                'rows' => $summary['by_type'] ?? [],
+                'totalIn' => $summary['total_in'] ?? 0,
+                'totalOut' => $summary['total_out'] ?? 0,
+                'net' => $summary['net'] ?? 0,
+            ],
+            'filename' => 'laporan-arus-kas-'.$from.'-'.$to.'.pdf',
+        ];
+    }
+
+    /**
+     * @return array{export: \App\Exports\FinanceReportExport, filename: string}
+     */
+    public function reportExcelPayload(User $user, string $from, string $to, string $mode = 'cash'): array
+    {
+        $pdf = $this->reportPdfPayload($user, $from, $to, $mode);
+        $kind = $mode === 'profit_loss' ? 'laba-rugi' : 'arus-kas';
+
+        return [
+            'export' => new \App\Exports\FinanceReportExport($mode, $pdf['data']),
+            'filename' => 'laporan-'.$kind.'-'.$from.'-'.$to.'.xlsx',
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function profitLossPdfData(string $from, string $to): array
+    {
+        $orders = Order::query()
+            ->with(['prospect', 'dataPembayaran', 'expenses'])
+            ->whereHas('prospect', function (Builder $q) use ($from, $to) {
+                $q->where(function (Builder $inner) use ($from, $to) {
+                    $inner->whereBetween('date_lamaran', [$from, $to])
+                        ->orWhereBetween('date_akad', [$from, $to])
+                        ->orWhereBetween('date_resepsi', [$from, $to]);
+                });
+            })
+            ->get();
+
+        foreach ($orders as $order) {
+            if ($order->prospect && ! mb_check_encoding($order->prospect->name_event ?? '', 'UTF-8')) {
+                $order->prospect->name_event = iconv('UTF-8', 'UTF-8//IGNORE', $order->prospect->name_event ?? '') ?: '';
+            }
+        }
+
+        $totalPaymentsReceived = $orders->sum(function (Order $order) {
+            return $order->dataPembayaran->sum('nominal');
+        });
+        $totalOrderValue = $orders->sum('grand_total');
+        $totalActualExpenses = $orders->sum(function (Order $order) {
+            return $order->expenses->sum('amount');
+        });
+
+        $expenseOps = ExpenseOps::query()->with('vendor')->whereBetween('date_expense', [$from, $to])
+            ->orderByDesc('date_expense')->get();
+
+        $pengeluaranLain = PengeluaranLain::query()->with('vendor')->whereBetween('date_expense', [$from, $to])
+            ->orderByDesc('date_expense')->get();
+
+        $pendapatanLain = PendapatanLain::query()->with('vendor')->whereBetween('tgl_bayar', [$from, $to])
+            ->orderByDesc('tgl_bayar')->get();
+
+        return [
+            'orders' => $orders,
+            'totalIncome' => $totalPaymentsReceived,
+            'totalExpenses' => $totalOrderValue,
+            'sumAllOrdersPengeluaran' => $totalActualExpenses,
+            'netProfit' => $totalOrderValue - $totalActualExpenses,
+            'expenseOps' => $expenseOps,
+            'pengeluaranLain' => $pengeluaranLain,
+            'pendapatanLain' => $pendapatanLain,
+            'totalExpenseOps' => $expenseOps->sum('amount'),
+            'totalPengeluaranLain' => $pengeluaranLain->sum('amount'),
+            'totalPendapatanLain' => $pendapatanLain->sum('nominal'),
+            'filterStartDate' => $from,
+            'filterEndDate' => $to,
+            'generatedDate' => now()->format('d M Y H:i'),
+            'companyLabel' => \App\Support\CompanyBrand::name(),
+        ];
+    }
+
+    /**
      * @return array{absolute: string, name: string, mime: string, mtime: int}|null
      */
     public function paymentProofFile(int $id): ?array
@@ -524,6 +720,197 @@ class FinanceSummaryService
             'name' => $this->publicFileName($path, 'Payment proof.jpg') ?? 'Payment proof.jpg',
             'mime' => $mime,
             'mtime' => (int) filemtime($absolute),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function productDetail(int $id): ?array
+    {
+        /** @var Product|null $product */
+        $product = Product::query()
+            ->with([
+                'category:id,name',
+                'items.vendor:id,name,pic_name,phone,address,category_id',
+                'items.vendor.category:id,name',
+                'pengurangans',
+            ])
+            ->find($id);
+
+        if (! $product) {
+            return null;
+        }
+
+        $pricing = ProductPricingCalculator::calculateForProduct($product);
+        $vendorLines = $product->items->map(fn ($item) => $this->productVendorLine($item))->values()->all();
+
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'pax' => $product->pax,
+            'category' => $product->category?->name,
+            'description' => $this->plainText($product->description),
+            'product_price' => (int) ($pricing['total_public_price'] ?? $product->product_price ?? 0),
+            'vendor_price' => (int) ($pricing['total_vendor_price'] ?? 0),
+            'pengurangan' => (int) ($pricing['total_discount_amount'] ?? $product->pengurangan ?? 0),
+            'price' => (int) ($pricing['final_publish'] ?? $product->price ?? 0),
+            'profit' => (int) ($pricing['profit_and_loss'] ?? 0),
+            'is_active' => (bool) $product->is_active,
+            'is_approved' => (bool) $product->is_approved,
+            'vendors' => $vendorLines,
+            'discounts' => $product->pengurangans->map(function ($row) {
+                return [
+                    'id' => $row->id,
+                    'description' => $row->description,
+                    'amount' => (int) $row->amount,
+                    'notes' => $this->plainText($row->notes),
+                ];
+            })->values()->all(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function vendorDetail(int $id): ?array
+    {
+        /** @var Vendor|null $vendor */
+        $vendor = Vendor::query()
+            ->with('category:id,name')
+            ->find($id);
+
+        if (! $vendor) {
+            return null;
+        }
+
+        $publish = (int) ($vendor->harga_publish ?? 0);
+        $modal = (int) ($vendor->harga_vendor ?? 0);
+
+        return [
+            'id' => $vendor->id,
+            'name' => $vendor->name,
+            'pic_name' => $vendor->pic_name,
+            'phone' => $vendor->phone,
+            'address' => $vendor->address,
+            'category' => $vendor->category?->name,
+            'description' => $this->plainText($vendor->description),
+            'harga_publish' => $publish,
+            'harga_vendor' => $modal,
+            'profit_amount' => (int) ($vendor->profit_amount ?? max(0, $publish - $modal)),
+        ];
+    }
+
+    /**
+     * @return array{data: list<array<string, mixed>>, meta: array<string, int>}
+     */
+    public function piutangs(?string $status = null, int $perPage = 20, bool $openOnly = false): array
+    {
+        $query = Piutang::query()->latest('tanggal_piutang')->latest('id');
+
+        $openStatuses = [
+            StatusPiutang::AKTIF->value,
+            StatusPiutang::DIBAYAR_SEBAGIAN->value,
+            StatusPiutang::JATUH_TEMPO->value,
+        ];
+
+        if ($status) {
+            $query->where('status', $status);
+        } elseif ($openOnly) {
+            $query->whereIn('status', $openStatuses);
+        }
+
+        $paginator = $query->paginate(min(max($perPage, 1), 50));
+
+        $data = collect($paginator->items())->map(fn (Piutang $p) => $this->piutangSummary($p))->values()->all();
+
+        $metaOpen = Piutang::query()->whereIn('status', $openStatuses);
+
+        return [
+            'data' => $data,
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'open_count' => (int) (clone $metaOpen)->count(),
+                'open_sisa' => (int) (clone $metaOpen)->sum('sisa_piutang'),
+                'open_total' => (int) (clone $metaOpen)->sum('total_piutang'),
+                'open_paid' => (int) (clone $metaOpen)->sum('sudah_dibayar'),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function piutangDetail(int $id): ?array
+    {
+        /** @var Piutang|null $piutang */
+        $piutang = Piutang::query()
+            ->with([
+                'pembayaranPiutangs' => fn ($q) => $q->latest('tanggal_pembayaran')->latest('id'),
+                'pembayaranPiutangs.paymentMethod:id,name,no_rekening',
+                'dibuatOleh:id,name',
+            ])
+            ->find($id);
+
+        if (! $piutang) {
+            return null;
+        }
+
+        $summary = $this->piutangSummary($piutang);
+
+        return array_merge($summary, [
+            'catatan' => $piutang->catatan,
+            'keterangan' => $piutang->keterangan,
+            'kontak_debitur' => $piutang->kontak_debitur,
+            'dibuat_oleh' => $piutang->dibuatOleh?->name,
+            'payments' => $piutang->pembayaranPiutangs->map(function ($bayar) {
+                return [
+                    'id' => $bayar->id,
+                    'nomor' => $bayar->nomor_pembayaran,
+                    'date' => optional($bayar->tanggal_pembayaran)?->toDateString(),
+                    'amount' => (int) $bayar->jumlah_pembayaran,
+                    'bunga' => (int) ($bayar->jumlah_bunga ?? 0),
+                    'denda' => (int) ($bayar->denda ?? 0),
+                    'total' => (int) $bayar->total_pembayaran,
+                    'payment_method' => $this->formatPaymentMethod($bayar->paymentMethod),
+                    'catatan' => $bayar->catatan,
+                ];
+            })->values()->all(),
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function piutangSummary(Piutang $piutang): array
+    {
+        $status = $piutang->status;
+        $statusValue = $status instanceof \BackedEnum ? $status->value : (string) $status;
+        $jenis = $piutang->jenis_piutang;
+        $jenisValue = $jenis instanceof \BackedEnum ? $jenis->value : (string) $jenis;
+
+        return [
+            'id' => $piutang->id,
+            'nomor' => $piutang->nomor_piutang,
+            'nama_debitur' => $piutang->nama_debitur,
+            'jenis' => $jenisValue,
+            'status' => $statusValue,
+            'status_label' => $status instanceof StatusPiutang ? $status->getLabel() : $statusValue,
+            'prioritas' => $piutang->prioritas,
+            'jumlah_pokok' => (int) $piutang->jumlah_pokok,
+            'total_piutang' => (int) $piutang->total_piutang,
+            'sudah_dibayar' => (int) $piutang->sudah_dibayar,
+            'sisa_piutang' => (int) $piutang->sisa_piutang,
+            'tanggal_piutang' => optional($piutang->tanggal_piutang)?->toDateString(),
+            'tanggal_jatuh_tempo' => optional($piutang->tanggal_jatuh_tempo)?->toDateString(),
+            'tanggal_lunas' => optional($piutang->tanggal_lunas)?->toDateString(),
+            'is_overdue' => $piutang->tanggal_jatuh_tempo
+                && $piutang->tanggal_jatuh_tempo->isPast()
+                && ! in_array($statusValue, [StatusPiutang::LUNAS->value, StatusPiutang::DIBATALKAN->value], true),
         ];
     }
 
@@ -831,5 +1218,41 @@ class FinanceSummaryService
         }
 
         return $path === '' ? null : $path;
+    }
+
+    /**
+     * @param  \App\Models\ProductVendor  $item
+     * @return array<string, mixed>
+     */
+    private function productVendorLine($item): array
+    {
+        $qty = max(1, (int) ($item->quantity ?? 1));
+        $hargaPublish = (int) ($item->harga_publish ?? 0);
+        $hargaVendor = (int) ($item->harga_vendor ?? 0);
+        $linePublic = (int) ($item->price_public ?: $hargaPublish * $qty);
+        $lineVendor = (int) ($item->total_price ?: $hargaVendor * $qty);
+
+        if ($hargaVendor > 0 && $hargaPublish !== $hargaVendor && $lineVendor === $linePublic) {
+            $lineVendor = $hargaVendor * $qty;
+        }
+
+        $vendor = $item->vendor;
+
+        return [
+            'id' => $item->id,
+            'vendor_id' => $item->vendor_id,
+            'name' => $vendor?->name,
+            'pic_name' => $vendor?->pic_name,
+            'phone' => $vendor?->phone,
+            'address' => $vendor?->address,
+            'category' => $vendor?->category?->name,
+            'quantity' => $qty,
+            'harga_publish' => $hargaPublish,
+            'harga_vendor' => $hargaVendor,
+            'line_public' => $linePublic,
+            'line_vendor' => $lineVendor,
+            'line_total' => $linePublic,
+            'description' => $this->plainText($item->description),
+        ];
     }
 }

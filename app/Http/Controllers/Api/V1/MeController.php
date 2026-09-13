@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\V1\PayrollResource;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -93,6 +94,24 @@ class MeController extends Controller
 
         return response()->json([
             'message' => 'Password berhasil diubah.',
+        ]);
+    }
+
+    public function compensation(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $period = (string) $request->query('period', 'year');
+        $payroll = $user->payrolls()->latest()->first();
+
+        return response()->json([
+            'data' => [
+                'period' => $period,
+                'current_year' => (int) date('Y'),
+                'payroll' => $payroll
+                    ? new PayrollResource($payroll)
+                    : null,
+            ],
         ]);
     }
 
