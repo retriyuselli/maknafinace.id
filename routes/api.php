@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\ItemPurchaseCodeController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\FinanceController;
 use App\Http\Controllers\Api\V1\MeController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,5 +27,8 @@ Route::prefix('v1')->group(function () {
             ->middleware('throttle:5,1')
             ->name('api.v1.me.password');
         Route::get('/me/devices', [MeController::class, 'devices'])->name('api.v1.me.devices');
+
+        Route::get('/finance/dashboard', [FinanceController::class, 'dashboard'])
+            ->name('api.v1.finance.dashboard');
     });
 });
