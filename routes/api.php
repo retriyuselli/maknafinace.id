@@ -103,9 +103,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/finance/projects/{id}/invoice', [FinanceController::class, 'projectInvoice'])
             ->whereNumber('id')
             ->name('api.v1.finance.projects.invoice');
-        Route::get('/finance/products/{id}/preview', [FinanceController::class, 'productPreview'])
+        Route::get('/finance/products/{id}/pdf', [FinanceController::class, 'productPdf'])
             ->whereNumber('id')
-            ->name('api.v1.finance.products.preview');
+            ->name('api.v1.finance.products.pdf');
         Route::get('/finance/products/{id}', [FinanceController::class, 'productShow'])
             ->name('api.v1.finance.products.show');
         Route::get('/finance/vendors/{id}', [FinanceController::class, 'vendorShow'])

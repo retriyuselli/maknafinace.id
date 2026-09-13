@@ -188,21 +188,12 @@ class ProductDisplayController extends Controller
         abort(404, 'Invalid action specified.');
     }
 
-    public function mobilePreview(Product $product): \Illuminate\Http\Response
+    public function apiDownloadPdf(Product $product): \Symfony\Component\HttpFoundation\Response
     {
-        $viewData = array_merge(
-            $this->productDisplayData($product, forPdf: false),
-            ['action' => 'preview']
-        );
+        $pdf = $this->buildProductPdf($product);
+        $fileName = 'product-'.$product->slug.'-'.now()->format('Ymd').'.pdf';
 
-        return response(
-            view('products.details-preview', $viewData)->render(),
-            200,
-            [
-                'Content-Type' => 'text/html; charset=UTF-8',
-                'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
-            ]
-        );
+        return $pdf->download($fileName);
     }
 
     public function streamPreview(Product $product)

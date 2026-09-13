@@ -403,7 +403,7 @@ class FinanceController extends Controller
         ]);
     }
 
-    public function productPreview(int $id): \Symfony\Component\HttpFoundation\Response
+    public function productPdf(int $id): \Symfony\Component\HttpFoundation\Response
     {
         $product = \App\Models\Product::query()->find($id);
 
@@ -412,11 +412,11 @@ class FinanceController extends Controller
         }
 
         try {
-            return app(\App\Http\Controllers\ProductDisplayController::class)->mobilePreview($product);
+            return app(\App\Http\Controllers\ProductDisplayController::class)->apiDownloadPdf($product);
         } catch (\Throwable $e) {
             report($e);
 
-            return response()->json(['message' => 'Preview paket gagal dibuka.'], 500);
+            return response()->json(['message' => 'PDF paket gagal dibuat.'], 500);
         }
     }
 
