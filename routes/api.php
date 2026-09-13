@@ -32,7 +32,17 @@ Route::prefix('v1')->group(function () {
             ->name('api.v1.finance.dashboard');
         Route::get('/finance/projects', [FinanceController::class, 'projects'])
             ->name('api.v1.finance.projects');
+        Route::get('/finance/projects/{id}', [FinanceController::class, 'projectShow'])
+            ->whereNumber('id')
+            ->name('api.v1.finance.projects.show');
         Route::get('/finance/prospects', [FinanceController::class, 'prospects'])
             ->name('api.v1.finance.prospects');
+        Route::get('/finance/transactions', [FinanceController::class, 'transactions'])
+            ->name('api.v1.finance.transactions');
+        Route::get('/finance/reports/summary', [FinanceController::class, 'reportSummary'])
+            ->name('api.v1.finance.reports.summary');
+        Route::get('/finance/payments/{id}/proof', [FinanceController::class, 'paymentProof'])
+            ->whereNumber('id')
+            ->name('api.v1.finance.payments.proof');
     });
 });
