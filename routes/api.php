@@ -30,5 +30,9 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/finance/dashboard', [FinanceController::class, 'dashboard'])
             ->name('api.v1.finance.dashboard');
+        Route::get('/finance/projects', [FinanceController::class, 'projects'])
+            ->name('api.v1.finance.projects');
+        Route::get('/finance/prospects', [FinanceController::class, 'prospects'])
+            ->name('api.v1.finance.prospects');
     });
 });

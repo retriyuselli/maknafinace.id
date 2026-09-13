@@ -26,4 +26,34 @@ class FinanceController extends Controller
             'data' => $this->finance->dashboard($period['from'], $period['to']),
         ]);
     }
+
+    public function projects(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'status' => ['nullable', 'string', 'max:40'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        return response()->json(
+            $this->finance->projects(
+                $data['status'] ?? null,
+                (int) ($data['per_page'] ?? 20),
+            )
+        );
+    }
+
+    public function prospects(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'status' => ['nullable', 'string', 'max:40'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        return response()->json(
+            $this->finance->prospects(
+                $data['status'] ?? null,
+                (int) ($data['per_page'] ?? 20),
+            )
+        );
+    }
 }
