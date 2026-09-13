@@ -1092,16 +1092,65 @@ class MobileModuleService
                     ->values()
                     ->all();
             }
-            if ($key === 'products' && $model instanceof Product) {
-                try {
-                    $payload['product'] = app(FinanceSummaryService::class)->serializeProductDetail($model);
-                } catch (\Throwable $e) {
-                    report($e);
+        }
+
+        if ($key === 'products' && $model instanceof Product) {
+            try {
+                if ($detailed) {
+                    $serialized = app(FinanceSummaryService::class)->serializeProductDetail($model);
+                    $payload['product'] = $serialized;
+                    $this->applyProductTotals($payload, $serialized);
+                } else {
+                    $this->applyLiveProductAmount($payload, $model);
                 }
+            } catch (\Throwable $e) {
+                report($e);
             }
         }
 
         return $payload;
+    }
+
+    /**
+     * List paket: amount = Total Paket (final_publish), bukan kolom `price` / Subtotal.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function applyLiveProductAmount(array &$payload, Product $product): void
+    {
+        $pricing = ProductPricingCalculator::calculateForProduct($product);
+        $payload['amount'] = (int) ($pricing['final_publish'] ?? 0);
+    }
+
+    /**
+     * Header & field harga mengikuti Total Paket (final_publish), bukan kolom `price` mentah.
+     *
+     * @param  array<string, mixed>  $payload
+     * @param  array<string, mixed>  $serialized
+     */
+    private function applyProductTotals(array &$payload, array $serialized): void
+    {
+        $totalPublish = (int) ($serialized['pricing']['total_publish'] ?? $serialized['price'] ?? 0);
+        $totalVendor = (int) ($serialized['pricing']['total_vendor'] ?? $serialized['vendor_price'] ?? 0);
+        $payload['amount'] = $totalPublish;
+
+        $payload['fields'] = array_map(function (array $field) use ($totalPublish, $totalVendor) {
+            $label = strtolower(trim((string) ($field['label'] ?? '')));
+            if ($label === 'harga') {
+                return [
+                    'label' => 'Total Paket',
+                    'value' => $this->displayValue($totalPublish, 'money'),
+                ];
+            }
+            if ($label === 'harga vendor') {
+                return [
+                    'label' => 'Total Vendor',
+                    'value' => $this->displayValue($totalVendor, 'money'),
+                ];
+            }
+
+            return $field;
+        }, $payload['fields'] ?? []);
     }
 
     /**
@@ -1529,7 +1578,12 @@ class MobileModuleService
                 'amount_attr' => 'price',
                 'status_attr' => 'is_active',
                 'search' => ['name', 'slug'],
-                'with' => ['category:id,name'],
+                'with' => [
+                    'category:id,name',
+                    'items',
+                    'pengurangans',
+                    'penambahanHarga',
+                ],
                 'detail_with' => [
                     'items.vendor.category:id,name',
                     'pengurangans',
