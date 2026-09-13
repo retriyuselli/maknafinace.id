@@ -4,7 +4,7 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('home') }}" class="flex items-center space-x-2">
-                        <span class="text-xl font-extrabold tracking-tight" style="font-family:'Poppins',sans-serif;color:#0b1f3a;">wofins</span>
+                        <span class="text-2xl font-bold tracking-wide" style="font-family:'Poppins',sans-serif;color:#0b1f3a;">WOFINS</span>
                     </a>
                 </div>
 
