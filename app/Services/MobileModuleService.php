@@ -81,9 +81,10 @@ class MobileModuleService
     }
 
     /**
+     * @param  array<string, mixed>  $filters
      * @return array{data: list<array<string, mixed>>, meta: array<string, mixed>}
      */
-    public function paginate(?User $user, string $key, ?string $search, int $perPage): array
+    public function paginate(?User $user, string $key, ?string $search, int $perPage, array $filters = []): array
     {
         $def = $this->definition($key);
         $this->assertAllowed($user, $def);
@@ -95,11 +96,34 @@ class MobileModuleService
             $columns = $def['search'] ?? [$def['title_attr'] ?? 'name'];
             $query->where(function (Builder $q) use ($columns, $search, $def) {
                 $table = (new $def['model'])->getTable();
-                foreach ($columns as $index => $column) {
-                    $method = $index === 0 ? 'where' : 'orWhere';
-                    $q->{$method}($table.'.'.$column, 'like', '%'.$search.'%');
+                $first = true;
+                foreach ($columns as $column) {
+                    if (str_contains((string) $column, '.')) {
+                        [$relation, $relColumn] = explode('.', (string) $column, 2);
+                        $method = $first ? 'whereHas' : 'orWhereHas';
+                        $q->{$method}($relation, function (Builder $relationQuery) use ($relColumn, $search) {
+                            $relationQuery->where($relColumn, 'like', '%'.$search.'%');
+                        });
+                    } else {
+                        $method = $first ? 'where' : 'orWhere';
+                        $q->{$method}($table.'.'.$column, 'like', '%'.$search.'%');
+                    }
+                    $first = false;
                 }
             });
+        }
+
+        foreach ($def['list_filters'] ?? [] as $filterDef) {
+            $filterKey = (string) ($filterDef['key'] ?? '');
+            if ($filterKey === '' || ! array_key_exists($filterKey, $filters)) {
+                continue;
+            }
+            $raw = $filters[$filterKey];
+            if ($raw === null || $raw === '') {
+                continue;
+            }
+            $column = (string) ($filterDef['column'] ?? $filterKey);
+            $query->where($column, (int) $raw);
         }
 
         if (! empty($def['with'])) {
@@ -110,20 +134,54 @@ class MobileModuleService
             ->latest('id')
             ->paginate(min(max($perPage, 1), 50));
 
+        $meta = [
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'title' => $def['title'],
+            'can_create' => $this->canCreate($def),
+            'filters' => $this->listFilterPayload($def, $filters),
+        ];
+
         return [
             'data' => collect($paginator->items())
                 ->map(fn (Model $model) => $this->mapRecord($key, $def, $model, false))
                 ->values()
                 ->all(),
-            'meta' => [
-                'current_page' => $paginator->currentPage(),
-                'last_page' => $paginator->lastPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-                'title' => $def['title'],
-                'can_create' => $this->canCreate($def),
-            ],
+            'meta' => $meta,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $def
+     * @param  array<string, mixed>  $selected
+     * @return list<array<string, mixed>>
+     */
+    private function listFilterPayload(array $def, array $selected): array
+    {
+        $rows = [];
+        foreach ($def['list_filters'] ?? [] as $filterDef) {
+            $key = (string) ($filterDef['key'] ?? '');
+            if ($key === '') {
+                continue;
+            }
+            $optionsSource = $filterDef['options'] ?? [];
+            $options = is_string($optionsSource)
+                ? $this->options($optionsSource)
+                : (is_array($optionsSource) ? $this->options($optionsSource) : []);
+
+            $rows[] = [
+                'key' => $key,
+                'label' => (string) ($filterDef['label'] ?? $key),
+                'value' => isset($selected[$key]) && $selected[$key] !== '' && $selected[$key] !== null
+                    ? (string) $selected[$key]
+                    : null,
+                'options' => $options,
+            ];
+        }
+
+        return $rows;
     }
 
     /**
@@ -1626,6 +1684,26 @@ class MobileModuleService
 
         return match ($source) {
             'payment_methods' => $map(PaymentMethod::query(), 'name'),
+            'rekening_koran' => PaymentMethod::query()
+                ->whereNotNull('no_rekening')
+                ->where('no_rekening', '!=', '')
+                ->orderBy('bank_name')
+                ->orderBy('no_rekening')
+                ->get(['id', 'name', 'bank_name', 'no_rekening'])
+                ->map(function (PaymentMethod $row) {
+                    $label = trim(implode(' · ', array_filter([
+                        (string) ($row->bank_name ?? ''),
+                        (string) ($row->no_rekening ?? ''),
+                        (string) ($row->name ?? ''),
+                    ], fn (string $part) => $part !== '')));
+
+                    return [
+                        'value' => (string) $row->id,
+                        'label' => $label !== '' ? $label : ('Rekening #'.$row->id),
+                    ];
+                })
+                ->values()
+                ->all(),
             'vendors' => $map(Vendor::query(), 'name'),
             'orders' => Order::query()->with('prospect:id,name_event')->latest('id')->limit(100)->get()->map(fn (Order $order) => [
                 'value' => (string) $order->id,
@@ -2263,9 +2341,17 @@ class MobileModuleService
                 'amount_attr' => 'closing_balance',
                 'status_attr' => 'reconciliation_status',
                 'date_attr' => 'period_start',
-                'search' => ['title', 'original_filename'],
+                'search' => ['title', 'original_filename', 'paymentMethod.name', 'paymentMethod.bank_name', 'paymentMethod.no_rekening'],
                 'with' => ['paymentMethod:id,name,bank_name,no_rekening'],
                 'detail_with' => ['transactions'],
+                'list_filters' => [
+                    [
+                        'key' => 'payment_method_id',
+                        'column' => 'payment_method_id',
+                        'label' => 'Daftar Rekening Koran',
+                        'options' => 'rekening_koran',
+                    ],
+                ],
                 'fields' => [
                     ['name' => 'payment_method_id', 'label' => 'Rekening', 'type' => 'select', 'required' => true, 'options' => 'payment_methods', 'cast' => 'int'],
                     ['name' => 'title', 'label' => 'Judul', 'type' => 'text', 'required' => true],

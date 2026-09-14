@@ -29,6 +29,7 @@ class MobileModuleController extends Controller
         $data = $request->validate([
             'q' => ['nullable', 'string', 'max:80'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'payment_method_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         return response()->json($this->modules->paginate(
@@ -36,6 +37,9 @@ class MobileModuleController extends Controller
             $key,
             $data['q'] ?? null,
             (int) ($data['per_page'] ?? 20),
+            [
+                'payment_method_id' => $data['payment_method_id'] ?? null,
+            ],
         ));
     }
 
