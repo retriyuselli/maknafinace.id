@@ -16,18 +16,17 @@ class ProductNotesFormatter
 
         $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-        // Prefer extracting list items into plain dashed lines
-        if (preg_match_all('/<li\b[^>]*>(.*?)<\/li>/is', $html, $matches)) {
-            $lines = [];
+        $rows = [];
 
-            // Keep any intro paragraph(s) before the list
+        // Prefer extracting list items into dashed rows with hanging indent
+        if (preg_match_all('/<li\b[^>]*>(.*?)<\/li>/is', $html, $matches)) {
             $beforeList = preg_split('/<(?:ol|ul)\b/i', $html, 2)[0] ?? '';
             $beforeList = trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $beforeList)));
             if ($beforeList !== '') {
                 foreach (preg_split("/\n+/", $beforeList) as $intro) {
                     $intro = trim($intro);
                     if ($intro !== '') {
-                        $lines[] = e($intro);
+                        $rows[] = '<div>'.e($intro).'</div>';
                     }
                 }
             }
@@ -37,19 +36,51 @@ class ProductNotesFormatter
                 if ($text === '') {
                     continue;
                 }
-                $text = ltrim($text, " \t.-•●·");
-                $lines[] = '- '.e($text);
+                $rows[] = self::pdfDashRow($text);
             }
 
-            return implode('<br>', $lines);
+            return implode('', $rows);
         }
 
         // No list: keep simple paragraphs as lines
-        $html = preg_replace('/<\/p>\s*<p[^>]*>/i', "<br>", $html) ?? $html;
-        $html = strip_tags($html, '<br><b><strong><em>');
+        $html = preg_replace('/<p[^>]*>\s*(?:&nbsp;|\s|<br\s*\/?>)*<\/p>/i', '', $html) ?? $html;
+        $html = preg_replace('/<\/p>\s*<p[^>]*>/i', '<br>', $html) ?? $html;
+        $html = strip_tags($html, '<br>');
         $html = str_replace(['•', '●', '·'], '-', $html);
+        $html = preg_replace('/(<br\s*\/?>\s*){2,}/i', '<br>', $html) ?? $html;
 
-        return trim($html);
+        foreach (preg_split('/<br\s*\/?>/i', $html) as $line) {
+            $line = trim(html_entity_decode(strip_tags($line), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            if ($line === '') {
+                continue;
+            }
+
+            if (preg_match('/^[-*]\s*(.+)$/u', $line, $match)) {
+                $rows[] = self::pdfDashRow($match[1]);
+                continue;
+            }
+
+            $rows[] = '<div>'.e($line).'</div>';
+        }
+
+        return implode('', $rows);
+    }
+
+    /**
+     * Dash stays on the first line; wrapped text aligns with the sentence, not the dash.
+     */
+    private static function pdfDashRow(string $text): string
+    {
+        $text = ltrim(trim($text), " \t.-•●·");
+        if ($text === '') {
+            return '';
+        }
+
+        return '<table class="notes-line" width="100%" style="width:100%;border-collapse:collapse;margin:0;padding:0;border:none;">'
+            .'<tr>'
+            .'<td width="12" style="width:12px;border:none;padding:0 6px 1px 0;margin:0;vertical-align:top;line-height:1.3;white-space:nowrap;">-</td>'
+            .'<td style="border:none;padding:0 0 1px 0;margin:0;vertical-align:top;line-height:1.3;">'.e($text).'</td>'
+            .'</tr></table>';
     }
 
     /**

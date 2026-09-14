@@ -198,6 +198,29 @@
             line-height: 1.35;
         }
 
+        .description-html-content table.notes-line {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            border: none;
+        }
+
+        .description-html-content table.notes-line td {
+            border: none !important;
+            vertical-align: top;
+            line-height: 1.35;
+        }
+
+        .description-html-content table.notes-line td:first-child {
+            width: 12px;
+            padding: 0 6px 1px 0 !important;
+            white-space: nowrap;
+        }
+
+        .description-html-content table.notes-line td:last-child {
+            padding: 0 0 1px 0 !important;
+        }
+
         .total-table td {
             text-align: right;
         }

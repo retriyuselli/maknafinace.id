@@ -375,38 +375,46 @@
             color: rgba(40, 167, 69, 0.15);
         }
 
-        .notes-content ul {
-            list-style: none;
-            padding-left: 0px;
+        .notes-content {
+            margin: 2px 0 0 0;
+            padding: 0;
+            line-height: 1.3;
+        }
+
+        .notes-content p,
+        .notes-content ul,
+        .notes-content ol,
+        .notes-content li,
+        .notes-content div {
             margin: 0;
+            padding: 0;
+            line-height: 1.3;
         }
 
-        .notes-content li {
-            list-style: none;
-            margin-bottom: 0px;
-            padding-left: 14px;
-            margin-left: 0px;
-            position: relative;
+        table.notes-line,
+        .notes-content table.notes-line {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            padding: 0;
+            border: none;
         }
 
-        .notes-content li:before {
-            content: '-';
-            left: 0;
-            position: absolute;
-            top: 0;
+        table.bordered td table.notes-line td,
+        .notes-line td {
+            border: none !important;
+            vertical-align: top;
+            line-height: 1.3;
         }
 
-        /* Menghilangkan margin default pada elemen p pertama agar sejajar dengan bullet */
-        .notes-content p:first-child {
-            margin-top: 0px;
-            margin-bottom: 0px;
+        .notes-line td:first-child {
+            width: 12px;
+            padding: 0 6px 1px 0 !important;
+            white-space: nowrap;
         }
 
-        /* Memberikan jarak antar paragraf jika ada lebih dari satu */
-        .notes-content p {
-            margin-bottom: 5px;
-            margin-left: 0;
-            padding-left: 0;
+        .notes-line td:last-child {
+            padding: 0 0 1px 0 !important;
         }
 
         .footer ul {
@@ -461,7 +469,7 @@
     @if ($order->is_paid)
         <div class="watermark paid">Paid</div>
     @else
-        <div class="watermark pending">Partial Paid</div>
+        <div class="watermark pending">PARTIAL</div>
     @endif
 
     <!-- Header -->
@@ -655,9 +663,14 @@
                             <td>
                                 {{ $itemPenambahan->vendor->name ?? 'N/A' }}
                                 @if ($itemPenambahan->description)
-                                    <div class="notes-content" style="font-size: 12px; margin-left: 15px; color: #000000;">
-                                        {!! \App\Support\SafeHtml::fromRichText($itemPenambahan->description) !!}
-                                    </div>
+                                    @php
+                                        $penambahanNotes = \App\Support\ProductNotesFormatter::forPdf($itemPenambahan->description);
+                                    @endphp
+                                    @if ($penambahanNotes !== '')
+                                        <div class="notes-content" style="font-size: 12px; margin-left: 12px; color: #000000;">
+                                            {!! \App\Support\SafeHtml::fromRichText($penambahanNotes) !!}
+                                        </div>
+                                    @endif
                                 @endif
                             </td>
                             <td style="text-align: right; color: #28a745; font-weight: bold;">+ Rp
@@ -690,9 +703,14 @@
                             <td>
                                 {{ $itemPengurangan->description ?? 'N/A' }}
                                 @if ($itemPengurangan->notes)
-                                    <div class="notes-content" style="font-size: 12px; margin-left: 15px; color: #030303;">
-                                        {!! \App\Support\SafeHtml::fromRichText($itemPengurangan->notes) !!}
-                                    </div>
+                                    @php
+                                        $penguranganNotes = \App\Support\ProductNotesFormatter::forPdf($itemPengurangan->notes);
+                                    @endphp
+                                    @if ($penguranganNotes !== '')
+                                        <div class="notes-content" style="font-size: 12px; margin-left: 12px; color: #030303;">
+                                            {!! \App\Support\SafeHtml::fromRichText($penguranganNotes) !!}
+                                        </div>
+                                    @endif
                                 @endif
                             </td>
                             <td style="text-align: right; color: #dc3545; font-weight: bold;">- Rp

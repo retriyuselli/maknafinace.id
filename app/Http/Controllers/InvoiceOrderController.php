@@ -70,7 +70,7 @@ class InvoiceOrderController extends Controller
     }
 
     /**
-     * Generate and download PDF invoice for the given order.
+     * Stream PDF invoice in the browser (inline), instead of forcing a download.
      *
      * @return Response
      */
@@ -78,7 +78,7 @@ class InvoiceOrderController extends Controller
     {
         Gate::authorize('view', $order);
 
-        return $this->pdfResponse($order);
+        return $this->pdfResponse($order, false);
     }
 
     /**
