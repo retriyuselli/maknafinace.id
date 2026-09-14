@@ -1427,7 +1427,10 @@ class MobileModuleService
             'account_managers' => $this->accountManagerOptions(),
             'employees' => $map(Employee::query(), 'name'),
             'users' => User::query()
-                ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
+                ->when(
+                    $companyId && Schema::hasColumn('users', 'company_id'),
+                    fn ($q) => $q->where('company_id', $companyId)
+                )
                 ->orderBy('name')
                 ->get(['id', 'name'])
                 ->map(fn (User $row) => ['value' => (string) $row->id, 'label' => $row->name])
@@ -1443,7 +1446,10 @@ class MobileModuleService
                 'label' => trim($row->nomor_piutang.' · '.$row->nama_debitur),
             ])->values()->all(),
             'document_categories' => DocumentCategory::query()
-                ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
+                ->when(
+                    $companyId && Schema::hasColumn((new DocumentCategory)->getTable(), 'company_id'),
+                    fn ($q) => $q->where('company_id', $companyId)
+                )
                 ->orderBy('name')
                 ->get(['id', 'name'])
                 ->map(fn ($row) => ['value' => (string) $row->id, 'label' => (string) $row->name])
