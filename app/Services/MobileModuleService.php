@@ -1415,11 +1415,134 @@ class MobileModuleService
             ['label' => 'Catatan', 'value' => $this->plainText($model->description)],
         ];
 
+        $payload['children_title'] = 'Mutasi rekening';
+        $payload['reconciliation'] = $this->serializeBankStatementReconciliation($model);
+
+        $matchPct = data_get($payload, 'reconciliation.statistics.match_percentage');
+        if ($matchPct !== null) {
+            $fields[] = [
+                'label' => 'Persentase cocok',
+                'value' => rtrim(rtrim(number_format((float) $matchPct, 1, ',', ''), '0'), ',').'%',
+            ];
+        }
+
         $payload['fields'] = array_values(array_filter(
             $fields,
             fn (array $row) => filled($row['value'] ?? null)
         ));
-        $payload['children_title'] = 'Mutasi rekening';
+    }
+
+    /**
+     * Payload perbandingan App ↔ Bank (sama sumber data halaman Filament ViewReconciliation).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function serializeBankStatementReconciliation(BankStatement $model): ?array
+    {
+        if (! $model->payment_method_id || ! $model->period_start || ! $model->period_end) {
+            return null;
+        }
+
+        try {
+            $results = app(ReconciliationService::class)->getStoredMatches(
+                (int) $model->payment_method_id,
+                $model->period_start->format('Y-m-d'),
+                $model->period_end->format('Y-m-d'),
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
+
+        $matched = collect($results['matched'] ?? [])->values();
+        $unmatchedApp = collect($results['unmatched_app'] ?? [])->values();
+        $unmatchedBank = collect($results['unmatched_bank'] ?? [])->values();
+        $stats = $results['statistics'] ?? [];
+        $limit = 50;
+
+        return [
+            'statistics' => [
+                'total_app_transactions' => (int) ($stats['total_app_transactions'] ?? 0),
+                'total_bank_items' => (int) ($stats['total_bank_items'] ?? 0),
+                'matched_count' => (int) ($stats['matched_count'] ?? 0),
+                'unmatched_app_count' => (int) ($stats['unmatched_app_count'] ?? 0),
+                'unmatched_bank_count' => (int) ($stats['unmatched_bank_count'] ?? 0),
+                'match_percentage' => (float) ($stats['match_percentage'] ?? 0),
+                'total_app_debit' => (int) ($stats['total_app_debit'] ?? 0),
+                'total_app_credit' => (int) ($stats['total_app_credit'] ?? 0),
+                'total_bank_debit' => (int) ($stats['total_bank_debit'] ?? 0),
+                'total_bank_credit' => (int) ($stats['total_bank_credit'] ?? 0),
+            ],
+            'matched' => $matched->take($limit)->map(function ($match) {
+                $match = (array) $match;
+
+                return [
+                    'confidence' => (int) ($match['confidence'] ?? 0),
+                    'match_type' => (string) ($match['match_type'] ?? 'stored'),
+                    'app' => $this->serializeReconciliationAppTx($match['app_transaction'] ?? null),
+                    'bank' => $this->serializeReconciliationBankItem($match['bank_item'] ?? null),
+                ];
+            })->values()->all(),
+            'unmatched_app' => $unmatchedApp->take($limit)->map(
+                fn ($tx) => $this->serializeReconciliationAppTx($tx)
+            )->values()->all(),
+            'unmatched_bank' => $unmatchedBank->take($limit)->map(
+                fn ($item) => $this->serializeReconciliationBankItem($item)
+            )->values()->all(),
+            'truncated' => [
+                'matched' => $matched->count() > $limit,
+                'unmatched_app' => $unmatchedApp->count() > $limit,
+                'unmatched_bank' => $unmatchedBank->count() > $limit,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function serializeReconciliationAppTx(mixed $tx): ?array
+    {
+        if ($tx === null) {
+            return null;
+        }
+
+        $debit = (int) ($tx->debit_amount ?? 0);
+        $credit = (int) ($tx->credit_amount ?? 0);
+
+        return [
+            'id' => (int) ($tx->source_id ?? 0),
+            'date' => optional($tx->transaction_date ?? null)?->format('Y-m-d'),
+            'description' => $this->stringValue($tx->description ?? '') ?: 'Transaksi aplikasi',
+            'source' => $this->stringValue($tx->source_table ?? $tx->source_type ?? '') ?: null,
+            'debit' => $debit,
+            'credit' => $credit,
+            'amount' => $debit > 0 ? $debit : $credit,
+            'is_debit' => $debit > 0,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function serializeReconciliationBankItem(mixed $item): ?array
+    {
+        if ($item === null) {
+            return null;
+        }
+
+        $debit = (int) ($item->debit ?? 0);
+        $credit = (int) ($item->credit ?? 0);
+
+        return [
+            'id' => (int) ($item->id ?? 0),
+            'date' => optional($item->date ?? null)?->format('Y-m-d'),
+            'description' => $this->stringValue($item->description ?? '') ?: 'Mutasi bank',
+            'debit' => $debit,
+            'credit' => $credit,
+            'amount' => $debit > 0 ? $debit : $credit,
+            'is_debit' => $debit > 0,
+        ];
     }
 
     /**
