@@ -44,6 +44,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -1181,7 +1182,35 @@ class MobileModuleService
             }
         }
 
+        if ($imageUrl = $this->imageUrl($def, $model)) {
+            $payload['image_url'] = $imageUrl;
+        }
+
         return $payload;
+    }
+
+    /**
+     * Absolute public URL for list/detail thumbnails (e.g. crew foto).
+     *
+     * @param  array<string, mixed>  $def
+     */
+    private function imageUrl(array $def, Model $model): ?string
+    {
+        $attr = $def['image_attr'] ?? null;
+        if (! is_string($attr) || $attr === '') {
+            return null;
+        }
+
+        $path = $this->stringValue($this->value($model, $attr));
+        if ($path === '') {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        return url(Storage::disk('public')->url(ltrim($path, '/')));
     }
 
     /**
@@ -2592,6 +2621,7 @@ class MobileModuleService
                 'group_label' => 'Business',
                 'title_attr' => 'nama_lengkap',
                 'subtitle_attr' => 'pekerjaan',
+                'image_attr' => 'foto',
                 'search' => ['nama_lengkap', 'email', 'pekerjaan'],
                 'fields' => [
                     ['name' => 'nama_lengkap', 'label' => 'Nama lengkap', 'type' => 'text', 'required' => true],
