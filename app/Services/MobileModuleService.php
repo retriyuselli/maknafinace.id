@@ -2090,12 +2090,14 @@ class MobileModuleService
                 'icon' => 'banknote.fill',
                 'group' => 'profesional',
                 'group_label' => 'Professional',
-                'title_attr' => 'employee.name',
+                // Internal Makna: payroll terikat User (bukan master Employee seperti WOFINS SaaS).
+                'title_attr' => 'user.name',
+                'subtitle_attr' => 'period_name',
                 'amount_attr' => 'monthly_salary',
                 'search' => ['notes'],
-                'with' => ['employee:id,name'],
+                'with' => ['user:id,name'],
                 'fields' => [
-                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select', 'required' => true, 'options' => 'employees', 'cast' => 'int'],
+                    ['name' => 'user_id', 'label' => 'Karyawan', 'type' => 'select', 'required' => true, 'options' => 'users', 'cast' => 'int'],
                     ['name' => 'period_month', 'label' => 'Bulan', 'type' => 'number', 'required' => true, 'cast' => 'int'],
                     ['name' => 'period_year', 'label' => 'Tahun', 'type' => 'number', 'required' => true, 'cast' => 'int'],
                     ['name' => 'gaji_pokok', 'label' => 'Gaji pokok', 'type' => 'number', 'required' => true, 'cast' => 'int'],
@@ -2105,7 +2107,7 @@ class MobileModuleService
                     ['name' => 'notes', 'label' => 'Catatan', 'type' => 'textarea'],
                 ],
                 'detail' => [
-                    ['label' => 'Karyawan', 'attr' => 'employee.name'],
+                    ['label' => 'Karyawan', 'attr' => 'user.name'],
                     ['label' => 'Bulan', 'attr' => 'period_month'],
                     ['label' => 'Tahun', 'attr' => 'period_year'],
                     ['label' => 'Gaji bulanan', 'attr' => 'monthly_salary', 'format' => 'money'],
