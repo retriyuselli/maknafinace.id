@@ -245,6 +245,12 @@ class MobileModuleService
         $def = $this->definition($key);
         $this->assertAllowed($user, $def);
 
+        if (($def['can_update'] ?? true) === false) {
+            throw new HttpResponseException(response()->json([
+                'message' => 'Perubahan data modul ini hanya tersedia di admin desktop.',
+            ], 403));
+        }
+
         /** @var Model|null $model */
         $model = $this->scopedQuery($def)->find($id);
         if (! $model) {
@@ -1063,6 +1069,12 @@ class MobileModuleService
         $amountAttr = $def['amount_attr'] ?? null;
 
         $title = $this->stringValue($this->value($model, $titleAttr));
+
+        if ($key === 'bank_statements' && $model instanceof BankStatement) {
+            $rawRecon = $this->stringValue($model->reconciliation_status);
+            $status = BankStatement::getReconciliationStatusOptions()[$rawRecon]
+                ?? ($rawRecon !== '' ? $rawRecon : null);
+        }
 
         $payload = [
             'id' => (int) $model->getKey(),
@@ -2243,10 +2255,13 @@ class MobileModuleService
                 'icon' => 'arrow.left.arrow.right',
                 'group' => 'profesional',
                 'group_label' => 'Professional',
+                // Create/edit (upload RK + file rekonsiliasi) hanya lewat admin desktop.
+                'can_create' => false,
+                'can_update' => false,
                 'title_attr' => 'title',
                 'subtitle_attr' => 'paymentMethod.name',
                 'amount_attr' => 'closing_balance',
-                'status_attr' => 'status',
+                'status_attr' => 'reconciliation_status',
                 'date_attr' => 'period_start',
                 'search' => ['title', 'original_filename'],
                 'with' => ['paymentMethod:id,name,bank_name,no_rekening'],
