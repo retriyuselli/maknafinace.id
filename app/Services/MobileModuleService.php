@@ -1092,6 +1092,9 @@ class MobileModuleService
                     ->values()
                     ->all();
             }
+            if ($key === 'bank_statements' && $model instanceof BankStatement) {
+                $this->applyBankStatementDetail($payload, $model);
+            }
         }
 
         if ($key === 'products' && $model instanceof Product) {
@@ -1301,15 +1304,31 @@ class MobileModuleService
                 })->values()->all()
                 : [],
             'bank_statements' => $model instanceof BankStatement
-                ? $model->transactions()->latest('transaction_date')->limit(50)->get()->map(function (BankTransaction $row) {
-                    $amount = (int) $row->credit_amount !== 0 ? (int) $row->credit_amount : (int) $row->debit_amount;
+                ? $model->transactions()->latest('transaction_date')->latest('id')->limit(100)->get()->map(function (BankTransaction $row) {
+                    $debit = (int) $row->debit_amount;
+                    $credit = (int) $row->credit_amount;
+                    $fields = [];
+                    if ($debit > 0) {
+                        $fields[] = ['label' => 'Debit', 'value' => $this->displayValue($debit, 'money')];
+                    }
+                    if ($credit > 0) {
+                        $fields[] = ['label' => 'Kredit', 'value' => $this->displayValue($credit, 'money')];
+                    }
+                    if ($ref = $this->stringValue($row->reference_number)) {
+                        $fields[] = ['label' => 'Referensi', 'value' => $ref];
+                    }
+                    if ($row->balance !== null && $row->balance !== '') {
+                        $fields[] = ['label' => 'Saldo', 'value' => $this->displayValue($row->balance, 'money')];
+                    }
 
                     return [
-                        'id' => $row->id,
-                        'title' => $row->description ?: ($row->reference_number ?: 'Transaksi bank'),
-                        'subtitle' => optional($row->transaction_date)?->toDateString(),
-                        'amount' => $amount,
+                        'id' => (int) $row->id,
+                        'title' => $this->stringValue($row->description)
+                            ?: ($this->stringValue($row->reference_number) ?: 'Transaksi bank'),
+                        'subtitle' => optional($row->transaction_date)?->format('d M Y'),
+                        'amount' => $credit > 0 ? $credit : $debit,
                         'status' => $row->is_matched ? 'matched' : 'unmatched',
+                        'fields' => $fields,
                     ];
                 })->values()->all()
                 : [],
@@ -1332,6 +1351,75 @@ class MobileModuleService
                 : [],
             default => [],
         };
+    }
+
+    /**
+     * Lengkapi payload detail rekonsiliasi (saldo, debit/kredit, rekening, label status).
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function applyBankStatementDetail(array &$payload, BankStatement $model): void
+    {
+        $model->loadMissing(['paymentMethod:id,name,bank_name,no_rekening']);
+
+        $pm = $model->paymentMethod;
+        $rekeningParts = array_values(array_filter([
+            $this->stringValue($pm?->bank_name),
+            $this->stringValue($pm?->no_rekening),
+            $this->stringValue($pm?->name),
+        ], fn (string $value) => $value !== ''));
+        $rekening = implode(' · ', $rekeningParts);
+
+        $customTitle = $this->stringValue($model->title);
+        if ($customTitle === '' && $rekening !== '') {
+            $start = optional($model->period_start)?->format('d M Y');
+            $end = optional($model->period_end)?->format('d M Y');
+            $period = ($start && $end) ? "{$start} – {$end}" : ($start ?: $end);
+            $payload['title'] = $period ? "{$rekening} · {$period}" : $rekening;
+        }
+
+        if ($rekening !== '') {
+            $payload['subtitle'] = $rekening;
+        }
+
+        $statusLabels = BankStatement::getStatusOptions();
+        $reconLabels = BankStatement::getReconciliationStatusOptions();
+        $sourceLabels = BankStatement::getSourceTypeOptions();
+
+        $fields = [
+            ['label' => 'Judul', 'value' => $customTitle !== '' ? $customTitle : null],
+            ['label' => 'Rekening', 'value' => $rekening !== '' ? $rekening : null],
+            ['label' => 'Cabang', 'value' => $this->stringValue($model->branch) ?: null],
+            ['label' => 'Mulai', 'value' => $this->displayValue($model->period_start, 'date')],
+            ['label' => 'Selesai', 'value' => $this->displayValue($model->period_end, 'date')],
+            ['label' => 'Saldo awal', 'value' => $this->displayValue($model->opening_balance ?? 0, 'money')],
+            ['label' => 'Saldo akhir', 'value' => $this->displayValue($model->closing_balance ?? 0, 'money')],
+            ['label' => 'Total debit', 'value' => $this->displayValue($model->tot_debit ?? 0, 'money')],
+            ['label' => 'Jumlah debit', 'value' => $model->no_of_debit !== null ? ((int) $model->no_of_debit).' transaksi' : null],
+            ['label' => 'Total kredit', 'value' => $this->displayValue($model->tot_credit ?? 0, 'money')],
+            ['label' => 'Jumlah kredit', 'value' => $model->no_of_credit !== null ? ((int) $model->no_of_credit).' transaksi' : null],
+            ['label' => 'Total mutasi', 'value' => $model->total_records !== null ? ((int) $model->total_records).' baris' : null],
+            [
+                'label' => 'Sumber',
+                'value' => $sourceLabels[(string) $model->source_type] ?? ($this->stringValue($model->source_type) ?: null),
+            ],
+            ['label' => 'File', 'value' => $this->stringValue($model->original_filename) ?: null],
+            [
+                'label' => 'Status',
+                'value' => $statusLabels[(string) $model->status] ?? ($this->stringValue($model->status) ?: null),
+            ],
+            [
+                'label' => 'Status rekonsiliasi',
+                'value' => $reconLabels[(string) $model->reconciliation_status] ?? ($this->stringValue($model->reconciliation_status) ?: null),
+            ],
+            ['label' => 'Catatan', 'value' => $this->plainText($model->description)],
+        ];
+
+        $payload['fields'] = array_values(array_filter(
+            $fields,
+            fn (array $row) => filled($row['value'] ?? null)
+        ));
+        $payload['children_title'] = 'Mutasi rekening';
     }
 
     /**
@@ -2038,7 +2126,7 @@ class MobileModuleService
                 'status_attr' => 'status',
                 'date_attr' => 'period_start',
                 'search' => ['title', 'original_filename'],
-                'with' => ['paymentMethod:id,name'],
+                'with' => ['paymentMethod:id,name,bank_name,no_rekening'],
                 'detail_with' => ['transactions'],
                 'fields' => [
                     ['name' => 'payment_method_id', 'label' => 'Rekening', 'type' => 'select', 'required' => true, 'options' => 'payment_methods', 'cast' => 'int'],
@@ -2052,10 +2140,15 @@ class MobileModuleService
                 'detail' => [
                     ['label' => 'Judul', 'attr' => 'title'],
                     ['label' => 'Rekening', 'attr' => 'paymentMethod.name'],
+                    ['label' => 'Cabang', 'attr' => 'branch'],
                     ['label' => 'Mulai', 'attr' => 'period_start', 'format' => 'date'],
                     ['label' => 'Selesai', 'attr' => 'period_end', 'format' => 'date'],
+                    ['label' => 'Saldo awal', 'attr' => 'opening_balance', 'format' => 'money'],
                     ['label' => 'Saldo akhir', 'attr' => 'closing_balance', 'format' => 'money'],
+                    ['label' => 'Total debit', 'attr' => 'tot_debit', 'format' => 'money'],
+                    ['label' => 'Total kredit', 'attr' => 'tot_credit', 'format' => 'money'],
                     ['label' => 'Status', 'attr' => 'status'],
+                    ['label' => 'Catatan', 'attr' => 'description'],
                 ],
             ],
             'employees' => [
