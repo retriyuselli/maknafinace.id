@@ -240,14 +240,6 @@ class FinanceSummaryService
                 'tone' => 'primary',
             ],
             [
-                'key' => 'customer_payments',
-                'title' => 'Total Pembayaran',
-                'value' => $this->formatOverviewMoney($customerPayments),
-                'value_raw' => $customerPayments,
-                'description' => 'Processing',
-                'tone' => 'success',
-            ],
-            [
                 'key' => 'customer_expenses',
                 'title' => 'Total Pengeluaran',
                 'value' => $this->formatOverviewMoney($customerExpenses),
