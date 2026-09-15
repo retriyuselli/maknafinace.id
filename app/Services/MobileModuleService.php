@@ -260,6 +260,20 @@ class MobileModuleService
                 ->all();
         }
 
+        if ($key === 'products' && $id === null) {
+            $payload['defaults'] = [
+                'stock' => '10',
+                'pax' => '1000',
+                'pax_akad' => '100',
+                'is_active' => '1',
+                'price' => '0',
+                'product_price' => '0',
+                'pengurangan' => '0',
+                'penambahan_publish' => '0',
+                'penambahan_vendor' => '0',
+            ];
+        }
+
         return $payload;
     }
 
@@ -652,8 +666,20 @@ class MobileModuleService
         }
         if (! $existing) {
             $data['created_by'] = $user?->id;
-            $data['is_active'] = $data['is_active'] ?? true;
+            $data['is_active'] = array_key_exists('is_active', $data)
+                ? (bool) $data['is_active']
+                : true;
+            $data['stock'] = $data['stock'] ?? 10;
+            $data['pax'] = $data['pax'] ?? 1000;
+            $data['pax_akad'] = $data['pax_akad'] ?? 100;
             $data['product_price'] = $data['product_price'] ?? ($data['price'] ?? 0);
+            $data['pengurangan'] = $data['pengurangan'] ?? 0;
+            $data['penambahan_publish'] = $data['penambahan_publish'] ?? 0;
+            $data['penambahan_vendor'] = $data['penambahan_vendor'] ?? 0;
+        } else {
+            if (array_key_exists('is_active', $data)) {
+                $data['is_active'] = (bool) $data['is_active'];
+            }
         }
 
         return $data;
@@ -1304,7 +1330,7 @@ class MobileModuleService
                 continue;
             }
 
-            if ($name === 'notes') {
+            if ($name === 'notes' || $name === 'free_pengurangan' || $name === 'description') {
                 $plain = $this->plainText((string) $raw);
                 if ($plain) {
                     $values[$name] = $plain;
@@ -1916,30 +1942,49 @@ class MobileModuleService
                 'search' => ['name', 'slug'],
                 'with' => [
                     'category:id,name',
+                    'parent:id,name',
                     'items',
                     'pengurangans',
                     'penambahanHarga',
                 ],
                 'detail_with' => [
+                    'category:id,name',
+                    'parent:id,name',
                     'items.vendor.category:id,name',
                     'pengurangans',
                     'penambahanHarga.vendor.category:id,name',
                 ],
                 'fields' => [
-                    ['name' => 'name', 'label' => 'Nama paket', 'type' => 'text', 'required' => true],
-                    ['name' => 'category_id', 'label' => 'Kategori', 'type' => 'select', 'options' => 'categories', 'cast' => 'int'],
-                    ['name' => 'price', 'label' => 'Harga jual', 'type' => 'number', 'required' => true, 'cast' => 'int'],
-                    ['name' => 'pax', 'label' => 'Pax', 'type' => 'number', 'cast' => 'int'],
-                    ['name' => 'description', 'label' => 'Deskripsi', 'type' => 'textarea'],
+                    ['name' => 'name', 'label' => 'Nama paket', 'type' => 'text', 'required' => true, 'section' => 'Informasi dasar', 'placeholder' => 'nama_lokasi_pax'],
+                    ['name' => 'category_id', 'label' => 'Kategori', 'type' => 'select', 'options' => 'categories', 'cast' => 'int', 'required' => true, 'section' => 'Informasi dasar'],
+                    ['name' => 'parent_id', 'label' => 'Paket induk', 'type' => 'select', 'options' => 'products', 'cast' => 'int', 'section' => 'Informasi dasar', 'helper' => 'Opsional jika paket ini adalah varian (child).'],
+                    ['name' => 'pax', 'label' => 'Resepsi (pax)', 'type' => 'number', 'cast' => 'int', 'required' => true, 'section' => 'Kapasitas', 'placeholder' => '1000'],
+                    ['name' => 'pax_akad', 'label' => 'Akad (pax)', 'type' => 'number', 'cast' => 'int', 'section' => 'Kapasitas', 'placeholder' => '100'],
+                    ['name' => 'stock', 'label' => 'Stok', 'type' => 'number', 'cast' => 'int', 'required' => true, 'section' => 'Kapasitas', 'helper' => 'Biasanya diisi 10.', 'placeholder' => '10'],
+                    ['name' => 'product_price', 'label' => 'Total harga publish', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga', 'helper' => 'Total fasilitas dasar (harga publish).'],
+                    ['name' => 'pengurangan', 'label' => 'Total pengurangan', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga'],
+                    ['name' => 'penambahan_publish', 'label' => 'Penambahan publish', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga'],
+                    ['name' => 'penambahan_vendor', 'label' => 'Penambahan vendor', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga'],
+                    ['name' => 'price', 'label' => 'Harga jual / Total paket', 'type' => 'number', 'required' => true, 'cast' => 'int', 'section' => 'Harga', 'helper' => 'Umumnya: publish − pengurangan + penambahan publish.'],
+                    ['name' => 'description', 'label' => 'Deskripsi', 'type' => 'textarea', 'section' => 'Detail'],
+                    ['name' => 'free_pengurangan', 'label' => 'Keterangan free / pengurangan', 'type' => 'textarea', 'section' => 'Detail', 'helper' => 'Catatan free atau keterangan pengurangan.'],
+                    ['name' => 'is_active', 'label' => 'Aktif', 'type' => 'toggle', 'section' => 'Status', 'helper' => 'Nonaktifkan untuk menyembunyikan paket.'],
                 ],
                 'detail' => [
                     ['label' => 'Nama', 'attr' => 'name'],
                     ['label' => 'Kategori', 'attr' => 'category.name'],
+                    ['label' => 'Paket induk', 'attr' => 'parent.name'],
                     ['label' => 'Harga', 'attr' => 'price', 'format' => 'money'],
-                    ['label' => 'Harga vendor', 'attr' => 'product_price', 'format' => 'money'],
-                    ['label' => 'Pax', 'attr' => 'pax'],
+                    ['label' => 'Total publish', 'attr' => 'product_price', 'format' => 'money'],
+                    ['label' => 'Pengurangan', 'attr' => 'pengurangan', 'format' => 'money'],
+                    ['label' => 'Penambahan publish', 'attr' => 'penambahan_publish', 'format' => 'money'],
+                    ['label' => 'Penambahan vendor', 'attr' => 'penambahan_vendor', 'format' => 'money'],
+                    ['label' => 'Resepsi (pax)', 'attr' => 'pax'],
                     ['label' => 'Akad (pax)', 'attr' => 'pax_akad'],
+                    ['label' => 'Stok', 'attr' => 'stock'],
+                    ['label' => 'Status', 'attr' => 'is_active'],
                     ['label' => 'Deskripsi', 'attr' => 'description'],
+                    ['label' => 'Free / pengurangan', 'attr' => 'free_pengurangan'],
                 ],
             ],
             'vendors' => [
