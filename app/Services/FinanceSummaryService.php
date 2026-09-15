@@ -172,6 +172,123 @@ class FinanceSummaryService
         ];
     }
 
+
+    /**
+     * Widget ringkasan Orders (sama seperti Filament OrderOverview).
+     *
+     * @return array{widgets: list<array{key: string, title: string, value: string, value_raw: int, description: string, tone: string}>}
+     */
+    public function orderOverviewStats(): array
+    {
+        $now = Carbon::now();
+        $monthLabel = $now->copy()->locale('id')->translatedFormat('F Y');
+        $processing = OrderStatus::Processing->value;
+
+        $orders = Order::query();
+        $monthly = (clone $orders)
+            ->whereMonth('closing_date', $now->month)
+            ->whereYear('closing_date', $now->year)
+            ->selectRaw('COUNT(*) as total_projects')
+            ->selectRaw('COALESCE(SUM(grand_total), 0) as monthly_revenue')
+            ->first();
+
+        $processingIds = (clone $orders)->where('status', $processing)->pluck('id');
+        $customerPayments = (int) DataPembayaran::query()->whereIn('order_id', $processingIds)->sum('nominal');
+        $customerExpenses = (int) Expense::query()->whereIn('order_id', $processingIds)->sum('amount');
+        $netReceived = $customerPayments - $customerExpenses;
+
+        $docsUploaded = (int) (clone $orders)->whereNotNull('doc_kontrak')->count();
+        $docsPending = (int) (clone $orders)->whereNull('doc_kontrak')->count();
+        $agreementUploaded = (int) (clone $orders)->whereNotNull('agreement_product')->count();
+        $agreementPending = (int) (clone $orders)->whereNull('agreement_product')->count();
+        $yearRevenue = (int) (clone $orders)->whereYear('closing_date', $now->year)->sum('grand_total');
+        $expenseOps = (int) ExpenseOps::query()->sum('amount');
+        $newProjects = (int) ($monthly->total_projects ?? 0);
+        $monthlyRevenue = (int) ($monthly->monthly_revenue ?? 0);
+
+        $widgets = [
+            [
+                'key' => 'customer_payments',
+                'title' => 'Total Pembayaran Pelanggan',
+                'value' => $this->formatOverviewMoney($customerPayments),
+                'value_raw' => $customerPayments,
+                'description' => 'Total pembayaran diterima',
+                'tone' => 'success',
+            ],
+            [
+                'key' => 'customer_expenses',
+                'title' => 'Total Pengeluaran Pelanggan',
+                'value' => $this->formatOverviewMoney($customerExpenses),
+                'value_raw' => $customerExpenses,
+                'description' => 'Total pengeluaran',
+                'tone' => 'danger',
+            ],
+            [
+                'key' => 'agreement_files',
+                'title' => 'File Persetujuan Produk',
+                'value' => (string) $agreementUploaded,
+                'value_raw' => $agreementUploaded,
+                'description' => 'belum upload: '.$agreementPending,
+                'tone' => 'primary',
+            ],
+            [
+                'key' => 'new_projects_month',
+                'title' => 'Proyek Baru Bulan Ini',
+                'value' => (string) $newProjects,
+                'value_raw' => $newProjects,
+                'description' => 'Proyek di '.$monthLabel,
+                'tone' => 'primary',
+            ],
+            [
+                'key' => 'monthly_revenue',
+                'title' => 'Pendapatan Bulanan',
+                'value' => $this->formatOverviewMoney($monthlyRevenue),
+                'value_raw' => $monthlyRevenue,
+                'description' => 'Pendapatan di '.$monthLabel,
+                'tone' => 'success',
+            ],
+            [
+                'key' => 'contract_docs',
+                'title' => 'Total Dokumen Kontrak',
+                'value' => (string) $docsUploaded,
+                'value_raw' => $docsUploaded,
+                'description' => $docsPending.' dokumen menunggu verifikasi',
+                'tone' => 'primary',
+            ],
+            [
+                'key' => 'total_revenue',
+                'title' => 'Total Pendapatan',
+                'value' => $this->formatOverviewMoney($yearRevenue),
+                'value_raw' => $yearRevenue,
+                'description' => 'Pendapatan keseluruhan',
+                'tone' => 'success',
+            ],
+            [
+                'key' => 'total_expenses',
+                'title' => 'Total Pengeluaran',
+                'value' => $this->formatOverviewMoney($expenseOps),
+                'value_raw' => $expenseOps,
+                'description' => 'Pengeluaran keseluruhan',
+                'tone' => 'danger',
+            ],
+            [
+                'key' => 'net_received_processing',
+                'title' => 'Total Uang Diterima (processing)',
+                'value' => $this->formatOverviewMoney($netReceived),
+                'value_raw' => $netReceived,
+                'description' => 'Untuk order dengan status processing',
+                'tone' => 'primary',
+            ],
+        ];
+
+        return ['widgets' => $widgets];
+    }
+
+    private function formatOverviewMoney(int $amount): string
+    {
+        return number_format($amount, 0, ',', '.');
+    }
+
     public function scopedProspectsQuery(): Builder
     {
         return Prospect::query()->with([

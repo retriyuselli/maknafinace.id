@@ -48,6 +48,13 @@ class FinanceController extends Controller
         );
     }
 
+    public function projectsOverview(): JsonResponse
+    {
+        return response()->json([
+            'data' => $this->finance->orderOverviewStats(),
+        ]);
+    }
+
     public function projectOptions(Request $request): JsonResponse
     {
         /** @var User $user */
