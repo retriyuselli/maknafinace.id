@@ -55,6 +55,17 @@ class FinanceController extends Controller
         ]);
     }
 
+    public function projectsClosing(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'month' => ['nullable', 'string', 'regex:/^\d{4}-\d{2}$/'],
+        ]);
+
+        return response()->json(
+            $this->finance->projectsByClosingMonth($data['month'] ?? null)
+        );
+    }
+
     public function projectOptions(Request $request): JsonResponse
     {
         /** @var User $user */

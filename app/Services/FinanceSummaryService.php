@@ -172,6 +172,65 @@ class FinanceSummaryService
         ];
     }
 
+    /**
+     * Daftar proyek closing di bulan tertentu (sama filter Filament ViewClosing).
+     *
+     * @return array{data: list<array<string, mixed>>, meta: array<string, int|string>}
+     */
+    public function projectsByClosingMonth(?string $month = null): array
+    {
+        $target = $this->resolveClosingMonth($month);
+        $monthKey = $target->format('Y-m');
+        $monthLabel = $target->copy()->locale('id')->translatedFormat('F Y');
+
+        $orders = Order::query()
+            ->with([
+                'prospect:id,name_event,name_cpp,name_cpw,venue,phone,address,date_lamaran,date_akad,date_resepsi',
+                'user:id,name',
+                'dataPembayaran:id,order_id,nominal,tgl_bayar,keterangan,payment_method_id',
+                'dataPengeluaran:id,order_id,amount,date_expense,note,vendor_id,payment_stage',
+                'expenses:id,order_id,amount,date_expense,note,vendor_id,payment_stage',
+            ])
+            ->whereNotNull('closing_date')
+            ->whereMonth('closing_date', $target->month)
+            ->whereYear('closing_date', $target->year)
+            ->orderByDesc('closing_date')
+            ->orderByDesc('id')
+            ->get();
+
+        $data = $orders->map(fn (Order $order) => $this->projectSummary($order))->values()->all();
+
+        $metaTotals = [
+            'total_grand_total' => 0,
+            'total_payments' => 0,
+            'total_expenses' => 0,
+            'total_net_cash_flow' => 0,
+        ];
+        foreach ($data as $row) {
+            $metaTotals['total_grand_total'] += (int) ($row['grand_total'] ?? 0);
+            $metaTotals['total_payments'] += (int) ($row['paid_amount'] ?? 0);
+            $metaTotals['total_expenses'] += (int) ($row['expenses_total'] ?? 0);
+            $metaTotals['total_net_cash_flow'] += (int) ($row['net_cash_flow'] ?? 0);
+        }
+
+        return [
+            'data' => $data,
+            'meta' => array_merge([
+                'month' => $monthKey,
+                'month_label' => $monthLabel,
+                'total' => count($data),
+            ], $metaTotals),
+        ];
+    }
+
+    private function resolveClosingMonth(?string $month): Carbon
+    {
+        if (is_string($month) && preg_match('/^\d{4}-\d{2}$/', $month)) {
+            return Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        }
+
+        return Carbon::now()->startOfMonth();
+    }
 
     /**
      * Widget ringkasan Orders (sama seperti Filament OrderOverview).
