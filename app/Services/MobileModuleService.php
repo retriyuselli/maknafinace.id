@@ -1488,6 +1488,10 @@ class MobileModuleService
                 ?? ($rawRecon !== '' ? $rawRecon : null);
         }
 
+        if ($key === 'vendors' && $model instanceof Vendor) {
+            $status = $this->stringValue($model->status) ?: null;
+        }
+
         $payload = [
             'id' => (int) $model->getKey(),
             'title' => $title !== '' ? $title : ($def['title'].' #'.$model->getKey()),
@@ -1678,7 +1682,21 @@ class MobileModuleService
                 continue;
             }
 
-            $values[$name] = (string) $raw;
+            if ($raw instanceof \BackedEnum) {
+                $values[$name] = (string) $raw->value;
+
+                continue;
+            }
+
+            if ($raw instanceof \UnitEnum) {
+                $values[$name] = $raw->name;
+
+                continue;
+            }
+
+            if (is_scalar($raw)) {
+                $values[$name] = (string) $raw;
+            }
         }
 
         return $values;
@@ -1853,16 +1871,16 @@ class MobileModuleService
             ['label' => 'Total mutasi', 'value' => $model->total_records !== null ? ((int) $model->total_records).' baris' : null],
             [
                 'label' => 'Sumber',
-                'value' => $sourceLabels[(string) $model->source_type] ?? ($this->stringValue($model->source_type) ?: null),
+                'value' => $sourceLabels[$this->stringValue($model->source_type)] ?? ($this->stringValue($model->source_type) ?: null),
             ],
             ['label' => 'File', 'value' => $this->stringValue($model->original_filename) ?: null],
             [
                 'label' => 'Status',
-                'value' => $statusLabels[(string) $model->status] ?? ($this->stringValue($model->status) ?: null),
+                'value' => $statusLabels[$this->stringValue($model->status)] ?? ($this->stringValue($model->status) ?: null),
             ],
             [
                 'label' => 'Status rekonsiliasi',
-                'value' => $reconLabels[(string) $model->reconciliation_status] ?? ($this->stringValue($model->reconciliation_status) ?: null),
+                'value' => $reconLabels[$this->stringValue($model->reconciliation_status)] ?? ($this->stringValue($model->reconciliation_status) ?: null),
             ],
             ['label' => 'Catatan', 'value' => $this->plainText($model->description)],
         ];
@@ -2087,6 +2105,21 @@ class MobileModuleService
                 ->values()
                 ->all(),
             'vendors' => $map(Vendor::query(), 'name'),
+            'parent_vendors' => Vendor::query()
+                ->whereNull('parent_id')
+                ->whereIn('status', [
+                    StatusVendor::VENDOR->value,
+                    StatusVendor::MASTER->value,
+                ])
+                ->when($companyId && Schema::hasColumn((new Vendor)->getTable(), 'company_id'), fn ($q) => $q->where('company_id', $companyId))
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn (Vendor $row) => [
+                    'value' => (string) $row->id,
+                    'label' => (string) $row->name,
+                ])
+                ->values()
+                ->all(),
             'orders' => Order::query()->with('prospect:id,name_event')->latest('id')->limit(100)->get()->map(fn (Order $order) => [
                 'value' => (string) $order->id,
                 'label' => trim(($order->no_kontrak ? $order->no_kontrak.' · ' : '').($order->prospect?->name_event ?: 'Proyek #'.$order->id)),
@@ -2168,8 +2201,8 @@ class MobileModuleService
 
     private function scalar(mixed $value): ?string
     {
-        if ($value instanceof \BackedEnum) {
-            return (string) $value->value;
+        if (($enum = $this->enumString($value)) !== null) {
+            return $enum;
         }
         if (is_bool($value)) {
             return $value ? 'aktif' : 'nonaktif';
@@ -2177,20 +2210,54 @@ class MobileModuleService
         if ($value === null || $value === '') {
             return null;
         }
+        if (is_scalar($value)) {
+            return (string) $value;
+        }
 
-        return (string) $value;
+        return null;
     }
 
     private function stringValue(mixed $value): string
     {
         if ($value instanceof \BackedEnum) {
-            return method_exists($value, 'getLabel') ? (string) $value->getLabel() : (string) $value->value;
+            if (is_callable([$value, 'getLabel'])) {
+                $label = $value->getLabel();
+                if (is_string($label) && $label !== '') {
+                    return $label;
+                }
+            }
+
+            return (string) $value->value;
+        }
+        if ($value instanceof \UnitEnum) {
+            return $value->name;
         }
         if (is_bool($value)) {
             return $value ? 'Ya' : 'Tidak';
         }
+        if ($value === null) {
+            return '';
+        }
+        if (is_scalar($value)) {
+            return trim((string) $value);
+        }
+        if (is_object($value) && method_exists($value, '__toString')) {
+            return trim((string) $value);
+        }
 
-        return trim((string) ($value ?? ''));
+        return '';
+    }
+
+    private function enumString(mixed $value): ?string
+    {
+        if ($value instanceof \BackedEnum) {
+            return (string) $value->value;
+        }
+        if ($value instanceof \UnitEnum) {
+            return $value->name;
+        }
+
+        return null;
     }
 
     private function dateValue(Model $model, ?string $attr): ?string
@@ -2203,8 +2270,14 @@ class MobileModuleService
         if ($value instanceof \DateTimeInterface) {
             return $value->format('Y-m-d');
         }
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (is_scalar($value)) {
+            return (string) $value;
+        }
 
-        return $value ? (string) $value : null;
+        return $this->enumString($value);
     }
 
     private function displayValue(mixed $value, ?string $format): ?string
