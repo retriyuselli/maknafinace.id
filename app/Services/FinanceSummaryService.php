@@ -208,30 +208,6 @@ class FinanceSummaryService
 
         $widgets = [
             [
-                'key' => 'customer_payments',
-                'title' => 'Total Pembayaran',
-                'value' => $this->formatOverviewMoney($customerPayments),
-                'value_raw' => $customerPayments,
-                'description' => 'Total pembayaran diterima',
-                'tone' => 'success',
-            ],
-            [
-                'key' => 'customer_expenses',
-                'title' => 'Total Pengeluaran',
-                'value' => $this->formatOverviewMoney($customerExpenses),
-                'value_raw' => $customerExpenses,
-                'description' => 'Total pengeluaran',
-                'tone' => 'danger',
-            ],
-            [
-                'key' => 'agreement_files',
-                'title' => 'File Persetujuan Produk',
-                'value' => (string) $agreementUploaded,
-                'value_raw' => $agreementUploaded,
-                'description' => 'belum upload: '.$agreementPending,
-                'tone' => 'primary',
-            ],
-            [
                 'key' => 'new_projects_month',
                 'title' => 'Proyek Baru Bulan Ini',
                 'value' => (string) $newProjects,
@@ -246,6 +222,38 @@ class FinanceSummaryService
                 'value_raw' => $monthlyRevenue,
                 'description' => 'Pendapatan di '.$monthLabel,
                 'tone' => 'success',
+            ],
+            [
+                'key' => 'net_received_processing',
+                'title' => 'Sisa Uang Pengantin',
+                'value' => $this->formatOverviewMoney($netReceived),
+                'value_raw' => $netReceived,
+                'description' => 'Processing',
+                'tone' => 'primary',
+            ],
+            [
+                'key' => 'agreement_files',
+                'title' => 'File Persetujuan Produk',
+                'value' => (string) $agreementUploaded,
+                'value_raw' => $agreementUploaded,
+                'description' => 'belum upload: '.$agreementPending,
+                'tone' => 'primary',
+            ],
+            [
+                'key' => 'customer_payments',
+                'title' => 'Total Pembayaran',
+                'value' => $this->formatOverviewMoney($customerPayments),
+                'value_raw' => $customerPayments,
+                'description' => 'Processing',
+                'tone' => 'success',
+            ],
+            [
+                'key' => 'customer_expenses',
+                'title' => 'Total Pengeluaran',
+                'value' => $this->formatOverviewMoney($customerExpenses),
+                'value_raw' => $customerExpenses,
+                'description' => 'Processing',
+                'tone' => 'danger',
             ],
             [
                 'key' => 'contract_docs',
@@ -265,19 +273,11 @@ class FinanceSummaryService
             ],
             [
                 'key' => 'total_expenses',
-                'title' => 'Total Pengeluaran',
+                'title' => 'Pengeluaran Operasional',
                 'value' => $this->formatOverviewMoney($expenseOps),
                 'value_raw' => $expenseOps,
                 'description' => 'Pengeluaran keseluruhan',
                 'tone' => 'danger',
-            ],
-            [
-                'key' => 'net_received_processing',
-                'title' => 'Sisa Uang Pengantin',
-                'value' => $this->formatOverviewMoney($netReceived),
-                'value_raw' => $netReceived,
-                'description' => 'Processing',
-                'tone' => 'primary',
             ],
         ];
 
