@@ -13,6 +13,8 @@ use App\Models\BankTransaction;
 use App\Models\Category;
 use App\Models\DataPribadi;
 use App\Models\Document;
+use App\Models\DocumentApproval;
+use App\Models\DocumentAttachment;
 use App\Models\DocumentCategory;
 use App\Models\Documentation;
 use App\Models\DocumentationCategory;
@@ -296,7 +298,7 @@ class MobileModuleService
             }
         }
 
-        if ($key === 'vendors') {
+            if ($key === 'vendors') {
             if ($id === null) {
                 $payload['defaults'] = [
                     'status' => 'product',
@@ -322,6 +324,22 @@ class MobileModuleService
                 $payload['price_histories'] = $this->serializeVendorPriceHistories($record);
             } else {
                 $payload['price_histories'] = [];
+            }
+        }
+
+        if ($key === 'documents') {
+            if ($id === null) {
+                $payload['defaults'] = [
+                    'confidentiality' => 'internal',
+                    'use_digital_signature' => '1',
+                    'show_confidentiality_warning' => '0',
+                ];
+            }
+            if ($record instanceof Document) {
+                $payload['defaults'] = array_merge(
+                    $payload['defaults'] ?? [],
+                    $this->formValues($def, $record)
+                );
             }
         }
 
@@ -571,7 +589,7 @@ class MobileModuleService
                     break;
                 case 'textarea':
                     $rule[] = 'string';
-                    $rule[] = 'max:5000';
+                    $rule[] = 'max:'.(int) ($field['max'] ?? 5000);
                     break;
                 case 'email':
                     $rule[] = 'email';
@@ -1368,6 +1386,27 @@ class MobileModuleService
         if (! $existing) {
             $data['created_by'] = $user?->id;
             $data['status'] = $data['status'] ?? 'draft';
+            $data['confidentiality'] = $data['confidentiality'] ?? 'internal';
+            $data['use_digital_signature'] = array_key_exists('use_digital_signature', $data)
+                ? (bool) $data['use_digital_signature']
+                : true;
+            $data['show_confidentiality_warning'] = array_key_exists('show_confidentiality_warning', $data)
+                ? (bool) $data['show_confidentiality_warning']
+                : false;
+            // Biarkan observer mengisi nomor otomatis dari kategori.
+            unset($data['document_number']);
+        } else {
+            unset($data['document_number'], $data['status'], $data['created_by']);
+            if (array_key_exists('use_digital_signature', $data)) {
+                $data['use_digital_signature'] = (bool) $data['use_digital_signature'];
+            }
+            if (array_key_exists('show_confidentiality_warning', $data)) {
+                $data['show_confidentiality_warning'] = (bool) $data['show_confidentiality_warning'];
+            }
+        }
+
+        if (! empty($data['content']) && is_string($data['content']) && ! str_contains($data['content'], '<')) {
+            $data['content'] = '<p>'.e(trim($data['content'])).'</p>';
         }
 
         return $data;
@@ -1523,6 +1562,9 @@ class MobileModuleService
             if ($key === 'bank_statements' && $model instanceof BankStatement) {
                 $this->applyBankStatementDetail($payload, $model);
             }
+            if ($key === 'documents' && $model instanceof Document) {
+                $this->applyDocumentDetail($payload, $model);
+            }
         }
 
         if ($key === 'products' && $model instanceof Product) {
@@ -1661,7 +1703,7 @@ class MobileModuleService
                 continue;
             }
 
-            if ($name === 'notes' || $name === 'free_pengurangan' || $name === 'description') {
+            if ($name === 'notes' || $name === 'free_pengurangan' || $name === 'description' || $name === 'content' || $name === 'summary') {
                 $plain = $this->plainText((string) $raw);
                 if ($plain) {
                     $values[$name] = $plain;
@@ -1819,8 +1861,180 @@ class MobileModuleService
             'products' => $model instanceof Product
                 ? $this->productFacilityChildren($model)
                 : [],
+            'documents' => $model instanceof Document
+                ? $this->documentChildren($model)
+                : [],
             default => [],
         };
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function documentChildren(Document $model): array
+    {
+        $model->loadMissing([
+            'approvals.user:id,name',
+            'attachments',
+        ]);
+
+        $approvals = $model->approvals->values()->map(function (DocumentApproval $row, int $index) {
+            $userName = $this->stringValue($row->user?->name) ?: 'Approver';
+            $note = $this->stringValue($row->note);
+            $signed = optional($row->signed_at)?->format('d M Y H:i');
+
+            $fields = [
+                ['label' => 'Urutan', 'value' => (string) ($row->step_order ?? ($index + 1))],
+            ];
+            if ($note !== '') {
+                $fields[] = ['label' => 'Catatan', 'value' => $note];
+            }
+            if ($signed) {
+                $fields[] = ['label' => 'Ditandatangani', 'value' => $signed];
+            }
+
+            return [
+                'id' => (int) $row->id,
+                'title' => $userName,
+                'subtitle' => 'Persetujuan',
+                'status' => $this->stringValue($row->status) ?: null,
+                'fields' => $fields,
+            ];
+        })->all();
+
+        $attachments = $model->attachments->values()->map(function (DocumentAttachment $row) {
+            $url = $this->publicStorageUrl($row->file_path);
+            $fields = [];
+            if ($url) {
+                $fields[] = ['label' => 'File', 'value' => $url];
+            }
+            if ($row->file_size) {
+                $fields[] = ['label' => 'Ukuran', 'value' => $this->formatFileSize((int) $row->file_size)];
+            }
+            if ($mime = $this->stringValue($row->mime_type)) {
+                $fields[] = ['label' => 'Tipe', 'value' => $mime];
+            }
+
+            return [
+                'id' => (int) $row->id,
+                'title' => $this->stringValue($row->file_name) ?: 'Lampiran',
+                'subtitle' => 'Lampiran',
+                'status' => null,
+                'fields' => $fields,
+            ];
+        })->all();
+
+        return array_values(array_merge($approvals, $attachments));
+    }
+
+    private function publicStorageUrl(mixed $path): ?string
+    {
+        $value = $this->stringValue($path);
+        if ($value === '') {
+            return null;
+        }
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+
+        return url(Storage::disk('public')->url(ltrim($value, '/')));
+    }
+
+    private function formatFileSize(int $bytes): string
+    {
+        if ($bytes < 1024) {
+            return $bytes.' B';
+        }
+        if ($bytes < 1024 * 1024) {
+            return round($bytes / 1024, 1).' KB';
+        }
+
+        return round($bytes / (1024 * 1024), 1).' MB';
+    }
+
+    /**
+     * Lengkapi payload detail dokumen (penerima, label status, konten, dll).
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function applyDocumentDetail(array &$payload, Document $model): void
+    {
+        $model->loadMissing([
+            'category:id,name,code',
+            'creator:id,name',
+            'recipientsList:id,name',
+            'approvals.user:id,name',
+            'attachments',
+        ]);
+
+        $confidentialityLabels = [
+            'public' => 'Public',
+            'internal' => 'Internal',
+            'confidential' => 'Confidential',
+            'secret' => 'Secret',
+        ];
+        $statusLabels = [
+            'draft' => 'Draft',
+            'pending' => 'Pending',
+            'approved' => 'Approved',
+            'rejected' => 'Rejected',
+            'archived' => 'Archived',
+        ];
+
+        $recipients = $model->recipientsList
+            ->map(fn (User $user) => $this->stringValue($user->name))
+            ->filter(fn (string $name) => $name !== '')
+            ->values()
+            ->all();
+
+        $fields = [
+            ['label' => 'Judul', 'value' => $this->stringValue($model->title) ?: null],
+            ['label' => 'Nomor', 'value' => $this->stringValue($model->document_number) ?: null],
+            ['label' => 'Kategori', 'value' => $this->stringValue($model->category?->name) ?: null],
+            ['label' => 'Kepada', 'value' => $recipients === [] ? null : implode(', ', $recipients)],
+            [
+                'label' => 'Kerahasiaan',
+                'value' => $confidentialityLabels[$this->stringValue($model->confidentiality)]
+                    ?? ($this->stringValue($model->confidentiality) ?: null),
+            ],
+            [
+                'label' => 'Status',
+                'value' => $statusLabels[$this->stringValue($model->status)]
+                    ?? ($this->stringValue($model->status) ?: null),
+            ],
+            ['label' => 'Dibuat oleh', 'value' => $this->stringValue($model->creator?->name) ?: null],
+            ['label' => 'Berlaku mulai', 'value' => $this->displayValue($model->date_effective, 'date')],
+            ['label' => 'Berlaku hingga', 'value' => $this->displayValue($model->date_expired, 'date')],
+            [
+                'label' => 'Tanda tangan digital',
+                'value' => $model->use_digital_signature ? 'Ya' : 'Tidak',
+            ],
+            [
+                'label' => 'Peringatan kerahasiaan',
+                'value' => $model->show_confidentiality_warning ? 'Ya' : 'Tidak',
+            ],
+            ['label' => 'Ringkasan', 'value' => $this->plainText($model->summary)],
+            ['label' => 'Isi dokumen', 'value' => $this->plainText($model->content)],
+        ];
+
+        if (is_array($model->metadata) && $model->metadata !== []) {
+            foreach ($model->metadata as $metaKey => $metaValue) {
+                $label = $this->stringValue($metaKey);
+                $value = is_scalar($metaValue) ? $this->stringValue($metaValue) : null;
+                if ($label !== '' && $value !== null && $value !== '') {
+                    $fields[] = ['label' => $label, 'value' => $value];
+                }
+            }
+        }
+
+        $payload['fields'] = array_values(array_filter(
+            $fields,
+            fn (array $row) => ($row['value'] ?? null) !== null && $row['value'] !== ''
+        ));
+        $payload['children'] = $this->documentChildren($model);
+        $payload['children_title'] = 'Persetujuan & lampiran';
+        $payload['status'] = $statusLabels[$this->stringValue($model->status)]
+            ?? ($this->stringValue($model->status) ?: $payload['status'] ?? null);
     }
 
     /**
@@ -2999,18 +3213,39 @@ class MobileModuleService
                 'date_attr' => 'date_effective',
                 'search' => ['title', 'document_number', 'summary'],
                 'with' => ['category:id,name'],
+                'detail_with' => [
+                    'category:id,name,code',
+                    'creator:id,name',
+                    'recipientsList:id,name',
+                    'approvals.user:id,name',
+                    'attachments',
+                ],
                 'fields' => [
-                    ['name' => 'title', 'label' => 'Judul', 'type' => 'text', 'required' => true],
-                    ['name' => 'category_id', 'label' => 'Kategori', 'type' => 'select', 'options' => 'document_categories', 'cast' => 'int'],
-                    ['name' => 'document_number', 'label' => 'Nomor dokumen', 'type' => 'text'],
-                    ['name' => 'summary', 'label' => 'Ringkasan', 'type' => 'textarea'],
-                    ['name' => 'date_effective', 'label' => 'Berlaku mulai', 'type' => 'date'],
+                    ['name' => 'title', 'label' => 'Judul', 'type' => 'text', 'required' => true, 'section' => 'Informasi umum'],
+                    ['name' => 'category_id', 'label' => 'Kategori', 'type' => 'select', 'options' => 'document_categories', 'cast' => 'int', 'required' => true, 'section' => 'Informasi umum'],
+                    ['name' => 'document_number', 'label' => 'Nomor dokumen', 'type' => 'text', 'section' => 'Informasi umum', 'readonly' => true, 'helper' => 'Otomatis dari kategori saat dokumen dibuat.'],
+                    ['name' => 'confidentiality', 'label' => 'Kerahasiaan', 'type' => 'select', 'required' => true, 'section' => 'Informasi umum', 'options' => [
+                        'public' => 'Public',
+                        'internal' => 'Internal',
+                        'confidential' => 'Confidential',
+                        'secret' => 'Secret',
+                    ]],
+                    ['name' => 'summary', 'label' => 'Ringkasan', 'type' => 'textarea', 'section' => 'Informasi umum', 'max' => 5000],
+                    ['name' => 'use_digital_signature', 'label' => 'Tanda tangan digital', 'type' => 'toggle', 'section' => 'Informasi umum'],
+                    ['name' => 'show_confidentiality_warning', 'label' => 'Peringatan kerahasiaan', 'type' => 'toggle', 'section' => 'Informasi umum'],
+                    ['name' => 'content', 'label' => 'Isi dokumen', 'type' => 'textarea', 'section' => 'Isi & tanggal', 'max' => 50000, 'helper' => 'Teks biasa di mobile. Formatting lengkap (Rich Editor) di admin desktop.'],
+                    ['name' => 'date_effective', 'label' => 'Berlaku mulai', 'type' => 'date', 'section' => 'Isi & tanggal'],
+                    ['name' => 'date_expired', 'label' => 'Berlaku hingga', 'type' => 'date', 'section' => 'Isi & tanggal'],
                 ],
                 'detail' => [
                     ['label' => 'Judul', 'attr' => 'title'],
                     ['label' => 'Nomor', 'attr' => 'document_number'],
                     ['label' => 'Kategori', 'attr' => 'category.name'],
+                    ['label' => 'Kerahasiaan', 'attr' => 'confidentiality'],
                     ['label' => 'Ringkasan', 'attr' => 'summary'],
+                    ['label' => 'Isi dokumen', 'attr' => 'content', 'format' => 'html'],
+                    ['label' => 'Berlaku mulai', 'attr' => 'date_effective', 'format' => 'date'],
+                    ['label' => 'Berlaku hingga', 'attr' => 'date_expired', 'format' => 'date'],
                     ['label' => 'Status', 'attr' => 'status'],
                 ],
             ],
@@ -3026,14 +3261,29 @@ class MobileModuleService
                 'company_scope' => true,
                 'title_attr' => 'name',
                 'subtitle_attr' => 'code',
+                'status_attr' => 'is_approval_required',
                 'search' => ['name', 'code'],
+                'with' => ['parent:id,name'],
                 'fields' => [
                     ['name' => 'name', 'label' => 'Nama', 'type' => 'text', 'required' => true],
-                    ['name' => 'code', 'label' => 'Kode', 'type' => 'text'],
+                    ['name' => 'code', 'label' => 'Kode', 'type' => 'text', 'required' => true],
+                    ['name' => 'type', 'label' => 'Tipe', 'type' => 'select', 'required' => true, 'options' => [
+                        'internal' => 'Internal (SK, Memo, SOP)',
+                        'outbound' => 'Outbound (Surat Keluar)',
+                        'inbound' => 'Inbound (Surat Masuk)',
+                        'other' => 'Other',
+                    ]],
+                    ['name' => 'format_number', 'label' => 'Format nomor', 'type' => 'text', 'placeholder' => '{SEQ}/{CAT}/MKI/{ROMAN_MONTH}/{Y}'],
+                    ['name' => 'parent_id', 'label' => 'Kategori induk', 'type' => 'select', 'options' => 'document_categories', 'cast' => 'int'],
+                    ['name' => 'is_approval_required', 'label' => 'Perlu approval', 'type' => 'toggle'],
                 ],
                 'detail' => [
                     ['label' => 'Nama', 'attr' => 'name'],
                     ['label' => 'Kode', 'attr' => 'code'],
+                    ['label' => 'Tipe', 'attr' => 'type'],
+                    ['label' => 'Format nomor', 'attr' => 'format_number'],
+                    ['label' => 'Induk', 'attr' => 'parent.name'],
+                    ['label' => 'Perlu approval', 'attr' => 'is_approval_required'],
                 ],
             ],
             'sops' => [
