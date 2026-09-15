@@ -2310,14 +2310,68 @@ class MobileModuleService
             return null;
         }
 
-        $text = preg_replace('/<\s*br\s*\/?\s*>/i', "\n", $html) ?? $html;
-        $text = preg_replace('/<\/(p|div|li|h[1-6]|tr)>/i', "\n", $text) ?? $text;
-        $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = preg_replace("/[ \t]+/u", ' ', $text) ?? $text;
+        $text = $html;
+
+        // Preserve ordered lists as "1. …" / "2. …"
+        $text = preg_replace_callback(
+            '/<ol\b([^>]*)>(.*?)<\/ol>/is',
+            function (array $match): string {
+                $attrs = $match[1] ?? '';
+                $start = 1;
+                if (preg_match('/\bstart\s*=\s*["\']?(\d+)/i', $attrs, $startMatch)) {
+                    $start = max(1, (int) $startMatch[1]);
+                }
+
+                preg_match_all('/<li\b[^>]*>(.*?)<\/li>/is', $match[2] ?? '', $items);
+                $lines = [];
+                $n = $start;
+                foreach ($items[1] ?? [] as $itemHtml) {
+                    $item = $this->plainTextFragment((string) $itemHtml);
+                    if ($item !== '') {
+                        $lines[] = $n.'. '.$item;
+                        $n++;
+                    }
+                }
+
+                return $lines === [] ? '' : "\n".implode("\n", $lines)."\n";
+            },
+            $text
+        ) ?? $text;
+
+        // Preserve unordered lists as "• …"
+        $text = preg_replace_callback(
+            '/<ul\b[^>]*>(.*?)<\/ul>/is',
+            function (array $match): string {
+                preg_match_all('/<li\b[^>]*>(.*?)<\/li>/is', $match[1] ?? '', $items);
+                $lines = [];
+                foreach ($items[1] ?? [] as $itemHtml) {
+                    $item = $this->plainTextFragment((string) $itemHtml);
+                    if ($item !== '') {
+                        $lines[] = '• '.$item;
+                    }
+                }
+
+                return $lines === [] ? '' : "\n".implode("\n", $lines)."\n";
+            },
+            $text
+        ) ?? $text;
+
+        $text = $this->plainTextFragment($text);
         $text = preg_replace("/\n{3,}/", "\n\n", $text) ?? $text;
         $text = trim($text);
 
         return $text === '' ? null : $text;
+    }
+
+    private function plainTextFragment(string $html): string
+    {
+        $text = preg_replace('/<\s*br\s*\/?\s*>/i', "\n", $html) ?? $html;
+        $text = preg_replace('/<\/(p|div|h[1-6]|tr)>/i', "\n", $text) ?? $text;
+        $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace("/[ \t]+/u", ' ', $text) ?? $text;
+        $text = preg_replace("/ *\n */u", "\n", $text) ?? $text;
+
+        return trim($text);
     }
 
     /**
