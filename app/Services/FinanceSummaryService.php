@@ -179,25 +179,95 @@ class FinanceSummaryService
      */
     public function projectsByClosingMonth(?string $month = null): array
     {
+        return $this->projectsByOverviewWidget('new_projects_month', $month);
+    }
+
+    /**
+     * Daftar proyek untuk widget Ringkasan Orders.
+     *
+     * @return array{data: list<array<string, mixed>>, meta: array<string, int|string>}
+     */
+    public function projectsByOverviewWidget(string $key, ?string $month = null): array
+    {
+        $now = Carbon::now();
         $target = $this->resolveClosingMonth($month);
         $monthKey = $target->format('Y-m');
         $monthLabel = $target->copy()->locale('id')->translatedFormat('F Y');
+        $yearLabel = (string) $now->year;
+        $processing = OrderStatus::Processing->value;
 
-        $orders = Order::query()
+        $query = $this->scopedOrdersQuery()
             ->with([
                 'prospect:id,name_event,name_cpp,name_cpw,venue,phone,address,date_lamaran,date_akad,date_resepsi',
                 'user:id,name',
                 'dataPembayaran:id,order_id,nominal,tgl_bayar,keterangan,payment_method_id',
                 'dataPengeluaran:id,order_id,amount,date_expense,note,vendor_id,payment_stage',
                 'expenses:id,order_id,amount,date_expense,note,vendor_id,payment_stage',
-            ])
-            ->whereNotNull('closing_date')
-            ->whereMonth('closing_date', $target->month)
-            ->whereYear('closing_date', $target->year)
-            ->orderByDesc('closing_date')
-            ->orderByDesc('id')
-            ->get();
+            ]);
 
+        switch ($key) {
+            case 'new_projects_month':
+            case 'monthly_revenue':
+                $query->whereNotNull('closing_date')
+                    ->whereMonth('closing_date', $target->month)
+                    ->whereYear('closing_date', $target->year)
+                    ->orderByDesc('closing_date')
+                    ->orderByDesc('id');
+                $title = $key === 'monthly_revenue' ? 'Revenue Bulanan' : 'Proyek Baru Bulan Ini';
+                $subtitle = 'Closing '.$monthLabel;
+                break;
+
+            case 'total_revenue':
+                $query->whereNotNull('closing_date')
+                    ->whereYear('closing_date', $now->year)
+                    ->orderByDesc('closing_date')
+                    ->orderByDesc('id');
+                $title = 'Total Pendapatan';
+                $subtitle = 'Closing tahun '.$yearLabel;
+                break;
+
+            case 'net_received_processing':
+            case 'customer_expenses':
+                $query->where('status', $processing)
+                    ->orderByDesc('closing_date')
+                    ->orderByDesc('id');
+                $title = $key === 'customer_expenses' ? 'Total Pengeluaran' : 'Sisa Uang Pengantin';
+                $subtitle = 'Status processing';
+                break;
+
+            case 'agreement_files':
+                $query->orderByRaw('CASE WHEN agreement_product IS NULL OR agreement_product = \'\' THEN 0 ELSE 1 END')
+                    ->orderByDesc('closing_date')
+                    ->orderByDesc('id');
+                $title = 'File Persetujuan Produk';
+                $subtitle = 'Semua proyek';
+                break;
+
+            case 'contract_docs':
+                $query->orderByRaw('CASE WHEN doc_kontrak IS NULL OR doc_kontrak = \'\' THEN 0 ELSE 1 END')
+                    ->orderByDesc('closing_date')
+                    ->orderByDesc('id');
+                $title = 'Total Dokumen Kontrak';
+                $subtitle = 'Semua proyek';
+                break;
+
+            default:
+                return [
+                    'data' => [],
+                    'meta' => [
+                        'key' => $key,
+                        'title' => 'Daftar Proyek',
+                        'subtitle' => null,
+                        'total' => 0,
+                        'total_grand_total' => 0,
+                        'total_payments' => 0,
+                        'total_expenses' => 0,
+                        'total_net_cash_flow' => 0,
+                    ],
+                ];
+        }
+
+        $orders = $query->get();
         $data = $orders->map(fn (Order $order) => $this->projectSummary($order))->values()->all();
 
         $metaTotals = [
@@ -213,13 +283,37 @@ class FinanceSummaryService
             $metaTotals['total_net_cash_flow'] += (int) ($row['net_cash_flow'] ?? 0);
         }
 
+        $meta = array_merge([
+            'key' => $key,
+            'title' => $title,
+            'subtitle' => $subtitle,
+            'total' => count($data),
+        ], $metaTotals);
+
+        if (in_array($key, ['new_projects_month', 'monthly_revenue'], true)) {
+            $meta['month'] = $monthKey;
+            $meta['month_label'] = $monthLabel;
+        }
+
+        if ($key === 'total_revenue') {
+            $meta['year'] = $now->year;
+        }
+
+        if ($key === 'agreement_files') {
+            $meta['uploaded'] = collect($data)->where('has_agreement', true)->count();
+            $meta['pending'] = collect($data)->where('has_agreement', false)->count();
+            $meta['subtitle'] = 'Sudah upload: '.$meta['uploaded'].' · belum: '.$meta['pending'];
+        }
+
+        if ($key === 'contract_docs') {
+            $meta['uploaded'] = collect($data)->where('has_contract', true)->count();
+            $meta['pending'] = collect($data)->where('has_contract', false)->count();
+            $meta['subtitle'] = 'Sudah upload: '.$meta['uploaded'].' · menunggu: '.$meta['pending'];
+        }
+
         return [
             'data' => $data,
-            'meta' => array_merge([
-                'month' => $monthKey,
-                'month_label' => $monthLabel,
-                'total' => count($data),
-            ], $metaTotals),
+            'meta' => $meta,
         ];
     }
 
@@ -469,6 +563,8 @@ class FinanceSummaryService
             'expenses_total' => $expenses,
             'net_cash_flow' => $paid - $expenses,
             'gross_profit' => $grand - $expenses,
+            'has_agreement' => filled($order->agreement_product),
+            'has_contract' => filled($order->doc_kontrak),
         ];
     }
 
