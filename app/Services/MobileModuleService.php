@@ -30,12 +30,16 @@ use App\Models\PendapatanLain;
 use App\Models\PengeluaranLain;
 use App\Models\Piutang;
 use App\Models\Product;
+use App\Models\ProductPenambahan;
+use App\Models\ProductPengurangan;
+use App\Models\ProductVendor;
 use App\Models\Prospect;
 use App\Models\SimulasiProduk;
 use App\Models\Sop;
 use App\Models\SopCategory;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Models\VendorPriceHistory;
 use App\Support\CompanySubscription;
 use App\Support\PricingPlans;
 use App\Support\ProFeatures;
@@ -274,6 +278,53 @@ class MobileModuleService
             ];
         }
 
+        if ($key === 'products') {
+            $payload['vendor_options'] = $this->productVendorOptions();
+            if ($record instanceof Product) {
+                $record->loadMissing(['items.vendor', 'pengurangans', 'penambahanHarga.vendor']);
+                $payload['defaults'] = array_merge(
+                    $payload['defaults'] ?? [],
+                    $this->formValues($def, $record)
+                );
+                $payload['items'] = $this->serializeProductItems($record);
+                $payload['discounts'] = $this->serializeProductDiscounts($record);
+                $payload['additions'] = $this->serializeProductAdditions($record);
+            } else {
+                $payload['items'] = [];
+                $payload['discounts'] = [];
+                $payload['additions'] = [];
+            }
+        }
+
+        if ($key === 'vendors') {
+            if ($id === null) {
+                $payload['defaults'] = [
+                    'status' => 'product',
+                    'stock' => '10',
+                    'harga_publish' => '0',
+                    'harga_vendor' => '0',
+                    'profit_amount' => '0',
+                    'profit_margin' => '0',
+                    'is_master' => '0',
+                    'is_published' => '0',
+                ];
+            }
+            if ($record instanceof Vendor) {
+                $record->loadMissing(['priceHistories']);
+                $payload['defaults'] = array_merge(
+                    $payload['defaults'] ?? [],
+                    $this->formValues($def, $record)
+                );
+                // profit_margin stored as basis points (x100); show as percent for mobile
+                if (isset($payload['defaults']['profit_margin'])) {
+                    $payload['defaults']['profit_margin'] = (string) round(((float) $payload['defaults']['profit_margin']) / 100, 2);
+                }
+                $payload['price_histories'] = $this->serializeVendorPriceHistories($record);
+            } else {
+                $payload['price_histories'] = [];
+            }
+        }
+
         return $payload;
     }
 
@@ -304,6 +355,12 @@ class MobileModuleService
         $modelClass = $def['model'];
         /** @var Model $model */
         $model = $modelClass::query()->create($data);
+        if ($key === 'products' && $model instanceof Product) {
+            $this->syncProductRelations($model, $input);
+        }
+        if ($key === 'vendors' && $model instanceof Vendor) {
+            $this->syncVendorPriceHistories($model, $input);
+        }
         $this->afterSave($key, $model, true);
 
         return $this->detail($user, $key, (int) $model->getKey()) ?? $this->mapRecord($key, $def, $model->fresh(), true);
@@ -337,6 +394,12 @@ class MobileModuleService
         $data = $this->prepare($user, $key, $def, $data, $model);
         $model->fill($data);
         $model->save();
+        if ($key === 'products' && $model instanceof Product) {
+            $this->syncProductRelations($model, $input);
+        }
+        if ($key === 'vendors' && $model instanceof Vendor) {
+            $this->syncVendorPriceHistories($model, $input);
+        }
         $this->afterSave($key, $model, false);
 
         return $this->detail($user, $key, $id);
@@ -582,6 +645,7 @@ class MobileModuleService
         $table = match ($optionsKey) {
             'payment_methods' => 'payment_methods',
             'vendors' => 'vendors',
+            'parent_vendors' => 'vendors',
             'orders' => 'orders',
             'prospects' => 'prospects',
             'open_prospects' => 'prospects',
@@ -686,6 +750,177 @@ class MobileModuleService
     }
 
     /**
+     * @return list<array<string, mixed>>
+     */
+    private function productVendorOptions(): array
+    {
+        $companyId = UserVisibility::companyId();
+
+        return Vendor::query()
+            ->when($companyId && Schema::hasColumn((new Vendor)->getTable(), 'company_id'), fn ($q) => $q->where('company_id', $companyId))
+            ->orderBy('name')
+            ->get(['id', 'name', 'harga_publish', 'harga_vendor', 'description'])
+            ->map(function (Vendor $vendor) {
+                $active = method_exists($vendor, 'activePrice') ? $vendor->activePrice() : null;
+                $publish = (int) ($active?->harga_publish ?? $vendor->harga_publish ?? 0);
+                $vendorPrice = (int) ($active?->harga_vendor ?? $vendor->harga_vendor ?? 0);
+
+                return [
+                    'value' => (string) $vendor->id,
+                    'label' => (string) $vendor->name,
+                    'harga_publish' => $publish,
+                    'harga_vendor' => $vendorPrice,
+                    'description' => $this->plainText((string) ($vendor->description ?? '')) ?? '',
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function serializeProductItems(Product $product): array
+    {
+        return $product->items->map(function ($item) {
+            $qty = max(1, (int) ($item->quantity ?? 1));
+            $publish = (int) ($item->harga_publish ?? 0);
+            $vendor = (int) ($item->harga_vendor ?? 0);
+
+            return [
+                'id' => (int) $item->id,
+                'vendor_id' => $item->vendor_id ? (string) $item->vendor_id : '',
+                'harga_publish' => $publish,
+                'harga_vendor' => $vendor,
+                'quantity' => $qty,
+                'price_public' => (int) ($item->price_public ?: $publish * $qty),
+                'total_price' => (int) ($item->total_price ?: $vendor * $qty),
+                'description' => $this->plainText((string) ($item->description ?? '')) ?? '',
+            ];
+        })->values()->all();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function serializeProductDiscounts(Product $product): array
+    {
+        return $product->pengurangans->map(fn ($row) => [
+            'id' => (int) $row->id,
+            'description' => (string) ($row->description ?? ''),
+            'amount' => (int) ($row->amount ?? 0),
+            'notes' => $this->plainText((string) ($row->notes ?? '')) ?? '',
+        ])->values()->all();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function serializeProductAdditions(Product $product): array
+    {
+        return $product->penambahanHarga->map(fn ($row) => [
+            'id' => (int) $row->id,
+            'vendor_id' => $row->vendor_id ? (string) $row->vendor_id : '',
+            'harga_publish' => (int) ($row->harga_publish ?? 0),
+            'harga_vendor' => (int) ($row->harga_vendor ?? 0),
+            'description' => $this->plainText((string) ($row->description ?? '')) ?? '',
+        ])->values()->all();
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     */
+    private function syncProductRelations(Product $product, array $input): void
+    {
+        $items = is_array($input['items'] ?? null) ? $input['items'] : [];
+        $discounts = is_array($input['discounts'] ?? null) ? $input['discounts'] : [];
+        $additions = is_array($input['additions'] ?? null) ? $input['additions'] : [];
+
+        $product->items()->delete();
+        $product->pengurangans()->delete();
+        $product->penambahanHarga()->delete();
+
+        $totalPublish = 0;
+        $totalVendor = 0;
+        foreach ($items as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $vendorId = (int) ($row['vendor_id'] ?? 0);
+            if ($vendorId <= 0) {
+                continue;
+            }
+            $qty = max(1, (int) ($row['quantity'] ?? 1));
+            $hargaPublish = (int) ($row['harga_publish'] ?? 0);
+            $hargaVendor = (int) ($row['harga_vendor'] ?? 0);
+            $pricePublic = (int) ($row['price_public'] ?? ($hargaPublish * $qty));
+            $lineVendor = (int) ($row['total_price'] ?? ($hargaVendor * $qty));
+            $totalPublish += $pricePublic;
+            $totalVendor += $lineVendor;
+
+            $product->items()->create([
+                'vendor_id' => $vendorId,
+                'harga_publish' => $hargaPublish,
+                'harga_vendor' => $hargaVendor,
+                'quantity' => $qty,
+                'price_public' => $pricePublic,
+                'total_price' => $lineVendor,
+                'description' => (string) ($row['description'] ?? ''),
+            ]);
+        }
+
+        $totalDiscount = 0;
+        foreach ($discounts as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $amount = (int) ($row['amount'] ?? 0);
+            $description = trim((string) ($row['description'] ?? ''));
+            if ($description === '' && $amount <= 0) {
+                continue;
+            }
+            $totalDiscount += $amount;
+            $product->pengurangans()->create([
+                'description' => $description !== '' ? $description : 'Pengurangan',
+                'amount' => $amount,
+                'notes' => (string) ($row['notes'] ?? ''),
+            ]);
+        }
+
+        $totalAddPublish = 0;
+        $totalAddVendor = 0;
+        foreach ($additions as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $vendorId = (int) ($row['vendor_id'] ?? 0);
+            if ($vendorId <= 0) {
+                continue;
+            }
+            $hargaPublish = (int) ($row['harga_publish'] ?? 0);
+            $hargaVendor = (int) ($row['harga_vendor'] ?? 0);
+            $totalAddPublish += $hargaPublish;
+            $totalAddVendor += $hargaVendor;
+            $product->penambahanHarga()->create([
+                'vendor_id' => $vendorId,
+                'harga_publish' => $hargaPublish,
+                'harga_vendor' => $hargaVendor,
+                'description' => (string) ($row['description'] ?? ''),
+            ]);
+        }
+
+        $finalPrice = max(0, $totalPublish - $totalDiscount + $totalAddPublish);
+        $product->forceFill([
+            'product_price' => $totalPublish,
+            'pengurangan' => $totalDiscount,
+            'penambahan' => $totalAddPublish,
+            'penambahan_publish' => $totalAddPublish,
+            'penambahan_vendor' => $totalAddVendor,
+            'price' => $finalPrice,
+        ])->save();
+    }
+
+    /**
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
@@ -696,12 +931,104 @@ class MobileModuleService
         }
         if (! $existing) {
             $data['created_by'] = $user?->id;
-            $data['status'] = $data['status'] ?? StatusVendor::VENDOR->value;
+            $data['status'] = $data['status'] ?? StatusVendor::PRODUCT->value;
+            $data['stock'] = $data['stock'] ?? 10;
+            $data['is_master'] = array_key_exists('is_master', $data) ? (bool) $data['is_master'] : false;
+            $data['is_published'] = array_key_exists('is_published', $data) ? (bool) $data['is_published'] : false;
+        } else {
+            if (array_key_exists('is_master', $data)) {
+                $data['is_master'] = (bool) $data['is_master'];
+            }
+            if (array_key_exists('is_published', $data)) {
+                $data['is_published'] = (bool) $data['is_published'];
+            }
         }
+
         $data['harga_publish'] = (int) ($data['harga_publish'] ?? 0);
         $data['harga_vendor'] = (int) ($data['harga_vendor'] ?? 0);
+        $data['profit_amount'] = $data['harga_publish'] - $data['harga_vendor'];
+        $marginPercent = $data['harga_publish'] > 0
+            ? ($data['profit_amount'] / $data['harga_publish']) * 100
+            : 0;
+        $data['profit_margin'] = (int) round($marginPercent * 100);
 
+        $status = is_object($data['status'] ?? null) && property_exists($data['status'], 'value')
+            ? $data['status']->value
+            : ($data['status'] ?? null);
+        if ($status !== StatusVendor::PRODUCT->value) {
+            $data['parent_id'] = null;
+        }
+
+        // Ignore client-sent readonly display margin (already recomputed above)
         return $data;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function serializeVendorPriceHistories(Vendor $vendor): array
+    {
+        return $vendor->priceHistories
+            ->sortByDesc('effective_from')
+            ->values()
+            ->map(function ($row) {
+                $publish = (int) ($row->harga_publish ?? 0);
+                $vendorPrice = (int) ($row->harga_vendor ?? 0);
+                $profit = (int) ($row->profit_amount ?? ($publish - $vendorPrice));
+                $marginRaw = (int) ($row->profit_margin ?? 0);
+
+                return [
+                    'id' => (int) $row->id,
+                    'effective_from' => optional($row->effective_from)?->format('Y-m-d'),
+                    'effective_to' => optional($row->effective_to)?->format('Y-m-d'),
+                    'harga_publish' => $publish,
+                    'harga_vendor' => $vendorPrice,
+                    'profit_amount' => $profit,
+                    'profit_margin' => round($marginRaw / 100, 2),
+                    'description' => (string) ($row->description ?? ''),
+                ];
+            })
+            ->all();
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     */
+    private function syncVendorPriceHistories(Vendor $vendor, array $input): void
+    {
+        $isMaster = (bool) ($vendor->is_master ?? false);
+        $rows = is_array($input['price_histories'] ?? null) ? $input['price_histories'] : [];
+
+        $vendor->priceHistories()->delete();
+
+        if (! $isMaster) {
+            return;
+        }
+
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $from = trim((string) ($row['effective_from'] ?? ''));
+            $to = trim((string) ($row['effective_to'] ?? ''));
+            if ($from === '' || $to === '') {
+                continue;
+            }
+            $publish = (int) ($row['harga_publish'] ?? 0);
+            $vendorPrice = (int) ($row['harga_vendor'] ?? 0);
+            $profit = $publish - $vendorPrice;
+            $marginPercent = $publish > 0 ? ($profit / $publish) * 100 : 0;
+
+            $vendor->priceHistories()->create([
+                'effective_from' => $from,
+                'effective_to' => $to,
+                'harga_publish' => $publish,
+                'harga_vendor' => $vendorPrice,
+                'profit_amount' => $profit,
+                'profit_margin' => (int) round($marginPercent * 100),
+                'description' => (string) ($row['description'] ?? ''),
+            ]);
+        }
     }
 
     /**
@@ -1961,11 +2288,11 @@ class MobileModuleService
                     ['name' => 'pax', 'label' => 'Resepsi (pax)', 'type' => 'number', 'cast' => 'int', 'required' => true, 'section' => 'Kapasitas', 'placeholder' => '1000'],
                     ['name' => 'pax_akad', 'label' => 'Akad (pax)', 'type' => 'number', 'cast' => 'int', 'section' => 'Kapasitas', 'placeholder' => '100'],
                     ['name' => 'stock', 'label' => 'Stok', 'type' => 'number', 'cast' => 'int', 'required' => true, 'section' => 'Kapasitas', 'helper' => 'Biasanya diisi 10.', 'placeholder' => '10'],
-                    ['name' => 'product_price', 'label' => 'Total harga publish', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga', 'helper' => 'Total fasilitas dasar (harga publish).'],
-                    ['name' => 'pengurangan', 'label' => 'Total pengurangan', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga'],
-                    ['name' => 'penambahan_publish', 'label' => 'Penambahan publish', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga'],
-                    ['name' => 'penambahan_vendor', 'label' => 'Penambahan vendor', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga'],
-                    ['name' => 'price', 'label' => 'Harga jual / Total paket', 'type' => 'number', 'required' => true, 'cast' => 'int', 'section' => 'Harga', 'helper' => 'Umumnya: publish − pengurangan + penambahan publish.'],
+                    ['name' => 'product_price', 'label' => 'Total harga publish', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga', 'readonly' => true, 'helper' => 'Otomatis dari fasilitas vendor.'],
+                    ['name' => 'pengurangan', 'label' => 'Total pengurangan', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga', 'readonly' => true, 'helper' => 'Otomatis dari daftar pengurangan.'],
+                    ['name' => 'penambahan_publish', 'label' => 'Penambahan publish', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga', 'readonly' => true, 'helper' => 'Otomatis dari penambahan harga.'],
+                    ['name' => 'penambahan_vendor', 'label' => 'Penambahan vendor', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga', 'readonly' => true],
+                    ['name' => 'price', 'label' => 'Harga jual / Total paket', 'type' => 'number', 'cast' => 'int', 'section' => 'Harga', 'readonly' => true, 'helper' => 'publish − pengurangan + penambahan publish.'],
                     ['name' => 'description', 'label' => 'Deskripsi', 'type' => 'textarea', 'section' => 'Detail'],
                     ['name' => 'free_pengurangan', 'label' => 'Keterangan free / pengurangan', 'type' => 'textarea', 'section' => 'Detail', 'helper' => 'Catatan free atau keterangan pengurangan.'],
                     ['name' => 'is_active', 'label' => 'Aktif', 'type' => 'toggle', 'section' => 'Status', 'helper' => 'Nonaktifkan untuk menyembunyikan paket.'],
@@ -2001,29 +2328,48 @@ class MobileModuleService
                 'amount_attr' => 'harga_publish',
                 'status_attr' => 'status',
                 'search' => ['name', 'pic_name', 'phone'],
-                'with' => ['category:id,name'],
+                'with' => ['category:id,name', 'parent:id,name'],
+                'detail_with' => ['category:id,name', 'parent:id,name', 'priceHistories'],
                 'fields' => [
-                    ['name' => 'name', 'label' => 'Nama vendor', 'type' => 'text', 'required' => true],
-                    ['name' => 'pic_name', 'label' => 'Nama PIC', 'type' => 'text'],
-                    ['name' => 'phone', 'label' => 'Telepon', 'type' => 'text'],
-                    ['name' => 'address', 'label' => 'Alamat', 'type' => 'textarea'],
-                    ['name' => 'category_id', 'label' => 'Kategori', 'type' => 'select', 'options' => 'categories', 'cast' => 'int'],
-                    ['name' => 'harga_publish', 'label' => 'Harga publish', 'type' => 'number', 'cast' => 'int'],
-                    ['name' => 'harga_vendor', 'label' => 'Harga vendor', 'type' => 'number', 'cast' => 'int'],
-                    ['name' => 'bank_name', 'label' => 'Bank', 'type' => 'text'],
-                    ['name' => 'account_holder', 'label' => 'Nama rekening', 'type' => 'text'],
-                    ['name' => 'bank_account', 'label' => 'Nomor rekening', 'type' => 'text'],
+                    ['name' => 'name', 'label' => 'Nama vendor', 'type' => 'text', 'required' => true, 'section' => 'Informasi dasar'],
+                    ['name' => 'phone', 'label' => 'Telepon', 'type' => 'text', 'required' => true, 'section' => 'Informasi dasar', 'placeholder' => '812XXXXXXXX', 'helper' => 'Nomor tanpa angka 0 di depan (+62).'],
+                    ['name' => 'address', 'label' => 'Alamat', 'type' => 'text', 'section' => 'Informasi dasar'],
+                    ['name' => 'pic_name', 'label' => 'Nama PIC', 'type' => 'text', 'section' => 'Informasi dasar'],
+                    ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'required' => true, 'section' => 'Informasi dasar', 'options' => [
+                        'vendor' => 'Vendor',
+                        'product' => 'Product',
+                        'master' => 'Master',
+                    ]],
+                    ['name' => 'parent_id', 'label' => 'Vendor induk', 'type' => 'select', 'options' => 'parent_vendors', 'cast' => 'int', 'section' => 'Informasi dasar', 'helper' => 'Kosongkan jika ini vendor induk. Muncul untuk status Product.'],
+                    ['name' => 'category_id', 'label' => 'Kategori', 'type' => 'select', 'options' => 'categories', 'cast' => 'int', 'required' => true, 'section' => 'Informasi dasar'],
+                    ['name' => 'is_master', 'label' => 'Master', 'type' => 'toggle', 'section' => 'Informasi dasar', 'helper' => 'Tandai sebagai data master (bisa punya periode harga).'],
+                    ['name' => 'is_published', 'label' => 'Published', 'type' => 'toggle', 'section' => 'Informasi dasar'],
+                    ['name' => 'description', 'label' => 'Deskripsi', 'type' => 'textarea', 'section' => 'Informasi dasar'],
+                    ['name' => 'harga_publish', 'label' => 'Harga publish', 'type' => 'number', 'cast' => 'int', 'section' => 'Keuangan'],
+                    ['name' => 'harga_vendor', 'label' => 'Harga vendor', 'type' => 'number', 'cast' => 'int', 'section' => 'Keuangan'],
+                    ['name' => 'profit_amount', 'label' => 'Profit', 'type' => 'number', 'cast' => 'int', 'section' => 'Keuangan', 'readonly' => true, 'helper' => 'Otomatis: publish − vendor.'],
+                    ['name' => 'profit_margin', 'label' => 'Profit margin (%)', 'type' => 'number', 'cast' => 'int', 'section' => 'Keuangan', 'readonly' => true, 'helper' => 'Otomatis dari profit / publish.'],
+                    ['name' => 'stock', 'label' => 'Stok', 'type' => 'number', 'cast' => 'int', 'section' => 'Keuangan', 'placeholder' => '10'],
+                    ['name' => 'bank_name', 'label' => 'Nama bank', 'type' => 'text', 'section' => 'Rekening'],
+                    ['name' => 'bank_account', 'label' => 'Nomor rekening', 'type' => 'text', 'section' => 'Rekening'],
+                    ['name' => 'account_holder', 'label' => 'Nama pemilik rekening', 'type' => 'text', 'section' => 'Rekening'],
                 ],
                 'detail' => [
                     ['label' => 'Nama', 'attr' => 'name'],
                     ['label' => 'PIC', 'attr' => 'pic_name'],
                     ['label' => 'Telepon', 'attr' => 'phone'],
                     ['label' => 'Alamat', 'attr' => 'address'],
+                    ['label' => 'Status', 'attr' => 'status'],
+                    ['label' => 'Vendor induk', 'attr' => 'parent.name'],
                     ['label' => 'Kategori', 'attr' => 'category.name'],
                     ['label' => 'Harga publish', 'attr' => 'harga_publish', 'format' => 'money'],
                     ['label' => 'Harga vendor', 'attr' => 'harga_vendor', 'format' => 'money'],
+                    ['label' => 'Profit', 'attr' => 'profit_amount', 'format' => 'money'],
+                    ['label' => 'Stok', 'attr' => 'stock'],
                     ['label' => 'Bank', 'attr' => 'bank_name'],
                     ['label' => 'Rekening', 'attr' => 'bank_account'],
+                    ['label' => 'Pemilik rekening', 'attr' => 'account_holder'],
+                    ['label' => 'Deskripsi', 'attr' => 'description'],
                 ],
             ],
             'categories' => [
