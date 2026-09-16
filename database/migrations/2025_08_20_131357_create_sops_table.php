@@ -33,7 +33,9 @@ return new class extends Migration
             $table->index(['version']);
             $table->index(['effective_date']);
             $table->index(['review_date']);
-            $table->fullText(['title', 'description', 'keywords']);
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                $table->fullText(['title', 'description', 'keywords']);
+            }
         });
     }
 

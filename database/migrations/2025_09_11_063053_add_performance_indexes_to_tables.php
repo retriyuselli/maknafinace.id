@@ -12,6 +12,16 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('nota_dinas_details', fn (Blueprint $table) => $table->index(['nota_dinas_id', 'jenis_pengeluaran', 'vendor_id'], 'idx_nota_dinas_details_compound'));
+            Schema::table('expenses', fn (Blueprint $table) => $table->index(['order_id', 'nota_dinas_detail_id'], 'idx_expenses_order_detail'));
+            Schema::table('orders', fn (Blueprint $table) => $table->index(['status', 'closing_date', 'created_at'], 'idx_orders_status_dates'));
+            Schema::table('data_pembayarans', fn (Blueprint $table) => $table->index(['order_id', 'tgl_bayar'], 'idx_data_pembayaran_order'));
+            Schema::table('products', fn (Blueprint $table) => $table->index(['product_price', 'pengurangan'], 'idx_products_price_fields'));
+
+            return;
+        }
+
         $dbName = DB::getDatabaseName();
 
         // Add compound index for nota_dinas_details
@@ -80,6 +90,16 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('nota_dinas_details', fn (Blueprint $table) => $table->dropIndex('idx_nota_dinas_details_compound'));
+            Schema::table('expenses', fn (Blueprint $table) => $table->dropIndex('idx_expenses_order_detail'));
+            Schema::table('orders', fn (Blueprint $table) => $table->dropIndex('idx_orders_status_dates'));
+            Schema::table('data_pembayarans', fn (Blueprint $table) => $table->dropIndex('idx_data_pembayaran_order'));
+            Schema::table('products', fn (Blueprint $table) => $table->dropIndex('idx_products_price_fields'));
+
+            return;
+        }
+
         $dbName = DB::getDatabaseName();
         $notaIndexExists = DB::table('information_schema.statistics')
             ->where('table_schema', $dbName)

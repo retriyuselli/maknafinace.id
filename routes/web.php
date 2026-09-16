@@ -1,12 +1,14 @@
 <?php
 
-use App\Http\Controllers\AccountManagerReportController;
+use App\Enums\OrderStatus;
+use App\Http\Controllers\Absen\HomeController as AbsenHomeController;
 use App\Http\Controllers\AbsensiLaporanController;
 use App\Http\Controllers\AbsensiPhotoController;
+use App\Http\Controllers\AccountManagerReportController;
 use App\Http\Controllers\BankReconciliationTemplateController;
 use App\Http\Controllers\BankStatementFileController;
-use App\Http\Controllers\NotaDinasInvoiceFileController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\Front\AsetFeatureController;
 use App\Http\Controllers\Front\AuthController;
@@ -18,28 +20,28 @@ use App\Http\Controllers\Front\LaporanFeatureController;
 use App\Http\Controllers\Front\PayrollFeatureController;
 use App\Http\Controllers\Front\ProductCatalogController;
 use App\Http\Controllers\Front\RegistrationController;
+use App\Http\Controllers\Front\SolusiController;
 use App\Http\Controllers\FrontendDataPribadiController;
 use App\Http\Controllers\InvoiceOrderController;
 use App\Http\Controllers\JournalPdfController;
 use App\Http\Controllers\LaporanKeuanganController;
+use App\Http\Controllers\LeaveApprovalController;
+use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\NotaDinasInvoiceFileController;
 use App\Http\Controllers\NotaDinasPdfController;
 use App\Http\Controllers\PayrollSlipController;
 use App\Http\Controllers\ProductDisplayController;
-use App\Http\Controllers\Absen\HomeController as AbsenHomeController;
 use App\Http\Controllers\Profile\AbsensiController as ProfileAbsensiController;
-use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Profile\AdminToolsController;
+use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\ProspectAppController;
 use App\Http\Controllers\ProspectController;
 use App\Http\Controllers\ReconciliationController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SensitiveFileController;
 use App\Http\Controllers\SimulasiDisplayController;
 use App\Http\Controllers\SopPrintController;
 use App\Http\Controllers\UserFormPdfController;
-use App\Http\Controllers\LeaveApprovalController;
-use App\Http\Controllers\LeaveRequestController;
-use App\Http\Controllers\DocumentationController;
-use App\Enums\OrderStatus;
 use App\Models\DataPembayaran;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -47,6 +49,19 @@ use Illuminate\Support\Facades\Route;
 $authNoStore = ['filament.auth', 'no-store'];
 $authNoStoreThrottle = [...$authNoStore, 'throttle:60,1'];
 $phpInfoMiddleware = [...$authNoStore, 'super-admin', 'throttle:10,1'];
+
+Route::middleware($authNoStoreThrottle)->prefix('secure-files')->group(function (): void {
+    Route::get('/orders/{order}/{field}', [SensitiveFileController::class, 'order'])
+        ->where('field', 'doc_kontrak|agreement_product')
+        ->name('secure-files.orders');
+    Route::get('/leave/{leaveRequest}/{index}', [SensitiveFileController::class, 'leave'])
+        ->whereNumber('index')
+        ->name('secure-files.leave');
+    Route::get('/users/{user}/signature', [SensitiveFileController::class, 'signature'])
+        ->name('secure-files.signature');
+    Route::get('/document-attachments/{attachment}', [SensitiveFileController::class, 'documentAttachment'])
+        ->name('secure-files.document-attachments');
+});
 
 if (app()->isLocal() || config('app.debug')) {
     Route::get('/_phpinfo', function () {
@@ -167,7 +182,7 @@ Route::get('/fitur/{slug}', [FiturDetailController::class, 'show'])
 Route::view('/harga', 'front.harga')->name('harga');
 Route::view('/keamanan', 'front.keamanan')->name('keamanan');
 Route::view('/tentang-kami', 'front.tentang')->name('tentang');
-Route::get('/solusi/{slug}', [\App\Http\Controllers\Front\SolusiController::class, 'show'])
+Route::get('/solusi/{slug}', [SolusiController::class, 'show'])
     ->name('solusi.show')
     ->where('slug', 'owner|finance|hrd|operasional');
 

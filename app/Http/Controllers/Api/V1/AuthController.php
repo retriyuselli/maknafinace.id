@@ -53,36 +53,27 @@ class AuthController extends Controller
         $email = trim((string) ($payload['email'] ?? ''));
         $emailVerified = filter_var($payload['email_verified'] ?? false, FILTER_VALIDATE_BOOL);
 
-        if ($googleId === '' || $email === '') {
+        if ($googleId === '' || $email === '' || ! $emailVerified) {
             throw ValidationException::withMessages([
-                'id_token' => ['Akun Google tidak menyediakan email yang valid.'],
+                'id_token' => ['Akun Google harus menyediakan email yang terverifikasi.'],
             ]);
         }
 
         /** @var User|null $user */
         $user = User::query()
-            ->where(function ($query) use ($googleId, $email) {
-                $query->where('google_id', $googleId)->orWhere('email', $email);
-            })
+            ->where('google_id', $googleId)
             ->first();
 
-        if ($user) {
-            $this->assertUserCanLogin($user);
-
-            $updates = [];
-            if (! $user->google_id) {
-                $updates['google_id'] = $googleId;
-            }
-            if ($emailVerified && ! $user->email_verified_at) {
-                $updates['email_verified_at'] = now();
-            }
-            if ($updates !== []) {
-                $user->forceFill($updates)->save();
-            }
-        } else {
+        if (! $user || strcasecmp(trim((string) $user->email), $email) !== 0) {
             throw ValidationException::withMessages([
-                'id_token' => ['Akun Google belum terdaftar di Makna Finance. Hubungi administrator.'],
+                'id_token' => ['Akun Google belum ditautkan secara tepat oleh administrator.'],
             ]);
+        }
+
+        $this->assertUserCanLogin($user);
+
+        if (! $user->email_verified_at) {
+            $user->forceFill(['email_verified_at' => now()])->save();
         }
 
         return $this->tokenResponse($user, $data['device_name'] ?? 'ios-wofins-google');
@@ -121,12 +112,18 @@ class AuthController extends Controller
 
     private function tokenResponse(User $user, string $deviceName): JsonResponse
     {
-        $token = $user->createToken($deviceName)->plainTextToken;
+        $expiresAt = now()->addDays((int) config('sanctum.api_token_days', 30));
+        $token = $user->createToken(
+            $deviceName,
+            ['api:access', 'finance:read', 'finance:write', 'modules:read', 'modules:write'],
+            $expiresAt,
+        )->plainTextToken;
 
         return response()->json([
             'message' => 'Login berhasil.',
             'token' => $token,
             'token_type' => 'Bearer',
+            'expires_at' => $expiresAt->toIso8601String(),
             'user' => new UserResource($user->loadMissing(['roles'])),
         ]);
     }

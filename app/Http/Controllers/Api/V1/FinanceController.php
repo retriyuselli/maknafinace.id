@@ -3,14 +3,24 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\InvoiceOrderController;
+use App\Http\Controllers\ProductDisplayController;
+use App\Models\DataPembayaran;
+use App\Models\Order;
+use App\Models\Piutang;
+use App\Models\Product;
+use App\Models\Prospect;
 use App\Models\User;
+use App\Models\Vendor;
 use App\Services\FinanceProjectWriteService;
 use App\Services\FinanceSummaryService;
 use App\Support\CompanySubscription;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\Response;
 
 class FinanceController extends Controller
 {
@@ -21,6 +31,7 @@ class FinanceController extends Controller
 
     public function dashboard(Request $request): JsonResponse
     {
+        Gate::authorize('viewAny', DataPembayaran::class);
         $data = $request->validate([
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date'],
@@ -35,6 +46,7 @@ class FinanceController extends Controller
 
     public function projects(Request $request): JsonResponse
     {
+        Gate::authorize('viewAny', Order::class);
         $data = $request->validate([
             'status' => ['nullable', 'string', 'max:40'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
@@ -50,6 +62,8 @@ class FinanceController extends Controller
 
     public function projectsOverview(): JsonResponse
     {
+        Gate::authorize('viewAny', Order::class);
+
         return response()->json([
             'data' => $this->finance->orderOverviewStats(),
         ]);
@@ -57,17 +71,23 @@ class FinanceController extends Controller
 
     public function projectsClosing(Request $request): JsonResponse
     {
+        Gate::authorize('viewAny', Order::class);
         $data = $request->validate([
             'month' => ['nullable', 'string', 'regex:/^\d{4}-\d{2}$/'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
         ]);
 
         return response()->json(
-            $this->finance->projectsByClosingMonth($data['month'] ?? null)
+            $this->finance->projectsByClosingMonth(
+                $data['month'] ?? null,
+                (int) ($data['per_page'] ?? 20),
+            )
         );
     }
 
     public function projectsOverviewWidget(Request $request, string $key): JsonResponse
     {
+        Gate::authorize('viewAny', Order::class);
         $allowed = [
             'new_projects_month',
             'monthly_revenue',
@@ -84,15 +104,21 @@ class FinanceController extends Controller
 
         $data = $request->validate([
             'month' => ['nullable', 'string', 'regex:/^\d{4}-\d{2}$/'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
         ]);
 
         return response()->json(
-            $this->finance->projectsByOverviewWidget($key, $data['month'] ?? null)
+            $this->finance->projectsByOverviewWidget(
+                $key,
+                $data['month'] ?? null,
+                (int) ($data['per_page'] ?? 20),
+            )
         );
     }
 
     public function projectOptions(Request $request): JsonResponse
     {
+        Gate::authorize('create', Order::class);
         /** @var User $user */
         $user = $request->user();
 
@@ -106,6 +132,7 @@ class FinanceController extends Controller
 
     public function projectStore(Request $request): JsonResponse
     {
+        Gate::authorize('create', Order::class);
         /** @var User $user */
         $user = $request->user();
 
@@ -193,6 +220,7 @@ class FinanceController extends Controller
         if (! $order) {
             return response()->json(['message' => 'Proyek tidak ditemukan.'], 404);
         }
+        Gate::authorize('update', $order);
 
         if (! $this->projectWrites->canEdit($user, $order)) {
             return response()->json([
@@ -268,6 +296,7 @@ class FinanceController extends Controller
 
     public function prospects(Request $request): JsonResponse
     {
+        Gate::authorize('viewAny', Prospect::class);
         $data = $request->validate([
             'status' => ['nullable', 'string', 'max:40'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
@@ -283,6 +312,8 @@ class FinanceController extends Controller
 
     public function prospectShow(int $id): JsonResponse
     {
+        $prospect = Prospect::query()->findOrFail($id);
+        Gate::authorize('view', $prospect);
         $detail = $this->finance->prospectDetail($id);
 
         if (! $detail) {
@@ -296,6 +327,7 @@ class FinanceController extends Controller
 
     public function prospectStore(Request $request): JsonResponse
     {
+        Gate::authorize('create', Prospect::class);
         /** @var User $user */
         $user = $request->user();
 
@@ -313,6 +345,8 @@ class FinanceController extends Controller
 
     public function prospectUpdate(Request $request, int $id): JsonResponse
     {
+        $prospect = Prospect::query()->findOrFail($id);
+        Gate::authorize('update', $prospect);
         $detail = $this->finance->updateProspect($id, $this->validatedProspectPayload($request));
 
         if (! $detail) {
@@ -373,6 +407,8 @@ class FinanceController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
+        $order = Order::query()->findOrFail($id);
+        Gate::authorize('view', $order);
 
         $detail = $this->finance->projectDetail($user, $id);
 
@@ -385,10 +421,12 @@ class FinanceController extends Controller
         ]);
     }
 
-    public function projectContract(Request $request, int $id): \Symfony\Component\HttpFoundation\Response
+    public function projectContract(Request $request, int $id): Response
     {
         /** @var User $user */
         $user = $request->user();
+        $order = Order::query()->findOrFail($id);
+        Gate::authorize('view', $order);
         $file = $this->finance->projectContractFile($user, $id);
 
         if (! $file) {
@@ -401,7 +439,7 @@ class FinanceController extends Controller
         ]);
     }
 
-    public function projectInvoice(Request $request, int $id): \Symfony\Component\HttpFoundation\Response
+    public function projectInvoice(Request $request, int $id): Response
     {
         /** @var User $user */
         $user = $request->user();
@@ -411,12 +449,15 @@ class FinanceController extends Controller
         if (! $order) {
             return response()->json(['message' => 'Proyek tidak ditemukan.'], 404);
         }
+        Gate::authorize('view', $order);
 
-        return app(\App\Http\Controllers\InvoiceOrderController::class)->pdfResponse($order, false);
+        return app(InvoiceOrderController::class)->pdfResponse($order, false);
     }
 
-    public function paymentProof(int $id): \Symfony\Component\HttpFoundation\Response
+    public function paymentProof(int $id): Response
     {
+        $payment = DataPembayaran::query()->findOrFail($id);
+        Gate::authorize('view', $payment);
         $file = $this->finance->paymentProofFile($id);
 
         if (! $file) {
@@ -435,6 +476,8 @@ class FinanceController extends Controller
 
     public function productShow(int $id): JsonResponse
     {
+        $product = Product::query()->findOrFail($id);
+        Gate::authorize('view', $product);
         $detail = $this->finance->productDetail($id);
 
         if (! $detail) {
@@ -446,16 +489,17 @@ class FinanceController extends Controller
         ]);
     }
 
-    public function productPdf(int $id): \Symfony\Component\HttpFoundation\Response
+    public function productPdf(int $id): Response
     {
-        $product = \App\Models\Product::query()->find($id);
+        $product = Product::query()->find($id);
 
         if (! $product) {
             return response()->json(['message' => 'Paket tidak ditemukan.'], 404);
         }
+        Gate::authorize('view', $product);
 
         try {
-            return app(\App\Http\Controllers\ProductDisplayController::class)->apiDownloadPdf($product);
+            return app(ProductDisplayController::class)->apiDownloadPdf($product);
         } catch (\Throwable $e) {
             report($e);
 
@@ -465,6 +509,8 @@ class FinanceController extends Controller
 
     public function vendorShow(int $id): JsonResponse
     {
+        $vendor = Vendor::query()->findOrFail($id);
+        Gate::authorize('view', $vendor);
         $detail = $this->finance->vendorDetail($id);
 
         if (! $detail) {
@@ -478,6 +524,7 @@ class FinanceController extends Controller
 
     public function transactions(Request $request): JsonResponse
     {
+        Gate::authorize('viewAny', DataPembayaran::class);
         $data = $request->validate([
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date'],
@@ -501,6 +548,7 @@ class FinanceController extends Controller
 
     public function reportSummary(Request $request): JsonResponse
     {
+        Gate::authorize('viewAny', DataPembayaran::class);
         $data = $request->validate([
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date'],
@@ -518,8 +566,9 @@ class FinanceController extends Controller
         ]);
     }
 
-    public function reportPdf(Request $request): \Symfony\Component\HttpFoundation\Response
+    public function reportPdf(Request $request): Response
     {
+        Gate::authorize('viewAny', DataPembayaran::class);
         $data = $request->validate([
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date'],
@@ -542,8 +591,9 @@ class FinanceController extends Controller
         return $pdf->stream($payload['filename']);
     }
 
-    public function reportExcel(Request $request): \Symfony\Component\HttpFoundation\Response
+    public function reportExcel(Request $request): Response
     {
+        Gate::authorize('viewAny', DataPembayaran::class);
         $data = $request->validate([
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date'],
@@ -565,6 +615,7 @@ class FinanceController extends Controller
 
     public function piutangs(Request $request): JsonResponse
     {
+        Gate::authorize('viewAny', Piutang::class);
         $data = $request->validate([
             'status' => ['nullable', 'string', 'in:aktif,dibayar_sebagian,lunas,jatuh_tempo,dibatalkan'],
             'open_only' => ['nullable', 'boolean'],
@@ -582,6 +633,8 @@ class FinanceController extends Controller
 
     public function piutangShow(int $id): JsonResponse
     {
+        $piutang = Piutang::query()->findOrFail($id);
+        Gate::authorize('view', $piutang);
         $detail = $this->finance->piutangDetail($id);
 
         if (! $detail) {

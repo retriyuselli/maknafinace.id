@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class LeaveRequestController extends Controller
 {
@@ -93,13 +94,12 @@ class LeaveRequestController extends Controller
         if ($request->hasFile('documents')) {
             $uploadedFiles = [];
             foreach ($request->file('documents') as $file) {
-                $filename = time().'_'.$file->getClientOriginalName();
-                $path = $file->storeAs('leave-documents', $filename, 'public');
+                $path = $file->store('leave-documents', 'private');
                 $uploadedFiles[] = $path;
             }
 
             $leaveRequest->update([
-                'documents' => json_encode($uploadedFiles),
+                'documents' => $uploadedFiles,
             ]);
         }
 
@@ -142,15 +142,19 @@ class LeaveRequestController extends Controller
 
         // Handle file uploads if any
         if ($request->hasFile('documents')) {
+            foreach ((array) $leaveRequest->documents as $oldPath) {
+                if (is_string($oldPath)) {
+                    Storage::disk('private')->delete($oldPath);
+                }
+            }
             $uploadedFiles = [];
             foreach ($request->file('documents') as $file) {
-                $filename = time().'_'.$file->getClientOriginalName();
-                $path = $file->storeAs('leave-documents', $filename, 'public');
+                $path = $file->store('leave-documents', 'private');
                 $uploadedFiles[] = $path;
             }
 
             $leaveRequest->update([
-                'documents' => json_encode($uploadedFiles),
+                'documents' => $uploadedFiles,
             ]);
         }
 

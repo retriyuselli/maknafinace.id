@@ -387,10 +387,11 @@
                 }
                 
                 const documentsHtml = documents.length > 0 
-                    ? documents.map(doc => {
+                    ? documents.map((doc, index) => {
                         const fileName = doc.split('/').pop(); // Get filename from path
                         const fileExtension = fileName.split('.').pop().toLowerCase();
                         const fileIcon = getFileIcon(fileExtension);
+                        const secureUrl = `/secure-files/leave/${request.id}/${index}`;
                         return `
                             <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2">
                                 <div class="flex items-center">
@@ -401,7 +402,7 @@
                                     </div>
                                 </div>
                                 <div class="flex space-x-2">
-                                    <button onclick="viewDocument('${doc}')" 
+                                    <button onclick="viewDocument('${secureUrl}', '${fileExtension}', '${fileName}')"
                                         class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors duration-200">
                                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -409,7 +410,7 @@
                                         </svg>
                                         Lihat
                                     </button>
-                                    <button onclick="downloadDocument('${doc}')" 
+                                    <button onclick="downloadDocument('${secureUrl}')"
                                         class="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors duration-200">
                                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -640,16 +641,12 @@
         }
 
         // Function to view document
-        function viewDocument(documentPath) {
-            const fullUrl = `/storage/${documentPath}`;
-            
-            // Check if it's an image
-            const extension = documentPath.split('.').pop().toLowerCase();
+        function viewDocument(fullUrl, extension, fileName) {
             const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
             
             if (imageExtensions.includes(extension)) {
                 // Open image in a new modal
-                showImageModal(fullUrl, documentPath.split('/').pop());
+                showImageModal(fullUrl, fileName);
             } else {
                 // Open document in new tab
                 window.open(fullUrl, '_blank');
@@ -657,15 +654,8 @@
         }
 
         // Function to download document
-        function downloadDocument(documentPath) {
-            console.log('Download function called with:', documentPath);
-            
-            // Create download URL that goes through Laravel route for security
-            const downloadUrl = `/leave/document/download/${encodeURIComponent(documentPath)}`;
-            console.log('Download URL:', downloadUrl);
-            
-            // Use window.location for direct download (will trigger browser download)
-            window.location.href = downloadUrl;
+        function downloadDocument(secureUrl) {
+            window.location.href = secureUrl;
         }
 
         // Function to show image in modal

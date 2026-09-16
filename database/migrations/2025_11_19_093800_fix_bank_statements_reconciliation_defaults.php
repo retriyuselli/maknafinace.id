@@ -30,6 +30,10 @@ return new class extends Migration
             }
         });
 
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Adjust defaults for existing columns without requiring doctrine/dbal
         if (Schema::hasColumn('bank_statements', 'total_records')) {
             DB::statement('ALTER TABLE bank_statements MODIFY total_records INT NOT NULL DEFAULT 0');
@@ -44,7 +48,7 @@ return new class extends Migration
             // Ensure enum default is 'uploaded'
             try {
                 DB::statement("ALTER TABLE bank_statements MODIFY reconciliation_status ENUM('uploaded','processing','completed','failed') NOT NULL DEFAULT 'uploaded'");
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Fallback: if enum modification fails, make it nullable then set default via update
                 DB::statement("UPDATE bank_statements SET reconciliation_status = IFNULL(reconciliation_status, 'uploaded')");
             }

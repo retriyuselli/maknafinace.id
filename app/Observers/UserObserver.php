@@ -25,6 +25,13 @@ class UserObserver
         if ($user->isDirty('annual_leave_quota')) {
             LeaveBalance::generateForUser($user);
         }
+
+        if (
+            $user->wasChanged(['status', 'expire_date'])
+            && (in_array($user->status, ['terminated', 'inactive'], true) || $user->isExpired())
+        ) {
+            $user->tokens()->delete();
+        }
     }
 
     /**
@@ -32,6 +39,7 @@ class UserObserver
      */
     public function deleted(User $user): void
     {
+        $user->tokens()->delete();
         // Clean up leave balances when user is deleted
         $user->leaveBalances()->delete();
     }

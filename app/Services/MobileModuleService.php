@@ -14,10 +14,10 @@ use App\Models\Category;
 use App\Models\DataPribadi;
 use App\Models\Document;
 use App\Models\DocumentApproval;
-use App\Models\DocumentAttachment;
-use App\Models\DocumentCategory;
 use App\Models\Documentation;
 use App\Models\DocumentationCategory;
+use App\Models\DocumentAttachment;
+use App\Models\DocumentCategory;
 use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\ExpenseOps;
@@ -32,16 +32,12 @@ use App\Models\PendapatanLain;
 use App\Models\PengeluaranLain;
 use App\Models\Piutang;
 use App\Models\Product;
-use App\Models\ProductPenambahan;
-use App\Models\ProductPengurangan;
-use App\Models\ProductVendor;
 use App\Models\Prospect;
 use App\Models\SimulasiProduk;
 use App\Models\Sop;
 use App\Models\SopCategory;
 use App\Models\User;
 use App\Models\Vendor;
-use App\Models\VendorPriceHistory;
 use App\Support\CompanySubscription;
 use App\Support\PricingPlans;
 use App\Support\ProFeatures;
@@ -49,11 +45,11 @@ use App\Support\UserVisibility;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class MobileModuleService
 {
@@ -65,8 +61,11 @@ class MobileModuleService
         $items = [];
 
         foreach ($this->definitions() as $key => $def) {
-            $allowed = $this->allows($user, $def);
-            $canCreate = $allowed && $this->canCreate($def);
+            $allowed = $this->allows($user, $def)
+                && $this->policyAllows($user, 'viewAny', $def['model']);
+            $canCreate = $allowed
+                && $this->policyAllows($user, 'create', $def['model'])
+                && $this->canCreate($def);
             $count = $allowed ? $this->scopedQuery($def)->count() : 0;
 
             $items[] = [
@@ -95,6 +94,7 @@ class MobileModuleService
     {
         $def = $this->definition($key);
         $this->assertAllowed($user, $def);
+        $this->authorize($user, 'viewAny', $def['model']);
 
         $query = $this->scopedQuery($def);
         $search = trim((string) $search);
@@ -199,6 +199,10 @@ class MobileModuleService
         $def = $this->definition($key);
         $this->assertAllowed($user, $def);
 
+        if ($id === null) {
+            $this->authorize($user, 'create', $def['model']);
+        }
+
         if ($id === null && ! $this->canCreate($def)) {
             $quota = $def['quota'] ?? null;
             throw new HttpResponseException(response()->json([
@@ -213,6 +217,9 @@ class MobileModuleService
             throw new HttpResponseException(response()->json([
                 'message' => 'Data tidak ditemukan.',
             ], 404));
+        }
+        if ($record) {
+            $this->authorize($user, 'update', $record);
         }
 
         $fields = [];
@@ -298,7 +305,7 @@ class MobileModuleService
             }
         }
 
-            if ($key === 'vendors') {
+        if ($key === 'vendors') {
             if ($id === null) {
                 $payload['defaults'] = [
                     'status' => 'product',
@@ -354,6 +361,7 @@ class MobileModuleService
     {
         $def = $this->definition($key);
         $this->assertAllowed($user, $def);
+        $this->authorize($user, 'create', $def['model']);
 
         if (! $this->canCreate($def)) {
             $quota = $def['quota'] ?? null;
@@ -404,6 +412,7 @@ class MobileModuleService
         if (! $model) {
             return null;
         }
+        $this->authorize($user, 'update', $model);
 
         $data = $this->validated($def, $input, $id);
         if ($key === 'simulasi' && array_key_exists('payment_simulation', $input)) {
@@ -442,6 +451,10 @@ class MobileModuleService
         /** @var Model|null $model */
         $model = $query->find($id);
 
+        if ($model) {
+            $this->authorize($user, 'view', $model);
+        }
+
         return $model ? $this->mapRecord($key, $def, $model, true) : null;
     }
 
@@ -450,7 +463,26 @@ class MobileModuleService
         $def = $this->definition($key);
         $this->assertAllowed($user, $def);
 
-        return $this->scopedQuery($def)->find($id);
+        $model = $this->scopedQuery($def)->find($id);
+        if ($model) {
+            $this->authorize($user, 'view', $model);
+        }
+
+        return $model;
+    }
+
+    private function authorize(?User $user, string $ability, Model|string $subject): void
+    {
+        if (! $user) {
+            throw new HttpResponseException(response()->json(['message' => 'Unauthenticated'], 401));
+        }
+
+        Gate::forUser($user)->authorize($ability, $subject);
+    }
+
+    private function policyAllows(?User $user, string $ability, Model|string $subject): bool
+    {
+        return $user !== null && Gate::forUser($user)->allows($ability, $subject);
     }
 
     /**
@@ -1903,7 +1935,9 @@ class MobileModuleService
         })->all();
 
         $attachments = $model->attachments->values()->map(function (DocumentAttachment $row) {
-            $url = $this->publicStorageUrl($row->file_path);
+            $url = filled($row->file_path)
+                ? url('/api/v1/files/document-attachments/'.$row->id)
+                : null;
             $fields = [];
             if ($url) {
                 $fields[] = ['label' => 'File', 'value' => $url];

@@ -318,7 +318,10 @@
                 @php
                     $signatureBase64 = '';
                     if ($record->use_digital_signature && $record->creator && $record->creator->signature_url) {
-                        $signaturePath = public_path('storage/' . $record->creator->signature_url);
+                        $signaturePath = Storage::disk('private')->path($record->creator->signature_url);
+                        if (!file_exists($signaturePath)) {
+                            $signaturePath = Storage::disk('public')->path($record->creator->signature_url);
+                        }
                         if (file_exists($signaturePath)) {
                             $sigType = pathinfo($signaturePath, PATHINFO_EXTENSION);
                             $sigData = file_get_contents($signaturePath);

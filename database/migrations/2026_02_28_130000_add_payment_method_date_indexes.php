@@ -9,6 +9,14 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('expenses', fn (Blueprint $table) => $table->index(['payment_method_id', 'date_expense'], 'idx_expenses_pm_date'));
+            Schema::table('pengeluaran_lains', fn (Blueprint $table) => $table->index(['payment_method_id', 'date_expense'], 'idx_pengeluaran_pm_date'));
+            Schema::table('data_pembayarans', fn (Blueprint $table) => $table->index(['payment_method_id', 'tgl_bayar'], 'idx_pembayaran_pm_date'));
+
+            return;
+        }
+
         $db = DB::getDatabaseName();
 
         $existsExpenses = DB::table('information_schema.statistics')
@@ -47,6 +55,14 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('expenses', fn (Blueprint $table) => $table->dropIndex('idx_expenses_pm_date'));
+            Schema::table('pengeluaran_lains', fn (Blueprint $table) => $table->dropIndex('idx_pengeluaran_pm_date'));
+            Schema::table('data_pembayarans', fn (Blueprint $table) => $table->dropIndex('idx_pembayaran_pm_date'));
+
+            return;
+        }
+
         $db = DB::getDatabaseName();
 
         $existsExpenses = DB::table('information_schema.statistics')

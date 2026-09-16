@@ -8,14 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('vendors')) {
+        if (DB::getDriverName() !== 'sqlite' && Schema::hasTable('vendors')) {
             DB::statement("ALTER TABLE vendors MODIFY status ENUM('vendor','product','master') NOT NULL DEFAULT 'product'");
         }
     }
 
     public function down(): void
     {
-        if (Schema::hasTable('vendors')) {
+        if (DB::getDriverName() !== 'sqlite' && Schema::hasTable('vendors')) {
             DB::statement("ALTER TABLE vendors MODIFY status ENUM('vendor','product') NOT NULL DEFAULT 'product'");
         }
     }

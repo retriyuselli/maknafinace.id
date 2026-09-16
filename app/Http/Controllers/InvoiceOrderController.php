@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
+use App\Models\Company;
 use App\Models\Order;
 use App\Models\PaymentMethod;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -10,19 +12,21 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class InvoiceOrderController extends Controller
 {
     /**
      * Display the invoice for the given order.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function show(Order $order)
     {
         Gate::authorize('view', $order);
-        
+
         // Get payment methods for the view
         $paymentMethods = PaymentMethod::where('is_cash', false)->get();
 
@@ -105,8 +109,8 @@ class InvoiceOrderController extends Controller
         ])->findOrFail($order->id);
 
         $company = null;
-        if (\Illuminate\Support\Facades\Schema::hasTable('companies')) {
-            $company = \App\Models\Company::with('paymentMethod')->first();
+        if (Schema::hasTable('companies')) {
+            $company = Company::with('paymentMethod')->first();
         }
 
         $paymentDetails = 'Please contact us for payment details.';
@@ -170,7 +174,7 @@ class InvoiceOrderController extends Controller
         }
 
         // Configure PDF options to handle page breaks properly
-        $pdf = PDF::loadView('invoices.pdf', compact(
+        $pdf = Pdf::loadView('invoices.pdf', compact(
             'order',
             'company',
             'paymentDetails',
@@ -208,7 +212,7 @@ class InvoiceOrderController extends Controller
     public function previewProfitLoss(Order $order)
     {
         Gate::authorize('view', $order);
-        abort_unless($order->status === \App\Enums\OrderStatus::Done, 403, 'Laporan L/R hanya tersedia untuk pesanan Done.');
+        abort_unless($order->status === OrderStatus::Done, 403, 'Laporan L/R hanya tersedia untuk pesanan Done.');
 
         return view('orders.profit_loss_stream', [
             'order' => $order,
@@ -238,7 +242,7 @@ class InvoiceOrderController extends Controller
     protected function makeProfitLossPdf(Order $order)
     {
         Gate::authorize('view', $order);
-        abort_unless($order->status === \App\Enums\OrderStatus::Done, 403, 'Laporan L/R hanya tersedia untuk pesanan Done.');
+        abort_unless($order->status === OrderStatus::Done, 403, 'Laporan L/R hanya tersedia untuk pesanan Done.');
 
         @ini_set('max_execution_time', '300');
         @ini_set('memory_limit', '512M');
@@ -302,7 +306,7 @@ class InvoiceOrderController extends Controller
         @ini_set('max_execution_time', '300');
         @ini_set('memory_limit', '512M');
         @set_time_limit(300);
-        
+
         // Get order details with eager loading
         $order = Order::with([
             'items.product.category',
@@ -313,7 +317,7 @@ class InvoiceOrderController extends Controller
         ])->findOrFail($order->id);
 
         // Configure PDF options
-        $pdf = PDF::loadView('invoices.simulation-pdf', compact('order'));
+        $pdf = Pdf::loadView('invoices.simulation-pdf', compact('order'));
 
         // Set PDF options for better rendering of multi-page documents
         $pdf->setPaper('a4', 'portrait');
@@ -332,7 +336,7 @@ class InvoiceOrderController extends Controller
     /**
      * Print the invoice for the given order.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function print(Order $order)
     {
@@ -374,7 +378,7 @@ class InvoiceOrderController extends Controller
 
         // Handle file upload if present
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('payment-proofs', 'public');
+            $path = $request->file('image')->store('payment-proofs', 'private');
             $validated['image'] = $path;
         }
 

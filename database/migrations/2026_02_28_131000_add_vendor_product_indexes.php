@@ -9,6 +9,26 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('vendors', function (Blueprint $table): void {
+                $table->index('category_id', 'idx_vendors_category');
+                $table->index('status', 'idx_vendors_status');
+                $table->index('is_master', 'idx_vendors_is_master');
+                $table->index('created_at', 'idx_vendors_created_at');
+                $table->index('deleted_at', 'idx_vendors_deleted_at');
+            });
+            Schema::table('products', function (Blueprint $table): void {
+                $table->index('category_id', 'idx_products_category');
+                $table->index('is_active', 'idx_products_is_active');
+                $table->index('is_approved', 'idx_products_is_approved');
+                $table->index('created_at', 'idx_products_created_at');
+                $table->index('deleted_at', 'idx_products_deleted_at');
+                $table->index('price', 'idx_products_price');
+            });
+
+            return;
+        }
+
         $db = DB::getDatabaseName();
 
         // Vendors table indexes
@@ -72,6 +92,21 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('vendors', function (Blueprint $table): void {
+                foreach (['idx_vendors_category', 'idx_vendors_status', 'idx_vendors_is_master', 'idx_vendors_created_at', 'idx_vendors_deleted_at'] as $index) {
+                    $table->dropIndex($index);
+                }
+            });
+            Schema::table('products', function (Blueprint $table): void {
+                foreach (['idx_products_category', 'idx_products_is_active', 'idx_products_is_approved', 'idx_products_created_at', 'idx_products_deleted_at', 'idx_products_price'] as $index) {
+                    $table->dropIndex($index);
+                }
+            });
+
+            return;
+        }
+
         $db = DB::getDatabaseName();
 
         if (Schema::hasTable('vendors')) {

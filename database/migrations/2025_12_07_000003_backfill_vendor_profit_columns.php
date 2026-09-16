@@ -13,11 +13,12 @@ return new class extends Migration
             DB::table('vendors')->whereNull('profit_amount')->update(['profit_amount' => 0]);
             DB::table('vendors')->whereNull('profit_margin')->update(['profit_margin' => 0]);
 
-            DB::statement(<<<'SQL'
+            $greatest = DB::getDriverName() === 'sqlite' ? 'MAX' : 'GREATEST';
+            DB::statement(<<<SQL
                 UPDATE vendors
-                SET profit_amount = GREATEST(COALESCE(harga_publish,0) - COALESCE(harga_vendor,0), 0),
+                SET profit_amount = {$greatest}(COALESCE(harga_publish,0) - COALESCE(harga_vendor,0), 0),
                     profit_margin = CASE WHEN COALESCE(harga_publish,0) > 0
-                        THEN ROUND((GREATEST(COALESCE(harga_publish,0) - COALESCE(harga_vendor,0), 0) / COALESCE(harga_publish,0)) * 100, 2)
+                        THEN ROUND(({$greatest}(COALESCE(harga_publish,0) - COALESCE(harga_vendor,0), 0) / COALESCE(harga_publish,0)) * 100, 2)
                         ELSE 0 END
             SQL);
         }

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\FinanceController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MobileModuleController;
+use App\Http\Controllers\SensitiveFileController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:item-purchase-code')->group(function (): void {
@@ -20,7 +21,7 @@ Route::prefix('v1')->group(function () {
         ->middleware('throttle:10,1')
         ->name('api.v1.auth.google');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'abilities:api:access', 'api.active'])->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout'])
             ->name('api.v1.auth.logout');
 
@@ -33,6 +34,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/me/devices', [MeController::class, 'devices'])->name('api.v1.me.devices');
         Route::get('/me/compensation', [MeController::class, 'compensation'])
             ->name('api.v1.me.compensation');
+        Route::get('/files/document-attachments/{attachment}', [SensitiveFileController::class, 'documentAttachment'])
+            ->whereNumber('attachment')
+            ->name('api.v1.files.document-attachments');
 
         Route::prefix('modules')->group(function () {
             Route::get('/', [MobileModuleController::class, 'index'])
@@ -67,8 +71,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/finance/reports/summary', [FinanceController::class, 'reportSummary'])
             ->name('api.v1.finance.reports.summary');
         Route::get('/finance/reports/pdf', [FinanceController::class, 'reportPdf'])
+            ->middleware('throttle:3,1')
             ->name('api.v1.finance.reports.pdf');
         Route::get('/finance/reports/excel', [FinanceController::class, 'reportExcel'])
+            ->middleware('throttle:3,1')
             ->name('api.v1.finance.reports.excel');
         Route::get('/finance/piutangs', [FinanceController::class, 'piutangs'])
             ->name('api.v1.finance.piutangs');

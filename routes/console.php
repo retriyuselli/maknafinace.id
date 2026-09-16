@@ -27,3 +27,13 @@ Schedule::command('absensi:rekap-harian')
     ->dailyAt('01:15')
     ->timezone('Asia/Jakarta')
     ->description('Rekap absensi harian otomatis');
+
+Schedule::command('sanctum:prune-expired --hours=24')
+    ->dailyAt('02:00')
+    ->withoutOverlapping()
+    ->description('Prune expired Sanctum access tokens');
+
+Schedule::command('users:force-logout-expired')
+    ->hourly()
+    ->withoutOverlapping()
+    ->description('Revoke sessions and tokens for expired users');

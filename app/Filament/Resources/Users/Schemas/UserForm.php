@@ -226,6 +226,7 @@ class UserForm
                                                     ->columnSpan(1),
 
                                                 FileUpload::make('signature_url')
+                                                    ->disk('private')
                                                     ->label('Tanda Tangan Digital')
                                                     ->image()
                                                     ->disk('public')

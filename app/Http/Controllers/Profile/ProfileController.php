@@ -22,7 +22,7 @@ class ProfileController extends Controller
     private function profileViewData(): array
     {
         $user = Auth::user();
-        if ($user instanceof \App\Models\User) {
+        if ($user instanceof User) {
             $user->load(['status', 'roles']);
         }
 
@@ -33,6 +33,7 @@ class ProfileController extends Controller
                 $this->hrSalaryLeaveViewData($user),
             );
         }
+
         return array_merge(compact('user'), $viewData);
     }
 
@@ -101,6 +102,7 @@ class ProfileController extends Controller
             } elseif ($period === 'last_year') {
                 $q->whereYear('start_date', (int) $currentYear - 1);
             }
+
             return $q;
         };
 
@@ -223,6 +225,7 @@ class ProfileController extends Controller
         $availableMonths = collect(range(0, 11))
             ->map(function (int $i) {
                 $d = now()->startOfMonth()->subMonths($i)->startOfMonth();
+
                 return [
                     'value' => $d->format('Y-m'),
                     'label' => $d->copy()->locale('id')->translatedFormat('F Y'),
@@ -347,6 +350,7 @@ class ProfileController extends Controller
             $total = (int) $rows->sum('nominal');
             $rows = $rows->map(function (PendapatanLain $r) {
                 $desc = $r->name ?: ($r->keterangan ?: '-');
+
                 return [
                     'id' => $r->id,
                     'date' => $r->tgl_bayar?->format('d/m/Y') ?? '-',
@@ -372,6 +376,7 @@ class ProfileController extends Controller
                 if (! empty($r->vendor_id)) {
                     $refs[] = 'Vendor #'.$r->vendor_id;
                 }
+
                 return [
                     'id' => $r->id,
                     'date' => $r->date_expense?->format('d/m/Y') ?? '-',
@@ -458,7 +463,7 @@ class ProfileController extends Controller
             'hire_date' => ['nullable', 'date'],
             'emergency_contact' => ['nullable', 'string', 'max:255'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-            'signature_url' => ['nullable', 'image', 'mimes:png', 'max:1024'],
+            'signature' => ['nullable', 'image', 'mimes:png', 'max:1024', 'dimensions:max_width=2000,max_height=2000'],
         ];
 
         // Add password validation if password field is filled
@@ -484,12 +489,12 @@ class ProfileController extends Controller
         // Handle signature upload
         if ($request->hasFile('signature')) {
             // Delete old signature if exists
-            if ($user->signature_url && Storage::disk('public')->exists($user->signature_url)) {
-                Storage::disk('public')->delete($user->signature_url);
+            if ($user->signature_url && Storage::disk('private')->exists($user->signature_url)) {
+                Storage::disk('private')->delete($user->signature_url);
             }
 
             // Store new signature
-            $signaturePath = $request->file('signature')->store('signatures', 'public');
+            $signaturePath = $request->file('signature')->store('signatures', 'private');
             $user->signature_url = $signaturePath;
         }
 

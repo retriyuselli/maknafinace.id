@@ -170,7 +170,7 @@
                                     @if ($user->signature_url)
                                         <div class="shrink-0 border rounded p-2 bg-white">
                                             <img class="h-16 object-contain" 
-                                                 src="{{ Storage::url($user->signature_url) }}" 
+                                                 src="{{ route('secure-files.signature', $user) }}"
                                                  alt="Current signature">
                                         </div>
                                     @endif

@@ -195,8 +195,8 @@ class FinanceProjectWriteService
         ], 'user_id');
 
         return DB::transaction(function () use ($payload, $items, $payments, $paymentProofs, $files) {
-            $payload['doc_kontrak'] = $files['doc_kontrak']->store('doc_kontrak', 'public');
-            $payload['agreement_product'] = $files['agreement_product']->store('agreement_product', 'public');
+            $payload['doc_kontrak'] = $files['doc_kontrak']->store('orders/contracts', 'private');
+            $payload['agreement_product'] = $files['agreement_product']->store('orders/agreements', 'private');
 
             $order = Order::query()->create($payload);
 
@@ -219,7 +219,7 @@ class FinanceProjectWriteService
                     'kategori_transaksi' => $payment['kategori_transaksi'],
                     'tgl_bayar' => $payment['tgl_bayar'],
                     'image' => isset($paymentProofs[$index])
-                        ? $paymentProofs[$index]->store('payment-proofs/'.date('Y/m'), 'public')
+                        ? $paymentProofs[$index]->store('payment-proofs/'.date('Y/m'), 'private')
                         : null,
                 ]);
 
@@ -313,10 +313,10 @@ class FinanceProjectWriteService
         ];
 
         if (isset($files['doc_kontrak'])) {
-            $payload['doc_kontrak'] = $files['doc_kontrak']->store('doc_kontrak', 'public');
+            $payload['doc_kontrak'] = $files['doc_kontrak']->store('orders/contracts', 'private');
         }
         if (isset($files['agreement_product'])) {
-            $payload['agreement_product'] = $files['agreement_product']->store('agreement_product', 'public');
+            $payload['agreement_product'] = $files['agreement_product']->store('orders/agreements', 'private');
         }
 
         return DB::transaction(function () use ($order, $payload, $items, $payments, $paymentProofs) {
@@ -353,7 +353,7 @@ class FinanceProjectWriteService
                     'tgl_bayar' => $payment['tgl_bayar'],
                 ];
                 if (isset($paymentProofs[$index])) {
-                    $row['image'] = $paymentProofs[$index]->store('payment-proofs/'.date('Y/m'), 'public');
+                    $row['image'] = $paymentProofs[$index]->store('payment-proofs/'.date('Y/m'), 'private');
                 }
 
                 $existingId = (int) ($payment['id'] ?? 0);
