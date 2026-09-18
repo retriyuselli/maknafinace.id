@@ -30,6 +30,7 @@ use Filament\Support\RawJs;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class OrderForm
@@ -155,26 +156,18 @@ class OrderForm
                             ->label('Pax')
                             ->default(1000)
                             ->numeric(),
-                        FileUpload::make('doc_kontrak')
-                            ->label('Upload Kontrak')
-                            ->reorderable()
-                            ->required()
-                            ->helperText('pastikan kontrak sudah semua ditanda tangani')
-                            ->openable()
-                            ->disk('private')
-                            ->directory('doc_kontrak')
-                            ->downloadable()
-                            ->acceptedFileTypes(['application/pdf']),
-                        FileUpload::make('agreement_product')
-                            ->label('File Persetujuan Produk')
-                            ->reorderable()
-                            ->required()
-                            ->helperText('pastikan file persetujuan produk sudah semua ditanda tangani (one up level)')
-                            ->openable()
-                            ->disk('private')
-                            ->directory('agreement_product')
-                            ->downloadable()
-                            ->acceptedFileTypes(['application/pdf']),
+                        static::privateOrderPdfUpload(
+                            field: 'doc_kontrak',
+                            label: 'Upload Kontrak',
+                            helper: 'pastikan kontrak sudah semua ditanda tangani',
+                            directory: 'doc_kontrak',
+                        ),
+                        static::privateOrderPdfUpload(
+                            field: 'agreement_product',
+                            label: 'File Persetujuan Produk',
+                            helper: 'pastikan file persetujuan produk sudah semua ditanda tangani (one up level)',
+                            directory: 'agreement_product',
+                        ),
                         ToggleButtons::make('status')
                             ->inline()
                             ->options(OrderStatus::class)
@@ -563,5 +556,88 @@ class OrderForm
                 ->columns(3)
                 ->skippable(),
         ]);
+    }
+
+    protected static function privateOrderPdfUpload(string $field, string $label, string $helper, string $directory): FileUpload
+    {
+        $secureUrl = function (?Order $record, bool $download = false) use ($field): ?string {
+            if (! $record instanceof Order) {
+                return null;
+            }
+
+            $params = [
+                'order' => $record,
+                'field' => $field,
+            ];
+
+            if ($download) {
+                $params['download'] = 1;
+            }
+
+            return route('secure-files.orders', $params);
+        };
+
+        return FileUpload::make($field)
+            ->label($label)
+            ->helperText($helper)
+            ->required()
+            ->reorderable()
+            ->disk('private')
+            ->visibility('private')
+            ->directory($directory)
+            ->acceptedFileTypes(['application/pdf'])
+            ->openable()
+            ->downloadable()
+            ->fetchFileInformation(false)
+            ->getUploadedFileUsing(function (FileUpload $component, string $file) use ($secureUrl): ?array {
+                $resolved = static::resolveSensitiveStoredFile($file);
+                if ($resolved === null) {
+                    return null;
+                }
+
+                [$diskName, $path] = $resolved;
+                $disk = Storage::disk($diskName);
+                $record = $component->getRecord();
+
+                return [
+                    'name' => basename($path),
+                    'size' => $disk->size($path),
+                    'type' => $disk->mimeType($path) ?: 'application/pdf',
+                    'url' => $secureUrl($record instanceof Order ? $record : null),
+                ];
+            })
+            ->getOpenableFileUrlUsing(function (?string $file, $record) use ($secureUrl): ?string {
+                return filled($file) ? $secureUrl($record instanceof Order ? $record : null) : null;
+            })
+            ->getDownloadableFileUrlUsing(function (?string $file, $record) use ($secureUrl): ?string {
+                return filled($file) ? $secureUrl($record instanceof Order ? $record : null, true) : null;
+            });
+    }
+
+    /**
+     * @return array{0: string, 1: string}|null
+     */
+    protected static function resolveSensitiveStoredFile(string $file): ?array
+    {
+        $path = ltrim(str_replace('\\', '/', trim($file)), '/');
+        if (str_starts_with($path, 'storage/')) {
+            $path = substr($path, strlen('storage/'));
+        }
+
+        if ($path === '' || str_contains($path, '..')) {
+            return null;
+        }
+
+        foreach (['private', 'public'] as $disk) {
+            try {
+                if (Storage::disk($disk)->exists($path)) {
+                    return [$disk, $path];
+                }
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+
+        return null;
     }
 }
