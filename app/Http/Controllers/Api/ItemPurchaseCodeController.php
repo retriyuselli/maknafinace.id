@@ -17,10 +17,17 @@ class ItemPurchaseCodeController extends Controller
             'bind' => ['sometimes', 'boolean'],
         ]);
 
+        $bind = (bool) ($data['bind'] ?? true);
+        $domain = array_key_exists('domain', $data) ? $data['domain'] : null;
+        // Saat bind=false (mis. app iOS membuka host), jangan fallback ke Origin/getHost().
+        if ($bind && ($domain === null || $domain === '')) {
+            $domain = $request->headers->get('Origin') ?? $request->getHost();
+        }
+
         $payload = $service->verify(
             $data['code'],
-            $data['domain'] ?? $request->headers->get('Origin') ?? $request->getHost(),
-            (bool) ($data['bind'] ?? true),
+            $domain,
+            $bind,
         );
 
         return response()->json($payload, $payload['valid'] ? 200 : 422);

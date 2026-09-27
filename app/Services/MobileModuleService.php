@@ -859,6 +859,7 @@ class MobileModuleService
             'id' => (int) $row->id,
             'description' => (string) ($row->description ?? ''),
             'amount' => (int) ($row->amount ?? 0),
+            'publish_only' => (bool) ($row->publish_only ?? false),
             'notes' => $this->plainText((string) ($row->notes ?? '')) ?? '',
         ])->values()->all();
     }
@@ -933,6 +934,7 @@ class MobileModuleService
             $product->pengurangans()->create([
                 'description' => $description !== '' ? $description : 'Pengurangan',
                 'amount' => $amount,
+                'publish_only' => filter_var($row['publish_only'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 'notes' => (string) ($row['notes'] ?? ''),
             ]);
         }

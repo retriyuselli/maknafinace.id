@@ -55,6 +55,13 @@ class OrdersTable
                         'danger' => OrderStatus::Cancelled->value,
                         'primary' => OrderStatus::Done->value,
                     ]),
+                TextColumn::make('contract_signed_at')
+                    ->label('TTD')
+                    ->badge()
+                    ->getStateUsing(fn (Order $record): string => $record->isContractSigned() ? 'TTD' : 'Belum')
+                    ->color(fn (Order $record): string => $record->isContractSigned() ? 'success' : 'gray')
+                    ->tooltip(fn (Order $record): ?string => $record->contract_signed_at?->format('d M Y H:i'))
+                    ->toggleable(),
                 TextColumn::make('payment_status')
                     ->label('Pembayaran')
                     ->getStateUsing(function (Order $record): string {

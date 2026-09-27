@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details PDF: {{ $product->name }}</title>
+    <title>Form Persetujuan Produk: {{ $product->name }}</title>
     <style>
         /* DomPDF: jangan load @font-face Poppins (TTF besar) — bisa >2 menit per PDF.
            Pakai DejaVu Sans bawaan DomPDF (cepat + mendukung karakter umum). */
@@ -285,6 +285,16 @@
             font-weight: bold;
         }
 
+        .document-title {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            margin: -28px 0 10px 0;
+            padding: 0;
+            color: #111;
+            line-height: 1.3;
+        }
+
         /* Pastikan bold bekerja */
     </style>
 </head>
@@ -323,6 +333,8 @@
     </div>
 
     <div class="pdf-container">
+
+        <h1 class="document-title">Form Persetujuan Produk</h1>
 
         {{-- Simulation Information --}}
         <table class="details-table">
@@ -483,6 +495,7 @@
             $totalPublicPrice = $pricing['total_public_price'];
             $totalVendorPrice = $pricing['total_vendor_price'];
             $totalDiscountAmount = $pricing['total_discount_amount'];
+            $totalDiscountVendor = $pricing['total_discount_vendor'] ?? $totalDiscountAmount;
             $totalAdditionAmount = $pricing['total_addition_publish'];
             $totalAdditionVendorAmount = $pricing['total_addition_vendor'];
             $subtotalPublish = $pricing['subtotal_publish'];
@@ -498,8 +511,8 @@
                 <thead>
                     <tr style="background-color: #f3f4f6;">
                         <th style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: left; font-size: 8pt;">Keterangan</th>
-                        <th style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-size: 8pt;">Publish (Rp)</th>
                         <th style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-size: 8pt;">Vendor (Rp)</th>
+                        <th style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-size: 8pt;">Publish (Rp)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -507,9 +520,9 @@
                     <tr>
                         <td style="border: 1px solid #d1d5db; padding: 6px 8px; font-weight: bold; font-size: 8pt;">Harga Awal</td>
                         <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-size: 8pt;">
-                            {{ number_format($totalPublicPrice, 0, ',', '.') }}</td>
-                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-size: 8pt;">
                             {{ number_format($totalVendorPrice, 0, ',', '.') }}</td>
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-size: 8pt;">
+                            {{ number_format($totalPublicPrice, 0, ',', '.') }}</td>
                     </tr>
 
                     {{-- Addition (Penambahan) --}}
@@ -517,18 +530,18 @@
                         <td style="border: 1px solid #d1d5db; padding: 6px 8px; font-weight: bold; font-size: 8pt;">Addition (Penambahan)
                         </td>
                         <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; color: green; font-size: 8pt;">+
-                            {{ number_format($totalAdditionAmount, 0, ',', '.') }}</td>
-                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; color: green; font-size: 8pt;">+
                             {{ number_format($totalAdditionVendorAmount, 0, ',', '.') }}</td>
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; color: green; font-size: 8pt;">+
+                            {{ number_format($totalAdditionAmount, 0, ',', '.') }}</td>
                     </tr>
 
                     {{-- Subtotal --}}
                     <tr style="background-color: #f9fafb;">
                         <td style="border: 1px solid #d1d5db; padding: 6px 8px; font-weight: bold; font-size: 8pt;">Subtotal</td>
                         <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-weight: bold; font-size: 8pt;">
-                            {{ number_format($subtotalPublish, 0, ',', '.') }}</td>
-                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-weight: bold; font-size: 8pt;">
                             {{ number_format($subtotalVendor, 0, ',', '.') }}</td>
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-weight: bold; font-size: 8pt;">
+                            {{ number_format($subtotalPublish, 0, ',', '.') }}</td>
                     </tr>
 
                     {{-- Reduction (Pengurangan) --}}
@@ -536,7 +549,7 @@
                         <td style="border: 1px solid #d1d5db; padding: 6px 8px; font-weight: bold; font-size: 8pt;">Reduction (Pengurangan)
                         </td>
                         <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; color: red; font-size: 8pt;">-
-                            {{ number_format($totalDiscountAmount, 0, ',', '.') }}</td>
+                            {{ number_format($totalDiscountVendor, 0, ',', '.') }}</td>
                         <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; color: red; font-size: 8pt;">-
                             {{ number_format($totalDiscountAmount, 0, ',', '.') }}</td>
                     </tr>
@@ -545,9 +558,9 @@
                     <tr style="background-color: #f9fafb;">
                         <td style="border: 1px solid #d1d5db; padding: 6px 8px; font-weight: bold; font-size: 8pt;">Total Paket</td>
                         <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-weight: bold; font-size: 8pt;">
-                            {{ number_format($finalPriceAfterDiscounts, 0, ',', '.') }}</td>
-                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-weight: bold; font-size: 8pt;">
                             {{ number_format($finalVendorPriceAfterDiscounts, 0, ',', '.') }}</td>
+                        <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; font-weight: bold; font-size: 8pt;">
+                            {{ number_format($finalPriceAfterDiscounts, 0, ',', '.') }}</td>
                     </tr>
 
                     {{-- Profit / (Loss) --}}

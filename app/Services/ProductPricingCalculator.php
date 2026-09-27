@@ -103,19 +103,54 @@ class ProductPricingCalculator
         ];
     }
 
+    public static function isPublishOnly(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return (int) $value === 1;
+        }
+
+        if ($value === null) {
+            return false;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
     public static function calculateDiscountTotal(array $itemsPengurangan): int
     {
-        $total = 0;
+        return self::calculateDiscountTotals($itemsPengurangan)['publish'];
+    }
+
+    /**
+     * @return array{publish: int, vendor: int}
+     */
+    public static function calculateDiscountTotals(array $itemsPengurangan): array
+    {
+        $publish = 0;
+        $vendor = 0;
 
         foreach ($itemsPengurangan as $item) {
             if (! is_array($item)) {
                 continue;
             }
 
-            $total += self::stripCurrency($item['amount'] ?? 0);
+            $amount = self::stripCurrency($item['amount'] ?? 0);
+            $publish += $amount;
+
+            $publishOnly = self::isPublishOnly($item['publish_only'] ?? false);
+            if (! $publishOnly) {
+                $vendor += $amount;
+            }
         }
 
-        return $total;
+        return [
+            'publish' => $publish,
+            'vendor' => $vendor,
+        ];
     }
 
     public static function normalizeAdditions(array $penambahanHarga): array
@@ -172,6 +207,7 @@ class ProductPricingCalculator
      *     total_public_price: int,
      *     total_vendor_price: int,
      *     total_discount_amount: int,
+     *     total_discount_vendor: int,
      *     total_addition_publish: int,
      *     total_addition_vendor: int,
      *     subtotal_publish: int,
@@ -205,9 +241,10 @@ class ProductPricingCalculator
             ])->all()
         );
 
-        $discount = self::calculateDiscountTotal(
+        $discounts = self::calculateDiscountTotals(
             $pengurangans->map(fn ($row) => [
                 'amount' => $row->amount,
+                'publish_only' => self::isPublishOnly($row->publish_only ?? false),
             ])->all()
         );
 
@@ -222,14 +259,17 @@ class ProductPricingCalculator
         $totalVendorPrice = (int) $vendor['vendor_total'];
         $totalAdditionPublish = (int) $addition['penambahan_publish'];
         $totalAdditionVendor = (int) $addition['penambahan_vendor'];
+        $discountPublish = (int) $discounts['publish'];
+        $discountVendor = (int) $discounts['vendor'];
 
-        $finalPublish = self::calculateFinalPrice($totalPublicPrice, $discount, $totalAdditionPublish);
-        $finalVendor = self::calculateFinalPrice($totalVendorPrice, $discount, $totalAdditionVendor);
+        $finalPublish = self::calculateFinalPrice($totalPublicPrice, $discountPublish, $totalAdditionPublish);
+        $finalVendor = self::calculateFinalPrice($totalVendorPrice, $discountVendor, $totalAdditionVendor);
 
         return [
             'total_public_price' => $totalPublicPrice,
             'total_vendor_price' => $totalVendorPrice,
-            'total_discount_amount' => $discount,
+            'total_discount_amount' => $discountPublish,
+            'total_discount_vendor' => $discountVendor,
             'total_addition_publish' => $totalAdditionPublish,
             'total_addition_vendor' => $totalAdditionVendor,
             'subtotal_publish' => $totalPublicPrice + $totalAdditionPublish,

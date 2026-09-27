@@ -1056,6 +1056,7 @@ class FinanceSummaryService
                     'id' => $row->id,
                     'description' => $row->description,
                     'amount' => (int) $row->amount,
+                    'publish_only' => (bool) ($row->publish_only ?? false),
                     'notes' => $this->plainText($row->notes),
                 ];
             })->values()->all(),
@@ -1067,6 +1068,7 @@ class FinanceSummaryService
                 'subtotal_publish' => (int) ($pricing['subtotal_publish'] ?? 0),
                 'subtotal_vendor' => (int) ($pricing['subtotal_vendor'] ?? 0),
                 'pengurangan' => (int) ($pricing['total_discount_amount'] ?? 0),
+                'pengurangan_vendor' => (int) ($pricing['total_discount_vendor'] ?? $pricing['total_discount_amount'] ?? 0),
                 'total_publish' => (int) ($pricing['final_publish'] ?? 0),
                 'total_vendor' => (int) ($pricing['final_vendor'] ?? 0),
                 'profit' => (int) ($pricing['profit_and_loss'] ?? 0),

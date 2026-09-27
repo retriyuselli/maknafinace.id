@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\ProductPricingCalculator;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
@@ -15,23 +17,30 @@ class ProductPengurangan extends Model
         'product_id',
         'description',
         'amount',
-        'notes', // Optional: if you added notes in the repeater
+        'publish_only',
+        'notes',
     ];
 
     /**
-     * The attributes that should be cast.
-     *
      * @var array<string, string>
      */
     protected $casts = [
-        'amount' => 'decimal:2', // Cast amount to a decimal with 2 places
+        'amount' => 'integer',
     ];
+
+    protected function publishOnly(): Attribute
+    {
+        return Attribute::make(
+            get: fn (mixed $value): bool => ProductPricingCalculator::isPublishOnly($value),
+            set: fn (mixed $value): int => ProductPricingCalculator::isPublishOnly($value) ? 1 : 0,
+        );
+    }
 
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['product_id', 'description', 'amount'])
+            ->logOnly(['product_id', 'description', 'amount', 'publish_only'])
             ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
             ->useLogName('product_pengurangan');
     }

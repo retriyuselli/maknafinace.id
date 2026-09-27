@@ -32,6 +32,23 @@ class OrderPolicy
         return $authUser->can('Update:Order');
     }
 
+    /**
+     * Ubah angka kontrak (item/harga/penambahan/pengurangan) setelah TTD.
+     */
+    public function amendFinancials(AuthUser $authUser, Order $order): bool
+    {
+        if (! $this->update($authUser, $order)) {
+            return false;
+        }
+
+        if (! $order->isContractSigned()) {
+            return true;
+        }
+
+        return $authUser instanceof \App\Models\User
+            && $authUser->canApplyOrderFinancialAmendment();
+    }
+
     public function delete(AuthUser $authUser, Order $order): bool
     {
         return $authUser->can('Delete:Order');

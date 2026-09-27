@@ -95,6 +95,7 @@
             $totalAdditionAmount = 0;
             $totalAdditionVendorAmount = 0;
             $totalDiscountAmount = 0;
+            $totalDiscountVendorAmount = 0;
 
             // Loop melalui semua item order untuk menghitung total
             foreach ($order->items as $orderItem) {
@@ -124,8 +125,13 @@
                     $totalAdditionVendorAmount += $productAdditionVendor * $quantity;
 
                     // Total pengurangan dari product
-                    $productDiscount = ($product->pengurangans ?? collect())->sum('amount');
+                    $pengurangans = $product->pengurangans ?? collect();
+                    $productDiscount = $pengurangans->sum('amount');
+                    $productDiscountVendor = $pengurangans
+                        ->reject(fn ($row) => \App\Services\ProductPricingCalculator::isPublishOnly($row->publish_only ?? false))
+                        ->sum('amount');
                     $totalDiscountAmount += $productDiscount * $quantity;
+                    $totalDiscountVendorAmount += $productDiscountVendor * $quantity;
                 }
             }
 
@@ -134,7 +140,7 @@
 
             // Hitung harga final setelah diskon dan penambahan
             $finalPriceAfterDiscounts = $basePackagePrice - $totalDiscountAmount + $totalAdditionAmount;
-            $finalVendorPriceAfterDiscounts = $totalVendorPrice - $totalDiscountAmount + $totalAdditionVendorAmount;
+            $finalVendorPriceAfterDiscounts = $totalVendorPrice - $totalDiscountVendorAmount + $totalAdditionVendorAmount;
 
             // Hitung Profit & Loss dari perhitungan detail
             $calculatedProfitLoss = $finalPriceAfterDiscounts - $finalVendorPriceAfterDiscounts;
@@ -304,11 +310,24 @@
                             <tr>
                                 <td
                                     class="px-4 py-2 border-b border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
-                                    Total Reduction (Pengurangan)</td>
+                                    Total Reduction Publish (Pengurangan)</td>
                                 <td
                                     class="text-right px-4 py-2 border-b border-gray-200 dark:border-gray-600 text-red-600">
                                     - Rp
                                     {{ number_format($totalDiscountAmount, 0, ',', '.') }}
+                                </td>
+                            </tr>
+                        @endif
+
+                        @if ($totalDiscountVendorAmount > 0)
+                            <tr>
+                                <td
+                                    class="px-4 py-2 border-b border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
+                                    Total Reduction Vendor (Pengurangan)</td>
+                                <td
+                                    class="text-right px-4 py-2 border-b border-gray-200 dark:border-gray-600 text-red-600">
+                                    - Rp
+                                    {{ number_format($totalDiscountVendorAmount, 0, ',', '.') }}
                                 </td>
                             </tr>
                         @endif
@@ -548,6 +567,9 @@
                                     class="px-4 py-2 border-b border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                                     <div>
                                         {{ ucwords(strtolower($itemPengurangan->description ?? 'N/A')) }}
+                                        @if ($itemPengurangan->publish_only)
+                                            <span class="font-normal text-gray-500 dark:text-gray-300"> (Publish saja)</span>
+                                        @endif
                                     </div>
                                     @if ($itemPengurangan->notes)
                                         <div class="ml-7 text-gray-600 dark:text-white">

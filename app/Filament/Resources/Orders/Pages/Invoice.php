@@ -27,6 +27,9 @@ class Invoice extends Page
             'user',
             'employee',
             'items.product.vendorItems.vendor',
+            'items.product.items',
+            'items.product.penambahanHarga',
+            'items.product.pengurangans',
             'dataPembayaran.paymentMethod',
             'expenses.vendor',
         ])->findOrFail($record);

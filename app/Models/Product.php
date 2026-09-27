@@ -135,6 +135,44 @@ class Product extends Model
         );
     }
 
+    public function simulasiProduks(): HasMany
+    {
+        return $this->hasMany(SimulasiProduk::class);
+    }
+
+    public function getUsageStatusAttribute(): string
+    {
+        $details = $this->usage_details;
+
+        return ($details['orderCount'] > 0 || $details['simulasiCount'] > 0 || $details['childCount'] > 0)
+            ? 'In Use'
+            : 'Available';
+    }
+
+    /**
+     * @return array{
+     *     orderCount: int,
+     *     orderProductCount: int,
+     *     simulasiCount: int,
+     *     childCount: int,
+     *     vendorItemCount: int,
+     *     penguranganCount: int,
+     *     penambahanCount: int
+     * }
+     */
+    public function getUsageDetailsAttribute(): array
+    {
+        return [
+            'orderCount' => $this->orders()->count(),
+            'orderProductCount' => $this->orderProducts()->count(),
+            'simulasiCount' => $this->simulasiProduks()->count(),
+            'childCount' => $this->children()->count(),
+            'vendorItemCount' => $this->items()->count(),
+            'penguranganCount' => $this->pengurangans()->count(),
+            'penambahanCount' => $this->penambahanHarga()->count(),
+        ];
+    }
+
     public function getRouteKeyName()
     {
         return 'slug';

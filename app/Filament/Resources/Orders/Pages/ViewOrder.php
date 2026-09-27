@@ -55,6 +55,10 @@ class ViewOrder extends ViewRecord
                         }
                     }
 
+                    if ($record->isContractSigned()) {
+                        return 'Kontrak sudah TTD. Angka keuangan terkunci; koreksi hanya amandemen (AM/Finance/Super Admin/Admin AM).';
+                    }
+
                     return 'Edit order ini';
                 }),
         ];

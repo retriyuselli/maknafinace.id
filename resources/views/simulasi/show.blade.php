@@ -639,12 +639,15 @@ Invoice Area
                                             $calculationTotalReductions = (
                                                 $simulasi->product->pengurangans ?? collect()
                                             )->sum('amount');
+                                            $calculationVendorReductions = (
+                                                $simulasi->product->pengurangans ?? collect()
+                                            )->reject(fn ($row) => \App\Services\ProductPricingCalculator::isPublishOnly($row->publish_only ?? false))->sum('amount');
 
                                             // Hitung total jumlah harga publish setelah pengurangan dan penambahan
                                             $finalPublicPriceAfterDiscounts =
                                                 $basePackagePrice + $totalAdditionPublish - $calculationTotalReductions;
                                             $finalVendorPriceAfterDiscounts =
-                                                $baseVendorPrice + $totalAdditionVendor - $calculationTotalReductions;
+                                                $baseVendorPrice + $totalAdditionVendor - $calculationVendorReductions;
 
                                             // Profit & Loss for this simulation
                                             $calculationProfitLoss =
@@ -692,7 +695,7 @@ Invoice Area
                                                             </td>
                                                             <td class="col-vendor-price"
                                                                 style="color: #dc3545; font-weight: 600;">
-                                                                ({{ number_format($calculationTotalReductions, 0, ',', '.') }})
+                                                                ({{ number_format($calculationVendorReductions, 0, ',', '.') }})
                                                             </td>
                                                             <td class="col-public-price"
                                                                 style="color: #dc3545; font-weight: 600; display: table-cell !important;">

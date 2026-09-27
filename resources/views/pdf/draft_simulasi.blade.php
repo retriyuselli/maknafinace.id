@@ -234,12 +234,15 @@
         $totalAdditionVendor = $penambahanHarga->sum('harga_vendor');
 
         $calculationTotalReductions = $pengurangans->sum('amount');
+        $calculationVendorReductions = $pengurangans
+            ->reject(fn ($row) => \App\Services\ProductPricingCalculator::isPublishOnly($row->publish_only ?? false))
+            ->sum('amount');
 
         $basePackagePrice = $totalPublicPrice;
         $baseVendorPrice = $totalVendorPrice;
 
         $finalPublicPriceAfterDiscounts = $basePackagePrice + $totalAdditionPublish - $calculationTotalReductions;
-        $finalVendorPriceAfterDiscounts = $baseVendorPrice + $totalAdditionVendor - $calculationTotalReductions;
+        $finalVendorPriceAfterDiscounts = $baseVendorPrice + $totalAdditionVendor - $calculationVendorReductions;
 
         $calculationProfitLoss = $finalPublicPriceAfterDiscounts - $finalVendorPriceAfterDiscounts;
     @endphp

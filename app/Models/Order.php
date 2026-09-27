@@ -32,6 +32,7 @@ class Order extends Model
         'last_edited_by',
         'no_kontrak',
         'doc_kontrak',
+        'contract_signed_at',
         'agreement_product',
         'pax',
         'note',
@@ -59,6 +60,7 @@ class Order extends Model
         'grand_total' => 'integer',
         'bayar' => 'integer',
         'closing_date' => 'date',
+        'contract_signed_at' => 'datetime',
         'kategori_transaksi' => 'string',
     ];
 
@@ -66,9 +68,26 @@ class Order extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status', 'total_price', 'closing_date', 'user_id', 'number', 'name'])
+            ->logOnly(['status', 'total_price', 'closing_date', 'contract_signed_at', 'user_id', 'number', 'name', 'penambahan', 'pengurangan', 'grand_total'])
             ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
             ->useLogName('order');
+    }
+
+    public function isContractSigned(): bool
+    {
+        return $this->contract_signed_at !== null;
+    }
+
+    public function financialFieldsLockedFor(?User $user = null): bool
+    {
+        // Setelah TTD, angka item/harga dikunci di form.
+        // Koreksi hanya lewat aksi "Ambil ulang dari Produk" (+ alasan amandemen).
+        return $this->isContractSigned();
+    }
+
+    public function amendments(): HasMany
+    {
+        return $this->hasMany(OrderAmendment::class)->latest();
     }
 
     protected function finance(): OrderFinance

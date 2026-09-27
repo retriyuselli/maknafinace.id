@@ -373,6 +373,16 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         return true;
     }
 
+    public function canApplyOrderFinancialAmendment(): bool
+    {
+        return $this->hasAnyRole(['super_admin', 'Finance', 'admin_am', 'Account Manager']);
+    }
+
+    public function canMarkOrderContractSigned(): bool
+    {
+        return $this->hasAnyRole(['super_admin', 'Finance', 'admin_am', 'Account Manager']);
+    }
+
     /**
      * Check if user account is expired
      */

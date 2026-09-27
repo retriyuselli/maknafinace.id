@@ -15,18 +15,26 @@ class OrderProduct extends Model
         'product_id',
         'quantity',
         'unit_price',
+        'unit_penambahan',
+        'unit_pengurangan',
+        'penambahan_lines',
+        'pengurangan_lines',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'integer',
+        'unit_penambahan' => 'integer',
+        'unit_pengurangan' => 'integer',
+        'penambahan_lines' => 'array',
+        'pengurangan_lines' => 'array',
     ];
 
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['order_id', 'product_id', 'quantity', 'unit_price'])
+            ->logOnly(['order_id', 'product_id', 'quantity', 'unit_price', 'unit_penambahan', 'unit_pengurangan'])
             ->setDescriptionForEvent(fn (string $eventName) => "{$eventName}")
             ->useLogName('order_product');
     }

@@ -15,6 +15,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -282,9 +283,142 @@ class ProductForm
                                 ]),
                             self::getAdditionRepeater(),
                         ]),
+                    self::getUsageInformationTab(),
                 ])
                 ->columnSpanFull(),
         ];
+    }
+
+    protected static function getUsageInformationTab(): Tab
+    {
+        return Tab::make('Usage Information')
+            ->icon('heroicon-m-chart-bar')
+            ->schema([
+                Section::make('Product Usage Overview')
+                    ->schema([
+                        Grid::make([
+                            'default' => 1,
+                            'md' => 3,
+                        ])
+                            ->schema([
+                                ViewField::make('orders_count')
+                                    ->label('Proyek Wedding')
+                                    ->view('filament.forms.components.text-content')
+                                    ->formatStateUsing(function ($record): string {
+                                        if (! $record) {
+                                            return '0 proyek';
+                                        }
+
+                                        $count = (int) ($record->usage_details['orderCount'] ?? 0);
+
+                                        return $count.' proyek';
+                                    }),
+                                ViewField::make('simulasi_count')
+                                    ->label('Simulasi')
+                                    ->view('filament.forms.components.text-content')
+                                    ->formatStateUsing(function ($record): string {
+                                        if (! $record) {
+                                            return '0 simulasi';
+                                        }
+
+                                        $count = (int) ($record->usage_details['simulasiCount'] ?? 0);
+
+                                        return $count.' simulasi';
+                                    }),
+                                ViewField::make('deletion_status')
+                                    ->label('Status hapus')
+                                    ->view('filament.forms.components.text-content')
+                                    ->formatStateUsing(function ($record): string {
+                                        if (! $record) {
+                                            return 'Belum tersimpan';
+                                        }
+
+                                        return $record->usage_status === 'In Use'
+                                            ? 'Tidak disarankan dihapus'
+                                            : 'Bisa dihapus';
+                                    }),
+                            ]),
+                    ]),
+                Section::make('Usage Details')
+                    ->schema([
+                        ViewField::make('usage_summary')
+                            ->label('Detailed Usage Information')
+                            ->view('filament.forms.components.text-content')
+                            ->formatStateUsing(function ($record): string {
+                                if (! $record) {
+                                    return 'Simpan produk dulu untuk melihat pemakaian di proyek, simulasi, dan varian.';
+                                }
+
+                                $details = $record->usage_details;
+                                $lines = [];
+
+                                $vendorItems = (int) ($details['vendorItemCount'] ?? 0);
+                                $pengurangan = (int) ($details['penguranganCount'] ?? 0);
+                                $penambahan = (int) ($details['penambahanCount'] ?? 0);
+                                $lines[] = 'Isi paket: '.$vendorItems.' vendor, '.$pengurangan.' pengurangan, '.$penambahan.' penambahan.';
+
+                                $orderCount = (int) ($details['orderCount'] ?? 0);
+                                if ($orderCount > 0) {
+                                    $orderNames = $record->orders()
+                                        ->with('prospect')
+                                        ->latest('orders.id')
+                                        ->take(5)
+                                        ->get()
+                                        ->map(fn ($order) => $order->prospect?->name_event ?: ($order->number ?? '#'.$order->id))
+                                        ->filter()
+                                        ->unique()
+                                        ->values();
+                                    $line = 'Proyek Wedding ('.$orderCount.'): '.$orderNames->implode(', ');
+                                    if ($orderCount > 5) {
+                                        $line .= ' dan '.($orderCount - 5).' lagi...';
+                                    }
+                                    $lines[] = $line;
+                                }
+
+                                $simulasiCount = (int) ($details['simulasiCount'] ?? 0);
+                                if ($simulasiCount > 0) {
+                                    $simulasiNames = $record->simulasiProduks()
+                                        ->with('prospect')
+                                        ->latest('id')
+                                        ->take(5)
+                                        ->get()
+                                        ->map(fn ($simulasi) => $simulasi->prospect?->name_event ?: ($simulasi->slug ?? '#'.$simulasi->id))
+                                        ->filter()
+                                        ->unique()
+                                        ->values();
+                                    $line = 'Simulasi ('.$simulasiCount.'): '.$simulasiNames->implode(', ');
+                                    if ($simulasiCount > 5) {
+                                        $line .= ' dan '.($simulasiCount - 5).' lagi...';
+                                    }
+                                    $lines[] = $line;
+                                }
+
+                                $childCount = (int) ($details['childCount'] ?? 0);
+                                if ($childCount > 0) {
+                                    $childNames = $record->children()->orderBy('name')->pluck('name')->filter()->values();
+                                    $top = $childNames->take(5);
+                                    $line = 'Varian / child ('.$childCount.'): '.$top->implode(', ');
+                                    if ($childCount > 5) {
+                                        $line .= ' dan '.($childCount - 5).' lagi...';
+                                    }
+                                    $lines[] = $line;
+                                }
+
+                                if ($orderCount === 0 && $simulasiCount === 0 && $childCount === 0) {
+                                    $lines[] = 'Produk ini belum dipakai di proyek, simulasi, atau sebagai paket induk.';
+                                }
+
+                                return implode("\n\n", $lines);
+                            })
+                            ->columnSpanFull(),
+                        ViewField::make('usage_note')
+                            ->label('Catatan')
+                            ->view('filament.forms.components.text-content')
+                            ->formatStateUsing(fn (): string => 'Catatan: produk yang sudah dipakai di proyek atau simulasi sebaiknya tidak dihapus. Ubah status menjadi nonaktif jika tidak ingin ditawarkan lagi.')
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible(),
+            ]);
     }
 
     protected static function getVendorRepeater()
@@ -460,6 +594,14 @@ class ProductForm
                             ->dehydrateStateUsing(fn ($state) => self::stripCurrency($state))
                             ->columnSpan(3),
 
+                        Toggle::make('publish_only')
+                            ->label('Hanya potong Publish')
+                            ->helperText('Aktifkan hanya untuk Diskon CEO / bukan barang. Harga vendor tidak ikut berkurang.')
+                            ->default(false)
+                            ->dehydrated()
+                            ->dehydrateStateUsing(fn ($state): bool => \App\Services\ProductPricingCalculator::isPublishOnly($state))
+                            ->columnSpanFull(),
+
                         RichEditor::make('notes')
                             ->label('Keterangan')
                             ->columnSpanFull(),
@@ -467,8 +609,14 @@ class ProductForm
             ])
             ->defaultItems(0)
             ->collapsed()
-            ->itemLabel(fn (array $state): ?string => $state['description'] ?? 'New Discount Item'
-            )
+            ->itemLabel(function (array $state): ?string {
+                $name = $state['description'] ?? 'New Discount Item';
+                if (! empty($state['publish_only'])) {
+                    return $name.' · Publish saja';
+                }
+
+                return $name;
+            })
             ->reorderable()
             ->cloneable()
             ->afterStateUpdated(function (Get $get, Set $set, $state) {

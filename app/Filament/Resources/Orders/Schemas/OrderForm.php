@@ -6,19 +6,26 @@ use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Order;
 use App\Models\PaymentMethod;
+use App\Models\Product;
 use App\Models\Prospect;
 use App\Support\CompanySubscription;
+use App\Support\OrderFinancialSnapshot;
 use Exception;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions as SchemaActions;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -168,13 +175,34 @@ class OrderForm
                             helper: 'pastikan file persetujuan produk sudah semua ditanda tangani (one up level)',
                             directory: 'agreement_product',
                         ),
+                        DateTimePicker::make('contract_signed_at')
+                            ->label('Kontrak Ditandatangani')
+                            ->native(false)
+                            ->seconds(false)
+                            ->helperText('Setelah diisi, angka item/harga terkunci. Koreksi lewat “Ambil ulang dari Produk” di Detail Pembayaran (modal alasan, langsung tersimpan).')
+                            ->disabled(function (?Order $record): bool {
+                                $user = Auth::user();
+                                if (! $user instanceof \App\Models\User || ! $user->canMarkOrderContractSigned()) {
+                                    return true;
+                                }
+                                if ($record?->isContractSigned() && ! $user->hasRole('super_admin')) {
+                                    return true;
+                                }
+
+                                return false;
+                            })
+                            ->dehydrated(true)
+                            ->columnSpan([
+                                'default' => 1,
+                                'md' => 2,
+                            ]),
                         ToggleButtons::make('status')
                             ->inline()
                             ->options(OrderStatus::class)
                             ->label('Status Pesanan')
                             ->columnSpan(2)
                             ->required()
-                            ->helperText('Status Done: Finance hanya bisa view, Super Admin bisa edit.'),
+                            ->helperText('Setelah TTD, angka keuangan dikunci. Amandemen lewat “Ambil ulang dari Produk”. Status Done: edit penuh hanya Super Admin.'),
                         RichEditor::make('note')
                             ->label('Keterangan Tambahan')
                             ->fileAttachmentsDirectory('orders')
@@ -186,7 +214,64 @@ class OrderForm
                     ->description('Produk dan informasi pembayaran')
                     ->schema([
                         Section::make('Product dipesan')
-                            ->schema([OrderResource::getItemsRepeater()])
+                            ->description(function (?Order $record): ?string {
+                                if (! $record?->isContractSigned()) {
+                                    return null;
+                                }
+
+                                return 'Kontrak sudah TTD. Koreksi sekali jalan: ubah master Produk → klik Ambil ulang dari Produk → isi alasan di modal → terapkan. Riwayat di langkah Riwayat Modifikasi.';
+                            })
+                            ->schema([
+                                SchemaActions::make([
+                                    Action::make('syncAllItemsFromProducts')
+                                        ->label('Ambil ulang dari Produk')
+                                        ->icon('heroicon-o-arrow-path')
+                                        ->color('warning')
+                                        ->button()
+                                        ->extraAttributes([
+                                            'class' => 'w-full sm:w-auto',
+                                        ])
+                                        ->visible(function (?Order $record): bool {
+                                            $user = Auth::user();
+
+                                            if (! $record || ! $user instanceof \App\Models\User) {
+                                                return false;
+                                            }
+
+                                            if (! $record->isContractSigned()) {
+                                                return true;
+                                            }
+
+                                            return $user->canApplyOrderFinancialAmendment();
+                                        })
+                                        ->modalHeading('Ambil ulang dari Produk')
+                                        ->modalDescription('Harga, penambahan, dan pengurangan item akan diganti dari Produk terkini.')
+                                        ->modalSubmitActionLabel('Terapkan & simpan')
+                                        ->form(function (?Order $record): array {
+                                            if (! $record?->isContractSigned()) {
+                                                return [];
+                                            }
+
+                                            return [
+                                                Textarea::make('reason')
+                                                    ->label('Alasan Amandemen Keuangan')
+                                                    ->required()
+                                                    ->rows(3)
+                                                    ->helperText('Langsung disimpan ke order dan masuk riwayat amandemen.')
+                                                    ->placeholder('Contoh: penambahan lighting sesuai request klien tanggal …'),
+                                            ];
+                                        })
+                                        ->action(function (array $data, Get $get, Set $set, $livewire): void {
+                                            OrderResource::runProductSyncAction(
+                                                get: $get,
+                                                set: $set,
+                                                livewire: $livewire,
+                                                reason: trim((string) ($data['reason'] ?? '')),
+                                            );
+                                        }),
+                                ]),
+                                OrderResource::getItemsRepeater(),
+                            ])
                             ->columnSpanFull(),
                         Section::make('Data Pembayaran')
                             ->schema([
@@ -323,7 +408,7 @@ class OrderForm
                             ->prefix('Rp. ')
                             ->readOnly()
                             ->label('Penambahan Harga')
-                            ->helperText('Auto-calculated from selected products penambahan publish price')
+                            ->helperText('Dari snapshot item order (bukan harga produk terkini)')
                             ->mask(RawJs::make('$money($input)'))
                             ->stripCharacters(',')
                             ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
@@ -356,7 +441,7 @@ class OrderForm
                             ->dehydrated()
                             ->dehydrateStateUsing(fn ($state) => (int) str_replace([',', '.'], '', (string) $state))
                             ->readOnly()
-                            ->helperText('Nilai ini dihitung otomatis dari total pengurangan semua produk dalam order.'),
+                            ->helperText('Dari snapshot item order (bukan harga produk terkini).'),
                     ]),
                 Step::make('Informasi Keuangan')
                     ->icon('heroicon-o-banknotes')
@@ -548,6 +633,103 @@ class OrderForm
                                     $component->state('Belum dilacak');
                                 }
                             }),
+                        Section::make('Riwayat Amandemen Keuangan')
+                            ->description('Alasan dan perubahan angka setelah kontrak ditandatangani.')
+                            ->schema([
+                                TextEntry::make('amendments_empty')
+                                    ->hiddenLabel()
+                                    ->state('Belum ada amandemen untuk order ini.')
+                                    ->visible(fn (?Order $record): bool => ! $record || $record->amendments()->doesntExist()),
+                                Repeater::make('amendments_history')
+                                    ->hiddenLabel()
+                                    ->schema([
+                                        TextInput::make('when')
+                                            ->label('Waktu')
+                                            ->disabled()
+                                            ->dehydrated(true),
+                                        TextInput::make('by')
+                                            ->label('Oleh')
+                                            ->disabled()
+                                            ->dehydrated(true),
+                                        Textarea::make('reason')
+                                            ->label('Alasan')
+                                            ->disabled()
+                                            ->dehydrated(true)
+                                            ->rows(2)
+                                            ->columnSpanFull()
+                                            ->extraInputAttributes(['class' => 'break-words']),
+                                        Textarea::make('changes')
+                                            ->label('Perubahan')
+                                            ->disabled()
+                                            ->dehydrated(true)
+                                            ->rows(8)
+                                            ->columnSpanFull()
+                                            ->extraInputAttributes([
+                                                'class' => 'break-words font-mono text-xs leading-relaxed whitespace-pre-wrap',
+                                                'style' => 'min-height: 8rem;',
+                                            ]),
+                                    ])
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->addable(false)
+                                    ->deletable(false)
+                                    ->reorderable(false)
+                                    ->defaultItems(0)
+                                    ->collapsible()
+                                    ->collapsed()
+                                    ->itemLabel(function (array $state): string {
+                                        $when = trim((string) ($state['when'] ?? ''));
+                                        $by = trim((string) ($state['by'] ?? ''));
+                                        $reason = trim((string) ($state['reason'] ?? ''));
+
+                                        $parts = array_values(array_filter([
+                                            $when !== '' ? $when : null,
+                                            $by !== '' ? $by : null,
+                                            $reason !== '' ? Str::limit($reason, 42) : null,
+                                        ]));
+
+                                        return $parts !== []
+                                            ? implode(' · ', $parts)
+                                            : 'Amandemen tanpa detail';
+                                    })
+                                    ->afterStateHydrated(function ($component, $state, ?Order $record): void {
+                                        if (! $record) {
+                                            $component->state([]);
+
+                                            return;
+                                        }
+
+                                        $record->loadMissing(['amendments.user']);
+
+                                        $component->state(
+                                            $record->amendments
+                                                ->take(20)
+                                                ->map(fn ($amendment) => [
+                                                    'when' => $amendment->created_at?->format('d M Y H:i') ?? '-',
+                                                    'by' => $amendment->user?->name ?? 'Tidak diketahui',
+                                                    'reason' => (string) ($amendment->reason ?? '-'),
+                                                    'changes' => static::formatAmendmentDiff(
+                                                        is_array($amendment->diff) ? $amendment->diff : []
+                                                    ),
+                                                ])
+                                                ->values()
+                                                ->all()
+                                        );
+                                    })
+                                    ->visible(fn (?Order $record): bool => (bool) $record?->amendments()->exists())
+                                    ->columns([
+                                        'default' => 1,
+                                        'md' => 2,
+                                    ]),
+                            ])
+                            ->visible(function (?Order $record): bool {
+                                $user = Auth::user();
+
+                                return $record !== null
+                                    && $user instanceof \App\Models\User
+                                    && $user->canApplyOrderFinancialAmendment();
+                            })
+                            ->columnSpanFull(),
                     ])
                     ->columnSpan(['lg' => 1])
                     ->hidden(fn (?Order $record) => $record === null),
@@ -556,6 +738,193 @@ class OrderForm
                 ->columns(3)
                 ->skippable(),
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $diff
+     */
+    public static function formatAmendmentDiff(array $diff): string
+    {
+        if ($diff === []) {
+            return '-';
+        }
+
+        $lines = [];
+
+        $penambahanDetail = self::formatNamedAmountLines(
+            'Penambahan',
+            is_array($diff['penambahan_lines'] ?? null) ? $diff['penambahan_lines'] : null,
+        );
+        $penguranganDetail = self::formatNamedAmountLines(
+            'Pengurangan',
+            is_array($diff['pengurangan_lines'] ?? null) ? $diff['pengurangan_lines'] : null,
+        );
+
+        if ($penambahanDetail !== []) {
+            array_push($lines, ...$penambahanDetail);
+        } elseif (isset($diff['penambahan']) && is_array($diff['penambahan'])) {
+            $before = (int) ($diff['penambahan']['before'] ?? 0);
+            $after = (int) ($diff['penambahan']['after'] ?? 0);
+            if ($before !== $after) {
+                $lines[] = 'Penambahan: Rp '.number_format($after, 0, ',', '.');
+            }
+        }
+
+        if ($penguranganDetail !== []) {
+            if ($lines !== []) {
+                $lines[] = '';
+            }
+            array_push($lines, ...$penguranganDetail);
+        } elseif (isset($diff['pengurangan']) && is_array($diff['pengurangan'])) {
+            $before = (int) ($diff['pengurangan']['before'] ?? 0);
+            $after = (int) ($diff['pengurangan']['after'] ?? 0);
+            if ($before !== $after) {
+                if ($lines !== []) {
+                    $lines[] = '';
+                }
+                $lines[] = 'Pengurangan: Rp '.number_format($after, 0, ',', '.');
+            }
+        }
+
+        foreach ([
+            'total_price' => 'Total paket',
+            'promo' => 'Promo',
+            'grand_total' => 'Grand total',
+        ] as $key => $label) {
+            if (! isset($diff[$key]) || ! is_array($diff[$key])) {
+                continue;
+            }
+
+            $before = (int) ($diff[$key]['before'] ?? 0);
+            $after = (int) ($diff[$key]['after'] ?? 0);
+            if ($before === $after) {
+                continue;
+            }
+
+            if ($lines !== []) {
+                $lines[] = '';
+            }
+            $lines[] = $label.': Rp '.number_format($after, 0, ',', '.');
+        }
+
+        // Fallback lama: hanya total item berubah tanpa detail baris.
+        if ($lines === [] && isset($diff['items']) && is_array($diff['items'])) {
+            $lines = self::formatItemsAmendmentLines($diff['items']);
+        }
+
+        $text = trim(implode("\n", $lines));
+
+        return $text !== '' ? $text : '-';
+    }
+
+    /**
+     * @param  array{before?: mixed, after?: mixed}|null  $change
+     * @return list<string>
+     */
+    protected static function formatNamedAmountLines(string $heading, ?array $change): array
+    {
+        if ($change === null) {
+            return [];
+        }
+
+        $before = collect(OrderFinancialSnapshot::mergeLines($change['before'] ?? []))
+            ->keyBy(fn (array $line) => self::lineKey($line));
+        $after = collect(OrderFinancialSnapshot::mergeLines($change['after'] ?? []))
+            ->keyBy(fn (array $line) => self::lineKey($line));
+
+        if ($before->isEmpty() && $after->isEmpty()) {
+            return [];
+        }
+
+        $detail = [];
+        $keys = $before->keys()->merge($after->keys())->unique()->values();
+
+        // Belum ada snapshot baris lama → tampilkan komposisi baru apa adanya.
+        $markDelta = $before->isNotEmpty();
+
+        foreach ($keys as $key) {
+            $b = $before->get($key);
+            $a = $after->get($key);
+
+            if ($b && ! $a) {
+                $detail[] = ($markDelta ? '− ' : '').$b['name'].': Rp '.number_format((int) $b['amount'], 0, ',', '.');
+
+                continue;
+            }
+
+            if ($a && ! $b) {
+                $detail[] = ($markDelta ? '+ ' : '').$a['name'].': Rp '.number_format((int) $a['amount'], 0, ',', '.');
+
+                continue;
+            }
+
+            if ($a && $b && (int) $a['amount'] !== (int) $b['amount']) {
+                $detail[] = $a['name'].': Rp '.number_format((int) $a['amount'], 0, ',', '.');
+            }
+        }
+
+        if ($detail === []) {
+            return [];
+        }
+
+        return array_merge([$heading.':'], $detail);
+    }
+
+    /**
+     * @param  array{id?: int|null, name?: string, amount?: int}  $line
+     */
+    protected static function lineKey(array $line): string
+    {
+        if (isset($line['id']) && $line['id'] !== null) {
+            return 'id:'.(int) $line['id'];
+        }
+
+        return 'name:'.mb_strtolower((string) ($line['name'] ?? ''));
+    }
+
+    /**
+     * @param  array{before?: mixed, after?: mixed}  $change
+     * @return list<string>
+     */
+    protected static function formatItemsAmendmentLines(array $change): array
+    {
+        $beforeItems = collect($change['before'] ?? [])
+            ->filter(fn ($item) => is_array($item) && ! empty($item['product_id']))
+            ->keyBy(fn ($item) => (string) $item['product_id']);
+
+        $afterItems = collect($change['after'] ?? [])
+            ->filter(fn ($item) => is_array($item) && ! empty($item['product_id']))
+            ->keyBy(fn ($item) => (string) $item['product_id']);
+
+        $keys = $beforeItems->keys()->merge($afterItems->keys())->unique()->values();
+        $fieldLabels = [
+            'unit_price' => 'Harga',
+            'unit_penambahan' => 'Penambahan',
+            'unit_pengurangan' => 'Pengurangan',
+            'quantity' => 'Qty',
+        ];
+        $lines = [];
+        $seen = [];
+
+        foreach ($keys as $key) {
+            $before = $beforeItems->get($key, []);
+            $after = $afterItems->get($key, []);
+
+            foreach ($fieldLabels as $field => $fieldLabel) {
+                $b = (int) ($before[$field] ?? 0);
+                $a = (int) ($after[$field] ?? 0);
+                if ($b === $a || isset($seen[$fieldLabel])) {
+                    continue;
+                }
+                $seen[$fieldLabel] = true;
+
+                $lines[] = $field === 'quantity'
+                    ? "{$fieldLabel}: {$a}"
+                    : $fieldLabel.': Rp '.number_format($a, 0, ',', '.');
+            }
+        }
+
+        return $lines;
     }
 
     protected static function privateOrderPdfUpload(string $field, string $label, string $helper, string $directory): FileUpload
